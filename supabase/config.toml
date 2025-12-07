@@ -1,0 +1,20 @@
+project_id = "multiblock"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[functions.encrypt-api-key]
+verify_jwt = true
+
+[functions.chat-proxy]
+verify_jwt = true
