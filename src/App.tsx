@@ -7,7 +7,10 @@ import { useAppStore } from "@/store/useAppStore";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import BoardCanvas from "./pages/BoardCanvas";
 import Pricing from "./pages/Pricing";
+import Checkout from "./pages/Checkout";
+import ApiKeys from "./pages/ApiKeys";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,11 +33,28 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/board/:id"
+            element={
+              <ProtectedRoute>
+                <BoardCanvas />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/keys"
+            element={
+              <ProtectedRoute>
+                <ApiKeys />
               </ProtectedRoute>
             }
           />

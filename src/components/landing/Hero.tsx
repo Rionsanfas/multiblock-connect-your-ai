@@ -1,4 +1,5 @@
 import { ArrowRight, Play } from "lucide-react";
+import { Link } from "react-router-dom";
 import MockUI from "./MockUI";
 
 const Hero = () => {
@@ -31,10 +32,10 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-up delay-300">
-            <a href="#pricing" className="btn-primary flex items-center gap-2">
+            <Link to="/auth" className="btn-primary flex items-center gap-2">
               Get Early Access
               <ArrowRight size={18} />
-            </a>
+            </Link>
             <a href="#how-it-works" className="btn-outline flex items-center gap-2">
               <Play size={18} />
               View Demo
