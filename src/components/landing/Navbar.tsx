@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Zap } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAppStore } from "@/store/useAppStore";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated } = useAppStore();
 
   const navLinks = [
     { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
+    { label: "Pricing", href: "/pricing", isRoute: true },
     { label: "FAQ", href: "#faq" },
-    { label: "Login", href: "#" },
   ];
 
   return (
@@ -16,31 +18,55 @@ const Navbar = () => {
       <div className="container mx-auto">
         <div className="glass-card px-6 py-3 flex items-center justify-between">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">M</span>
+              <Zap className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-lg text-foreground">Multiblock</span>
-          </a>
+            <span className="font-semibold text-lg text-foreground">MultiBlock</span>
+          </Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors duration-300 text-sm"
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) =>
+              link.isRoute ? (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors duration-300 text-sm"
+                >
+                  {link.label}
+                </Link>
+              ) : (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors duration-300 text-sm"
+                >
+                  {link.label}
+                </a>
+              )
+            )}
           </div>
 
           {/* CTA Button */}
-          <div className="hidden md:block">
-            <a href="#pricing" className="btn-primary text-sm">
-              Join Early Access
-            </a>
+          <div className="hidden md:flex items-center gap-4">
+            {isAuthenticated ? (
+              <Link to="/dashboard" className="btn-primary text-sm">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/auth"
+                  className="text-muted-foreground hover:text-foreground transition-colors text-sm"
+                >
+                  Login
+                </Link>
+                <Link to="/pricing" className="btn-primary text-sm">
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -56,19 +82,53 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden mt-2 glass-card p-4 animate-fade-in">
             <div className="flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors duration-300"
+              {navLinks.map((link) =>
+                link.isRoute ? (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    className="text-muted-foreground hover:text-foreground transition-colors duration-300"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    className="text-muted-foreground hover:text-foreground transition-colors duration-300"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </a>
+                )
+              )}
+              {isAuthenticated ? (
+                <Link
+                  to="/dashboard"
+                  className="btn-primary text-center text-sm mt-2"
                   onClick={() => setIsOpen(false)}
                 >
-                  {link.label}
-                </a>
-              ))}
-              <a href="#pricing" className="btn-primary text-center text-sm mt-2">
-                Join Early Access
-              </a>
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/auth"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/pricing"
+                    className="btn-primary text-center text-sm mt-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
