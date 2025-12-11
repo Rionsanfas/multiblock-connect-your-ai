@@ -247,10 +247,13 @@ export const api = {
       const offer = ltdOffers.find((o) => o.sku === sku);
       
       if (user && offer) {
+        // TODO: Replace with Supabase plan update
         setUser({
           ...user,
-          plan: sku.replace('ltd-', '') as 'solo' | 'team' | 'agency',
+          plan: 'pro-50', // Default to pro-50 for legacy LTD purchases
           boards_limit: offer.limits.boards,
+          storage_limit_mb: 5120,
+          storage_used_mb: user.storage_used_mb || 0,
         });
       }
       

@@ -12,6 +12,9 @@ import { useAppStore } from "@/store/useAppStore";
 import { api } from "@/api";
 import { toast } from "sonner";
 import type { Board } from "@/types";
+import { StorageUsageCard } from "@/components/dashboard/StorageUsageCard";
+import { PlanUsageCard } from "@/components/dashboard/PlanUsageCard";
+import { mockUser } from "@/mocks/seed";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -52,19 +55,42 @@ export default function Dashboard() {
 
   const getBlockCount = (boardId: string) => blocks.filter((b) => b.board_id === boardId).length;
 
+  // TODO: Replace mockUser with actual user from Supabase auth
+  const user = mockUser;
+
   return (
     <DashboardLayout>
       <div className="p-6 max-w-7xl mx-auto">
+        {/* Usage Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <PlanUsageCard
+            planId={user.plan}
+            boardsUsed={user.boards_used}
+            boardsLimit={user.boards_limit}
+            seatsUsed={user.seats_used}
+            seatsLimit={user.seats}
+          />
+          <StorageUsageCard
+            usedMb={user.storage_used_mb}
+            limitMb={user.storage_limit_mb}
+          />
+          <GlassCard className="p-5 flex flex-col justify-center">
+            <Button onClick={handleCreateBoard} className="gap-2 w-full">
+              <Plus className="h-4 w-4" />
+              New Board
+            </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              {user.boards_limit - user.boards_used} boards remaining
+            </p>
+          </GlassCard>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold">Your Boards</h1>
             <p className="text-muted-foreground">{boards.length} boards</p>
           </div>
-          <Button onClick={handleCreateBoard} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Board
-          </Button>
         </div>
 
         {/* Toolbar */}

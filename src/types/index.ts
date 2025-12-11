@@ -5,9 +5,13 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  plan: 'free' | 'solo' | 'team' | 'agency';
+  plan: 'free' | 'pro-50' | 'pro-100' | 'team-50' | 'team-100';
   boards_limit: number;
   boards_used: number;
+  storage_limit_mb: number;
+  storage_used_mb: number;
+  seats?: number;
+  seats_used?: number;
   created_at: string;
 }
 
@@ -75,6 +79,32 @@ export interface ApiKey {
   created_at: string;
 }
 
+// Subscription Plans
+export interface PricingPlan {
+  id: string;
+  name: string;
+  tier: 'free' | 'pro' | 'team';
+  price_cents: number;
+  billing_period: 'monthly' | 'yearly';
+  boards: number;
+  blocks_per_board: number | 'unlimited';
+  storage_mb: number;
+  seats: number;
+  features: string[];
+  highlight?: boolean;
+  badge?: string;
+}
+
+// Board Add-ons
+export interface BoardAddon {
+  id: string;
+  name: string;
+  boards: number;
+  storage_mb: number;
+  price_cents: number;
+}
+
+// Legacy LTD Offers (keeping for backward compatibility)
 export interface LtdOffer {
   sku: string;
   title: string;
@@ -96,10 +126,11 @@ export interface LtdOffer {
 export interface UserPlan {
   id: string;
   user_id: string;
-  offer_sku: string;
+  plan_id: string;
   status: 'active' | 'pending' | 'cancelled';
   purchased_at: string;
   expires_at?: string;
+  addons?: string[]; // addon IDs
 }
 
 // Model providers

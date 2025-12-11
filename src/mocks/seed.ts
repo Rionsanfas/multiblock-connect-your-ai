@@ -1,4 +1,167 @@
-import type { Board, Block, Message, Connection, ApiKey, LtdOffer } from '@/types';
+import type { Board, Block, Message, Connection, ApiKey, LtdOffer, PricingPlan, BoardAddon, User } from '@/types';
+
+// ============================================
+// PRICING PLANS - TODO: Replace with Supabase data
+// ============================================
+export const pricingPlans: PricingPlan[] = [
+  {
+    id: 'free',
+    name: 'Free / Starter',
+    tier: 'free',
+    price_cents: 0,
+    billing_period: 'monthly',
+    boards: 1,
+    blocks_per_board: 3,
+    storage_mb: 100,
+    seats: 1,
+    features: [
+      '1 board',
+      '3 blocks per board',
+      '100 MB storage',
+      'Basic AI models',
+      'Community support',
+    ],
+    badge: 'Free Forever',
+  },
+  {
+    id: 'pro-50',
+    name: 'Pro 50',
+    tier: 'pro',
+    price_cents: 9900, // $99/year
+    billing_period: 'yearly',
+    boards: 50,
+    blocks_per_board: 'unlimited',
+    storage_mb: 5120, // 5 GB
+    seats: 1,
+    features: [
+      '50 boards',
+      'Unlimited blocks',
+      '5 GB storage',
+      'All AI models',
+      'Priority support',
+      'Export to JSON',
+      'API access',
+    ],
+    badge: 'Yearly subscription',
+  },
+  {
+    id: 'pro-100',
+    name: 'Pro 100',
+    tier: 'pro',
+    price_cents: 14900, // $149/year
+    billing_period: 'yearly',
+    boards: 100,
+    blocks_per_board: 'unlimited',
+    storage_mb: 10240, // 10 GB
+    seats: 1,
+    features: [
+      '100 boards',
+      'Unlimited blocks',
+      '10 GB storage',
+      'All AI models',
+      'Priority support',
+      'Export to JSON',
+      'API access',
+      'Custom templates',
+    ],
+    highlight: true,
+    badge: 'Best Value',
+  },
+  {
+    id: 'team-50',
+    name: 'Team 50',
+    tier: 'team',
+    price_cents: 12900, // $129/year
+    billing_period: 'yearly',
+    boards: 50,
+    blocks_per_board: 'unlimited',
+    storage_mb: 20480, // 20 GB
+    seats: 5,
+    features: [
+      '50 boards',
+      'Unlimited blocks',
+      '20 GB storage',
+      '5 team seats',
+      'All AI models',
+      'Team collaboration',
+      'Admin dashboard',
+      'Priority support',
+    ],
+    badge: 'Yearly subscription for teams',
+  },
+  {
+    id: 'team-100',
+    name: 'Team 100',
+    tier: 'team',
+    price_cents: 16900, // $169/year
+    billing_period: 'yearly',
+    boards: 100,
+    blocks_per_board: 'unlimited',
+    storage_mb: 30720, // 30 GB
+    seats: 10,
+    features: [
+      '100 boards',
+      'Unlimited blocks',
+      '30 GB storage',
+      '10 team seats',
+      'All AI models',
+      'Team collaboration',
+      'Admin dashboard',
+      'SSO integration',
+      'Priority support',
+    ],
+    badge: 'Yearly subscription for teams',
+  },
+];
+
+// ============================================
+// BOARD ADD-ONS - TODO: Replace with Supabase data
+// ============================================
+export const boardAddons: BoardAddon[] = [
+  {
+    id: 'addon-5',
+    name: '5 Extra Boards',
+    boards: 5,
+    storage_mb: 500,
+    price_cents: 500, // $5
+  },
+  {
+    id: 'addon-20',
+    name: '20 Extra Boards',
+    boards: 20,
+    storage_mb: 2048, // 2 GB
+    price_cents: 1500, // $15
+  },
+  {
+    id: 'addon-50',
+    name: '50 Extra Boards',
+    boards: 50,
+    storage_mb: 5120, // 5 GB
+    price_cents: 3000, // $30
+  },
+  {
+    id: 'addon-100',
+    name: '100 Extra Boards',
+    boards: 100,
+    storage_mb: 10240, // 10 GB
+    price_cents: 5000, // $50
+  },
+];
+
+// ============================================
+// MOCK USER DATA - TODO: Replace with Supabase auth
+// ============================================
+export const mockUser: User = {
+  id: 'user-1',
+  email: 'demo@multiblock.ai',
+  name: 'Demo User',
+  plan: 'pro-50',
+  boards_limit: 50,
+  boards_used: 3,
+  storage_limit_mb: 5120,
+  storage_used_mb: 1250, // Mock: ~1.2 GB used
+  created_at: '2024-01-01T00:00:00Z',
+};
 
 export const seedData = {
   boards: [
@@ -152,107 +315,6 @@ export const seedData = {
     },
   ] as ApiKey[],
   
-  ltdOffers: [
-    {
-      sku: 'ltd-solo',
-      title: 'Solo',
-      description: 'Perfect for individual creators and researchers',
-      price_cents: 4900,
-      original_price_cents: 14900,
-      limits: {
-        boards: 10,
-        blocks_per_board: 20,
-        api_calls_month: 10000,
-      },
-      seats: 1,
-      features: [
-        '10 boards',
-        '20 blocks per board',
-        '10K API calls/month',
-        'All AI models',
-        'Export to JSON',
-        'Priority support',
-      ],
-      total_quantity: 500,
-      sold: 127,
-    },
-    {
-      sku: 'ltd-pro',
-      title: 'Pro',
-      description: 'For power users who need more capacity',
-      price_cents: 9900,
-      original_price_cents: 29900,
-      limits: {
-        boards: 50,
-        blocks_per_board: 50,
-        api_calls_month: 50000,
-      },
-      seats: 1,
-      features: [
-        '50 boards',
-        '50 blocks per board',
-        '50K API calls/month',
-        'All AI models',
-        'Export to JSON',
-        'API access',
-        'Priority support',
-        'Custom templates',
-      ],
-      total_quantity: 300,
-      sold: 89,
-      highlight: true,
-    },
-    {
-      sku: 'ltd-team',
-      title: 'Team',
-      description: 'Collaborate with your entire team',
-      price_cents: 19900,
-      original_price_cents: 59900,
-      limits: {
-        boards: 200,
-        blocks_per_board: 100,
-        api_calls_month: 200000,
-      },
-      seats: 5,
-      features: [
-        '200 boards',
-        '100 blocks per board',
-        '200K API calls/month',
-        '5 team seats',
-        'All AI models',
-        'Team collaboration',
-        'Admin dashboard',
-        'SSO integration',
-        'Priority support',
-      ],
-      total_quantity: 200,
-      sold: 45,
-    },
-    {
-      sku: 'ltd-agency',
-      title: 'Agency',
-      description: 'Unlimited power for agencies and enterprises',
-      price_cents: 49900,
-      original_price_cents: 149900,
-      limits: {
-        boards: -1, // unlimited
-        blocks_per_board: -1,
-        api_calls_month: -1,
-      },
-      seats: 20,
-      features: [
-        'Unlimited boards',
-        'Unlimited blocks',
-        'Unlimited API calls',
-        '20 team seats',
-        'White-label option',
-        'Custom integrations',
-        'Dedicated support',
-        'SLA guarantee',
-        'On-premise option',
-      ],
-      total_quantity: 50,
-      sold: 12,
-    },
-  ] as LtdOffer[],
+  // Legacy LTD offers (keeping for backward compatibility)
+  ltdOffers: [] as LtdOffer[],
 };
