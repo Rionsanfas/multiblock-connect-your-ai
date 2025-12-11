@@ -6,9 +6,7 @@ const Footer = () => {
           {/* Logo & Copyright */}
           <div className="flex flex-col items-center md:items-start gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-                
-              </div>
+              
               <span className="font-semibold text-foreground">Multiblock</span>
             </div>
             <p className="text-sm text-muted-foreground">
