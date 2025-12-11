@@ -25,7 +25,13 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
       <div className="container mx-auto">
-        <div className="px-6 py-3 flex items-center justify-between rounded-xl bg-transparent">
+        <div
+          className={`px-6 py-3 flex items-center justify-between rounded-xl transition-all duration-300 ${
+            scrolled
+              ? "bg-card/80 backdrop-blur-xl border border-border/50"
+              : "bg-transparent"
+          }`}
+        >
           {/* Site Name Only */}
           <Link to="/" className="flex items-center">
             <span className="font-semibold text-lg text-foreground">MultiBlock</span>
