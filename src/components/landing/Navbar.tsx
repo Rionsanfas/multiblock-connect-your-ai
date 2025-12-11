@@ -1,11 +1,20 @@
-import { useState } from "react";
-import { Menu, X, Zap } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated } = useAppStore();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { label: "Features", href: "#features" },
@@ -16,12 +25,15 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
       <div className="container mx-auto">
-        <div className="glass-card px-6 py-3 flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Zap className="h-4 w-4 text-primary-foreground" />
-            </div>
+        <div
+          className={`px-6 py-3 flex items-center justify-between rounded-xl transition-all duration-300 ${
+            scrolled
+              ? "bg-card/80 backdrop-blur-xl border border-border/50"
+              : "bg-transparent"
+          }`}
+        >
+          {/* Site Name Only */}
+          <Link to="/" className="flex items-center">
             <span className="font-semibold text-lg text-foreground">MultiBlock</span>
           </Link>
 
@@ -73,6 +85,7 @@ const Navbar = () => {
           <button
             className="md:hidden text-foreground"
             onClick={() => setIsOpen(!isOpen)}
+            aria-label="Toggle menu"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -80,7 +93,7 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden mt-2 glass-card p-4 animate-fade-in">
+          <div className="md:hidden mt-2 bg-card/90 backdrop-blur-xl border border-border/50 rounded-xl p-4 animate-fade-in">
             <div className="flex flex-col gap-4">
               {navLinks.map((link) =>
                 link.isRoute ? (
