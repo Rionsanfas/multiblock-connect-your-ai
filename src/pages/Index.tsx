@@ -8,7 +8,7 @@ import Footer from "@/components/landing/Footer";
 
 const Index = () => {
   return (
-    <div className="noise-bg min-h-screen">
+    <div className="liquid-bg noise-overlay min-h-screen">
       <Navbar />
       <main className="relative z-10">
         <Hero />
