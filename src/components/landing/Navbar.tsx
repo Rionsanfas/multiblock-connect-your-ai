@@ -1,20 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated } = useAppStore();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const navLinks = [
     { label: "Features", href: "#features" },
@@ -25,13 +16,7 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
       <div className="container mx-auto">
-        <div
-          className={`px-6 py-3 flex items-center justify-between rounded-xl transition-all duration-300 ${
-            scrolled
-              ? "bg-card/80 backdrop-blur-xl border border-border/50"
-              : "bg-transparent"
-          }`}
-        >
+        <div className="px-6 py-3 flex items-center justify-between rounded-xl bg-transparent">
           {/* Site Name Only */}
           <Link to="/" className="flex items-center">
             <span className="font-semibold text-lg text-foreground">MultiBlock</span>
