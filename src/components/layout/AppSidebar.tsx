@@ -9,7 +9,6 @@ import {
   HelpCircle,
   LogOut,
   ChevronLeft,
-  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
@@ -41,14 +40,11 @@ export function AppSidebar() {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Logo */}
+      {/* Site Name */}
       <div className="flex items-center gap-3 p-4 border-b border-border/30">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary text-primary-foreground">
-          <Zap className="h-5 w-5" />
-        </div>
-        {!collapsed && (
-          <span className="font-semibold text-lg">MultiBlock</span>
-        )}
+        <span className="font-semibold text-lg">
+          {collapsed ? "M" : "MultiBlock"}
+        </span>
       </div>
 
       {/* User dropdown */}
