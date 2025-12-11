@@ -9,8 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppStore } from "@/store/useAppStore";
 import { toast } from "sonner";
-import { User, Shield, Cookie, Bell, Trash2 } from "lucide-react";
+import { User, Shield, Cookie, Bell, Trash2, Crown, HardDrive, LayoutGrid, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
+import { mockUser, pricingPlans, boardAddons } from "@/mocks/seed";
+import { GlassCard } from "@/components/ui/glass-card";
 
 export default function Settings() {
   const { user } = useAppStore();
@@ -52,8 +55,12 @@ export default function Settings() {
           <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="bg-card/50 border border-border/50">
+        <Tabs defaultValue="plan" className="space-y-6">
+          <TabsList className="bg-card/50 border border-border/50 flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="plan" className="gap-2">
+              <Crown className="h-4 w-4" />
+              Plan
+            </TabsTrigger>
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" />
               Profile
@@ -71,6 +78,11 @@ export default function Settings() {
               Privacy
             </TabsTrigger>
           </TabsList>
+
+          {/* Plan & Usage Tab */}
+          <TabsContent value="plan">
+            <PlanUsageSection />
+          </TabsContent>
 
           <TabsContent value="profile">
             <Card className="bg-card/80 backdrop-blur-xl border-border/50">
@@ -294,5 +306,137 @@ export default function Settings() {
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+}
+
+// Helper to format storage
+const formatStorage = (mb: number): string => {
+  if (mb >= 1024) {
+    const gb = mb / 1024;
+    return `${gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1)} GB`;
+  }
+  return `${mb} MB`;
+};
+
+// Helper to format price
+const formatPrice = (cents: number): string => {
+  return `$${(cents / 100).toFixed(0)}`;
+};
+
+function PlanUsageSection() {
+  // TODO: Replace with actual user data from Supabase
+  const user = mockUser;
+  const plan = pricingPlans.find(p => p.id === user.plan);
+  
+  const storagePercentage = Math.min((user.storage_used_mb / user.storage_limit_mb) * 100, 100);
+  const boardsPercentage = Math.min((user.boards_used / user.boards_limit) * 100, 100);
+  const isStorageNearLimit = storagePercentage >= 80;
+
+  return (
+    <div className="space-y-6">
+      {/* Current Plan */}
+      <Card className="bg-card/80 backdrop-blur-xl border-border/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-primary" />
+            Current Plan
+          </CardTitle>
+          <CardDescription>Your subscription and usage details</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/20">
+            <div>
+              <p className="font-semibold text-lg">{plan?.name || 'Free / Starter'}</p>
+              <p className="text-sm text-muted-foreground">
+                {plan?.price_cents === 0 ? 'Free forever' : `${formatPrice(plan?.price_cents || 0)}/year`}
+              </p>
+            </div>
+            <Button asChild>
+              <Link to="/pricing">Upgrade Plan</Link>
+            </Button>
+          </div>
+
+          {/* Usage Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Boards Usage */}
+            <GlassCard className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <LayoutGrid className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">Boards</span>
+              </div>
+              <Progress value={boardsPercentage} className="h-2 mb-2" />
+              <p className="text-xs text-muted-foreground">
+                {user.boards_used} of {user.boards_limit} boards used
+              </p>
+            </GlassCard>
+
+            {/* Storage Usage */}
+            <GlassCard className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <HardDrive className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">Storage</span>
+              </div>
+              <Progress 
+                value={storagePercentage} 
+                className={`h-2 mb-2 ${isStorageNearLimit ? '[&>div]:bg-amber-500' : ''}`}
+              />
+              <p className="text-xs text-muted-foreground">
+                {formatStorage(user.storage_used_mb)} of {formatStorage(user.storage_limit_mb)} used
+              </p>
+              {isStorageNearLimit && (
+                <p className="text-xs text-amber-500 mt-1">Approaching storage limit</p>
+              )}
+            </GlassCard>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Board Add-ons */}
+      <Card className="bg-card/80 backdrop-blur-xl border-border/50">
+        <CardHeader>
+          <CardTitle>Board Add-ons</CardTitle>
+          <CardDescription>Expand your workspace with extra boards and storage</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {boardAddons.map((addon) => (
+              <GlassCard key={addon.id} variant="hover" className="p-4 text-center">
+                <div className="text-2xl font-bold text-primary mb-1">+{addon.boards}</div>
+                <div className="text-xs text-muted-foreground mb-2">boards</div>
+                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-3">
+                  <HardDrive className="h-3 w-3" />
+                  +{formatStorage(addon.storage_mb)}
+                </div>
+                <div className="text-lg font-bold mb-2">{formatPrice(addon.price_cents)}</div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={() => toast.success("Add-on added to cart")}
+                >
+                  Add
+                </Button>
+              </GlassCard>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Storage Info */}
+      <Card className="bg-muted/30 border-border/50">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <HardDrive className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <div>
+              <p className="font-medium text-sm mb-1">About Storage</p>
+              <p className="text-xs text-muted-foreground">
+                Your storage quota covers all your data including messages, block configurations, 
+                system prompts, and any files you upload. Storage usage is calculated in real-time.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

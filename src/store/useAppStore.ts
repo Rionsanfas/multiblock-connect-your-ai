@@ -110,8 +110,10 @@ export const useAppStore = create<AppState>()(
           email,
           name: email.split('@')[0],
           plan: 'free',
-          boards_limit: 3,
+          boards_limit: 1,
           boards_used: get().boards.length,
+          storage_limit_mb: 100,
+          storage_used_mb: 0,
           created_at: new Date().toISOString(),
         };
         set({ user, isAuthenticated: true });
