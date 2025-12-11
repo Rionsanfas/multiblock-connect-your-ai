@@ -1,8 +1,6 @@
 import { MessageSquare, Zap, Boxes } from "lucide-react";
-
 const MockUI = () => {
-  return (
-    <div className="relative max-w-4xl mx-auto">
+  return <div className="relative max-w-4xl mx-auto">
       {/* Main Board */}
       <div className="glass-card p-6 md:p-8 rounded-2xl">
         {/* Top Bar */}
@@ -18,12 +16,14 @@ const MockUI = () => {
         {/* Blocks Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Block 1 - GPT */}
-          <div className="glass-card-hover p-4 animate-float" style={{ animationDelay: '0s' }}>
+          <div className="glass-card-hover p-4 animate-float" style={{
+          animationDelay: '0s'
+        }}>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
                 <MessageSquare size={16} className="text-foreground" />
               </div>
-              <span className="text-sm font-medium text-foreground">GPT-4</span>
+              <span className="text-sm font-medium text-foreground">GPT-5</span>
             </div>
             <div className="space-y-2">
               <div className="h-2 bg-muted rounded-full w-full" />
@@ -45,7 +45,9 @@ const MockUI = () => {
           </div>
 
           {/* Block 2 - Claude */}
-          <div className="glass-card-hover p-4 animate-float" style={{ animationDelay: '1s' }}>
+          <div className="glass-card-hover p-4 animate-float" style={{
+          animationDelay: '1s'
+        }}>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
                 <Boxes size={16} className="text-foreground" />
@@ -73,8 +75,6 @@ const MockUI = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default MockUI;
