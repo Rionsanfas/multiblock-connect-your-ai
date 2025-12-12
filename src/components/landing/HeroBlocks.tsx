@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { Send, MoreHorizontal, Copy } from "lucide-react";
 
 const typingPhrases = [
   "How does AI work?",
@@ -40,16 +41,15 @@ export function HeroBlocks() {
   }, [typingText, isDeleting, phraseIndex]);
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center min-h-[700px]">
+    <div className="relative w-full h-full flex items-center justify-start min-h-[700px] pl-4">
       {/* SVG Connection Lines - Behind blocks */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none z-0"
-        viewBox="0 0 400 700"
+        viewBox="0 0 500 700"
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          {/* Animated flowing gradient for line 1 */}
-          <linearGradient id="flowLine1" gradientUnits="userSpaceOnUse" x1="120" y1="130" x2="260" y2="270">
+          <linearGradient id="flowLine1" gradientUnits="userSpaceOnUse" x1="100" y1="170" x2="200" y2="280">
             <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0">
               <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
             </stop>
@@ -67,8 +67,7 @@ export function HeroBlocks() {
             </stop>
           </linearGradient>
 
-          {/* Animated flowing gradient for line 2 */}
-          <linearGradient id="flowLine2" gradientUnits="userSpaceOnUse" x1="260" y1="430" x2="140" y2="570">
+          <linearGradient id="flowLine2" gradientUnits="userSpaceOnUse" x1="200" y1="430" x2="120" y2="530">
             <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0">
               <animate attributeName="offset" values="-0.5;1.5" dur="2s" begin="1s" repeatCount="indefinite" />
             </stop>
@@ -89,7 +88,7 @@ export function HeroBlocks() {
 
         {/* Base dashed lines */}
         <path
-          d="M 120 130 C 120 200, 260 210, 260 270"
+          d="M 100 170 C 100 220, 200 240, 200 280"
           fill="none"
           stroke="hsl(var(--primary) / 0.15)"
           strokeWidth="2"
@@ -97,7 +96,7 @@ export function HeroBlocks() {
           strokeDasharray="8 6"
         />
         <path
-          d="M 260 430 C 260 500, 140 510, 140 570"
+          d="M 200 430 C 200 480, 120 500, 120 530"
           fill="none"
           stroke="hsl(var(--primary) / 0.15)"
           strokeWidth="2"
@@ -107,7 +106,7 @@ export function HeroBlocks() {
 
         {/* Animated flowing lines */}
         <path
-          d="M 120 130 C 120 200, 260 210, 260 270"
+          d="M 100 170 C 100 220, 200 240, 200 280"
           fill="none"
           stroke="url(#flowLine1)"
           strokeWidth="3"
@@ -115,7 +114,7 @@ export function HeroBlocks() {
           className="motion-reduce:hidden"
         />
         <path
-          d="M 260 430 C 260 500, 140 510, 140 570"
+          d="M 200 430 C 200 480, 120 500, 120 530"
           fill="none"
           stroke="url(#flowLine2)"
           strokeWidth="3"
@@ -124,74 +123,113 @@ export function HeroBlocks() {
         />
       </svg>
 
-      {/* Chat Blocks Container */}
-      <div className="relative z-10 flex flex-col items-center gap-12 md:gap-16">
-        {/* Block 1 - With typing animation */}
+      {/* Chat Blocks Container - Shifted left */}
+      <div className="relative z-10 flex flex-col items-start gap-16 md:gap-20 ml-0">
+        {/* Block 1 - User input with typing animation */}
         <div
-          style={{ transform: "translateX(-60px)" }}
+          style={{ transform: "translateX(-20px)" }}
           className={cn(
             "relative",
-            "w-64 md:w-80 lg:w-96",
+            "w-72 md:w-96 lg:w-[28rem]",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
             "shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.2)]",
             "backdrop-blur-xl",
-            "p-6 md:p-8",
           )}
         >
-          <p className="text-sm text-muted-foreground mb-3">You</p>
-          <p className="text-lg md:text-xl text-foreground font-medium min-h-[32px]">
-            {typingText}
-            <span className="inline-block w-0.5 h-5 bg-primary ml-0.5 animate-pulse" />
-          </p>
+          {/* Header with dots */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-2">
+            <p className="text-sm text-muted-foreground">You</p>
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground/60" />
+          </div>
+          
+          {/* Content */}
+          <div className="px-6 pb-4">
+            <p className="text-lg md:text-xl text-foreground font-medium min-h-[32px]">
+              {typingText}
+              <span className="inline-block w-0.5 h-5 bg-primary ml-0.5 animate-pulse" />
+            </p>
+          </div>
+          
+          {/* Footer with send button */}
+          <div className="flex items-center justify-end gap-2 px-6 pb-5 pt-2 border-t border-border/20">
+            <button className="flex items-center gap-2 px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-colors text-sm font-medium">
+              <Send className="w-4 h-4" />
+              Send
+            </button>
+          </div>
         </div>
 
         {/* Block 2 - AI Response */}
         <div
-          style={{ transform: "translateX(70px)" }}
+          style={{ transform: "translateX(40px)" }}
           className={cn(
             "relative",
-            "w-60 md:w-96 lg:w-[28rem]",
+            "w-80 md:w-[26rem] lg:w-[32rem]",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
             "shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.2)]",
             "backdrop-blur-xl",
-            "p-6 md:p-8",
           )}
         >
-          <p className="text-sm text-muted-foreground mb-3">AI Assistant</p>
-          <p className="text-base md:text-lg text-foreground/90 leading-relaxed">
-            AI uses neural networks to process data and learn patterns, enabling intelligent responses.
-          </p>
-          <div className="flex gap-3 mt-4">
+          {/* Header with dots */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-2">
+            <p className="text-sm text-muted-foreground">AI Assistant</p>
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground/60" />
+          </div>
+          
+          {/* Content */}
+          <div className="px-6 pb-4">
+            <p className="text-base md:text-lg text-foreground/90 leading-relaxed">
+              AI uses neural networks to process data and learn patterns, enabling intelligent responses.
+            </p>
+          </div>
+          
+          {/* Footer with model badge and copy */}
+          <div className="flex items-center gap-3 px-6 pb-5 pt-2 border-t border-border/20">
             <span className="text-xs px-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium">ChatGPT 5</span>
-            <span className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full">Copy</span>
+            <button className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 text-muted-foreground rounded-full transition-colors">
+              <Copy className="w-3 h-3" />
+              Copy
+            </button>
           </div>
         </div>
 
         {/* Block 3 - Follow-up */}
         <div
-          style={{ transform: "translateX(-30px)" }}
+          style={{ transform: "translateX(-10px)" }}
           className={cn(
             "relative",
-            "w-60 md:w-72 lg:w-80",
+            "w-72 md:w-80 lg:w-96",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
             "shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.2)]",
             "backdrop-blur-xl",
-            "p-6 md:p-8",
           )}
         >
-          <p className="text-sm text-muted-foreground mb-3">AI Assistant</p>
-          <p className="text-base md:text-lg text-foreground/80">Can you give me an example?</p>
-          <div className="flex gap-3 mt-4">
+          {/* Header with dots */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-2">
+            <p className="text-sm text-muted-foreground">AI Assistant</p>
+            <MoreHorizontal className="w-5 h-5 text-muted-foreground/60" />
+          </div>
+          
+          {/* Content */}
+          <div className="px-6 pb-4">
+            <p className="text-base md:text-lg text-foreground/80">Can you give me an example?</p>
+          </div>
+          
+          {/* Footer with model badge and copy */}
+          <div className="flex items-center gap-3 px-6 pb-5 pt-2 border-t border-border/20">
             <span className="text-xs px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full font-medium">
               Claude 4
             </span>
-            <span className="text-xs px-3 py-1.5 bg-muted text-muted-foreground rounded-full">Copy</span>
+            <button className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-muted hover:bg-muted/80 text-muted-foreground rounded-full transition-colors">
+              <Copy className="w-3 h-3" />
+              Copy
+            </button>
           </div>
         </div>
       </div>
