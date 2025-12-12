@@ -1,11 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
+import { cn } from "@/lib/utils";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAtTop, setIsAtTop] = useState(true);
   const { isAuthenticated } = useAppStore();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setIsAtTop(scrollY < 50);
+    };
+
+    // Check initial position
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const navLinks = [
     { label: "Features", href: "#features" },
@@ -14,9 +29,27 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-4">
+    <nav
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 px-4 py-4",
+        "transition-all duration-300 ease-[cubic-bezier(0.2,0.9,0.2,1)]",
+        "motion-reduce:transition-none",
+        isAtTop
+          ? "opacity-100 translate-y-0"
+          : "opacity-0 -translate-y-4 pointer-events-none"
+      )}
+    >
       <div className="container mx-auto">
-        <div className="px-6 py-3 flex items-center justify-between rounded-xl bg-transparent">
+        <div
+          className={cn(
+            "px-6 py-3 flex items-center justify-between rounded-xl",
+            "transition-all duration-300 ease-[cubic-bezier(0.2,0.9,0.2,1)]",
+            "motion-reduce:transition-none",
+            isAtTop
+              ? "bg-background/80 backdrop-blur-md border border-border/50 shadow-sm"
+              : "bg-transparent border-transparent"
+          )}
+        >
           {/* Site Name Only */}
           <Link to="/" className="flex items-center">
             <span className="font-semibold text-lg text-foreground">MultiBlock</span>
