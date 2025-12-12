@@ -31,7 +31,7 @@ const Navbar = () => {
   return (
     <nav
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 px-4 py-4",
+        "fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 py-3 sm:py-4",
         "transition-all duration-300 ease-[cubic-bezier(0.2,0.9,0.2,1)]",
         "motion-reduce:transition-none",
         isAtTop
@@ -42,7 +42,7 @@ const Navbar = () => {
       <div className="container mx-auto">
         <div
           className={cn(
-            "px-6 py-3 flex items-center justify-between rounded-xl",
+            "px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between rounded-xl",
             "transition-all duration-300 ease-[cubic-bezier(0.2,0.9,0.2,1)]",
             "motion-reduce:transition-none",
             isAtTop
@@ -52,11 +52,11 @@ const Navbar = () => {
         >
           {/* Site Name Only */}
           <Link to="/" className="flex items-center">
-            <span className="font-semibold text-lg text-foreground">MultiBlock</span>
+            <span className="font-semibold text-base sm:text-lg text-foreground">MultiBlock</span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6 lg:gap-8">
             {navLinks.map((link) =>
               link.isRoute ? (
                 <Link
@@ -79,7 +79,7 @@ const Navbar = () => {
           </div>
 
           {/* CTA Button */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3 lg:gap-4">
             {isAuthenticated ? (
               <Link to="/dashboard" className="btn-primary text-sm">
                 Dashboard
@@ -99,11 +99,12 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu Toggle - larger touch target */}
           <button
-            className="md:hidden text-foreground"
+            className="md:hidden text-foreground p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
+            aria-expanded={isOpen}
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -111,14 +112,14 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden mt-2 bg-card/90 backdrop-blur-xl border border-border/50 rounded-xl p-4 animate-fade-in">
-            <div className="flex flex-col gap-4">
+          <div className="md:hidden mt-2 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl p-5 animate-fade-in">
+            <div className="flex flex-col gap-1">
               {navLinks.map((link) =>
                 link.isRoute ? (
                   <Link
                     key={link.label}
                     to={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors duration-300"
+                    className="text-foreground hover:bg-secondary/50 transition-colors duration-300 py-3 px-4 rounded-lg text-base min-h-[48px] flex items-center"
                     onClick={() => setIsOpen(false)}
                   >
                     {link.label}
@@ -127,17 +128,18 @@ const Navbar = () => {
                   <a
                     key={link.label}
                     href={link.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors duration-300"
+                    className="text-foreground hover:bg-secondary/50 transition-colors duration-300 py-3 px-4 rounded-lg text-base min-h-[48px] flex items-center"
                     onClick={() => setIsOpen(false)}
                   >
                     {link.label}
                   </a>
                 )
               )}
+              <div className="border-t border-border/30 my-3" />
               {isAuthenticated ? (
                 <Link
                   to="/dashboard"
-                  className="btn-primary text-center text-sm mt-2"
+                  className="btn-primary text-center text-base py-3 min-h-[48px] flex items-center justify-center"
                   onClick={() => setIsOpen(false)}
                 >
                   Dashboard
@@ -146,14 +148,14 @@ const Navbar = () => {
                 <>
                   <Link
                     to="/auth"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-lg text-base min-h-[48px] flex items-center"
                     onClick={() => setIsOpen(false)}
                   >
                     Login
                   </Link>
                   <Link
                     to="/pricing"
-                    className="btn-primary text-center text-sm mt-2"
+                    className="btn-primary text-center text-base py-3 mt-2 min-h-[48px] flex items-center justify-center"
                     onClick={() => setIsOpen(false)}
                   >
                     Get Started
