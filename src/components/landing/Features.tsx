@@ -1,18 +1,20 @@
-import { MessageSquare, GitBranch, Layout } from "lucide-react";
+import Feature3DIcon from "./Feature3DIcon";
 
-const features = [
+type IconType = "chat" | "connect" | "canvas";
+
+const features: { iconType: IconType; title: string; description: string }[] = [
   {
-    icon: MessageSquare,
+    iconType: "chat",
     title: "Multi-Model Chat Workspace",
     description: "Chat with GPT-4, Claude, Gemini, and more—all in one unified interface. Switch models instantly without juggling tabs.",
   },
   {
-    icon: GitBranch,
+    iconType: "connect",
     title: "Connect Blocks to Automate",
     description: "Link model outputs together. Let one AI's response feed into another, creating powerful automated workflows.",
   },
   {
-    icon: Layout,
+    iconType: "canvas",
     title: "Visual Board with Unlimited Blocks",
     description: "Drag, drop, and arrange your AI blocks on an infinite canvas. Organize complex projects visually.",
   },
@@ -56,12 +58,12 @@ const Features = () => {
           </p>
         </div>
 
-        {/* Premium Glassmorphism Feature Cards Grid */}
+        {/* Premium Glassmorphism Feature Cards Grid with 3D Icons */}
         <div 
           className="grid"
           style={{ 
             gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))",
-            gap: "clamp(16px, 2vw, 20px)",
+            gap: "clamp(20px, 2.5vw, 32px)",
             alignItems: "stretch",
           }}
         >
@@ -70,30 +72,19 @@ const Features = () => {
               key={feature.title}
               className="glass-card-hover group"
               style={{ 
-                padding: "clamp(24px, 3vw, 32px)",
+                padding: "clamp(20px, 2.5vw, 28px)",
+                paddingTop: "clamp(12px, 1.5vw, 16px)",
                 opacity: 0,
                 animation: "fadeUp 0.6s ease-out forwards",
                 animationDelay: `${index * 100}ms`,
               }}
             >
-              {/* Icon Container */}
-              <div 
-                className="glass-icon-box"
-                style={{ 
-                  width: "clamp(44px, 5vw, 52px)",
-                  height: "clamp(44px, 5vw, 52px)",
-                  marginBottom: "clamp(20px, 3vw, 28px)",
-                }}
-              >
-                <feature.icon 
-                  className="text-foreground/80 group-hover:text-foreground transition-colors duration-300" 
-                  style={{ width: "clamp(20px, 2.5vw, 24px)", height: "clamp(20px, 2.5vw, 24px)" }}
-                />
-              </div>
+              {/* 3D Animated Icon */}
+              <Feature3DIcon type={feature.iconType} />
 
               {/* Title */}
               <h3 
-                className="font-semibold text-foreground text-wrap-balance"
+                className="font-semibold text-foreground text-wrap-balance text-center"
                 style={{ 
                   fontSize: "clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem)",
                   marginBottom: "clamp(10px, 1.5vw, 14px)",
@@ -105,7 +96,7 @@ const Features = () => {
 
               {/* Description */}
               <p 
-                className="text-muted-foreground leading-relaxed text-break"
+                className="text-muted-foreground leading-relaxed text-break text-center"
                 style={{ 
                   fontSize: "clamp(0.875rem, 0.82rem + 0.2vw, 0.95rem)",
                   lineHeight: 1.6,
