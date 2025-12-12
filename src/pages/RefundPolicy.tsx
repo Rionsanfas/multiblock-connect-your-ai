@@ -1,18 +1,9 @@
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Link } from "react-router-dom";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 export default function RefundPolicy() {
-  return (
-    <div className="min-h-screen bg-background liquid-bg">
+  return <div className="min-h-screen bg-background liquid-bg">
       <div className="noise-overlay" />
       <Navbar />
       
@@ -101,8 +92,7 @@ export default function RefundPolicy() {
 
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">7. Refund Processing</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  Approved refunds will be issued to your <strong className="text-foreground">original payment method</strong>. Please allow 5-10 business days for the refund to appear in your account, depending on your payment provider.
+                <p className="text-muted-foreground leading-relaxed">Approved refunds will be issued to your original payment method. Please allow 2-7 business days for the refund to appear in your account, depending on your payment provider.<strong className="text-foreground">original payment method</strong>. Please allow 5-10 business days for the refund to appear in your account, depending on your payment provider.
                 </p>
               </section>
 
@@ -128,6 +118,5 @@ export default function RefundPolicy() {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 }
