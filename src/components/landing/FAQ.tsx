@@ -42,35 +42,35 @@ const faqs = [
 
 const FAQ = () => {
   return (
-    <section id="faq" className="py-24 relative">
-      <div className="container mx-auto px-4">
+    <section id="faq" className="py-16 sm:py-20 md:py-24 relative">
+      <div className="container mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 sm:mb-12 md:mb-16">
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             FAQ
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground mt-4 mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mt-4 mb-3 sm:mb-4">
             Frequently Asked Questions
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2 sm:px-0">
             Everything you need to know about Multiblock.
           </p>
         </div>
 
         {/* FAQ Accordion */}
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-3 sm:space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="glass-card border-border px-6 rounded-xl overflow-hidden"
+                className="glass-card border-border px-4 sm:px-6 rounded-xl overflow-hidden"
               >
-                <AccordionTrigger className="text-left text-foreground hover:no-underline py-5">
+                <AccordionTrigger className="text-left text-sm sm:text-base text-foreground hover:no-underline py-4 sm:py-5 min-h-[48px]">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5">
+                <AccordionContent className="text-sm sm:text-base text-muted-foreground pb-4 sm:pb-5">
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

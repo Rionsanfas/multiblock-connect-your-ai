@@ -27,28 +27,28 @@ const Pricing = () => {
 
   return (
     <TooltipProvider>
-      <section id="pricing" className="py-24 relative">
-        <div className="container mx-auto px-4">
+      <section id="pricing" className="py-16 sm:py-20 md:py-24 relative">
+        <div className="container mx-auto px-4 sm:px-6">
           {/* Header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
             <span className="section-badge mb-4">
               <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               Pricing
             </span>
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mt-4 mb-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mt-4 mb-3 sm:mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2 sm:px-0">
               Start free, upgrade when you need more. Yearly billing for best value.
             </p>
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 max-w-5xl mx-auto">
             {displayPlans.map((plan) => (
               <div
                 key={plan.id}
-                className={`glass-card-hover p-8 relative ${
+                className={`glass-card-hover p-5 sm:p-6 md:p-8 relative ${
                   plan.highlight ? 'border-accent/50 bg-card/70' : ''
                 }`}
               >
@@ -62,35 +62,38 @@ const Pricing = () => {
                   </div>
                 )}
                 
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                <div className="mb-4 sm:mb-6">
+                  <h3 className="text-base sm:text-lg font-medium text-muted-foreground mb-2">
                     {plan.name}
                   </h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-foreground">
+                    <span className="text-3xl sm:text-4xl font-bold text-foreground">
                       {formatPrice(plan.price_cents)}
                     </span>
                     {plan.price_cents > 0 && (
-                      <span className="text-muted-foreground text-sm">/year</span>
+                      <span className="text-muted-foreground text-xs sm:text-sm">/year</span>
                     )}
                   </div>
                 </div>
 
                 {/* Key Stats */}
-                <div className="space-y-3 mb-6 p-4 rounded-lg bg-muted/20">
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <LayoutGrid size={16} className="text-accent flex-shrink-0" />
+                <div className="space-y-2.5 sm:space-y-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg bg-muted/20">
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground">
+                    <LayoutGrid size={14} className="text-accent flex-shrink-0 sm:hidden" />
+                    <LayoutGrid size={16} className="text-accent flex-shrink-0 hidden sm:block" />
                     {plan.boards} board{plan.boards > 1 ? 's' : ''}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <Plus size={16} className="text-accent flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground">
+                    <Plus size={14} className="text-accent flex-shrink-0 sm:hidden" />
+                    <Plus size={16} className="text-accent flex-shrink-0 hidden sm:block" />
                     {plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-foreground">
-                    <HardDrive size={16} className="text-accent flex-shrink-0" />
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground">
+                    <HardDrive size={14} className="text-accent flex-shrink-0 sm:hidden" />
+                    <HardDrive size={16} className="text-accent flex-shrink-0 hidden sm:block" />
                     {formatStorage(plan.storage_mb)} storage
                     <Tooltip>
-                      <TooltipTrigger>
+                      <TooltipTrigger className="min-w-[24px] min-h-[24px] flex items-center justify-center">
                         <Info size={12} className="text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent>
@@ -99,17 +102,19 @@ const Pricing = () => {
                     </Tooltip>
                   </div>
                   {plan.seats > 1 && (
-                    <div className="flex items-center gap-2 text-sm text-foreground">
-                      <Users size={16} className="text-accent flex-shrink-0" />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground">
+                      <Users size={14} className="text-accent flex-shrink-0 sm:hidden" />
+                      <Users size={16} className="text-accent flex-shrink-0 hidden sm:block" />
                       {plan.seats} team seats
                     </div>
                   )}
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
                   {plan.features.slice(3).map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-sm text-foreground">
-                      <Check size={16} className="text-accent flex-shrink-0" />
+                    <li key={feature} className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-foreground">
+                      <Check size={14} className="text-accent flex-shrink-0 sm:hidden" />
+                      <Check size={16} className="text-accent flex-shrink-0 hidden sm:block" />
                       {feature}
                     </li>
                   ))}
@@ -117,7 +122,7 @@ const Pricing = () => {
 
                 <Link
                   to="/pricing"
-                  className={`block text-center w-full py-3 rounded-full font-medium transition-all duration-300 ${
+                  className={`block text-center w-full py-3 rounded-full font-medium transition-all duration-300 min-h-[48px] flex items-center justify-center text-sm sm:text-base ${
                     plan.highlight
                       ? 'btn-primary'
                       : 'btn-outline'
@@ -130,13 +135,13 @@ const Pricing = () => {
           </div>
 
           {/* Team Plans CTA */}
-          <div className="text-center mt-10">
-            <p className="text-muted-foreground mb-3">
+          <div className="text-center mt-8 sm:mt-10">
+            <p className="text-sm sm:text-base text-muted-foreground mb-3">
               Need team features?
             </p>
             <Link 
               to="/pricing" 
-              className="text-accent hover:text-accent/80 font-medium transition-colors"
+              className="text-accent hover:text-accent/80 font-medium transition-colors text-sm sm:text-base min-h-[44px] inline-flex items-center"
             >
               View Team Plans →
             </Link>

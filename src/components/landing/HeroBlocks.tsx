@@ -60,10 +60,10 @@ export function HeroBlocks() {
 
   return (
     // ADJUSTMENT POINT: Change the translateX value below to shift the entire visual left/right
-    // Current offset: -60px (increase negative value to move further left)
+    // Current offset: -60px on desktop, centered on mobile
     <div 
-      className="relative w-full h-full flex items-center justify-start min-h-[700px] pl-4 md:pl-0"
-      style={{ transform: "translateX(-60px)" }}
+      className="relative w-full h-full flex items-center justify-center lg:justify-start min-h-[280px] sm:min-h-[350px] md:min-h-[450px] lg:min-h-[700px] px-2 sm:px-4 lg:px-0 scale-[0.55] sm:scale-[0.7] md:scale-[0.85] lg:scale-100 origin-center lg:origin-left"
+      style={{ transform: "translateX(0px)" }}
     >
       {/* SVG Connection Lines - Softer glow with smoother animation */}
       <svg
@@ -176,7 +176,7 @@ export function HeroBlocks() {
       </svg>
 
       {/* Chat Blocks Container */}
-      <div className="relative z-10 flex flex-col items-start gap-16 md:gap-20 ml-0">
+      <div className="relative z-10 flex flex-col items-center lg:items-start gap-10 sm:gap-14 md:gap-16 lg:gap-20 ml-0">
         {/* Block 1 - User input with typing animation */}
         <div
           style={{ 
