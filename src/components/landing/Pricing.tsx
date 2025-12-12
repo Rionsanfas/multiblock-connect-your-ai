@@ -27,94 +27,175 @@ const Pricing = () => {
 
   return (
     <TooltipProvider>
-      <section id="pricing" className="py-16 sm:py-20 md:py-24 relative">
-        <div className="container mx-auto px-4 sm:px-6">
+      <section 
+        id="pricing" 
+        className="relative"
+        style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
+      >
+        {/* Container */}
+        <div 
+          className="w-full max-w-[1200px] mx-auto"
+          style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
+        >
           {/* Header */}
-          <div className="text-center mb-10 sm:mb-12 md:mb-16">
+          <div 
+            className="text-center"
+            style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}
+          >
             <span className="section-badge mb-4">
               <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               Pricing
             </span>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mt-4 mb-3 sm:mb-4">
+            <h2 
+              className="font-bold text-foreground mt-4 text-wrap-balance"
+              style={{ 
+                fontSize: "clamp(1.5rem, 1rem + 2.5vw, 3rem)",
+                marginBottom: "clamp(12px, 2vw, 16px)",
+              }}
+            >
               Simple, Transparent Pricing
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2 sm:px-0">
+            <p 
+              className="text-muted-foreground max-w-xl mx-auto text-break"
+              style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
+            >
               Start free, upgrade when you need more. Yearly billing for best value.
             </p>
           </div>
 
-          {/* Pricing Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 max-w-5xl mx-auto">
+          {/* 
+            Pricing Cards - responsive grid with auto-fit.
+            Max-width centers cards on large screens.
+          */}
+          <div 
+            className="grid max-w-5xl mx-auto align-start"
+            style={{ 
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))",
+              gap: "clamp(16px, 2.5vw, 24px)",
+            }}
+          >
             {displayPlans.map((plan) => (
               <div
                 key={plan.id}
-                className={`glass-card-hover p-5 sm:p-6 md:p-8 relative ${
+                className={`glass-card-hover relative ${
                   plan.highlight ? 'border-accent/50 bg-card/70' : ''
                 }`}
+                style={{ padding: "clamp(20px, 3vw, 32px)" }}
               >
                 {plan.badge && (
-                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium ${
-                    plan.highlight 
-                      ? 'bg-accent text-background' 
-                      : 'bg-muted text-muted-foreground'
-                  }`}>
+                  <div 
+                    className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full font-medium ${
+                      plan.highlight 
+                        ? 'bg-accent text-background' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                    style={{ 
+                      padding: "4px 12px",
+                      fontSize: "clamp(0.625rem, 0.6rem + 0.15vw, 0.75rem)",
+                    }}
+                  >
                     {plan.badge}
                   </div>
                 )}
                 
-                <div className="mb-4 sm:mb-6">
-                  <h3 className="text-base sm:text-lg font-medium text-muted-foreground mb-2">
+                <div style={{ marginBottom: "clamp(16px, 2.5vw, 24px)" }}>
+                  <h3 
+                    className="font-medium text-muted-foreground"
+                    style={{ 
+                      fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1.125rem)",
+                      marginBottom: "8px",
+                    }}
+                  >
                     {plan.name}
                   </h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl sm:text-4xl font-bold text-foreground">
+                    <span 
+                      className="font-bold text-foreground"
+                      style={{ fontSize: "clamp(1.75rem, 1.5rem + 1.25vw, 2.5rem)" }}
+                    >
                       {formatPrice(plan.price_cents)}
                     </span>
                     {plan.price_cents > 0 && (
-                      <span className="text-muted-foreground text-xs sm:text-sm">/year</span>
+                      <span 
+                        className="text-muted-foreground"
+                        style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
+                      >
+                        /year
+                      </span>
                     )}
                   </div>
                 </div>
 
                 {/* Key Stats */}
-                <div className="space-y-2.5 sm:space-y-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg bg-muted/20">
-                  <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground">
-                    <LayoutGrid size={14} className="text-accent flex-shrink-0 sm:hidden" />
-                    <LayoutGrid size={16} className="text-accent flex-shrink-0 hidden sm:block" />
+                <div 
+                  className="rounded-lg bg-muted/20"
+                  style={{ 
+                    padding: "clamp(12px, 2vw, 16px)",
+                    marginBottom: "clamp(16px, 2.5vw, 24px)",
+                  }}
+                >
+                  <div 
+                    className="flex items-center gap-2 text-foreground"
+                    style={{ 
+                      fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
+                      marginBottom: "clamp(8px, 1vw, 12px)",
+                    }}
+                  >
+                    <LayoutGrid className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
                     {plan.boards} board{plan.boards > 1 ? 's' : ''}
                   </div>
-                  <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground">
-                    <Plus size={14} className="text-accent flex-shrink-0 sm:hidden" />
-                    <Plus size={16} className="text-accent flex-shrink-0 hidden sm:block" />
+                  <div 
+                    className="flex items-center gap-2 text-foreground"
+                    style={{ 
+                      fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
+                      marginBottom: "clamp(8px, 1vw, 12px)",
+                    }}
+                  >
+                    <Plus className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
                     {plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board
                   </div>
-                  <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground">
-                    <HardDrive size={14} className="text-accent flex-shrink-0 sm:hidden" />
-                    <HardDrive size={16} className="text-accent flex-shrink-0 hidden sm:block" />
+                  <div 
+                    className="flex items-center gap-2 text-foreground"
+                    style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)" }}
+                  >
+                    <HardDrive className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
                     {formatStorage(plan.storage_mb)} storage
                     <Tooltip>
                       <TooltipTrigger className="min-w-[24px] min-h-[24px] flex items-center justify-center">
-                        <Info size={12} className="text-muted-foreground" />
+                        <Info style={{ width: "12px", height: "12px" }} className="text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="max-w-xs text-xs">Storage covers messages, blocks, and uploaded files</p>
+                        <p className="max-w-xs" style={{ fontSize: "clamp(0.625rem, 0.6rem + 0.1vw, 0.75rem)" }}>
+                          Storage covers messages, blocks, and uploaded files
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   </div>
                   {plan.seats > 1 && (
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-foreground">
-                      <Users size={14} className="text-accent flex-shrink-0 sm:hidden" />
-                      <Users size={16} className="text-accent flex-shrink-0 hidden sm:block" />
+                    <div 
+                      className="flex items-center gap-2 text-foreground"
+                      style={{ 
+                        fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
+                        marginTop: "clamp(8px, 1vw, 12px)",
+                      }}
+                    >
+                      <Users className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
                       {plan.seats} team seats
                     </div>
                   )}
                 </div>
 
-                <ul className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
+                <ul style={{ marginBottom: "clamp(20px, 3vw, 32px)" }}>
                   {plan.features.slice(3).map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-foreground">
-                      <Check size={14} className="text-accent flex-shrink-0 sm:hidden" />
-                      <Check size={16} className="text-accent flex-shrink-0 hidden sm:block" />
+                    <li 
+                      key={feature} 
+                      className="flex items-center gap-2 text-foreground text-break"
+                      style={{ 
+                        fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
+                        marginBottom: "clamp(8px, 1vw, 12px)",
+                      }}
+                    >
+                      <Check className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
                       {feature}
                     </li>
                   ))}
@@ -122,7 +203,7 @@ const Pricing = () => {
 
                 <Link
                   to="/pricing"
-                  className={`block text-center w-full py-3 rounded-full font-medium transition-all duration-300 min-h-[48px] flex items-center justify-center text-sm sm:text-base ${
+                  className={`block text-center w-full rounded-full font-medium transition-all duration-300 ${
                     plan.highlight
                       ? 'btn-primary'
                       : 'btn-outline'
@@ -135,13 +216,23 @@ const Pricing = () => {
           </div>
 
           {/* Team Plans CTA */}
-          <div className="text-center mt-8 sm:mt-10">
-            <p className="text-sm sm:text-base text-muted-foreground mb-3">
+          <div 
+            className="text-center"
+            style={{ marginTop: "clamp(32px, 4vw, 40px)" }}
+          >
+            <p 
+              className="text-muted-foreground"
+              style={{ 
+                fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
+                marginBottom: "12px",
+              }}
+            >
               Need team features?
             </p>
             <Link 
               to="/pricing" 
-              className="text-accent hover:text-accent/80 font-medium transition-colors text-sm sm:text-base min-h-[44px] inline-flex items-center"
+              className="text-accent hover:text-accent/80 font-medium transition-colors min-h-[44px] inline-flex items-center"
+              style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)" }}
             >
               View Team Plans →
             </Link>

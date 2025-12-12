@@ -7,14 +7,70 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "1.5rem",
+      padding: {
+        DEFAULT: "1rem",
+        sm: "1.5rem",
+        lg: "2rem",
+      },
       screens: {
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+        xl: "1200px",
         "2xl": "1280px",
       },
+    },
+    /* ============================================================
+       RESPONSIVE BREAKPOINTS
+       Mobile: up to 640px
+       Tablet: 641px — 1024px
+       Laptop: 1025px — 1440px
+       Desktop: 1441px and above
+       ============================================================ */
+    screens: {
+      xs: "360px",
+      sm: "641px",
+      md: "769px",
+      lg: "1025px",
+      xl: "1441px",
+      "2xl": "1920px",
     },
     extend: {
       fontFamily: {
         outfit: ['Outfit', 'sans-serif'],
+      },
+      /* Fluid font sizes using clamp() */
+      fontSize: {
+        /* Extra small: 10px → 12px */
+        "fluid-xs": "clamp(0.625rem, 0.6rem + 0.15vw, 0.75rem)",
+        /* Small: 12px → 14px */
+        "fluid-sm": "clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem)",
+        /* Base: 14px → 18px */
+        "fluid-base": "clamp(0.875rem, 0.8rem + 0.4vw, 1.125rem)",
+        /* Large: 16px → 20px */
+        "fluid-lg": "clamp(1rem, 0.9rem + 0.5vw, 1.25rem)",
+        /* XL: 18px → 24px */
+        "fluid-xl": "clamp(1.125rem, 1rem + 0.625vw, 1.5rem)",
+        /* 2XL: 20px → 30px */
+        "fluid-2xl": "clamp(1.25rem, 1rem + 1.25vw, 1.875rem)",
+        /* 3XL: 24px → 36px */
+        "fluid-3xl": "clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem)",
+        /* 4XL: 28px → 48px */
+        "fluid-4xl": "clamp(1.75rem, 1.25rem + 2.5vw, 3rem)",
+        /* 5XL: 32px → 60px */
+        "fluid-5xl": "clamp(2rem, 1.25rem + 3.75vw, 3.75rem)",
+        /* 6XL: 36px → 72px */
+        "fluid-6xl": "clamp(2.25rem, 1rem + 5vw, 4.5rem)",
+      },
+      /* Fluid spacing using clamp() */
+      spacing: {
+        "fluid-xs": "clamp(4px, 0.5vw, 8px)",
+        "fluid-sm": "clamp(8px, 1vw, 12px)",
+        "fluid-md": "clamp(12px, 1.5vw, 20px)",
+        "fluid-lg": "clamp(16px, 2vw, 32px)",
+        "fluid-xl": "clamp(24px, 3vw, 48px)",
+        "fluid-2xl": "clamp(32px, 4vw, 64px)",
+        "fluid-section": "clamp(48px, 6vw, 96px)",
       },
       colors: {
         border: "hsl(var(--border))",

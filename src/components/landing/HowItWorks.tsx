@@ -23,50 +23,104 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section id="how-it-works" className="py-16 sm:py-20 md:py-24 relative">
-      <div className="gradient-blur w-[300px] sm:w-[400px] md:w-[500px] h-[300px] sm:h-[400px] md:h-[500px] bg-accent/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute" />
+    <section 
+      id="how-it-works" 
+      className="relative"
+      style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
+    >
+      {/* Background blur effect - scales with viewport */}
+      <div 
+        className="gradient-blur bg-accent/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute"
+        style={{ 
+          width: "clamp(250px, 40vw, 500px)",
+          height: "clamp(250px, 40vw, 500px)",
+        }}
+      />
       
-      <div className="container mx-auto px-4 sm:px-6 relative z-10">
+      {/* Container */}
+      <div 
+        className="relative z-10 w-full max-w-[1200px] mx-auto"
+        style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
+      >
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-12 md:mb-16">
+        <div 
+          className="text-center"
+          style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}
+        >
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             How It Works
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mt-4 mb-3 sm:mb-4">
+          <h2 
+            className="font-bold text-foreground mt-4 text-wrap-balance"
+            style={{ 
+              fontSize: "clamp(1.5rem, 1rem + 2.5vw, 3rem)",
+              marginBottom: "clamp(12px, 2vw, 16px)",
+            }}
+          >
             Simple. Powerful. Visual.
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2 sm:px-0">
+          <p 
+            className="text-muted-foreground max-w-xl mx-auto text-break"
+            style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
+          >
             Get started in minutes with an intuitive workflow designed for builders.
           </p>
         </div>
 
-        {/* Steps */}
+        {/* Steps - responsive grid with auto-fit */}
         <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+          <div 
+            className="grid align-start"
+            style={{ 
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
+              gap: "clamp(16px, 3vw, 32px)",
+            }}
+          >
             {steps.map((step, index) => (
               <div key={step.number} className="relative">
-                {/* Connector Line (desktop) */}
+                {/* Connector Line (visible on wider screens when cards are in a row) */}
                 {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 left-1/2 w-full h-0.5 bg-gradient-to-r from-border to-transparent" />
+                  <div className="hidden lg:block absolute top-8 left-1/2 w-full h-0.5 bg-gradient-to-r from-border to-transparent" />
                 )}
                 
-                <div className="glass-card-hover p-5 sm:p-6 text-center relative">
+                <div 
+                  className="glass-card-hover text-center relative"
+                  style={{ padding: "clamp(20px, 3vw, 24px)" }}
+                >
                   {/* Number Badge */}
-                  <div className="step-number mx-auto mb-4 sm:mb-6">
+                  <div className="step-number mx-auto" style={{ marginBottom: "clamp(16px, 2.5vw, 24px)" }}>
                     {step.number}
                   </div>
                   
                   {/* Icon */}
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-secondary/50 border border-border flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                    <step.icon size={20} className="text-foreground sm:hidden" />
-                    <step.icon size={24} className="text-foreground hidden sm:block" />
+                  <div 
+                    className="rounded-xl bg-secondary/50 border border-border flex items-center justify-center mx-auto"
+                    style={{ 
+                      width: "clamp(48px, 6vw, 56px)",
+                      height: "clamp(48px, 6vw, 56px)",
+                      marginBottom: "clamp(12px, 2vw, 16px)",
+                    }}
+                  >
+                    <step.icon 
+                      className="text-foreground"
+                      style={{ width: "clamp(18px, 2.5vw, 24px)", height: "clamp(18px, 2.5vw, 24px)" }}
+                    />
                   </div>
                   
-                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">
+                  <h3 
+                    className="font-semibold text-foreground"
+                    style={{ 
+                      fontSize: "clamp(1rem, 0.9rem + 0.4vw, 1.125rem)",
+                      marginBottom: "clamp(8px, 1vw, 12px)",
+                    }}
+                  >
                     {step.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
+                  <p 
+                    className="text-muted-foreground text-break"
+                    style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem)" }}
+                  >
                     {step.description}
                   </p>
                 </div>
