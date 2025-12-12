@@ -1,19 +1,54 @@
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+
+const typingPhrases = [
+  "How does AI work?",
+  "Explain quantum computing",
+  "What is machine learning?",
+  "Tell me about neural networks",
+];
 
 export function HeroBlocks() {
+  const [typingText, setTypingText] = useState("");
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentPhrase = typingPhrases[phraseIndex];
+    
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        if (typingText.length < currentPhrase.length) {
+          setTypingText(currentPhrase.slice(0, typingText.length + 1));
+        } else {
+          setTimeout(() => setIsDeleting(true), 1500);
+        }
+      } else {
+        if (typingText.length > 0) {
+          setTypingText(typingText.slice(0, -1));
+        } else {
+          setIsDeleting(false);
+          setPhraseIndex((prev) => (prev + 1) % typingPhrases.length);
+        }
+      }
+    }, isDeleting ? 50 : 100);
+
+    return () => clearTimeout(timeout);
+  }, [typingText, isDeleting, phraseIndex]);
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center min-h-[420px]">
-      {/* SVG Connection Lines with Glow Animation */}
+    <div className="relative w-full h-full flex items-center justify-center min-h-[500px]">
+      {/* SVG Connection Lines - Behind blocks */}
       <svg
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        viewBox="0 0 240 420"
+        className="absolute inset-0 w-full h-full pointer-events-none z-0"
+        viewBox="0 0 300 500"
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
-          {/* Glow filter for dots and lines */}
+          {/* Glow filter for dots */}
           <filter id="dotGlow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="3" result="blur1" />
-            <feGaussianBlur stdDeviation="6" result="blur2" />
+            <feGaussianBlur stdDeviation="4" result="blur1" />
+            <feGaussianBlur stdDeviation="8" result="blur2" />
             <feMerge>
               <feMergeNode in="blur2" />
               <feMergeNode in="blur1" />
@@ -21,130 +56,155 @@ export function HeroBlocks() {
             </feMerge>
           </filter>
           
-          {/* Animated dash for line 1 */}
-          <linearGradient id="lineGradient1" gradientUnits="userSpaceOnUse" x1="70" y1="95" x2="140" y2="185">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+          {/* Animated flowing gradient for line 1 */}
+          <linearGradient id="flowLine1" gradientUnits="userSpaceOnUse" x1="80" y1="120" x2="180" y2="220">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0">
+              <animate attributeName="offset" values="-0.5;1.5" dur="2s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="20%" stopColor="hsl(var(--primary))" stopOpacity="0.8">
+              <animate attributeName="offset" values="-0.3;1.7" dur="2s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity="1">
+              <animate attributeName="offset" values="-0.1;1.9" dur="2s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity="0.8">
+              <animate attributeName="offset" values="0.1;2.1" dur="2s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="80%" stopColor="hsl(var(--primary))" stopOpacity="0">
+              <animate attributeName="offset" values="0.3;2.3" dur="2s" repeatCount="indefinite" />
+            </stop>
           </linearGradient>
           
-          {/* Animated dash for line 2 */}
-          <linearGradient id="lineGradient2" gradientUnits="userSpaceOnUse" x1="140" y1="255" x2="90" y2="345">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+          {/* Animated flowing gradient for line 2 */}
+          <linearGradient id="flowLine2" gradientUnits="userSpaceOnUse" x1="180" y1="320" x2="100" y2="420">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0">
+              <animate attributeName="offset" values="-0.5;1.5" dur="2s" begin="1s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="20%" stopColor="hsl(var(--primary))" stopOpacity="0.8">
+              <animate attributeName="offset" values="-0.3;1.7" dur="2s" begin="1s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity="1">
+              <animate attributeName="offset" values="-0.1;1.9" dur="2s" begin="1s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity="0.8">
+              <animate attributeName="offset" values="0.1;2.1" dur="2s" begin="1s" repeatCount="indefinite" />
+            </stop>
+            <stop offset="80%" stopColor="hsl(var(--primary))" stopOpacity="0">
+              <animate attributeName="offset" values="0.3;2.3" dur="2s" begin="1s" repeatCount="indefinite" />
+            </stop>
           </linearGradient>
         </defs>
         
-        {/* Dashed curved line 1: Block 1 to Block 2 */}
+        {/* Base dashed lines */}
         <path
-          d="M 70 95 C 70 140, 140 150, 140 185"
+          d="M 80 120 C 80 170, 180 180, 180 220"
           fill="none"
-          stroke="url(#lineGradient1)"
+          stroke="hsl(var(--primary) / 0.15)"
           strokeWidth="2"
           strokeLinecap="round"
-          strokeDasharray="6 4"
-          className="motion-reduce:stroke-[hsl(var(--primary)/0.3)]"
-        >
-          <animate
-            attributeName="stroke-dashoffset"
-            values="0;-30"
-            dur="1.5s"
-            repeatCount="indefinite"
-            className="motion-reduce:hidden"
-          />
-        </path>
+          strokeDasharray="8 6"
+        />
+        <path
+          d="M 180 320 C 180 370, 100 380, 100 420"
+          fill="none"
+          stroke="hsl(var(--primary) / 0.15)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeDasharray="8 6"
+        />
         
-        {/* Dashed curved line 2: Block 2 to Block 3 */}
+        {/* Animated flowing lines */}
         <path
-          d="M 140 255 C 140 300, 90 310, 90 345"
+          d="M 80 120 C 80 170, 180 180, 180 220"
           fill="none"
-          stroke="url(#lineGradient2)"
-          strokeWidth="2"
+          stroke="url(#flowLine1)"
+          strokeWidth="3"
           strokeLinecap="round"
-          strokeDasharray="6 4"
-          className="motion-reduce:stroke-[hsl(var(--primary)/0.3)]"
-        >
-          <animate
-            attributeName="stroke-dashoffset"
-            values="0;-30"
-            dur="1.5s"
-            begin="0.5s"
-            repeatCount="indefinite"
-            className="motion-reduce:hidden"
-          />
-        </path>
+          filter="url(#dotGlow)"
+          className="motion-reduce:hidden"
+        />
+        <path
+          d="M 180 320 C 180 370, 100 380, 100 420"
+          fill="none"
+          stroke="url(#flowLine2)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          filter="url(#dotGlow)"
+          className="motion-reduce:hidden"
+        />
         
         {/* Glowing connection dots */}
-        <circle cx="70" cy="95" r="6" fill="hsl(var(--primary))" filter="url(#dotGlow)" />
-        <circle cx="140" cy="185" r="6" fill="hsl(var(--primary))" filter="url(#dotGlow)" />
-        <circle cx="140" cy="255" r="6" fill="hsl(var(--primary))" filter="url(#dotGlow)" />
-        <circle cx="90" cy="345" r="6" fill="hsl(var(--primary))" filter="url(#dotGlow)" />
+        <circle cx="80" cy="120" r="7" fill="hsl(var(--primary))" filter="url(#dotGlow)" />
+        <circle cx="180" cy="220" r="7" fill="hsl(var(--primary))" filter="url(#dotGlow)" />
+        <circle cx="180" cy="320" r="7" fill="hsl(var(--primary))" filter="url(#dotGlow)" />
+        <circle cx="100" cy="420" r="7" fill="hsl(var(--primary))" filter="url(#dotGlow)" />
       </svg>
       
-      {/* Chat Blocks Container - staggered layout */}
-      <div className="relative z-10 flex flex-col items-center gap-8 md:gap-10">
-        {/* Block 1 - Left offset */}
+      {/* Chat Blocks Container */}
+      <div className="relative z-10 flex flex-col items-center gap-6 md:gap-8">
+        {/* Block 1 - With typing animation */}
         <div
-          style={{ transform: "translateX(-30px)" }}
+          style={{ transform: "translateX(-40px)" }}
           className={cn(
             "relative",
-            "w-32 h-20 md:w-40 md:h-24",
-            "rounded-xl",
-            "bg-gradient-to-br from-secondary/80 via-secondary/50 to-secondary/20",
-            "border border-border/30",
-            "shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.15)]",
-            "backdrop-blur-md",
-            "p-3 md:p-4",
-            "flex flex-col gap-2"
+            "w-48 md:w-64 lg:w-72",
+            "rounded-2xl",
+            "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
+            "border border-border/40",
+            "shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.2)]",
+            "backdrop-blur-xl",
+            "p-4 md:p-5"
           )}
         >
-          {/* Placeholder text lines */}
-          <div className="w-full h-2 bg-muted-foreground/20 rounded-full" />
-          <div className="w-3/4 h-2 bg-muted-foreground/15 rounded-full" />
-          <div className="w-1/2 h-2 bg-muted-foreground/10 rounded-full" />
+          <p className="text-xs text-muted-foreground mb-2">You</p>
+          <p className="text-sm md:text-base text-foreground font-medium min-h-[24px]">
+            {typingText}
+            <span className="inline-block w-0.5 h-4 bg-primary ml-0.5 animate-pulse" />
+          </p>
         </div>
         
-        {/* Block 2 - Right offset */}
+        {/* Block 2 - AI Response */}
         <div
-          style={{ transform: "translateX(40px)" }}
+          style={{ transform: "translateX(50px)" }}
           className={cn(
             "relative",
-            "w-36 h-24 md:w-44 md:h-28",
-            "rounded-xl",
-            "bg-gradient-to-br from-secondary/80 via-secondary/50 to-secondary/20",
-            "border border-border/30",
-            "shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.15)]",
-            "backdrop-blur-md",
-            "p-3 md:p-4",
-            "flex flex-col gap-2"
+            "w-52 md:w-72 lg:w-80",
+            "rounded-2xl",
+            "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
+            "border border-border/40",
+            "shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.2)]",
+            "backdrop-blur-xl",
+            "p-4 md:p-5"
           )}
         >
-          {/* Placeholder text lines */}
-          <div className="w-full h-2 bg-muted-foreground/20 rounded-full" />
-          <div className="w-5/6 h-2 bg-muted-foreground/15 rounded-full" />
-          <div className="w-2/3 h-2 bg-muted-foreground/12 rounded-full" />
-          <div className="w-1/3 h-2 bg-muted-foreground/10 rounded-full" />
+          <p className="text-xs text-muted-foreground mb-2">AI Assistant</p>
+          <p className="text-sm md:text-base text-foreground/90 leading-relaxed">
+            AI uses neural networks to process data and learn patterns, enabling intelligent responses.
+          </p>
+          <div className="flex gap-2 mt-3">
+            <span className="text-[10px] px-2 py-1 bg-primary/10 text-primary rounded-full">GPT-4</span>
+            <span className="text-[10px] px-2 py-1 bg-muted text-muted-foreground rounded-full">Copy</span>
+          </div>
         </div>
         
-        {/* Block 3 - Left offset */}
+        {/* Block 3 - Follow-up */}
         <div
-          style={{ transform: "translateX(-10px)" }}
+          style={{ transform: "translateX(-20px)" }}
           className={cn(
             "relative",
-            "w-28 h-18 md:w-36 md:h-22",
-            "rounded-xl",
-            "bg-gradient-to-br from-secondary/80 via-secondary/50 to-secondary/20",
-            "border border-border/30",
-            "shadow-[0_4px_24px_-4px_hsl(var(--primary)/0.15)]",
-            "backdrop-blur-md",
-            "p-3 md:p-4",
-            "flex flex-col gap-2"
+            "w-44 md:w-56 lg:w-64",
+            "rounded-2xl",
+            "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
+            "border border-border/40",
+            "shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.2)]",
+            "backdrop-blur-xl",
+            "p-4 md:p-5"
           )}
         >
-          {/* Placeholder text lines */}
-          <div className="w-full h-2 bg-muted-foreground/20 rounded-full" />
-          <div className="w-2/3 h-2 bg-muted-foreground/15 rounded-full" />
+          <p className="text-xs text-muted-foreground mb-2">Follow-up</p>
+          <p className="text-sm md:text-base text-foreground/80">
+            Can you give me an example?
+          </p>
         </div>
       </div>
     </div>
