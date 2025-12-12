@@ -1,12 +1,20 @@
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Link } from "react-router-dom";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 export default function RefundPolicy() {
-  return <div className="min-h-screen bg-background liquid-bg">
+  return (
+    <div className="min-h-screen bg-background liquid-bg">
       <div className="noise-overlay" />
       <Navbar />
-      
+
       <main className="relative z-10 pt-24 pb-16">
         <div className="container max-w-4xl mx-auto px-4">
           {/* Breadcrumb */}
@@ -34,7 +42,8 @@ export default function RefundPolicy() {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">1. Refund Eligibility</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Refunds are available within <strong className="text-foreground">7 days</strong> of your initial purchase date. This policy applies to yearly subscription plans only.
+                  Refunds are available within <strong className="text-foreground">7 days</strong> of your initial
+                  purchase date. This policy applies to yearly subscription plans only.
                 </p>
               </section>
 
@@ -48,37 +57,53 @@ export default function RefundPolicy() {
                   with the following information:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li><strong className="text-foreground">Reason for refund:</strong> A brief explanation of why you are requesting a refund.</li>
-                  <li><strong className="text-foreground">Plan purchased:</strong> The name of the subscription plan you purchased (e.g., Pro $99/year, Team $129/year).</li>
-                  <li><strong className="text-foreground">Account email:</strong> The email address associated with your Multiblock account.</li>
+                  <li>
+                    <strong className="text-foreground">Reason for refund:</strong> A brief explanation of why you are
+                    requesting a refund.
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Plan purchased:</strong> The name of the subscription plan you
+                    purchased (e.g., Pro $99/year, Team $129/year).
+                  </li>
+                  <li>
+                    <strong className="text-foreground">Account email:</strong> The email address associated with your
+                    Multiblock account.
+                  </li>
                 </ul>
               </section>
 
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">3. Yearly Subscriptions</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Refunds are only applicable to yearly subscription plans (Pro and Team plans). Refund requests must be submitted within 7 days of the original purchase date. Subscriptions renewed after the initial purchase are not eligible for refunds.
+                  Refunds are only applicable to yearly subscription plans (Pro and Team plans). Refund requests must be
+                  submitted within 7 days of the original purchase date.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">4. Lifetime Deal (LTD) Purchases</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  <strong className="text-foreground">LTD purchases are final and non-refundable.</strong> Due to the discounted nature of lifetime deals, we are unable to process refunds for these purchases. Please carefully review the features and limitations before purchasing an LTD offer.
+                  <strong className="text-foreground">LTD purchases are final and non-refundable.</strong> Due to the
+                  discounted nature of lifetime deals, we are unable to process refunds for these purchases. Please
+                  carefully review the features and limitations before purchasing an LTD offer.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">5. Data Retention After Refund</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  After a refund is processed, your stored data (boards, blocks, messages, and files) will remain in your account until you choose to delete it. Your account will be downgraded to the Free plan, and storage limits will apply accordingly. Data exceeding Free plan limits may become inaccessible until you upgrade or delete excess data.
+                  After a refund is processed, your stored data (boards, blocks, messages, and files) will remain in
+                  your account until you choose to delete it. Your account will be downgraded to the Free plan, and
+                  storage limits will apply accordingly. Data exceeding Free plan limits may become inaccessible until
+                  you upgrade or delete excess data.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">6. Abuse Policy</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  We reserve the right to decline refund requests in cases of suspected abuse. This includes, but is not limited to:
+                  We reserve the right to decline refund requests in cases of suspected abuse. This includes, but is not
+                  limited to:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2 mt-3">
                   <li>Repeated refund requests across multiple accounts</li>
@@ -92,14 +117,20 @@ export default function RefundPolicy() {
 
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">7. Refund Processing</h2>
-                <p className="text-muted-foreground leading-relaxed">Approved refunds will be issued to your original payment method. Please allow 2-7 business days for the refund to appear in your account, depending on your payment provider.<strong className="text-foreground">original payment method</strong>. Please allow 5-10 business days for the refund to appear in your account, depending on your payment provider.
+                <p className="text-muted-foreground leading-relaxed">
+                  Approved refunds will be issued to your original payment method. Please allow 2-7 business days for
+                  the refund to appear in your account, depending on your payment provider.
+                  <strong className="text-foreground">original payment method</strong>. Please allow 5-10 business days
+                  for the refund to appear in your account, depending on your payment provider.
                 </p>
               </section>
 
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">8. Board Add-ons</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Board add-on purchases are non-refundable once activated. If you have purchased board add-ons and request a subscription refund, the add-ons will be forfeited and cannot be transferred to another account.
+                  Board add-on purchases are non-refundable once activated. If you have purchased board add-ons and
+                  request a subscription refund, the add-ons will be forfeited and cannot be transferred to another
+                  account.
                 </p>
               </section>
 
@@ -118,5 +149,6 @@ export default function RefundPolicy() {
       </main>
 
       <Footer />
-    </div>;
+    </div>
+  );
 }
