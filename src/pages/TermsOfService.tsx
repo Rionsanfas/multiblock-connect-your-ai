@@ -1,18 +1,9 @@
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Link } from "react-router-dom";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 export default function TermsOfService() {
-  return (
-    <div className="min-h-screen bg-background liquid-bg">
+  return <div className="min-h-screen bg-background liquid-bg">
       <div className="noise-overlay" />
       <Navbar />
       
@@ -40,9 +31,7 @@ export default function TermsOfService() {
             <div className="prose prose-invert max-w-none space-y-8">
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">1. Introduction</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  Welcome to Multiblock Connect Your AI. These Terms of Service ("Terms") govern your access to and use of our platform, including our website, applications, APIs, and all related services. By creating an account or using our services, you agree to be bound by these Terms.
-                </p>
+                <p className="text-muted-foreground leading-relaxed">Welcome to Multiblock. These Terms of Service ("Terms") govern your access to and use of our platform, including our website, applications, APIs, and all related services. By creating an account or using our services, you agree to be bound by these Terms.</p>
               </section>
 
               <section>
@@ -244,6 +233,5 @@ export default function TermsOfService() {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 }
