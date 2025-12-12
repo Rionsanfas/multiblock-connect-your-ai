@@ -25,10 +25,6 @@ const Features = () => {
       className="relative"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
-      {/* 
-        Container with responsive padding.
-        Max-width prevents content from stretching too wide.
-      */}
       <div 
         className="w-full max-w-[1200px] mx-auto"
         style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
@@ -36,7 +32,7 @@ const Features = () => {
         {/* Header */}
         <div 
           className="text-center"
-          style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}
+          style={{ marginBottom: "clamp(40px, 6vw, 72px)" }}
         >
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
@@ -60,52 +56,60 @@ const Features = () => {
           </p>
         </div>
 
-        {/* 
-          Feature Cards using responsive grid.
-          auto-fit with minmax ensures cards wrap gracefully.
-          min() prevents cards from being too small on narrow screens.
-        */}
+        {/* Premium Glassmorphism Feature Cards Grid */}
         <div 
-          className="grid align-start"
+          className="grid"
           style={{ 
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
-            gap: "clamp(16px, 2.5vw, 24px)",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))",
+            gap: "clamp(16px, 2vw, 20px)",
+            alignItems: "stretch",
           }}
         >
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="glass-card-hover"
+              className="glass-card-hover group"
               style={{ 
-                padding: "clamp(20px, 3vw, 32px)",
+                padding: "clamp(24px, 3vw, 32px)",
+                opacity: 0,
+                animation: "fadeUp 0.6s ease-out forwards",
                 animationDelay: `${index * 100}ms`,
               }}
             >
+              {/* Icon Container */}
               <div 
-                className="rounded-xl bg-secondary border border-border flex items-center justify-center group-hover:border-accent/50 transition-colors duration-500"
+                className="glass-icon-box"
                 style={{ 
-                  width: "clamp(40px, 5vw, 48px)",
-                  height: "clamp(40px, 5vw, 48px)",
-                  marginBottom: "clamp(16px, 2.5vw, 24px)",
+                  width: "clamp(44px, 5vw, 52px)",
+                  height: "clamp(44px, 5vw, 52px)",
+                  marginBottom: "clamp(20px, 3vw, 28px)",
                 }}
               >
                 <feature.icon 
-                  className="text-foreground" 
-                  style={{ width: "clamp(18px, 2.5vw, 24px)", height: "clamp(18px, 2.5vw, 24px)" }}
+                  className="text-foreground/80 group-hover:text-foreground transition-colors duration-300" 
+                  style={{ width: "clamp(20px, 2.5vw, 24px)", height: "clamp(20px, 2.5vw, 24px)" }}
                 />
               </div>
+
+              {/* Title */}
               <h3 
                 className="font-semibold text-foreground text-wrap-balance"
                 style={{ 
-                  fontSize: "clamp(1rem, 0.9rem + 0.5vw, 1.25rem)",
-                  marginBottom: "clamp(8px, 1.5vw, 12px)",
+                  fontSize: "clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem)",
+                  marginBottom: "clamp(10px, 1.5vw, 14px)",
+                  letterSpacing: "-0.01em",
                 }}
               >
                 {feature.title}
               </h3>
+
+              {/* Description */}
               <p 
                 className="text-muted-foreground leading-relaxed text-break"
-                style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)" }}
+                style={{ 
+                  fontSize: "clamp(0.875rem, 0.82rem + 0.2vw, 0.95rem)",
+                  lineHeight: 1.6,
+                }}
               >
                 {feature.description}
               </p>
