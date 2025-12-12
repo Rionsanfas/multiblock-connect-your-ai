@@ -509,3 +509,488 @@
     }
   }
 }
+
+/* ============================================================
+   3D ANIMATED FEATURE ICONS
+   Large 3D icons with floating effects, orbits, and depth.
+   ============================================================ */
+
+/* Main container for 3D icon */
+.feature-3d-container {
+  position: relative;
+  width: 100%;
+  height: clamp(140px, 18vw, 200px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+/* Floating platform */
+.feature-3d-platform {
+  position: relative;
+  width: clamp(100px, 14vw, 140px);
+  height: clamp(100px, 14vw, 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(
+    145deg,
+    hsl(0 0% 12% / 0.9),
+    hsl(0 0% 6% / 0.95)
+  );
+  border: 1px solid hsl(0 0% 100% / 0.08);
+  box-shadow: 
+    0 20px 40px -10px hsl(0 0% 0% / 0.5),
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
+  animation: float3d 4s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+.feature-3d-platform-connect {
+  border-radius: 1.5rem;
+}
+
+.feature-3d-platform-canvas {
+  border-radius: 1rem;
+}
+
+/* Main center icon */
+.feature-3d-main-icon {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(56px, 7vw, 72px);
+  height: clamp(56px, 7vw, 72px);
+  border-radius: 1rem;
+  background: linear-gradient(
+    135deg,
+    hsl(0 0% 15% / 0.95),
+    hsl(0 0% 10% / 1)
+  );
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  box-shadow: 
+    0 8px 24px -4px hsl(0 0% 0% / 0.4),
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+  animation: iconPulse 3s ease-in-out infinite;
+}
+
+/* Glow effect behind platform */
+.feature-3d-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120%;
+  height: 120%;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle,
+    hsl(var(--accent) / 0.2) 0%,
+    transparent 70%
+  );
+  filter: blur(20px);
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.feature-3d-glow-accent {
+  background: radial-gradient(
+    circle,
+    hsl(var(--accent) / 0.25) 0%,
+    hsl(30 30% 50% / 0.1) 50%,
+    transparent 70%
+  );
+}
+
+.feature-3d-glow-primary {
+  background: radial-gradient(
+    circle,
+    hsl(0 0% 100% / 0.08) 0%,
+    hsl(220 30% 50% / 0.1) 50%,
+    transparent 70%
+  );
+}
+
+/* Orbiting elements container */
+.feature-3d-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130%;
+  height: 130%;
+  transform: translate(-50%, -50%);
+  animation: orbit 8s linear infinite;
+  pointer-events: none;
+}
+
+.feature-3d-orbit-2 {
+  width: 160%;
+  height: 160%;
+  animation: orbit 12s linear infinite reverse;
+}
+
+/* Orbiting satellite icons */
+.feature-3d-satellite {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  width: clamp(28px, 3.5vw, 36px);
+  height: clamp(28px, 3.5vw, 36px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    hsl(0 0% 14% / 0.95),
+    hsl(0 0% 8% / 1)
+  );
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  box-shadow: 0 4px 12px -2px hsl(0 0% 0% / 0.4);
+  animation: counter-orbit 8s linear infinite;
+}
+
+.feature-3d-satellite-sm {
+  position: absolute;
+  bottom: 10%;
+  right: 0;
+  transform: translateX(50%);
+  width: clamp(22px, 2.8vw, 28px);
+  height: clamp(22px, 2.8vw, 28px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    hsl(0 0% 14% / 0.95),
+    hsl(0 0% 8% / 1)
+  );
+  border: 1px solid hsl(0 0% 100% / 0.08);
+  box-shadow: 0 4px 12px -2px hsl(0 0% 0% / 0.4);
+  animation: counter-orbit 12s linear infinite reverse;
+}
+
+/* Floating particles */
+.feature-3d-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: hsl(var(--accent) / 0.6);
+  box-shadow: 0 0 8px hsl(var(--accent) / 0.4);
+}
+
+.feature-3d-particle-1 {
+  top: 15%;
+  right: 20%;
+  animation: particle1 5s ease-in-out infinite;
+}
+
+.feature-3d-particle-2 {
+  bottom: 25%;
+  left: 15%;
+  width: 3px;
+  height: 3px;
+  background: hsl(0 0% 100% / 0.5);
+  animation: particle2 6s ease-in-out infinite;
+}
+
+.feature-3d-particle-3 {
+  top: 40%;
+  left: 10%;
+  width: 2px;
+  height: 2px;
+  background: hsl(0 0% 100% / 0.3);
+  animation: particle3 4s ease-in-out infinite;
+}
+
+/* Shadow/reflection under platform */
+.feature-3d-shadow {
+  width: 60%;
+  height: 12px;
+  margin-top: 16px;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse,
+    hsl(0 0% 0% / 0.3) 0%,
+    transparent 70%
+  );
+  filter: blur(4px);
+  animation: shadowPulse 4s ease-in-out infinite;
+}
+
+/* Connection nodes for "Connect" feature */
+.feature-3d-node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: nodePulse 2s ease-in-out infinite;
+}
+
+.feature-3d-node-1 {
+  top: 20%;
+  left: 15%;
+  animation-delay: 0s;
+}
+
+.feature-3d-node-2 {
+  top: 25%;
+  right: 10%;
+  animation-delay: 0.5s;
+}
+
+.feature-3d-node-3 {
+  bottom: 20%;
+  right: 25%;
+  animation-delay: 1s;
+}
+
+/* Connection lines SVG */
+.feature-3d-connections {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.feature-3d-line {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: drawLine 2s ease-out forwards infinite;
+}
+
+.feature-3d-line-delay {
+  animation-delay: 0.3s;
+}
+
+.feature-3d-line-delay-2 {
+  animation-delay: 0.6s;
+}
+
+/* Zap effect */
+.feature-3d-zap {
+  position: absolute;
+  top: -5%;
+  right: 15%;
+  animation: zapPulse 2s ease-in-out infinite;
+}
+
+/* Grid lines for canvas feature */
+.feature-3d-grid {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+  pointer-events: none;
+}
+
+.feature-3d-grid-line {
+  position: absolute;
+  background: hsl(0 0% 100% / 0.06);
+}
+
+.feature-3d-grid-h1 {
+  top: 30%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.feature-3d-grid-h2 {
+  top: 65%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.feature-3d-grid-v1 {
+  top: 0;
+  left: 35%;
+  width: 1px;
+  height: 100%;
+}
+
+.feature-3d-grid-v2 {
+  top: 0;
+  left: 70%;
+  width: 1px;
+  height: 100%;
+}
+
+/* Floating blocks for canvas feature */
+.feature-3d-block {
+  position: absolute;
+  animation: blockFloat 4s ease-in-out infinite;
+}
+
+.feature-3d-block-1 {
+  top: 8%;
+  right: 15%;
+  animation-delay: 0s;
+}
+
+.feature-3d-block-2 {
+  bottom: 15%;
+  left: 10%;
+  animation-delay: 1s;
+}
+
+.feature-3d-block-3 {
+  top: 50%;
+  right: 5%;
+  animation-delay: 2s;
+}
+
+/* Keyframe animations */
+@keyframes float3d {
+  0%, 100% {
+    transform: translateY(0) rotateX(2deg) rotateY(-2deg);
+  }
+  50% {
+    transform: translateY(-8px) rotateX(-2deg) rotateY(2deg);
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 
+      0 8px 24px -4px hsl(0 0% 0% / 0.4),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 
+      0 12px 32px -4px hsl(0 0% 0% / 0.5),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.1);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+@keyframes orbit {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes counter-orbit {
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(-360deg);
+  }
+}
+
+@keyframes particle1 {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-5px, 5px);
+  }
+}
+
+@keyframes particle2 {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translate(0, 0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(8px, -3px);
+  }
+}
+
+@keyframes particle3 {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translate(0, 0);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translate(3px, 6px);
+  }
+}
+
+@keyframes shadowPulse {
+  0%, 100% {
+    transform: scaleX(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleX(0.9);
+    opacity: 0.3;
+  }
+}
+
+@keyframes nodePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes drawLine {
+  0% {
+    stroke-dashoffset: 40;
+    opacity: 0.3;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -40;
+    opacity: 0.3;
+  }
+}
+
+@keyframes zapPulse {
+  0%, 100% {
+    transform: scale(1) rotate(-10deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+    opacity: 1;
+  }
+}
+
+@keyframes blockFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(3deg);
+  }
+}
