@@ -1,5 +1,14 @@
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+import { Link } from "react-router-dom";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 export default function PrivacyPolicy() {
   return (
@@ -9,6 +18,21 @@ export default function PrivacyPolicy() {
       
       <main className="relative z-10 pt-24 pb-16">
         <div className="container max-w-4xl mx-auto px-4">
+          {/* Breadcrumb */}
+          <Breadcrumb className="mb-6">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/">Home</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Privacy Policy</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+
           <div className="bg-card/80 backdrop-blur-xl rounded-2xl border border-border/50 p-8 md:p-12">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Privacy Policy</h1>
             <p className="text-muted-foreground mb-8">
@@ -26,95 +50,192 @@ export default function PrivacyPolicy() {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">2. Information We Collect</h2>
                 
-                <h3 className="text-lg font-medium text-foreground mb-2">2.1 Personal Information You Provide</h3>
-                <ul className="list-disc list-inside text-muted-foreground space-y-2 mb-4">
-                  <li><strong className="text-foreground">Account Data:</strong> Email, username, and authentication information.</li>
-                  <li><strong className="text-foreground">User Content:</strong> Boards, blocks, messages, and imported files you create or upload.</li>
-                  <li><strong className="text-foreground">API Keys (BYOK):</strong> Provider keys you enter for AI model usage are encrypted and never shared outside of the provider connection.</li>
-                </ul>
-
-                <h3 className="text-lg font-medium text-foreground mb-2">2.2 Automatically Collected Information</h3>
+                <h3 className="text-lg font-medium text-foreground mb-2 mt-4">2.1 Account Data</h3>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  When you create an account, we collect:
+                </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li>Usage and analytics data: actions, timestamps, run history.</li>
-                  <li>Device and browser information: IP address, device type, OS, browser.</li>
-                  <li>Cookies and similar technologies for session management, analytics, and personalization.</li>
+                  <li>Email address and username</li>
+                  <li>Authentication credentials (securely hashed)</li>
+                  <li>Profile information you choose to provide</li>
+                  <li>Subscription and billing information</li>
                 </ul>
-              </section>
 
-              <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">3. How We Use Your Information</h2>
-                <p className="text-muted-foreground mb-2">We use your data to:</p>
+                <h3 className="text-lg font-medium text-foreground mb-2 mt-4">2.2 Usage Data</h3>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  We automatically collect information about how you use our service:
+                </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li>Provide, maintain, and improve our services.</li>
-                  <li>Authenticate and manage your account.</li>
-                  <li>Process AI model requests via your API keys.</li>
-                  <li>Personalize your experience and provide support.</li>
-                  <li>Comply with legal obligations.</li>
+                  <li>Actions performed within the platform (creating boards, blocks, messages)</li>
+                  <li>Timestamps and session duration</li>
+                  <li>Run history and AI interaction logs</li>
+                  <li>Feature usage patterns</li>
                 </ul>
-              </section>
 
-              <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">4. Encryption & Security</h2>
+                <h3 className="text-lg font-medium text-foreground mb-2 mt-4">2.3 Storage Usage Data</h3>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  We track your storage consumption to manage plan limits:
+                </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li>API keys you provide are encrypted and stored securely.</li>
-                  <li>Keys are used only to interact with the selected AI provider and never exposed to other users.</li>
-                  <li>We implement technical and organizational measures to safeguard your data.</li>
+                  <li>Total storage used (measured in MB/GB)</li>
+                  <li>Storage breakdown by type (messages, blocks, files)</li>
+                  <li>Number of boards and blocks created</li>
                 </ul>
-              </section>
 
-              <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">5. Data Retention</h2>
-                <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li>We retain your data only as long as necessary to provide services and meet legal requirements.</li>
-                  <li>You may request data deletion at any time via your account settings or by contacting support.</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">6. Data Sharing</h2>
-                <p className="text-muted-foreground mb-2">We do not sell or rent your personal information. We may share data with:</p>
-                <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li>Payment processors (e.g., Polar, Stripe)</li>
-                  <li>Analytics providers</li>
-                  <li>Legal authorities if required by law</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">7. Your Rights</h2>
-                <p className="text-muted-foreground mb-2">Depending on your jurisdiction, you may have rights to:</p>
-                <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li>Access, correct, or delete your data.</li>
-                  <li>Object to or restrict processing.</li>
-                  <li>Withdraw consent at any time.</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">8. Cookies</h2>
+                <h3 className="text-lg font-medium text-foreground mb-2 mt-4">2.4 AI-Generated Content</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  We use cookies for session management, analytics, and personalization. You can control cookie settings in your browser.
+                  Content generated through AI interactions using your API keys is stored within your account. This includes prompts sent and responses received from AI providers.
+                </p>
+
+                <h3 className="text-lg font-medium text-foreground mb-2 mt-4">2.5 Device & Browser Information</h3>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>IP address and approximate location</li>
+                  <li>Device type, operating system, and browser</li>
+                  <li>Cookies and similar tracking technologies</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">3. How We Use Your Data</h2>
+                <p className="text-muted-foreground mb-3">We use your information to:</p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Provide, maintain, and improve our services</li>
+                  <li>Authenticate and manage your account</li>
+                  <li>Process AI model requests via your API keys</li>
+                  <li>Track and enforce storage and usage limits</li>
+                  <li>Personalize your experience and provide support</li>
+                  <li>Send service-related communications</li>
+                  <li>Comply with legal obligations</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">4. How Storage Is Measured</h2>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  Your storage quota covers all data associated with your account:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li><strong className="text-foreground">Messages:</strong> All AI conversation history and responses</li>
+                  <li><strong className="text-foreground">Blocks:</strong> Block configurations, settings, and metadata</li>
+                  <li><strong className="text-foreground">Files:</strong> Any uploaded documents, images, or attachments</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  Storage is displayed in your dashboard in MB or GB for easy tracking. When you approach your limit, you will receive notifications to help manage your usage.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">9. Children's Privacy</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  Our services are not intended for children under 13. We do not knowingly collect data from minors.
+                <h2 className="text-xl font-semibold text-foreground mb-3">5. How Boards & Blocks Are Counted</h2>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Each board you create counts toward your plan's board limit</li>
+                  <li>Blocks within boards may have per-board limits depending on your plan</li>
+                  <li>Archived boards still count toward your total</li>
+                  <li>Board add-ons increase your total board limit</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">6. How AI Providers Process Data</h2>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  When you use BYOK (Bring Your Own Key):
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Your prompts are sent directly to your chosen AI provider using your API key</li>
+                  <li>We do not store or log the raw content sent to AI providers</li>
+                  <li>AI provider data handling is governed by their respective privacy policies</li>
+                  <li>Your API keys are encrypted and never shared with third parties</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">7. Data Security</h2>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>API keys are encrypted at rest and in transit</li>
+                  <li>We use industry-standard security measures (TLS, encryption)</li>
+                  <li>Access to user data is restricted to authorized personnel</li>
+                  <li>Regular security audits and vulnerability assessments</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">8. Your Rights</h2>
+                <p className="text-muted-foreground mb-3">Depending on your jurisdiction, you may have rights to:</p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li><strong className="text-foreground">Access:</strong> Request a copy of your personal data</li>
+                  <li><strong className="text-foreground">Correction:</strong> Update or correct inaccurate information</li>
+                  <li><strong className="text-foreground">Deletion:</strong> Request deletion of your data</li>
+                  <li><strong className="text-foreground">Portability:</strong> Export your data in a machine-readable format</li>
+                  <li><strong className="text-foreground">Objection:</strong> Object to certain processing activities</li>
+                  <li><strong className="text-foreground">Withdrawal:</strong> Withdraw consent at any time</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  To exercise these rights, contact us at{" "}
+                  <a href="mailto:support@multiblockconnect.com" className="text-primary hover:underline">
+                    support@multiblockconnect.com
+                  </a>
                 </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">10. Changes to This Policy</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  We may update this Privacy Policy. Updates will be posted on this page with an updated effective date.
+                <h2 className="text-xl font-semibold text-foreground mb-3">9. Data Retention</h2>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>We retain your data as long as your account is active</li>
+                  <li>After account deletion, data is removed within 30 days</li>
+                  <li>Some data may be retained longer for legal compliance</li>
+                  <li>You can request immediate deletion via account settings</li>
+                </ul>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">10. Third-Party Services</h2>
+                <p className="text-muted-foreground mb-3">We may share data with:</p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li><strong className="text-foreground">Payment processors:</strong> Stripe, Polar for billing</li>
+                  <li><strong className="text-foreground">Analytics providers:</strong> For service improvement</li>
+                  <li><strong className="text-foreground">AI providers:</strong> Via your own API keys</li>
+                  <li><strong className="text-foreground">Legal authorities:</strong> If required by law</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  We do not sell or rent your personal information to third parties.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">11. Contact</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">11. Cookies</h2>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  We use cookies and similar technologies for:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li><strong className="text-foreground">Essential:</strong> Session management and authentication</li>
+                  <li><strong className="text-foreground">Analytics:</strong> Understanding how you use our service</li>
+                  <li><strong className="text-foreground">Preferences:</strong> Remembering your settings</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  You can control cookie settings in your browser or through our cookie preferences in Settings.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">12. Age Restrictions</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Email: <a href="mailto:support@multiblockconnect.com" className="text-primary hover:underline">support@multiblockconnect.com</a>
+                  Our services are not intended for children under 13 years of age. We do not knowingly collect personal information from minors. If we discover that a child under 13 has provided us with personal information, we will delete it immediately.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">13. Changes to This Policy</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  We may update this Privacy Policy periodically. Changes will be posted on this page with an updated effective date. Continued use of our services after changes constitutes acceptance of the updated policy.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">14. Contact Us</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  If you have questions about this Privacy Policy or our data practices, please contact us at:{" "}
+                  <a href="mailto:support@multiblockconnect.com" className="text-primary hover:underline">
+                    support@multiblockconnect.com
+                  </a>
                 </p>
               </section>
             </div>
