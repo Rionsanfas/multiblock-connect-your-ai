@@ -59,15 +59,27 @@ export function HeroBlocks() {
   );
 
   return (
-    // ADJUSTMENT POINT: Change the translateX value below to shift the entire visual left/right
-    // Current offset: -60px on desktop, centered on mobile
+    /* 
+      Responsive container that scales with viewport.
+      Uses CSS scale transform for proportional sizing across breakpoints.
+      Scale values: 0.5 (mobile) → 0.65 (tablet) → 0.8 (laptop) → 1.0 (desktop)
+    */
     <div 
-      className="relative w-full h-full flex items-center justify-center lg:justify-start min-h-[280px] sm:min-h-[350px] md:min-h-[450px] lg:min-h-[700px] px-2 sm:px-4 lg:px-0 scale-[0.55] sm:scale-[0.7] md:scale-[0.85] lg:scale-100 origin-center lg:origin-left"
-      style={{ transform: "translateX(0px)" }}
+      className={cn(
+        "relative w-full h-full flex items-center justify-center",
+        "origin-center",
+        /* Fluid scale using clamp - prevents abrupt size changes */
+        "motion-reduce:!transform-none"
+      )}
+      style={{ 
+        /* Scale container based on viewport width */
+        transform: `scale(clamp(0.45, 0.3 + 0.04 * min(100vw / 10, 20), 1))`,
+        transformOrigin: "center center",
+      }}
     >
       {/* SVG Connection Lines - Softer glow with smoother animation */}
       <svg
-        className="absolute inset-0 w-full h-full pointer-events-none z-0"
+        className="absolute inset-0 w-full h-full pointer-events-none z-0 responsive-media"
         viewBox="0 0 500 700"
         preserveAspectRatio="xMidYMid meet"
       >
@@ -175,8 +187,8 @@ export function HeroBlocks() {
         />
       </svg>
 
-      {/* Chat Blocks Container */}
-      <div className="relative z-10 flex flex-col items-center lg:items-start gap-10 sm:gap-14 md:gap-16 lg:gap-20 ml-0">
+      {/* Chat Blocks Container - uses flex with gap for consistent spacing */}
+      <div className="relative z-10 flex flex-col items-center gap-16">
         {/* Block 1 - User input with typing animation */}
         <div
           style={{ 
@@ -185,7 +197,7 @@ export function HeroBlocks() {
           }}
           className={cn(
             "relative motion-reduce:!transform-none",
-            "w-72 md:w-96 lg:w-[28rem]",
+            "w-[22rem]",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
@@ -201,7 +213,7 @@ export function HeroBlocks() {
           
           {/* Content */}
           <div className="px-6 pb-3">
-            <p className="text-lg md:text-xl text-foreground font-medium min-h-[32px]">
+            <p className="text-lg text-foreground font-medium min-h-[32px] text-break">
               {typingText}
               <span className="inline-block w-0.5 h-5 bg-primary ml-0.5 animate-pulse" />
             </p>
@@ -227,7 +239,7 @@ export function HeroBlocks() {
           }}
           className={cn(
             "relative motion-reduce:!transform-none",
-            "w-80 md:w-[26rem] lg:w-[32rem]",
+            "w-[26rem]",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
@@ -243,13 +255,13 @@ export function HeroBlocks() {
           
           {/* Content */}
           <div className="px-6 pb-3">
-            <p className="text-base md:text-lg text-foreground/90 leading-relaxed">
+            <p className="text-base text-foreground/90 leading-relaxed text-break">
               AI uses neural networks to process data and learn patterns, enabling intelligent responses.
             </p>
           </div>
           
           {/* Footer with attachment, model badge and copy */}
-          <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-2 border-t border-border/20">
+          <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-2 border-t border-border/20 flex-wrap">
             <div className="flex items-center gap-2">
               <AttachmentUI />
               <span className="text-xs px-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium">ChatGPT 5</span>
@@ -269,7 +281,7 @@ export function HeroBlocks() {
           }}
           className={cn(
             "relative motion-reduce:!transform-none",
-            "w-72 md:w-80 lg:w-96",
+            "w-[20rem]",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
@@ -285,11 +297,11 @@ export function HeroBlocks() {
           
           {/* Content */}
           <div className="px-6 pb-3">
-            <p className="text-base md:text-lg text-foreground/80">Can you give me an example?</p>
+            <p className="text-base text-foreground/80 text-break">Can you give me an example?</p>
           </div>
           
           {/* Footer with attachment, model badge and copy */}
-          <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-2 border-t border-border/20">
+          <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-2 border-t border-border/20 flex-wrap">
             <div className="flex items-center gap-2">
               <AttachmentUI />
               <span className="text-xs px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-full font-medium">
@@ -304,7 +316,7 @@ export function HeroBlocks() {
         </div>
       </div>
 
-      {/* Floating animation styles */}
+      {/* Floating animation styles with reduced motion support */}
       <style>{`
         @keyframes heroFloat1 {
           0%, 100% { transform: translateX(-20px) translateY(0); }

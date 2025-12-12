@@ -42,35 +42,75 @@ const faqs = [
 
 const FAQ = () => {
   return (
-    <section id="faq" className="py-16 sm:py-20 md:py-24 relative">
-      <div className="container mx-auto px-4 sm:px-6">
+    <section 
+      id="faq" 
+      className="relative"
+      style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
+    >
+      {/* Container */}
+      <div 
+        className="w-full max-w-[1200px] mx-auto"
+        style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
+      >
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-12 md:mb-16">
+        <div 
+          className="text-center"
+          style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}
+        >
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             FAQ
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mt-4 mb-3 sm:mb-4">
+          <h2 
+            className="font-bold text-foreground mt-4 text-wrap-balance"
+            style={{ 
+              fontSize: "clamp(1.5rem, 1rem + 2.5vw, 3rem)",
+              marginBottom: "clamp(12px, 2vw, 16px)",
+            }}
+          >
             Frequently Asked Questions
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2 sm:px-0">
+          <p 
+            className="text-muted-foreground max-w-xl mx-auto text-break"
+            style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
+          >
             Everything you need to know about Multiblock.
           </p>
         </div>
 
-        {/* FAQ Accordion */}
+        {/* FAQ Accordion - max-width for readability */}
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-3 sm:space-y-4">
+          <Accordion 
+            type="single" 
+            collapsible 
+            className="space-y-3"
+          >
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="glass-card border-border px-4 sm:px-6 rounded-xl overflow-hidden"
+                className="glass-card border-border rounded-xl overflow-hidden"
+                style={{ padding: "0 clamp(16px, 2.5vw, 24px)" }}
               >
-                <AccordionTrigger className="text-left text-sm sm:text-base text-foreground hover:no-underline py-4 sm:py-5 min-h-[48px]">
+                <AccordionTrigger 
+                  className="text-left text-foreground hover:no-underline text-break"
+                  style={{ 
+                    fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
+                    paddingTop: "clamp(16px, 2vw, 20px)",
+                    paddingBottom: "clamp(16px, 2vw, 20px)",
+                    minHeight: "48px",
+                  }}
+                >
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm sm:text-base text-muted-foreground pb-4 sm:pb-5">
+                <AccordionContent 
+                  className="text-muted-foreground text-break"
+                  style={{ 
+                    fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
+                    paddingBottom: "clamp(16px, 2vw, 20px)",
+                    lineHeight: 1.6,
+                  }}
+                >
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>

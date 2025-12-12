@@ -45,23 +45,44 @@ const Navbar = () => {
           : "bg-transparent border-b border-transparent"
       )}
     >
-      {/* Flush edge-to-edge navbar - no floating bar styling */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
+      {/* 
+        Flush edge-to-edge navbar with fluid padding.
+        Uses clamp() for responsive horizontal padding.
+      */}
+      <div 
+        className="w-full flex items-center justify-between"
+        style={{ 
+          paddingLeft: "clamp(16px, 4vw, 32px)",
+          paddingRight: "clamp(16px, 4vw, 32px)",
+          paddingTop: "clamp(12px, 2vw, 16px)",
+          paddingBottom: "clamp(12px, 2vw, 16px)",
+        }}
+      >
         {/* Site Name Only */}
         <Link to="/" className="flex items-center">
-          <span className={cn("font-semibold text-base sm:text-lg transition-colors duration-300", logoColor)}>
+          <span 
+            className={cn(
+              "font-semibold transition-colors duration-300", 
+              logoColor
+            )}
+            style={{ fontSize: "clamp(1rem, 0.9rem + 0.5vw, 1.25rem)" }}
+          >
             MultiBlock
           </span>
         </Link>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-6 lg:gap-8">
+        {/* Desktop Nav - hidden on mobile/tablet, visible on laptop+ */}
+        <div className="hidden lg:flex items-center gap-6 xl:gap-8">
           {navLinks.map((link) =>
             link.isRoute ? (
               <Link
                 key={link.label}
                 to={link.href}
-                className={cn("transition-colors duration-300 text-sm", textColor, textHoverColor)}
+                className={cn(
+                  "transition-colors duration-300 text-fluid-sm",
+                  textColor, 
+                  textHoverColor
+                )}
               >
                 {link.label}
               </Link>
@@ -69,7 +90,11 @@ const Navbar = () => {
               <a
                 key={link.label}
                 href={link.href}
-                className={cn("transition-colors duration-300 text-sm", textColor, textHoverColor)}
+                className={cn(
+                  "transition-colors duration-300 text-fluid-sm",
+                  textColor, 
+                  textHoverColor
+                )}
               >
                 {link.label}
               </a>
@@ -77,31 +102,31 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* CTA Button */}
-        <div className="hidden md:flex items-center gap-3 lg:gap-4">
+        {/* CTA Buttons - hidden on mobile/tablet */}
+        <div className="hidden lg:flex items-center gap-3 xl:gap-4">
           {isAuthenticated ? (
-            <Link to="/dashboard" className="btn-primary text-sm">
+            <Link to="/dashboard" className="btn-primary">
               Dashboard
             </Link>
           ) : (
             <>
               <Link
                 to="/auth"
-                className={cn("transition-colors text-sm", textColor, textHoverColor)}
+                className={cn("transition-colors text-fluid-sm", textColor, textHoverColor)}
               >
                 Login
               </Link>
-              <Link to="/pricing" className="btn-primary text-sm">
+              <Link to="/pricing" className="btn-primary">
                 Get Started
               </Link>
             </>
           )}
         </div>
 
-        {/* Mobile Menu Toggle - larger touch target */}
+        {/* Mobile Menu Toggle - larger touch target (min 44px) */}
         <button
           className={cn(
-            "md:hidden p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors duration-300",
+            "lg:hidden p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors duration-300",
             menuIconColor
           )}
           onClick={() => setIsOpen(!isOpen)}
@@ -112,16 +137,27 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* 
+        Mobile Menu - full width with responsive padding.
+        Uses scrollable-modal class for overflow handling.
+      */}
       {isOpen && (
-        <div className="md:hidden mx-4 mb-4 bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl p-5 animate-fade-in">
-          <div className="flex flex-col gap-1">
+        <div 
+          className="lg:hidden bg-card/95 backdrop-blur-xl border-t border-border/50 animate-fade-in scrollable-modal"
+          style={{ 
+            marginLeft: "clamp(12px, 3vw, 24px)",
+            marginRight: "clamp(12px, 3vw, 24px)",
+            marginBottom: "clamp(12px, 3vw, 24px)",
+            borderRadius: "var(--radius)",
+          }}
+        >
+          <div className="flex flex-col gap-1 p-4">
             {navLinks.map((link) =>
               link.isRoute ? (
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="text-foreground hover:bg-secondary/50 transition-colors duration-300 py-3 px-4 rounded-lg text-base min-h-[48px] flex items-center"
+                  className="text-foreground hover:bg-secondary/50 transition-colors duration-300 py-3 px-4 rounded-lg text-fluid-base min-h-[48px] flex items-center"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
@@ -130,7 +166,7 @@ const Navbar = () => {
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-foreground hover:bg-secondary/50 transition-colors duration-300 py-3 px-4 rounded-lg text-base min-h-[48px] flex items-center"
+                  className="text-foreground hover:bg-secondary/50 transition-colors duration-300 py-3 px-4 rounded-lg text-fluid-base min-h-[48px] flex items-center"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
@@ -141,7 +177,7 @@ const Navbar = () => {
             {isAuthenticated ? (
               <Link
                 to="/dashboard"
-                className="btn-primary text-center text-base py-3 min-h-[48px] flex items-center justify-center"
+                className="btn-primary text-center w-full"
                 onClick={() => setIsOpen(false)}
               >
                 Dashboard
@@ -150,14 +186,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/auth"
-                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-lg text-base min-h-[48px] flex items-center"
+                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-lg text-fluid-base min-h-[48px] flex items-center"
                   onClick={() => setIsOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   to="/pricing"
-                  className="btn-primary text-center text-base py-3 mt-2 min-h-[48px] flex items-center justify-center"
+                  className="btn-primary text-center w-full mt-2"
                   onClick={() => setIsOpen(false)}
                 >
                   Get Started

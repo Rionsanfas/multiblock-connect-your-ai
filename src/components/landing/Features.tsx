@@ -20,39 +20,93 @@ const features = [
 
 const Features = () => {
   return (
-    <section id="features" className="py-16 sm:py-20 md:py-24 relative">
-      <div className="container mx-auto px-4 sm:px-6">
+    <section 
+      id="features" 
+      className="relative"
+      style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
+    >
+      {/* 
+        Container with responsive padding.
+        Max-width prevents content from stretching too wide.
+      */}
+      <div 
+        className="w-full max-w-[1200px] mx-auto"
+        style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
+      >
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-12 md:mb-16">
+        <div 
+          className="text-center"
+          style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}
+        >
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             Features
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mt-4 mb-3 sm:mb-4">
+          <h2 
+            className="font-bold text-foreground mt-4 text-wrap-balance"
+            style={{ 
+              fontSize: "clamp(1.5rem, 1rem + 2.5vw, 3rem)",
+              marginBottom: "clamp(12px, 2vw, 16px)",
+            }}
+          >
             Built for AI Power Users
           </h2>
-          <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto px-2 sm:px-0">
+          <p 
+            className="text-muted-foreground max-w-xl mx-auto text-break"
+            style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
+          >
             Everything you need to orchestrate multiple AI models in a single, 
             intuitive workspace.
           </p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
+        {/* 
+          Feature Cards using responsive grid.
+          auto-fit with minmax ensures cards wrap gracefully.
+          min() prevents cards from being too small on narrow screens.
+        */}
+        <div 
+          className="grid align-start"
+          style={{ 
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
+            gap: "clamp(16px, 2.5vw, 24px)",
+          }}
+        >
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="glass-card-hover p-5 sm:p-6 md:p-8 group"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="glass-card-hover"
+              style={{ 
+                padding: "clamp(20px, 3vw, 32px)",
+                animationDelay: `${index * 100}ms`,
+              }}
             >
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-secondary border border-border flex items-center justify-center mb-4 sm:mb-6 group-hover:border-accent/50 transition-colors duration-500">
-                <feature.icon size={20} className="text-foreground sm:hidden" />
-                <feature.icon size={24} className="text-foreground hidden sm:block" />
+              <div 
+                className="rounded-xl bg-secondary border border-border flex items-center justify-center group-hover:border-accent/50 transition-colors duration-500"
+                style={{ 
+                  width: "clamp(40px, 5vw, 48px)",
+                  height: "clamp(40px, 5vw, 48px)",
+                  marginBottom: "clamp(16px, 2.5vw, 24px)",
+                }}
+              >
+                <feature.icon 
+                  className="text-foreground" 
+                  style={{ width: "clamp(18px, 2.5vw, 24px)", height: "clamp(18px, 2.5vw, 24px)" }}
+                />
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2 sm:mb-3">
+              <h3 
+                className="font-semibold text-foreground text-wrap-balance"
+                style={{ 
+                  fontSize: "clamp(1rem, 0.9rem + 0.5vw, 1.25rem)",
+                  marginBottom: "clamp(8px, 1.5vw, 12px)",
+                }}
+              >
                 {feature.title}
               </h3>
-              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+              <p 
+                className="text-muted-foreground leading-relaxed text-break"
+                style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)" }}
+              >
                 {feature.description}
               </p>
             </div>

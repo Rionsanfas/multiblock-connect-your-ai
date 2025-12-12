@@ -3,63 +3,94 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="py-8 sm:py-10 md:py-12 border-t border-border">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex flex-col items-center gap-6 sm:gap-8 md:flex-row md:justify-between">
-          {/* Logo & Copyright */}
+    <footer 
+      className="border-t border-border"
+      style={{ paddingTop: "clamp(32px, 4vw, 48px)", paddingBottom: "clamp(32px, 4vw, 48px)" }}
+    >
+      {/* Container with responsive padding */}
+      <div 
+        className="w-full max-w-[1200px] mx-auto"
+        style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
+      >
+        {/* 
+          Flexbox layout that stacks on mobile, row on tablet+.
+          Uses flex-wrap for graceful wrapping.
+        */}
+        <div 
+          className="flex flex-col items-center md:flex-row md:justify-between"
+          style={{ gap: "clamp(24px, 4vw, 32px)" }}
+        >
+          {/* Logo & Copyright - order changes on mobile */}
           <div className="flex flex-col items-center md:items-start gap-2 order-3 md:order-1">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground">Multiblock</span>
+              <span 
+                className="font-semibold text-foreground"
+                style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
+              >
+                Multiblock
+              </span>
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">
+            <p 
+              className="text-muted-foreground text-center md:text-left"
+              style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
+            >
               © 2024 Multiblock. All rights reserved.
             </p>
           </div>
 
-          {/* Links */}
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-8 order-1 md:order-2">
+          {/* Links - flex-wrap for graceful wrapping */}
+          <div 
+            className="flex flex-wrap items-center justify-center order-1 md:order-2"
+            style={{ gap: "clamp(16px, 3vw, 32px)" }}
+          >
             <Link 
               to="/privacy" 
-              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:text-foreground py-2 min-h-[44px] flex items-center"
+              className="text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:text-foreground py-2 min-h-[44px] flex items-center"
+              style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
             >
               Privacy Policy
             </Link>
             <Link 
               to="/terms" 
-              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:text-foreground py-2 min-h-[44px] flex items-center"
+              className="text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:text-foreground py-2 min-h-[44px] flex items-center"
+              style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
             >
               Terms of Service
             </Link>
             <Link 
               to="/refund" 
-              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:text-foreground py-2 min-h-[44px] flex items-center"
+              className="text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:text-foreground py-2 min-h-[44px] flex items-center"
+              style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
             >
               Refund Policy
             </Link>
           </div>
 
-          {/* Social Links */}
-          <div className="flex items-center gap-3 sm:gap-4 order-2 md:order-3">
+          {/* Social Links - min touch targets 44px */}
+          <div className="flex items-center gap-3 order-2 md:order-3">
             <a 
               href="#" 
-              className="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              style={{ width: "44px", height: "44px" }}
               aria-label="Twitter"
             >
-              <Twitter size={18} />
+              <Twitter style={{ width: "18px", height: "18px" }} />
             </a>
             <a 
               href="#" 
-              className="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              style={{ width: "44px", height: "44px" }}
               aria-label="Github"
             >
-              <Github size={18} />
+              <Github style={{ width: "18px", height: "18px" }} />
             </a>
             <a 
               href="#" 
-              className="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              style={{ width: "44px", height: "44px" }}
               aria-label="Linkedin"
             >
-              <Linkedin size={18} />
+              <Linkedin style={{ width: "18px", height: "18px" }} />
             </a>
           </div>
         </div>
