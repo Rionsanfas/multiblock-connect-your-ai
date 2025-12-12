@@ -41,8 +41,8 @@ const Navbar = () => {
         "transition-all duration-300 ease-[cubic-bezier(0.2,0.9,0.2,1)]",
         "motion-reduce:transition-none",
         isAtTop
-          ? "opacity-100 translate-y-0 bg-background/80 backdrop-blur-md border-b border-border/50"
-          : "opacity-0 -translate-y-4 pointer-events-none bg-transparent"
+          ? "bg-background/80 backdrop-blur-md border-b border-border/50"
+          : "bg-transparent border-b border-transparent"
       )}
     >
       {/* Flush edge-to-edge navbar - no floating bar styling */}
