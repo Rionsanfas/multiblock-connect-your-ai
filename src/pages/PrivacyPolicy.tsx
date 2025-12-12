@@ -1,18 +1,9 @@
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Link } from "react-router-dom";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 export default function PrivacyPolicy() {
-  return (
-    <div className="min-h-screen bg-background liquid-bg">
+  return <div className="min-h-screen bg-background liquid-bg">
       <div className="noise-overlay" />
       <Navbar />
       
@@ -43,7 +34,7 @@ export default function PrivacyPolicy() {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">1. Introduction</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Welcome to Multiblock Connect Your AI ("we," "us," "our"). This Privacy Policy explains how we collect, use, store, and protect your personal information when you access or use our service, including our website, applications, and APIs. By using our services, you agree to this Privacy Policy.
+                  Welcome to Multiblock. This Privacy Policy explains how we collect, use, store, and protect your personal information when you access or use our service, including our website, applications, and APIs. By using our services, you agree to this Privacy Policy.
                 </p>
               </section>
 
@@ -244,6 +235,5 @@ export default function PrivacyPolicy() {
       </main>
 
       <Footer />
-    </div>
-  );
+    </div>;
 }
