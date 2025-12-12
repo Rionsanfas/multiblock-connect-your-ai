@@ -1,10 +1,8 @@
 import { ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import MockUI from "./MockUI";
-
 const Hero = () => {
-  return (
-    <section className="relative min-h-screen pt-32 pb-20 overflow-hidden">
+  return <section className="relative min-h-screen pt-32 pb-20 overflow-hidden">
       {/* Background Gradients */}
       <div className="gradient-blur w-[600px] h-[600px] bg-accent/20 -top-40 -right-40 absolute" />
       <div className="gradient-blur w-[400px] h-[400px] bg-muted-foreground/10 bottom-20 -left-20 absolute" />
@@ -31,7 +29,7 @@ const Hero = () => {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-fade-up delay-300">
+          <div className="flex flex-col sm:flex-row items-center justify-center mb-16 animate-fade-up delay-300 gap-[16px]">
             <Link to="/auth" className="btn-primary flex items-center gap-2">
               Get Early Access
               <ArrowRight size={18} />
@@ -48,8 +46,6 @@ const Hero = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
