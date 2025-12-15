@@ -316,6 +316,131 @@
       0 0 20px -4px hsl(var(--accent) / 0.2);
   }
 
+  /* ============================================================
+     PREMIUM PRICING CARDS
+     Gradient border effect with glassmorphism interior.
+     ============================================================ */
+  .premium-card-wrapper {
+    position: relative;
+    border-radius: 1.25rem;
+    padding: 1px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .premium-card-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--accent) / 0.5) 0%,
+      hsl(280 30% 50% / 0.3) 30%,
+      hsl(220 40% 50% / 0.3) 60%,
+      hsl(var(--accent) / 0.4) 100%
+    );
+    opacity: 0.6;
+    transition: opacity 0.4s ease;
+  }
+
+  .premium-card-wrapper:hover::before {
+    opacity: 1;
+  }
+
+  .premium-card-gradient {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--accent) / 0.15) 0%,
+      transparent 50%
+    );
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .premium-card-wrapper:hover .premium-card-gradient {
+    opacity: 1;
+  }
+
+  .premium-card-content {
+    position: relative;
+    border-radius: calc(1.25rem - 1px);
+    background: linear-gradient(
+      145deg,
+      hsl(0 0% 8% / 0.98),
+      hsl(0 0% 5% / 0.99)
+    );
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    height: 100%;
+  }
+
+  .premium-card-wrapper:hover {
+    transform: translateY(-4px);
+    box-shadow: 
+      0 20px 40px -10px hsl(0 0% 0% / 0.5),
+      0 0 60px -10px hsl(var(--accent) / 0.2);
+  }
+
+  /* Plan title gradient animation */
+  .plan-title-animated {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--foreground)) 0%,
+      hsl(var(--accent)) 50%,
+      hsl(var(--foreground)) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: planTitleShimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes planTitleShimmer {
+    0%, 100% {
+      background-position: 0% center;
+    }
+    50% {
+      background-position: 100% center;
+    }
+  }
+
+  /* Pricing card highlight badge glow */
+  .pricing-badge-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pricing-badge-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(90deg, transparent, hsl(var(--accent) / 0.5), transparent);
+    animation: badgeShimmer 2s linear infinite;
+  }
+
+  .pricing-badge-glow::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    background: hsl(var(--accent));
+    border-radius: inherit;
+  }
+
+  @keyframes badgeShimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
   .glow-text {
     text-shadow: 0 0 80px hsl(var(--glow-warm) / 0.5);
   }

@@ -77,140 +77,144 @@ const Pricing = () => {
             {displayPlans.map((plan) => (
               <div
                 key={plan.id}
-                className={`glass-card-hover relative ${
-                  plan.highlight ? 'border-accent/50 bg-card/70' : ''
-                }`}
-                style={{ padding: "clamp(20px, 3vw, 32px)" }}
+                className={`premium-card-wrapper ${plan.highlight ? 'scale-105' : ''}`}
               >
-                {plan.badge && (
-                  <div 
-                    className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full font-medium ${
-                      plan.highlight 
-                        ? 'bg-accent text-background' 
-                        : 'bg-muted text-muted-foreground'
-                    }`}
-                    style={{ 
-                      padding: "4px 12px",
-                      fontSize: "clamp(0.625rem, 0.6rem + 0.15vw, 0.75rem)",
-                    }}
-                  >
-                    {plan.badge}
-                  </div>
-                )}
-                
-                <div style={{ marginBottom: "clamp(16px, 2.5vw, 24px)" }}>
-                  <h3 
-                    className="font-medium text-muted-foreground"
-                    style={{ 
-                      fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1.125rem)",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {plan.name}
-                  </h3>
-                  <div className="flex items-baseline gap-1">
-                    <span 
-                      className="font-bold text-foreground"
-                      style={{ fontSize: "clamp(1.75rem, 1.5rem + 1.25vw, 2.5rem)" }}
-                    >
-                      {formatPrice(plan.price_cents)}
-                    </span>
-                    {plan.price_cents > 0 && (
-                      <span 
-                        className="text-muted-foreground"
-                        style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
-                      >
-                        /year
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Key Stats */}
+                <div className="premium-card-gradient" />
                 <div 
-                  className="rounded-lg bg-muted/20"
-                  style={{ 
-                    padding: "clamp(12px, 2vw, 16px)",
-                    marginBottom: "clamp(16px, 2.5vw, 24px)",
-                  }}
+                  className="premium-card-content"
+                  style={{ padding: "clamp(20px, 3vw, 32px)" }}
                 >
-                  <div 
-                    className="flex items-center gap-2 text-foreground"
-                    style={{ 
-                      fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
-                      marginBottom: "clamp(8px, 1vw, 12px)",
-                    }}
-                  >
-                    <LayoutGrid className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
-                    {plan.boards} board{plan.boards > 1 ? 's' : ''}
-                  </div>
-                  <div 
-                    className="flex items-center gap-2 text-foreground"
-                    style={{ 
-                      fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
-                      marginBottom: "clamp(8px, 1vw, 12px)",
-                    }}
-                  >
-                    <Plus className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
-                    {plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board
-                  </div>
-                  <div 
-                    className="flex items-center gap-2 text-foreground"
-                    style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)" }}
-                  >
-                    <HardDrive className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
-                    {formatStorage(plan.storage_mb)} storage
-                    <Tooltip>
-                      <TooltipTrigger className="min-w-[24px] min-h-[24px] flex items-center justify-center">
-                        <Info style={{ width: "12px", height: "12px" }} className="text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs" style={{ fontSize: "clamp(0.625rem, 0.6rem + 0.1vw, 0.75rem)" }}>
-                          Storage covers messages, blocks, and uploaded files
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  {plan.seats > 1 && (
+                  {plan.badge && (
                     <div 
-                      className="flex items-center gap-2 text-foreground"
+                      className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full font-semibold z-10 ${
+                        plan.highlight 
+                          ? 'bg-accent text-accent-foreground shadow-[0_0_20px_hsl(var(--accent)/0.4)]' 
+                          : 'bg-muted text-muted-foreground'
+                      }`}
                       style={{ 
-                        fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
-                        marginTop: "clamp(8px, 1vw, 12px)",
+                        padding: "6px 16px",
+                        fontSize: "clamp(0.625rem, 0.6rem + 0.15vw, 0.75rem)",
                       }}
                     >
-                      <Users className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
-                      {plan.seats} team seats
+                      {plan.badge}
                     </div>
                   )}
-                </div>
+                  
+                  <div style={{ marginBottom: "clamp(16px, 2.5vw, 24px)" }}>
+                    <h3 
+                      className={`font-bold ${plan.highlight ? 'plan-title-animated' : 'text-foreground'}`}
+                      style={{ 
+                        fontSize: "clamp(1.125rem, 1rem + 0.5vw, 1.5rem)",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      {plan.name}
+                    </h3>
+                    <div className="flex items-baseline gap-1">
+                      <span 
+                        className="font-bold text-foreground"
+                        style={{ fontSize: "clamp(2rem, 1.75rem + 1.5vw, 3rem)" }}
+                      >
+                        {formatPrice(plan.price_cents)}
+                      </span>
+                      {plan.price_cents > 0 && (
+                        <span 
+                          className="text-muted-foreground"
+                          style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
+                        >
+                          /year
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                <ul style={{ marginBottom: "clamp(20px, 3vw, 32px)" }}>
-                  {plan.features.slice(3).map((feature) => (
-                    <li 
-                      key={feature} 
-                      className="flex items-center gap-2 text-foreground text-break"
+                  {/* Key Stats */}
+                  <div 
+                    className="rounded-xl bg-muted/20 border border-border/30"
+                    style={{ 
+                      padding: "clamp(12px, 2vw, 16px)",
+                      marginBottom: "clamp(16px, 2.5vw, 24px)",
+                    }}
+                  >
+                    <div 
+                      className="flex items-center gap-2 text-foreground"
                       style={{ 
                         fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
                         marginBottom: "clamp(8px, 1vw, 12px)",
                       }}
                     >
-                      <Check className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                      <LayoutGrid className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
+                      {plan.boards} board{plan.boards > 1 ? 's' : ''}
+                    </div>
+                    <div 
+                      className="flex items-center gap-2 text-foreground"
+                      style={{ 
+                        fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
+                        marginBottom: "clamp(8px, 1vw, 12px)",
+                      }}
+                    >
+                      <Plus className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
+                      {plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board
+                    </div>
+                    <div 
+                      className="flex items-center gap-2 text-foreground"
+                      style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)" }}
+                    >
+                      <HardDrive className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
+                      {formatStorage(plan.storage_mb)} storage
+                      <Tooltip>
+                        <TooltipTrigger className="min-w-[24px] min-h-[24px] flex items-center justify-center">
+                          <Info style={{ width: "12px", height: "12px" }} className="text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs" style={{ fontSize: "clamp(0.625rem, 0.6rem + 0.1vw, 0.75rem)" }}>
+                            Storage covers messages, blocks, and uploaded files
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    {plan.seats > 1 && (
+                      <div 
+                        className="flex items-center gap-2 text-foreground"
+                        style={{ 
+                          fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
+                          marginTop: "clamp(8px, 1vw, 12px)",
+                        }}
+                      >
+                        <Users className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
+                        {plan.seats} team seats
+                      </div>
+                    )}
+                  </div>
 
-                <Link
-                  to="/pricing"
-                  className={`block text-center w-full rounded-full font-medium transition-all duration-300 ${
-                    plan.highlight
-                      ? 'btn-primary'
-                      : 'btn-outline'
-                  }`}
-                >
-                  {plan.price_cents === 0 ? "Get Started" : "View Plans"}
-                </Link>
+                  <ul style={{ marginBottom: "clamp(20px, 3vw, 32px)" }}>
+                    {plan.features.slice(3).map((feature) => (
+                      <li 
+                        key={feature} 
+                        className="flex items-center gap-2 text-foreground text-break"
+                        style={{ 
+                          fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
+                          marginBottom: "clamp(8px, 1vw, 12px)",
+                        }}
+                      >
+                        <Check className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    to="/pricing"
+                    className={`block text-center w-full rounded-full font-medium transition-all duration-300 ${
+                      plan.highlight
+                        ? 'bg-accent text-accent-foreground shadow-[0_4px_20px_hsl(var(--accent)/0.35)] hover:shadow-[0_6px_28px_hsl(var(--accent)/0.5)] hover:-translate-y-0.5'
+                        : 'border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5'
+                    }`}
+                    style={{ padding: "12px 24px" }}
+                  >
+                    {plan.price_cents === 0 ? "Get Started" : "View Plans"}
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
