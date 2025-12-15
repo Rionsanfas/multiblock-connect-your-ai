@@ -2,12 +2,30 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "hover" | "solid";
+  variant?: "default" | "hover" | "solid" | "premium";
   glow?: boolean;
 }
 
 const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
   ({ className, variant = "default", glow = false, children, ...props }, ref) => {
+    if (variant === "premium") {
+      return (
+        <div
+          ref={ref}
+          className={cn(
+            "premium-card-wrapper",
+            className
+          )}
+          {...props}
+        >
+          <div className="premium-card-gradient" />
+          <div className="premium-card-content">
+            {children}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div
         ref={ref}
