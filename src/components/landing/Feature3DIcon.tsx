@@ -1,6 +1,4 @@
 import { MessageSquare, MoreHorizontal } from "lucide-react";
-import claudeLogo from "@/assets/claude-logo.png";
-import xaiLogo from "@/assets/xai-logo.png";
 
 type IconType = "chat" | "connect" | "canvas";
 
@@ -95,33 +93,17 @@ const Feature3DIcon = ({ type }: Feature3DIconProps) => {
             </div>
           </div>
           
-          {/* Orbiting AI Logos - well spaced at cardinal positions */}
-          {/* Top */}
-          <div className="feature-3d-logo-position feature-3d-logo-top">
-            <div className="feature-3d-logo-satellite">
-              <div className="w-5 h-5">
+          {/* Orbiting AI Logos - animated orbit */}
+          <div className="feature-3d-orbit-ring">
+            <div className="feature-3d-orbit-logo feature-3d-orbit-logo-1">
+              <div className="w-6 h-6">
                 <OpenAILogo />
               </div>
             </div>
-          </div>
-          {/* Right */}
-          <div className="feature-3d-logo-position feature-3d-logo-right">
-            <div className="feature-3d-logo-satellite">
-              <div className="w-5 h-5">
+            <div className="feature-3d-orbit-logo feature-3d-orbit-logo-2">
+              <div className="w-6 h-6">
                 <GeminiLogo />
               </div>
-            </div>
-          </div>
-          {/* Bottom */}
-          <div className="feature-3d-logo-position feature-3d-logo-bottom">
-            <div className="feature-3d-logo-satellite">
-              <img src={xaiLogo} alt="xAI" className="w-5 h-5 object-contain brightness-0 invert" />
-            </div>
-          </div>
-          {/* Left */}
-          <div className="feature-3d-logo-position feature-3d-logo-left">
-            <div className="feature-3d-logo-satellite">
-              <img src={claudeLogo} alt="Claude" className="w-5 h-5 object-contain brightness-0 invert" />
             </div>
           </div>
           
@@ -232,9 +214,9 @@ const Feature3DIcon = ({ type }: Feature3DIconProps) => {
             <div className="feature-3d-grid-line feature-3d-grid-v2" />
           </div>
           
-          {/* Single AI Block - centered and floating, now larger */}
-          <div className="feature-3d-single-block-large">
-            <AIBlock label="Gemini" color="accent" size="lg" />
+          {/* Single AI Block - centered and floating */}
+          <div className="feature-3d-single-block">
+            <AIBlock label="Gemini" color="accent" size="sm" />
           </div>
           
           {/* Floating dots around */}
