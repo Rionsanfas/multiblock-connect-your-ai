@@ -1385,262 +1385,197 @@
   }
 }
 
-/* ============================================================
-   HOW IT WORKS 3D ICONS
-   Animated icons for the How It Works section
-   ============================================================ */
+/* =================================================
+   HOW IT WORKS - BENTO GRID LAYOUT
+   ================================================= */
 
-/* Card 1: Add Blocks - Plus icon with appearing block */
-.hiw-3d-container {
+.hiw-bento-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: clamp(12px, 2vw, 20px);
+}
+
+/* Tall left card - spans 2 rows */
+.hiw-bento-tall {
+  grid-row: span 2;
+}
+
+/* Wide top right card */
+.hiw-bento-wide {
+  min-height: 180px;
+}
+
+/* Square bottom right card */
+.hiw-bento-square {
+  min-height: 200px;
+}
+
+.hiw-bento-card {
   position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hiw-plus-icon-wrapper {
-  position: relative;
-  z-index: 10;
-  animation: hiwPlusPulse 2s ease-in-out infinite;
-}
-
-.hiw-plus-icon {
-  width: clamp(32px, 5vw, 48px);
-  height: clamp(32px, 5vw, 48px);
-  color: hsl(var(--foreground));
-  filter: drop-shadow(0 0 12px hsl(var(--accent) / 0.6));
-}
-
-@keyframes hiwPlusPulse {
-  0%, 100% {
-    transform: scale(1) rotate(0deg);
-    filter: drop-shadow(0 0 8px hsl(var(--accent) / 0.4));
-  }
-  50% {
-    transform: scale(1.15) rotate(90deg);
-    filter: drop-shadow(0 0 20px hsl(var(--accent) / 0.8));
-  }
-}
-
-.hiw-block-appearing {
-  position: absolute;
-  right: 8%;
-  bottom: 15%;
-  animation: hiwBlockAppear 3s ease-in-out infinite;
-}
-
-@keyframes hiwBlockAppear {
-  0%, 10% {
-    opacity: 0;
-    transform: translateY(20px) scale(0.5);
-  }
-  30%, 70% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  90%, 100% {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.8);
-  }
-}
-
-.hiw-particle {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: hsl(var(--accent));
-}
-
-.hiw-particle-1 {
-  top: 20%;
-  left: 25%;
-  animation: hiwParticleFloat 2.5s ease-in-out infinite;
-}
-
-.hiw-particle-2 {
-  top: 35%;
-  right: 20%;
-  animation: hiwParticleFloat 2.5s ease-in-out infinite 0.5s;
-}
-
-.hiw-particle-3 {
-  bottom: 25%;
-  left: 30%;
-  animation: hiwParticleFloat 2.5s ease-in-out infinite 1s;
-}
-
-@keyframes hiwParticleFloat {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: translateY(-8px) scale(1.5);
-  }
-}
-
-/* Card 2: Chat - Text highlight animation */
-.hiw-3d-container-chat {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding-left: 8%;
-  overflow: hidden;
-}
-
-.hiw-chat-text-wrapper {
+  background: hsl(var(--card));
+  border-radius: clamp(16px, 2vw, 24px);
+  padding: clamp(20px, 3vw, 32px);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  z-index: 5;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
 }
 
-.hiw-chat-line {
-  font-size: clamp(8px, 1.2vw, 11px);
-  font-weight: 600;
-  color: hsl(var(--muted-foreground));
-  white-space: nowrap;
+.hiw-bento-content {
+  margin-top: auto;
+  z-index: 10;
 }
 
-.hiw-chat-line-1 .hiw-highlight-text {
-  animation: hiwTextHighlight 4s ease-in-out infinite;
-}
-
-.hiw-chat-line-2 .hiw-highlight-text {
-  animation: hiwTextHighlight 4s ease-in-out infinite 1.3s;
-}
-
-.hiw-chat-line-3 .hiw-highlight-text {
-  animation: hiwTextHighlight 4s ease-in-out infinite 2.6s;
-}
-
-@keyframes hiwTextHighlight {
-  0%, 20%, 100% {
-    color: hsl(var(--muted-foreground));
-    text-shadow: none;
-    background: transparent;
-  }
-  30%, 50% {
-    color: hsl(var(--foreground));
-    text-shadow: 0 0 12px hsl(var(--accent) / 0.6);
-    background: linear-gradient(90deg, hsl(var(--accent) / 0.2), transparent);
-  }
-}
-
-.hiw-chat-glow {
+.hiw-content-bottom {
   position: absolute;
-  right: -20%;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 60%;
-  height: 80%;
-  background: radial-gradient(ellipse at center, hsl(var(--accent) / 0.15), transparent 70%);
-  animation: hiwChatGlow 3s ease-in-out infinite;
+  bottom: clamp(20px, 3vw, 32px);
+  left: clamp(20px, 3vw, 32px);
+  right: clamp(20px, 3vw, 32px);
 }
 
-@keyframes hiwChatGlow {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.7;
-  }
+.hiw-bento-title {
+  font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin-bottom: 8px;
 }
 
-/* Card 3: Connect - Animated chain with glow */
-.hiw-3d-container-connect {
+.hiw-bento-desc {
+  font-size: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+
+/* 3D Icon Wrapper - NO COVER */
+.hiw-3d-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: clamp(16px, 2vw, 32px);
+}
+
+/* 3D Plus Icon */
+.hiw-3d-plus {
   position: relative;
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.hiw-chain-wrapper {
-  position: relative;
-  z-index: 10;
-}
-
-.hiw-chain-icon {
-  width: clamp(28px, 4vw, 40px);
-  height: clamp(28px, 4vw, 40px);
+.hiw-3d-plus-icon {
+  width: clamp(80px, 12vw, 140px);
+  height: clamp(80px, 12vw, 140px);
   color: hsl(var(--foreground));
-  animation: hiwChainPulse 2.5s ease-in-out infinite;
+  filter: 
+    drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
+    drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
+    drop-shadow(0 0 40px hsl(var(--accent) / 0.3));
+  animation: hiw3dPlusGlow 3s ease-in-out infinite;
 }
 
-.hiw-chain-glow {
+@keyframes hiw3dPlusGlow {
+  0%, 100% {
+    filter: 
+      drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
+      drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
+      drop-shadow(0 0 30px hsl(var(--accent) / 0.2));
+  }
+  50% {
+    filter: 
+      drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
+      drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
+      drop-shadow(0 0 50px hsl(var(--accent) / 0.5));
+  }
+}
+
+/* Overflow Text Effect for Card 2 */
+.hiw-overflow-text {
   position: absolute;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 150%;
-  height: 150%;
-  background: radial-gradient(circle, hsl(var(--accent) / 0.6), transparent 60%);
-  border-radius: 50%;
-  animation: hiwChainGlow 2.5s ease-in-out infinite;
-  z-index: -1;
-}
-
-@keyframes hiwChainPulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-@keyframes hiwChainGlow {
-  0%, 100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8);
-  }
-  50% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.2);
-  }
-}
-
-.hiw-connection-lines {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
+  transform: translateY(-70%);
+  right: -5%;
+  white-space: nowrap;
   z-index: 1;
 }
 
-.hiw-connection-path {
-  stroke: hsl(var(--accent) / 0.5);
-  stroke-dasharray: 150;
-  stroke-dashoffset: 150;
-  animation: hiwConnectionDraw 3s ease-in-out infinite;
+.hiw-text-large {
+  font-size: clamp(48px, 8vw, 100px);
+  font-weight: 800;
+  color: hsl(var(--foreground) / 0.08);
+  line-height: 1;
+  letter-spacing: -0.03em;
 }
 
-@keyframes hiwConnectionDraw {
-  0% {
-    stroke-dashoffset: 150;
-    opacity: 0.2;
+.hiw-text-fade {
+  background: linear-gradient(90deg, hsl(var(--foreground) / 0.08), transparent 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 3D Link Icon */
+.hiw-3d-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hiw-3d-link-icon {
+  width: clamp(60px, 10vw, 100px);
+  height: clamp(60px, 10vw, 100px);
+  color: hsl(var(--foreground));
+  filter: 
+    drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
+    drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
+    drop-shadow(0 0 30px hsl(var(--accent) / 0.2));
+  animation: hiw3dLinkGlow 4s ease-in-out infinite;
+}
+
+@keyframes hiw3dLinkGlow {
+  0%, 100% {
+    filter: 
+      drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
+      drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
+      drop-shadow(0 0 20px hsl(var(--accent) / 0.1));
+    transform: scale(1);
   }
   50% {
-    stroke-dashoffset: 0;
-    opacity: 0.8;
-  }
-  100% {
-    stroke-dashoffset: -150;
-    opacity: 0.2;
+    filter: 
+      drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
+      drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
+      drop-shadow(0 0 60px hsl(var(--accent) / 0.6));
+    transform: scale(1.05);
   }
 }
 
-/* Reduced motion support for all animations */
+/* Responsive: Stack on mobile */
+@media (max-width: 640px) {
+  .hiw-bento-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .hiw-bento-tall {
+    grid-row: span 1;
+    min-height: 280px;
+  }
+  
+  .hiw-bento-wide {
+    min-height: 200px;
+  }
+  
+  .hiw-overflow-text {
+    right: -10%;
+  }
+  
+  .hiw-text-large {
+    font-size: clamp(36px, 15vw, 60px);
+  }
+}
+
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .feature-3d-cube,
   .feature-3d-orbit-ring,
@@ -1653,14 +1588,8 @@
   .feature-3d-single-block,
   .feature-3d-single-block-large,
   .feature-3d-canvas-dot,
-  .hiw-plus-icon-wrapper,
-  .hiw-block-appearing,
-  .hiw-particle,
-  .hiw-highlight-text,
-  .hiw-chat-glow,
-  .hiw-chain-icon,
-  .hiw-chain-glow,
-  .hiw-connection-path {
+  .hiw-3d-plus-icon,
+  .hiw-3d-link-icon {
     animation: none !important;
   }
 }
