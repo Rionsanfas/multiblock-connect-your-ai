@@ -1,12 +1,7 @@
 import { Check, Info, HardDrive, Users, LayoutGrid, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { pricingPlans } from "@/mocks/seed";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Helper to format storage
 const formatStorage = (mb: number): string => {
@@ -23,39 +18,36 @@ const formatPrice = (cents: number): string => {
 
 const Pricing = () => {
   // Show individual plans on landing page
-  const displayPlans = pricingPlans.filter(p => p.tier === 'free' || p.tier === 'pro');
+  const displayPlans = pricingPlans.filter((p) => p.tier === "free" || p.tier === "pro");
 
   return (
     <TooltipProvider>
-      <section 
-        id="pricing" 
+      <section
+        id="pricing"
         className="relative"
         style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
       >
         {/* Container */}
-        <div 
+        <div
           className="w-full max-w-[1200px] mx-auto"
           style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
         >
           {/* Header */}
-          <div 
-            className="text-center"
-            style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}
-          >
+          <div className="text-center" style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}>
             <span className="section-badge mb-4">
               <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               Pricing
             </span>
-            <h2 
+            <h2
               className="font-bold text-foreground mt-4 text-wrap-balance"
-              style={{ 
+              style={{
                 fontSize: "clamp(1.5rem, 1rem + 2.5vw, 3rem)",
                 marginBottom: "clamp(12px, 2vw, 16px)",
               }}
             >
               Simple, Transparent Pricing
             </h2>
-            <p 
+            <p
               className="text-muted-foreground max-w-xl mx-auto text-break"
               style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
             >
@@ -67,43 +59,37 @@ const Pricing = () => {
             Pricing Cards - responsive grid with auto-fit.
             Max-width centers cards on large screens.
           */}
-          <div 
+          <div
             className="grid max-w-5xl mx-auto align-start"
-            style={{ 
+            style={{
               gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))",
               gap: "clamp(16px, 2.5vw, 24px)",
             }}
           >
             {displayPlans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`premium-card-wrapper ${plan.highlight ? 'scale-105' : ''}`}
-              >
+              <div key={plan.id} className={`premium-card-wrapper ${plan.highlight ? "scale-105" : ""}`}>
                 <div className="premium-card-gradient" />
-                <div 
-                  className="premium-card-content"
-                  style={{ padding: "clamp(20px, 3vw, 32px)" }}
-                >
+                <div className="premium-card-content" style={{ padding: "clamp(20px, 3vw, 32px)" }}>
                   {plan.badge && (
-                    <div 
-                      className={`absolute -top-3 left-1/2 -translate-x-1/2 rounded-full font-semibold z-10 ${
-                        plan.highlight 
-                          ? 'bg-accent text-accent-foreground shadow-[0_0_20px_hsl(var(--accent)/0.4)]' 
-                          : 'bg-muted text-muted-foreground'
+                    <div
+                      className={`absolute top-2 left-1/2 -translate-x-1/2 rounded-full font-semibold z-10 ${
+                        plan.highlight
+                          ? "bg-accent text-accent-foreground shadow-[0_0_20px_hsl(var(--accent)/0.4)]"
+                          : "bg-muted text-muted-foreground"
                       }`}
-                      style={{ 
-                        padding: "6px 16px",
-                        fontSize: "clamp(0.625rem, 0.6rem + 0.15vw, 0.75rem)",
+                      style={{
+                        padding: "4px 12px",
+                        fontSize: "clamp(0.55rem, 0.5rem + 0.12vw, 0.65rem)",
                       }}
                     >
                       {plan.badge}
                     </div>
                   )}
-                  
+
                   <div style={{ marginBottom: "clamp(16px, 2.5vw, 24px)" }}>
-                    <h3 
-                      className={`font-bold ${plan.highlight ? 'plan-title-animated' : 'text-foreground'}`}
-                      style={{ 
+                    <h3
+                      className={`font-bold ${plan.highlight ? "plan-title-animated" : "text-foreground"}`}
+                      style={{
                         fontSize: "clamp(1.125rem, 1rem + 0.5vw, 1.5rem)",
                         marginBottom: "12px",
                       }}
@@ -111,14 +97,14 @@ const Pricing = () => {
                       {plan.name}
                     </h3>
                     <div className="flex items-baseline gap-1">
-                      <span 
+                      <span
                         className="font-bold text-foreground"
                         style={{ fontSize: "clamp(2rem, 1.75rem + 1.5vw, 3rem)" }}
                       >
                         {formatPrice(plan.price_cents)}
                       </span>
                       {plan.price_cents > 0 && (
-                        <span 
+                        <span
                           className="text-muted-foreground"
                           style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
                         >
@@ -129,38 +115,47 @@ const Pricing = () => {
                   </div>
 
                   {/* Key Stats */}
-                  <div 
+                  <div
                     className="rounded-xl bg-muted/20 border border-border/30"
-                    style={{ 
+                    style={{
                       padding: "clamp(12px, 2vw, 16px)",
                       marginBottom: "clamp(16px, 2.5vw, 24px)",
                     }}
                   >
-                    <div 
+                    <div
                       className="flex items-center gap-2 text-foreground"
-                      style={{ 
+                      style={{
                         fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
                         marginBottom: "clamp(8px, 1vw, 12px)",
                       }}
                     >
-                      <LayoutGrid className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
-                      {plan.boards} board{plan.boards > 1 ? 's' : ''}
+                      <LayoutGrid
+                        className="text-accent flex-shrink-0"
+                        style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
+                      />
+                      {plan.boards} board{plan.boards > 1 ? "s" : ""}
                     </div>
-                    <div 
+                    <div
                       className="flex items-center gap-2 text-foreground"
-                      style={{ 
+                      style={{
                         fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
                         marginBottom: "clamp(8px, 1vw, 12px)",
                       }}
                     >
-                      <Plus className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
-                      {plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board
+                      <Plus
+                        className="text-accent flex-shrink-0"
+                        style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
+                      />
+                      {plan.blocks_per_board === "unlimited" ? "Unlimited" : plan.blocks_per_board} blocks/board
                     </div>
-                    <div 
+                    <div
                       className="flex items-center gap-2 text-foreground"
                       style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)" }}
                     >
-                      <HardDrive className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
+                      <HardDrive
+                        className="text-accent flex-shrink-0"
+                        style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
+                      />
                       {formatStorage(plan.storage_mb)} storage
                       <Tooltip>
                         <TooltipTrigger className="min-w-[24px] min-h-[24px] flex items-center justify-center">
@@ -174,14 +169,17 @@ const Pricing = () => {
                       </Tooltip>
                     </div>
                     {plan.seats > 1 && (
-                      <div 
+                      <div
                         className="flex items-center gap-2 text-foreground"
-                        style={{ 
+                        style={{
                           fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
                           marginTop: "clamp(8px, 1vw, 12px)",
                         }}
                       >
-                        <Users className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
+                        <Users
+                          className="text-accent flex-shrink-0"
+                          style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
+                        />
                         {plan.seats} team seats
                       </div>
                     )}
@@ -189,15 +187,18 @@ const Pricing = () => {
 
                   <ul style={{ marginBottom: "clamp(20px, 3vw, 32px)" }}>
                     {plan.features.slice(3).map((feature) => (
-                      <li 
-                        key={feature} 
+                      <li
+                        key={feature}
                         className="flex items-center gap-2 text-foreground text-break"
-                        style={{ 
+                        style={{
                           fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
                           marginBottom: "clamp(8px, 1vw, 12px)",
                         }}
                       >
-                        <Check className="text-accent flex-shrink-0" style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }} />
+                        <Check
+                          className="text-accent flex-shrink-0"
+                          style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
+                        />
                         {feature}
                       </li>
                     ))}
@@ -207,8 +208,8 @@ const Pricing = () => {
                     to="/pricing"
                     className={`block text-center w-full rounded-full font-medium transition-all duration-300 ${
                       plan.highlight
-                        ? 'bg-accent text-accent-foreground shadow-[0_4px_20px_hsl(var(--accent)/0.35)] hover:shadow-[0_6px_28px_hsl(var(--accent)/0.5)] hover:-translate-y-0.5'
-                        : 'border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5'
+                        ? "bg-accent text-accent-foreground shadow-[0_4px_20px_hsl(var(--accent)/0.35)] hover:shadow-[0_6px_28px_hsl(var(--accent)/0.5)] hover:-translate-y-0.5"
+                        : "border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5"
                     }`}
                     style={{ padding: "12px 24px" }}
                   >
@@ -220,21 +221,18 @@ const Pricing = () => {
           </div>
 
           {/* Team Plans CTA */}
-          <div 
-            className="text-center"
-            style={{ marginTop: "clamp(32px, 4vw, 40px)" }}
-          >
-            <p 
+          <div className="text-center" style={{ marginTop: "clamp(32px, 4vw, 40px)" }}>
+            <p
               className="text-muted-foreground"
-              style={{ 
+              style={{
                 fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
                 marginBottom: "12px",
               }}
             >
               Need team features?
             </p>
-            <Link 
-              to="/pricing" 
+            <Link
+              to="/pricing"
               className="text-accent hover:text-accent/80 font-medium transition-colors min-h-[44px] inline-flex items-center"
               style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)" }}
             >
