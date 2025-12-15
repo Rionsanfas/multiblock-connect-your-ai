@@ -1090,72 +1090,150 @@
 }
 
 /* ============================================================
-   ORBITING AI LOGOS
-   4 logos orbiting the main icon with staggered positions
+   FIXED POSITION AI LOGOS
+   4 logos at cardinal positions around the main icon
    ============================================================ */
 
-.feature-3d-orbit-logo-1 {
-  width: 140%;
-  height: 140%;
-  animation: orbit 10s linear infinite;
+.feature-3d-logo-position {
+  position: absolute;
+  z-index: 5;
 }
 
-.feature-3d-orbit-logo-2 {
-  width: 140%;
-  height: 140%;
-  animation: orbit 10s linear infinite;
-  animation-delay: -2.5s;
+.feature-3d-logo-top {
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: logoFloatVertical 4s ease-in-out infinite;
 }
 
-.feature-3d-orbit-logo-3 {
-  width: 140%;
-  height: 140%;
-  animation: orbit 10s linear infinite;
-  animation-delay: -5s;
+.feature-3d-logo-right {
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: logoFloatHorizontal 4s ease-in-out infinite 1s;
 }
 
-.feature-3d-orbit-logo-4 {
-  width: 140%;
-  height: 140%;
-  animation: orbit 10s linear infinite;
-  animation-delay: -7.5s;
+.feature-3d-logo-bottom {
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: logoFloatVertical 4s ease-in-out infinite 2s;
+}
+
+.feature-3d-logo-left {
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: logoFloatHorizontal 4s ease-in-out infinite 3s;
+}
+
+@keyframes logoFloatVertical {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-4px);
+  }
+}
+
+@keyframes logoFloatHorizontal {
+  0%, 100% {
+    transform: translateY(-50%) translateX(0);
+  }
+  50% {
+    transform: translateY(-50%) translateX(-4px);
+  }
 }
 
 .feature-3d-logo-satellite {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%) translateY(-50%);
-  width: clamp(32px, 4vw, 40px);
-  height: clamp(32px, 4vw, 40px);
+  width: clamp(36px, 4.5vw, 44px);
+  height: clamp(36px, 4.5vw, 44px);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  background: hsl(var(--secondary) / 0.9);
+  border: 1px solid hsl(var(--border) / 0.5);
   backdrop-blur: 8px;
   box-shadow: 
     0 4px 16px -2px hsl(0 0% 0% / 0.5),
-    inset 0 1px 0 hsl(0 0% 100% / 0.05);
-  animation: counter-orbit 10s linear infinite;
-}
-
-.feature-3d-orbit-logo-2 .feature-3d-logo-satellite {
-  animation-delay: -2.5s;
-}
-
-.feature-3d-orbit-logo-3 .feature-3d-logo-satellite {
-  animation-delay: -5s;
-}
-
-.feature-3d-orbit-logo-4 .feature-3d-logo-satellite {
-  animation-delay: -7.5s;
+    inset 0 1px 0 hsl(0 0% 100% / 0.08);
 }
 
 /* ============================================================
    CONNECTED BLOCKS STYLES
-   Two AI blocks with animated connection line
+   Two AI blocks with hero-style animated connection line
    ============================================================ */
 
+.feature-3d-container-connect {
+  position: relative;
+  width: 100%;
+  height: clamp(160px, 20vw, 220px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-3d-platform-connect {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-3d-blocks-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(32px, 5vw, 60px);
+  width: 100%;
+}
+
+.feature-3d-block-float-1 {
+  position: relative;
+  z-index: 5;
+  animation: blockFloat1 5s ease-in-out infinite;
+}
+
+.feature-3d-block-float-2 {
+  position: relative;
+  z-index: 5;
+  animation: blockFloat2 5s ease-in-out infinite 0.5s;
+}
+
+@keyframes blockFloat1 {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+@keyframes blockFloat2 {
+  0%, 100% {
+    transform: translateY(0) rotate(1deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(-1deg);
+  }
+}
+
+.feature-3d-hero-connection {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(80px, 12vw, 120px);
+  height: 60px;
+  z-index: 1;
+}
+
+/* Legacy block connection styles (kept for compatibility) */
 .feature-3d-blocks-container {
   position: relative;
   display: flex;
@@ -1237,7 +1315,7 @@
 
 /* ============================================================
    SINGLE BLOCK ON CANVAS
-   Centered floating block with dot decorations
+   Centered floating block with dot decorations - LARGER
    ============================================================ */
 
 .feature-3d-single-block {
@@ -1246,12 +1324,19 @@
   animation: singleBlockFloat 5s ease-in-out infinite;
 }
 
+.feature-3d-single-block-large {
+  position: relative;
+  z-index: 10;
+  animation: singleBlockFloat 5s ease-in-out infinite;
+  transform-origin: center;
+}
+
 @keyframes singleBlockFloat {
   0%, 100% {
     transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateY(-8px) scale(1.02);
+    transform: translateY(-10px) scale(1.03);
   }
 }
 
@@ -1300,15 +1385,15 @@
 /* Reduced motion support for new animations */
 @media (prefers-reduced-motion: reduce) {
   .feature-3d-cube,
-  .feature-3d-orbit-logo-1,
-  .feature-3d-orbit-logo-2,
-  .feature-3d-orbit-logo-3,
-  .feature-3d-orbit-logo-4,
+  .feature-3d-logo-position,
   .feature-3d-logo-satellite,
   .feature-3d-block-wrapper,
+  .feature-3d-block-float-1,
+  .feature-3d-block-float-2,
   .feature-3d-flow-line,
   .feature-3d-zap-pulse,
   .feature-3d-single-block,
+  .feature-3d-single-block-large,
   .feature-3d-canvas-dot {
     animation: none !important;
   }
