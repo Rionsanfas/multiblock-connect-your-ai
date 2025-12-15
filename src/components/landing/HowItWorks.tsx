@@ -1,24 +1,4 @@
-import HowItWorks3DIcon from "./HowItWorks3DIcon";
-
-const steps = [
-  {
-    iconType: "add" as const,
-    title: "Add Blocks",
-    description:
-      "Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, Mistral, and more.",
-  },
-  {
-    iconType: "chat" as const,
-    title: "Chat with Models",
-    description:
-      "Interact with each model independently. Compare responses, iterate on prompts, and find the best output.",
-  },
-  {
-    iconType: "connect" as const,
-    title: "Connect Them",
-    description: "Draw connections between blocks. One model's output becomes another's input—automatically.",
-  },
-];
+import { Plus, Link } from "lucide-react";
 
 const HowItWorks = () => {
   return (
@@ -64,53 +44,56 @@ const HowItWorks = () => {
           </p>
         </div>
 
-        {/* Steps - responsive grid */}
-        <div className="max-w-4xl mx-auto">
-          <div
-            className="grid align-start"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
-              gap: "clamp(16px, 3vw, 32px)",
-            }}
-          >
-            {steps.map((step, index) => (
-              <div key={step.title} className="relative">
-                {/* Connector Line (visible on wider screens) */}
-                {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-1/2 w-full h-0.5 bg-gradient-to-r from-border to-transparent" />
-                )}
-
-                <div className="glass-card-hover text-center relative" style={{ padding: "clamp(20px, 3vw, 24px)" }}>
-                  {/* 3D Icon Container */}
-                  <div
-                    className="rounded-xl bg-secondary/50 border border-border flex items-center justify-center mx-auto overflow-hidden"
-                    style={{
-                      width: "clamp(100px, 15vw, 140px)",
-                      height: "clamp(80px, 12vw, 110px)",
-                      marginBottom: "clamp(16px, 2.5vw, 24px)",
-                    }}
-                  >
-                    <HowItWorks3DIcon type={step.iconType} />
-                  </div>
-
-                  <h3
-                    className="font-semibold text-foreground"
-                    style={{
-                      fontSize: "clamp(1rem, 0.9rem + 0.4vw, 1.125rem)",
-                      marginBottom: "clamp(8px, 1vw, 12px)",
-                    }}
-                  >
-                    {step.title}
-                  </h3>
-                  <p
-                    className="text-muted-foreground text-break"
-                    style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem)" }}
-                  >
-                    {step.description}
-                  </p>
-                </div>
+        {/* Bento Grid */}
+        <div className="hiw-bento-grid max-w-4xl mx-auto">
+          {/* Card 1 - Add Blocks (Tall left card) */}
+          <div className="hiw-bento-card hiw-bento-tall">
+            {/* 3D Plus Icon */}
+            <div className="hiw-3d-icon-wrapper">
+              <div className="hiw-3d-plus">
+                <Plus className="hiw-3d-plus-icon" strokeWidth={3} />
               </div>
-            ))}
+            </div>
+            
+            <div className="hiw-bento-content">
+              <h3 className="hiw-bento-title">Add Blocks</h3>
+              <p className="hiw-bento-desc">
+                Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, and more.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2 - Chat (Top right, wide) */}
+          <div className="hiw-bento-card hiw-bento-wide">
+            {/* Overflow text effect */}
+            <div className="hiw-overflow-text">
+              <span className="hiw-text-large">Compa</span>
+              <span className="hiw-text-large hiw-text-fade">re</span>
+            </div>
+            
+            <div className="hiw-bento-content hiw-content-bottom">
+              <h3 className="hiw-bento-title">Chat with Models</h3>
+              <p className="hiw-bento-desc">
+                Interact with each model independently. Compare responses in real-time.
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3 - Connect (Bottom right, square) */}
+          <div className="hiw-bento-card hiw-bento-square">
+            {/* 3D Link Icon */}
+            <div className="hiw-3d-icon-wrapper">
+              <div className="hiw-3d-link">
+                <Link className="hiw-3d-link-icon" strokeWidth={2.5} />
+              </div>
+            </div>
+            
+            <div className="hiw-bento-content">
+              <h3 className="hiw-bento-title">Connect Them</h3>
+              <p className="hiw-bento-desc">
+                Draw connections between blocks. One model's output becomes another's input.
+              </p>
+            </div>
           </div>
         </div>
       </div>
