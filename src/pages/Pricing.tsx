@@ -7,12 +7,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { toast } from "sonner";
 import { pricingPlans, boardAddons } from "@/mocks/seed";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Helper to format storage
@@ -52,8 +47,8 @@ export default function Pricing() {
     toast.success("Adding to your plan...");
   };
 
-  const individualPlans = pricingPlans.filter(p => p.tier === 'free' || p.tier === 'pro');
-  const teamPlans = pricingPlans.filter(p => p.tier === 'team');
+  const individualPlans = pricingPlans.filter((p) => p.tier === "free" || p.tier === "pro");
+  const teamPlans = pricingPlans.filter((p) => p.tier === "team");
 
   return (
     <TooltipProvider>
@@ -68,16 +63,18 @@ export default function Pricing() {
                 <Zap className="h-4 w-4" />
                 Simple Pricing
               </span>
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                Choose Your Plan
-              </h1>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4">Choose Your Plan</h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                 Start free, upgrade when you need more boards and storage. All plans include yearly billing.
               </p>
             </div>
 
             {/* Plan Type Tabs */}
-            <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as "individual" | "team")} className="mb-12">
+            <Tabs
+              value={selectedTab}
+              onValueChange={(v) => setSelectedTab(v as "individual" | "team")}
+              className="mb-12"
+            >
               <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
                 <TabsTrigger value="individual">Individual</TabsTrigger>
                 <TabsTrigger value="team">Teams</TabsTrigger>
@@ -87,32 +84,31 @@ export default function Pricing() {
               <TabsContent value="individual" className="mt-8">
                 <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
                   {individualPlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''}`}
-                    >
+                    <div key={plan.id} className={`premium-card-wrapper ${plan.highlight ? "scale-105 z-10" : ""}`}>
                       <div className="premium-card-gradient" />
                       <div className="premium-card-content p-6 relative">
                         {plan.badge && (
-                          <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs font-semibold rounded-full z-10 ${
-                            plan.highlight 
-                              ? "bg-accent text-accent-foreground shadow-[0_0_20px_hsl(var(--accent)/0.4)]" 
-                              : "bg-muted text-muted-foreground"
-                          }`}>
+                          <div
+                            className={`absolute -top-0 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs font-semibold rounded-full z-10 ${
+                              plan.highlight
+                                ? "bg-accent text-accent-foreground shadow-[0_0_20px_hsl(var(--accent)/0.4)]"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
                             {plan.badge}
                           </div>
                         )}
 
-                        <h3 className={`text-2xl font-bold mb-3 ${plan.highlight ? 'plan-title-animated' : 'text-foreground'}`}>
+                        <h3
+                          className={`text-2xl font-bold mb-3 ${plan.highlight ? "plan-title-animated" : "text-foreground"}`}
+                        >
                           {plan.name}
                         </h3>
-                        
+
                         <div className="mb-6">
                           <div className="flex items-baseline gap-1">
                             <span className="text-5xl font-bold">{formatPrice(plan.price_cents)}</span>
-                            {plan.price_cents > 0 && (
-                              <span className="text-muted-foreground">/year</span>
-                            )}
+                            {plan.price_cents > 0 && <span className="text-muted-foreground">/year</span>}
                           </div>
                         </div>
 
@@ -120,11 +116,15 @@ export default function Pricing() {
                         <div className="space-y-3 mb-6 p-4 rounded-xl bg-muted/20 border border-border/30">
                           <div className="flex items-center gap-2 text-sm">
                             <LayoutGrid className="h-4 w-4 text-accent" />
-                            <span>{plan.boards} board{plan.boards > 1 ? 's' : ''}</span>
+                            <span>
+                              {plan.boards} board{plan.boards > 1 ? "s" : ""}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Plus className="h-4 w-4 text-accent" />
-                            <span>{plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board</span>
+                            <span>
+                              {plan.blocks_per_board === "unlimited" ? "Unlimited" : plan.blocks_per_board} blocks/board
+                            </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <HardDrive className="h-4 w-4 text-accent" />
@@ -168,10 +168,7 @@ export default function Pricing() {
               <TabsContent value="team" className="mt-8">
                 <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
                   {teamPlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''}`}
-                    >
+                    <div key={plan.id} className={`premium-card-wrapper ${plan.highlight ? "scale-105 z-10" : ""}`}>
                       <div className="premium-card-gradient" />
                       <div className="premium-card-content p-6 relative">
                         {plan.badge && (
@@ -180,10 +177,12 @@ export default function Pricing() {
                           </div>
                         )}
 
-                        <h3 className={`text-2xl font-bold mb-3 ${plan.highlight ? 'plan-title-animated' : 'text-foreground'}`}>
+                        <h3
+                          className={`text-2xl font-bold mb-3 ${plan.highlight ? "plan-title-animated" : "text-foreground"}`}
+                        >
                           {plan.name}
                         </h3>
-                        
+
                         <div className="mb-6">
                           <div className="flex items-baseline gap-1">
                             <span className="text-5xl font-bold">{formatPrice(plan.price_cents)}</span>
@@ -247,9 +246,7 @@ export default function Pricing() {
             {/* Board Add-ons Section */}
             <div className="mt-20">
               <div className="text-center mb-10">
-                <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                  Need More Boards?
-                </h2>
+                <h2 className="text-2xl md:text-3xl font-bold mb-3">Need More Boards?</h2>
                 <p className="text-muted-foreground max-w-xl mx-auto">
                   Expand your workspace with board add-ons. Each add-on includes extra storage.
                 </p>
@@ -260,19 +257,14 @@ export default function Pricing() {
                   <div key={addon.id} className="premium-card-wrapper">
                     <div className="premium-card-gradient" />
                     <div className="premium-card-content p-5 text-center">
-                      <div className="text-3xl font-bold text-accent mb-1">
-                        +{addon.boards}
-                      </div>
+                      <div className="text-3xl font-bold text-accent mb-1">+{addon.boards}</div>
                       <div className="text-sm text-muted-foreground mb-3">boards</div>
-                      
+
                       <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-4">
-                        <HardDrive className="h-3 w-3" />
-                        +{formatStorage(addon.storage_mb)}
+                        <HardDrive className="h-3 w-3" />+{formatStorage(addon.storage_mb)}
                       </div>
 
-                      <div className="text-2xl font-bold mb-3">
-                        {formatPrice(addon.price_cents)}
-                      </div>
+                      <div className="text-2xl font-bold mb-3">{formatPrice(addon.price_cents)}</div>
 
                       <Button
                         variant="pill-outline"
@@ -300,9 +292,9 @@ export default function Pricing() {
                     <div>
                       <h3 className="font-semibold mb-2">About Storage</h3>
                       <p className="text-sm text-muted-foreground">
-                        Your storage quota covers all your data including messages, block configurations, 
-                        system prompts, and any files you upload. Storage usage is calculated in real-time 
-                        and displayed in your dashboard.
+                        Your storage quota covers all your data including messages, block configurations, system
+                        prompts, and any files you upload. Storage usage is calculated in real-time and displayed in
+                        your dashboard.
                       </p>
                     </div>
                   </div>
