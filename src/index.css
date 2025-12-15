@@ -994,3 +994,322 @@
     transform: translateY(-6px) rotate(3deg);
   }
 }
+
+/* ============================================================
+   3D CUBE ICON STYLES
+   For the main icon with true 3D depth effect
+   ============================================================ */
+
+.feature-3d-main-icon-3d {
+  position: relative;
+  z-index: 10;
+  perspective: 300px;
+  width: clamp(64px, 8vw, 80px);
+  height: clamp(64px, 8vw, 80px);
+}
+
+.feature-3d-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: cube3dRotate 8s ease-in-out infinite;
+}
+
+.feature-3d-cube-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  backface-visibility: hidden;
+}
+
+.feature-3d-cube-front {
+  background: linear-gradient(
+    135deg,
+    hsl(0 0% 16% / 0.98),
+    hsl(0 0% 10% / 1)
+  );
+  border: 1px solid hsl(0 0% 100% / 0.12);
+  box-shadow: 
+    0 8px 32px -4px hsl(0 0% 0% / 0.5),
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.1),
+    inset 0 -2px 8px 0 hsl(0 0% 0% / 0.2);
+  transform: translateZ(8px);
+}
+
+.feature-3d-cube-back {
+  background: hsl(0 0% 8%);
+  transform: translateZ(-8px);
+}
+
+.feature-3d-cube-top {
+  height: 16px;
+  background: linear-gradient(180deg, hsl(0 0% 20%), hsl(0 0% 12%));
+  border-radius: 1rem 1rem 0 0;
+  transform: rotateX(90deg) translateZ(8px);
+}
+
+.feature-3d-cube-bottom {
+  height: 16px;
+  background: hsl(0 0% 6%);
+  border-radius: 0 0 1rem 1rem;
+  transform: rotateX(-90deg) translateZ(calc(100% - 8px));
+}
+
+.feature-3d-cube-left {
+  width: 16px;
+  background: linear-gradient(90deg, hsl(0 0% 10%), hsl(0 0% 14%));
+  border-radius: 1rem 0 0 1rem;
+  transform: rotateY(-90deg) translateZ(8px);
+}
+
+.feature-3d-cube-right {
+  width: 16px;
+  background: linear-gradient(90deg, hsl(0 0% 14%), hsl(0 0% 8%));
+  border-radius: 0 1rem 1rem 0;
+  transform: rotateY(90deg) translateZ(calc(100% - 8px));
+}
+
+@keyframes cube3dRotate {
+  0%, 100% {
+    transform: rotateX(5deg) rotateY(-5deg);
+  }
+  25% {
+    transform: rotateX(-3deg) rotateY(5deg);
+  }
+  50% {
+    transform: rotateX(-5deg) rotateY(3deg);
+  }
+  75% {
+    transform: rotateX(3deg) rotateY(-3deg);
+  }
+}
+
+/* ============================================================
+   ORBITING AI LOGOS
+   4 logos orbiting the main icon with staggered positions
+   ============================================================ */
+
+.feature-3d-orbit-logo-1 {
+  width: 140%;
+  height: 140%;
+  animation: orbit 10s linear infinite;
+}
+
+.feature-3d-orbit-logo-2 {
+  width: 140%;
+  height: 140%;
+  animation: orbit 10s linear infinite;
+  animation-delay: -2.5s;
+}
+
+.feature-3d-orbit-logo-3 {
+  width: 140%;
+  height: 140%;
+  animation: orbit 10s linear infinite;
+  animation-delay: -5s;
+}
+
+.feature-3d-orbit-logo-4 {
+  width: 140%;
+  height: 140%;
+  animation: orbit 10s linear infinite;
+  animation-delay: -7.5s;
+}
+
+.feature-3d-logo-satellite {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  width: clamp(32px, 4vw, 40px);
+  height: clamp(32px, 4vw, 40px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  backdrop-blur: 8px;
+  box-shadow: 
+    0 4px 16px -2px hsl(0 0% 0% / 0.5),
+    inset 0 1px 0 hsl(0 0% 100% / 0.05);
+  animation: counter-orbit 10s linear infinite;
+}
+
+.feature-3d-orbit-logo-2 .feature-3d-logo-satellite {
+  animation-delay: -2.5s;
+}
+
+.feature-3d-orbit-logo-3 .feature-3d-logo-satellite {
+  animation-delay: -5s;
+}
+
+.feature-3d-orbit-logo-4 .feature-3d-logo-satellite {
+  animation-delay: -7.5s;
+}
+
+/* ============================================================
+   CONNECTED BLOCKS STYLES
+   Two AI blocks with animated connection line
+   ============================================================ */
+
+.feature-3d-blocks-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+  padding: clamp(8px, 1vw, 12px);
+}
+
+.feature-3d-block-wrapper {
+  position: relative;
+  z-index: 5;
+  animation: blockHover 4s ease-in-out infinite;
+}
+
+.feature-3d-block-left {
+  animation-delay: 0s;
+}
+
+.feature-3d-block-right {
+  animation-delay: 2s;
+}
+
+@keyframes blockHover {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.feature-3d-block-connection {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  height: 40px;
+  z-index: 1;
+}
+
+.feature-3d-flow-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: flowLineDraw 2.5s ease-in-out infinite;
+}
+
+@keyframes flowLineDraw {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0.3;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -100;
+    opacity: 0.3;
+  }
+}
+
+.feature-3d-zap-pulse {
+  animation: zapGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes zapGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px hsl(var(--accent)));
+    opacity: 0.8;
+  }
+  50% {
+    filter: drop-shadow(0 0 12px hsl(var(--accent)));
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   SINGLE BLOCK ON CANVAS
+   Centered floating block with dot decorations
+   ============================================================ */
+
+.feature-3d-single-block {
+  position: relative;
+  z-index: 10;
+  animation: singleBlockFloat 5s ease-in-out infinite;
+}
+
+@keyframes singleBlockFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+.feature-3d-canvas-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(var(--muted-foreground) / 0.4);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.feature-3d-canvas-dot-1 {
+  top: 15%;
+  left: 20%;
+  animation: dotPulse 3s ease-in-out infinite;
+}
+
+.feature-3d-canvas-dot-2 {
+  top: 25%;
+  right: 15%;
+  width: 10px;
+  height: 10px;
+  animation: dotPulse 3s ease-in-out infinite 1s;
+}
+
+.feature-3d-canvas-dot-3 {
+  bottom: 20%;
+  right: 25%;
+  width: 6px;
+  height: 6px;
+  animation: dotPulse 3s ease-in-out infinite 2s;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.2);
+  }
+}
+
+/* Reduced motion support for new animations */
+@media (prefers-reduced-motion: reduce) {
+  .feature-3d-cube,
+  .feature-3d-orbit-logo-1,
+  .feature-3d-orbit-logo-2,
+  .feature-3d-orbit-logo-3,
+  .feature-3d-orbit-logo-4,
+  .feature-3d-logo-satellite,
+  .feature-3d-block-wrapper,
+  .feature-3d-flow-line,
+  .feature-3d-zap-pulse,
+  .feature-3d-single-block,
+  .feature-3d-canvas-dot {
+    animation: none !important;
+  }
+}
