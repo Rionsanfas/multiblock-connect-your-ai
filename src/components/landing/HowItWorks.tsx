@@ -1,23 +1,20 @@
-import { Plus, MessageCircle, Link } from "lucide-react";
+import HowItWorks3DIcon from "./HowItWorks3DIcon";
 
 const steps = [
   {
-    number: "01",
-    icon: Plus,
+    iconType: "add" as const,
     title: "Add Blocks",
     description:
       "Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, Mistral, and more.",
   },
   {
-    number: "02",
-    icon: MessageCircle,
+    iconType: "chat" as const,
     title: "Chat with Models",
     description:
       "Interact with each model independently. Compare responses, iterate on prompts, and find the best output.",
   },
   {
-    number: "03",
-    icon: Link,
+    iconType: "connect" as const,
     title: "Connect Them",
     description: "Draw connections between blocks. One model's output becomes another's input—automatically.",
   },
@@ -30,7 +27,7 @@ const HowItWorks = () => {
       className="relative"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
-      {/* Background blur effect - scales with viewport */}
+      {/* Background blur effect */}
       <div
         className="gradient-blur bg-accent/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute"
         style={{
@@ -67,7 +64,7 @@ const HowItWorks = () => {
           </p>
         </div>
 
-        {/* Steps - responsive grid with auto-fit */}
+        {/* Steps - responsive grid */}
         <div className="max-w-4xl mx-auto">
           <div
             className="grid align-start"
@@ -77,31 +74,23 @@ const HowItWorks = () => {
             }}
           >
             {steps.map((step, index) => (
-              <div key={step.number} className="relative">
-                {/* Connector Line (visible on wider screens when cards are in a row) */}
+              <div key={step.title} className="relative">
+                {/* Connector Line (visible on wider screens) */}
                 {index < steps.length - 1 && (
                   <div className="hidden lg:block absolute top-8 left-1/2 w-full h-0.5 bg-gradient-to-r from-border to-transparent" />
                 )}
 
                 <div className="glass-card-hover text-center relative" style={{ padding: "clamp(20px, 3vw, 24px)" }}>
-                  {/* Number Badge */}
-                  <div className="step-number mx-auto" style={{ marginBottom: "clamp(16px, 2.5vw, 24px)" }}>
-                    {step.number}
-                  </div>
-
-                  {/* Icon */}
+                  {/* 3D Icon Container */}
                   <div
-                    className="rounded-xl bg-secondary/50 border border-border flex items-center justify-center mx-auto"
+                    className="rounded-xl bg-secondary/50 border border-border flex items-center justify-center mx-auto overflow-hidden"
                     style={{
-                      width: "clamp(48px, 6vw, 56px)",
-                      height: "clamp(48px, 6vw, 56px)",
-                      marginBottom: "clamp(12px, 2vw, 16px)",
+                      width: "clamp(100px, 15vw, 140px)",
+                      height: "clamp(80px, 12vw, 110px)",
+                      marginBottom: "clamp(16px, 2.5vw, 24px)",
                     }}
                   >
-                    <step.icon
-                      className="text-foreground"
-                      style={{ width: "clamp(18px, 2.5vw, 24px)", height: "clamp(18px, 2.5vw, 24px)" }}
-                    />
+                    <HowItWorks3DIcon type={step.iconType} />
                   </div>
 
                   <h3

@@ -1385,7 +1385,262 @@
   }
 }
 
-/* Reduced motion support for new animations */
+/* ============================================================
+   HOW IT WORKS 3D ICONS
+   Animated icons for the How It Works section
+   ============================================================ */
+
+/* Card 1: Add Blocks - Plus icon with appearing block */
+.hiw-3d-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hiw-plus-icon-wrapper {
+  position: relative;
+  z-index: 10;
+  animation: hiwPlusPulse 2s ease-in-out infinite;
+}
+
+.hiw-plus-icon {
+  width: clamp(32px, 5vw, 48px);
+  height: clamp(32px, 5vw, 48px);
+  color: hsl(var(--foreground));
+  filter: drop-shadow(0 0 12px hsl(var(--accent) / 0.6));
+}
+
+@keyframes hiwPlusPulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 8px hsl(var(--accent) / 0.4));
+  }
+  50% {
+    transform: scale(1.15) rotate(90deg);
+    filter: drop-shadow(0 0 20px hsl(var(--accent) / 0.8));
+  }
+}
+
+.hiw-block-appearing {
+  position: absolute;
+  right: 8%;
+  bottom: 15%;
+  animation: hiwBlockAppear 3s ease-in-out infinite;
+}
+
+@keyframes hiwBlockAppear {
+  0%, 10% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5);
+  }
+  30%, 70% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  90%, 100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.8);
+  }
+}
+
+.hiw-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: hsl(var(--accent));
+}
+
+.hiw-particle-1 {
+  top: 20%;
+  left: 25%;
+  animation: hiwParticleFloat 2.5s ease-in-out infinite;
+}
+
+.hiw-particle-2 {
+  top: 35%;
+  right: 20%;
+  animation: hiwParticleFloat 2.5s ease-in-out infinite 0.5s;
+}
+
+.hiw-particle-3 {
+  bottom: 25%;
+  left: 30%;
+  animation: hiwParticleFloat 2.5s ease-in-out infinite 1s;
+}
+
+@keyframes hiwParticleFloat {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1.5);
+  }
+}
+
+/* Card 2: Chat - Text highlight animation */
+.hiw-3d-container-chat {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 8%;
+  overflow: hidden;
+}
+
+.hiw-chat-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 5;
+}
+
+.hiw-chat-line {
+  font-size: clamp(8px, 1.2vw, 11px);
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+
+.hiw-chat-line-1 .hiw-highlight-text {
+  animation: hiwTextHighlight 4s ease-in-out infinite;
+}
+
+.hiw-chat-line-2 .hiw-highlight-text {
+  animation: hiwTextHighlight 4s ease-in-out infinite 1.3s;
+}
+
+.hiw-chat-line-3 .hiw-highlight-text {
+  animation: hiwTextHighlight 4s ease-in-out infinite 2.6s;
+}
+
+@keyframes hiwTextHighlight {
+  0%, 20%, 100% {
+    color: hsl(var(--muted-foreground));
+    text-shadow: none;
+    background: transparent;
+  }
+  30%, 50% {
+    color: hsl(var(--foreground));
+    text-shadow: 0 0 12px hsl(var(--accent) / 0.6);
+    background: linear-gradient(90deg, hsl(var(--accent) / 0.2), transparent);
+  }
+}
+
+.hiw-chat-glow {
+  position: absolute;
+  right: -20%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 60%;
+  height: 80%;
+  background: radial-gradient(ellipse at center, hsl(var(--accent) / 0.15), transparent 70%);
+  animation: hiwChatGlow 3s ease-in-out infinite;
+}
+
+@keyframes hiwChatGlow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Card 3: Connect - Animated chain with glow */
+.hiw-3d-container-connect {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hiw-chain-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+.hiw-chain-icon {
+  width: clamp(28px, 4vw, 40px);
+  height: clamp(28px, 4vw, 40px);
+  color: hsl(var(--foreground));
+  animation: hiwChainPulse 2.5s ease-in-out infinite;
+}
+
+.hiw-chain-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(circle, hsl(var(--accent) / 0.6), transparent 60%);
+  border-radius: 50%;
+  animation: hiwChainGlow 2.5s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes hiwChainPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes hiwChainGlow {
+  0%, 100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+.hiw-connection-lines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.hiw-connection-path {
+  stroke: hsl(var(--accent) / 0.5);
+  stroke-dasharray: 150;
+  stroke-dashoffset: 150;
+  animation: hiwConnectionDraw 3s ease-in-out infinite;
+}
+
+@keyframes hiwConnectionDraw {
+  0% {
+    stroke-dashoffset: 150;
+    opacity: 0.2;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: -150;
+    opacity: 0.2;
+  }
+}
+
+/* Reduced motion support for all animations */
 @media (prefers-reduced-motion: reduce) {
   .feature-3d-cube,
   .feature-3d-orbit-ring,
@@ -1397,7 +1652,15 @@
   .feature-3d-zap-pulse,
   .feature-3d-single-block,
   .feature-3d-single-block-large,
-  .feature-3d-canvas-dot {
+  .feature-3d-canvas-dot,
+  .hiw-plus-icon-wrapper,
+  .hiw-block-appearing,
+  .hiw-particle,
+  .hiw-highlight-text,
+  .hiw-chat-glow,
+  .hiw-chain-icon,
+  .hiw-chain-glow,
+  .hiw-connection-path {
     animation: none !important;
   }
 }
