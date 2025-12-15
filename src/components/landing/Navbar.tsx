@@ -28,11 +28,11 @@ const Navbar = () => {
     { label: "FAQ", href: "#faq" },
   ];
 
-  // Text color: use contrasting color when background is hidden (white text against hero)
-  const textColor = isAtTop ? "text-muted-foreground" : "text-white";
-  const textHoverColor = isAtTop ? "hover:text-foreground" : "hover:text-white/80";
-  const logoColor = isAtTop ? "text-foreground" : "text-white";
-  const menuIconColor = isAtTop ? "text-foreground" : "text-white";
+  // Text color: consistent since background is always semi-transparent
+  const textColor = "text-muted-foreground";
+  const textHoverColor = "hover:text-foreground";
+  const logoColor = "text-foreground";
+  const menuIconColor = "text-foreground";
 
   return (
     <nav
@@ -41,8 +41,8 @@ const Navbar = () => {
         "transition-all duration-300 ease-[cubic-bezier(0.2,0.9,0.2,1)]",
         "motion-reduce:transition-none",
         isAtTop
-          ? "bg-background/80 backdrop-blur-md border-b border-border/50"
-          : "bg-transparent border-b border-transparent"
+          ? "bg-background/50 backdrop-blur-md border-b border-border/50"
+          : "bg-background/50 backdrop-blur-md border-b border-border/30"
       )}
     >
       {/* 
