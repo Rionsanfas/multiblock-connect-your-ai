@@ -1741,12 +1741,12 @@
 }
 
 .hiw-letter {
-  color: hsl(var(--foreground) / 0.08);
-  transition: color 0.2s ease, text-shadow 0.2s ease;
+  color: hsl(var(--foreground) / 0.12);
+  transition: color 0.15s ease-out, text-shadow 0.15s ease-out;
 }
 
 .hiw-letter-active {
-  color: hsl(var(--foreground) / 0.9);
+  color: hsl(var(--accent));
   text-shadow: 0 0 30px hsl(var(--accent) / 0.5);
 }
 
