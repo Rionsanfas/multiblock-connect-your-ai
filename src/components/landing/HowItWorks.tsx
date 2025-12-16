@@ -1,10 +1,47 @@
 import { Plus, Link } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+
+const LetterHighlight = ({ text }: { text: string }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.5 }
+    );
+    if (containerRef.current) observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % (text.length + 3));
+    }, 150);
+    return () => clearInterval(interval);
+  }, [isVisible, text.length]);
+
+  return (
+    <div ref={containerRef} className="hiw-letter-highlight-container">
+      {text.split("").map((letter, i) => (
+        <span
+          key={i}
+          className={`hiw-letter ${i <= activeIndex && activeIndex < text.length ? "hiw-letter-active" : ""}`}
+        >
+          {letter}
+        </span>
+      ))}
+    </div>
+  );
+};
 
 const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="relative"
+      className="relative dot-grid-bg"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
       {/* Background blur effect */}
@@ -47,52 +84,57 @@ const HowItWorks = () => {
         {/* Bento Grid */}
         <div className="hiw-bento-grid max-w-4xl mx-auto">
           {/* Card 1 - Add Blocks (Tall left card) */}
-          <div className="hiw-bento-card hiw-bento-tall">
-            {/* 3D Plus Icon */}
-            <div className="hiw-3d-icon-wrapper">
-              <div className="hiw-3d-plus">
-                <Plus className="hiw-3d-plus-icon" strokeWidth={3} />
+          <div className="hiw-bento-card hiw-bento-tall hiw-card-3d hiw-card-3d-left">
+            <div className="hiw-card-3d-inner">
+              {/* 3D Plus Icon */}
+              <div className="hiw-3d-icon-wrapper">
+                <div className="hiw-3d-plus">
+                  <Plus className="hiw-3d-plus-icon" strokeWidth={3} />
+                </div>
               </div>
-            </div>
-            
-            <div className="hiw-bento-content">
-              <h3 className="hiw-bento-title">Add Blocks</h3>
-              <p className="hiw-bento-desc">
-                Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, and more.
-              </p>
+              
+              <div className="hiw-bento-content">
+                <h3 className="hiw-bento-title">Add Blocks</h3>
+                <p className="hiw-bento-desc">
+                  Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, and more.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Card 2 - Chat (Top right, wide) */}
-          <div className="hiw-bento-card hiw-bento-wide">
-            {/* Overflow text effect */}
-            <div className="hiw-overflow-text">
-              <span className="hiw-text-large">Compa</span>
-              <span className="hiw-text-large hiw-text-fade">re</span>
-            </div>
-            
-            <div className="hiw-bento-content hiw-content-bottom">
-              <h3 className="hiw-bento-title">Chat with Models</h3>
-              <p className="hiw-bento-desc">
-                Interact with each model independently. Compare responses in real-time.
-              </p>
+          <div className="hiw-bento-card hiw-bento-wide hiw-card-3d hiw-card-3d-right">
+            <div className="hiw-card-3d-inner">
+              {/* Sequential letter highlight text */}
+              <div className="hiw-overflow-text-new">
+                <LetterHighlight text="Compare" />
+              </div>
+              
+              <div className="hiw-bento-content hiw-content-bottom">
+                <h3 className="hiw-bento-title">Chat with Models</h3>
+                <p className="hiw-bento-desc">
+                  Interact with each model independently. Compare responses in real-time.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Card 3 - Connect (Bottom right, square) */}
-          <div className="hiw-bento-card hiw-bento-square">
-            {/* 3D Link Icon */}
-            <div className="hiw-3d-icon-wrapper">
-              <div className="hiw-3d-link">
-                <Link className="hiw-3d-link-icon" strokeWidth={2.5} />
+          <div className="hiw-bento-card hiw-bento-square hiw-card-3d hiw-card-3d-right">
+            <div className="hiw-card-3d-inner">
+              {/* 3D Link Icon */}
+              <div className="hiw-3d-icon-wrapper">
+                <div className="hiw-3d-link">
+                  <Link className="hiw-3d-link-icon" strokeWidth={2.5} />
+                </div>
               </div>
-            </div>
-            
-            <div className="hiw-bento-content">
-              <h3 className="hiw-bento-title">Connect Them</h3>
-              <p className="hiw-bento-desc">
-                Draw connections between blocks. One model's output becomes another's input.
-              </p>
+              
+              <div className="hiw-bento-content">
+                <h3 className="hiw-bento-title">Connect Them</h3>
+                <p className="hiw-bento-desc">
+                  Draw connections between blocks. One model's output becomes another's input.
+                </p>
+              </div>
             </div>
           </div>
         </div>
