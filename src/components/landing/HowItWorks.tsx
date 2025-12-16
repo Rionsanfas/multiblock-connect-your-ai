@@ -2,37 +2,66 @@ import { Plus, Link } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const LetterHighlight = ({ text }: { text: string }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { threshold: 0.5 }
-    );
-    if (containerRef.current) observer.observe(containerRef.current);
-    return () => observer.disconnect();
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      // Calculate how much of the element is visible
+      // Start highlighting when element enters bottom of viewport
+      // Complete when element reaches top third of viewport
+      const startPoint = windowHeight;
+      const endPoint = windowHeight * 0.3;
+      
+      const elementCenter = rect.top + rect.height / 2;
+      
+      if (elementCenter >= startPoint) {
+        setProgress(0);
+      } else if (elementCenter <= endPoint) {
+        setProgress(1);
+      } else {
+        const scrollProgress = (startPoint - elementCenter) / (startPoint - endPoint);
+        setProgress(Math.max(0, Math.min(1, scrollProgress)));
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Initial check
+    
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    if (!isVisible) return;
-    const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % (text.length + 3));
-    }, 150);
-    return () => clearInterval(interval);
-  }, [isVisible, text.length]);
+  // Calculate which letters should be highlighted based on progress
+  const highlightedCount = progress * text.length;
 
   return (
     <div ref={containerRef} className="hiw-letter-highlight-container">
-      {text.split("").map((letter, i) => (
-        <span
-          key={i}
-          className={`hiw-letter ${i <= activeIndex && activeIndex < text.length ? "hiw-letter-active" : ""}`}
-        >
-          {letter}
-        </span>
-      ))}
+      {text.split("").map((letter, i) => {
+        // Calculate opacity for each letter (allows partial highlighting)
+        const letterProgress = Math.max(0, Math.min(1, highlightedCount - i));
+        
+        return (
+          <span
+            key={i}
+            className="hiw-letter"
+            style={{
+              color: letterProgress > 0 
+                ? `hsl(30 30% ${35 + letterProgress * 25}%)` 
+                : undefined,
+              textShadow: letterProgress > 0.5 
+                ? `0 0 ${25 * letterProgress}px hsl(30 30% 50% / ${0.5 * letterProgress})` 
+                : undefined,
+            }}
+          >
+            {letter}
+          </span>
+        );
+      })}
     </div>
   );
 };
