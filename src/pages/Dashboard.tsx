@@ -109,13 +109,13 @@ export default function Dashboard() {
                 onClick={() => setViewMode("grid")}
                 className={`p-2.5 rounded-lg transition-all duration-300 ${viewMode === "grid" ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground shadow-[0_0_12px_hsl(40,70%,50%/0.5)] bg-[length:200%_100%] animate-[goldShimmer_2s_ease-in-out_infinite]" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <LayoutGrid className="h-4 w-4" />
+                <LayoutGrid className="h-4 w-4 icon-3d" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
                 className={`p-2.5 rounded-lg transition-all duration-300 ${viewMode === "list" ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground shadow-[0_0_12px_hsl(40,70%,50%/0.5)] bg-[length:200%_100%] animate-[goldShimmer_2s_ease-in-out_infinite]" : "text-muted-foreground hover:text-foreground"}`}
               >
-                <List className="h-4 w-4" />
+                <List className="h-4 w-4 icon-3d" />
               </button>
             </div>
           </div>
@@ -194,15 +194,6 @@ function BoardCard({
           <span>•</span>
           <span>{new Date(board.updated_at).toLocaleDateString()}</span>
         </div>
-        {board.metadata.tags && viewMode === "grid" && (
-          <div className="flex gap-2 mt-3">
-            {board.metadata.tags.map((tag) => (
-              <span key={tag} className="px-2 py-1 text-xs bg-secondary rounded-full">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       <DropdownMenu>

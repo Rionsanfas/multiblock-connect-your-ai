@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Settings,
-  Play,
   ZoomIn,
   ZoomOut,
   BarChart3,
@@ -155,14 +154,10 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
         {showBoardControls && (
           <>
             <button className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
-              <BarChart3 className="h-4 w-4" />
+              <BarChart3 className="h-4 w-4 icon-3d" />
             </button>
             <button className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
-              <Settings className="h-4 w-4" />
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl btn-3d-shiny text-foreground font-medium ml-2">
-              <Play className="h-4 w-4" />
-              Run All
+              <Settings className="h-4 w-4 icon-3d" />
             </button>
           </>
         )}
