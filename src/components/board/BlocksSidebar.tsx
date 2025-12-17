@@ -44,7 +44,7 @@ export function BlocksSidebar({ boardId }: BlocksSidebarProps) {
       <div className="p-4 border-b border-border/10">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button className="w-full gap-2 btn-3d-primary text-foreground font-medium rounded-xl py-3">
+            <Button className="w-full gap-2 btn-3d-shiny text-foreground font-medium rounded-xl py-3">
               <Plus className="h-4 w-4" />
               New Block
               <ChevronDown className="h-4 w-4 ml-auto" />

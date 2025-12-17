@@ -70,12 +70,12 @@ export default function ApiKeys() {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold">API Keys</h1>
             <p className="text-muted-foreground">Manage your AI provider API keys</p>
           </div>
-          <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
+          <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl">
             <Plus className="h-4 w-4" />
             Add Key
           </Button>
@@ -87,7 +87,7 @@ export default function ApiKeys() {
             title="No API keys configured"
             description="Add your AI provider API keys to start using the app"
             action={
-              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
+              <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl">
                 <Plus className="h-4 w-4" />
                 Add Your First Key
               </Button>
@@ -96,11 +96,11 @@ export default function ApiKeys() {
         ) : (
           <div className="space-y-4">
             {apiKeys.map((key) => (
-              <GlassCard key={key.id} variant="hover" className="p-4">
+              <GlassCard key={key.id} variant="soft" className="p-5 rounded-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div
-                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
                       style={{
                         backgroundColor: `${MODEL_PROVIDERS[key.provider as keyof typeof MODEL_PROVIDERS]?.color || "hsl(0 0% 60%)"}20`,
                       }}
@@ -110,32 +110,37 @@ export default function ApiKeys() {
                       }} />
                     </div>
                     <div>
-                      <h3 className="font-medium capitalize">{key.provider}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{showKeys[key.id] ? key.key_masked : "••••••••••••"}</span>
-                        <button onClick={() => toggleShowKey(key.id)}>
+                      <h3 className="font-semibold capitalize text-lg">{key.provider}</h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <span className="font-mono">{showKeys[key.id] ? key.key_masked : "••••••••••••"}</span>
+                        <button 
+                          onClick={() => toggleShowKey(key.id)}
+                          className="p-1 rounded-lg hover:bg-secondary/50 transition-colors"
+                        >
                           {showKeys[key.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </button>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${key.is_valid ? "bg-green-500/20 text-green-400" : "bg-yellow-500/20 text-yellow-400"}`}>
+                    <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+                      key.is_valid 
+                        ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+                        : "gold-shine text-foreground"
+                    }`}>
                       {key.is_valid ? "Valid" : "Unverified"}
                     </span>
                     {key.client_only && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-secondary text-muted-foreground">
+                      <span className="text-xs px-3 py-1.5 rounded-full bg-secondary/60 text-muted-foreground border border-border/20">
                         Client-only
                       </span>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <button
                       onClick={() => setDeleteId(key.id)}
-                      className="text-destructive hover:text-destructive"
+                      className="p-2.5 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </GlassCard>
@@ -146,38 +151,44 @@ export default function ApiKeys() {
 
       {/* Add Key Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20 rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Add API Key</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">Add API Key</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-5 py-4">
             <div className="space-y-2">
-              <Label>Provider</Label>
+              <Label className="text-sm font-medium">Provider</Label>
               <Select value={newKey.provider} onValueChange={(v) => setNewKey({ ...newKey, provider: v })}>
-                <SelectTrigger className="bg-secondary/50">
+                <SelectTrigger className="bg-secondary/40 border-border/20 rounded-xl h-12">
                   <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border">
+                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/20 rounded-xl">
                   {Object.entries(MODEL_PROVIDERS).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>{value.name}</SelectItem>
+                    <SelectItem 
+                      key={key} 
+                      value={key}
+                      className="rounded-lg focus:bg-[hsl(var(--accent))] focus:text-foreground"
+                    >
+                      {value.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>API Key</Label>
+              <Label className="text-sm font-medium">API Key</Label>
               <Input
                 type="password"
                 value={newKey.key}
                 onChange={(e) => setNewKey({ ...newKey, key: e.target.value })}
                 placeholder="sk-..."
-                className="bg-secondary/50"
+                className="bg-secondary/40 border-border/20 rounded-xl h-12"
               />
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/30">
               <div>
-                <Label>Client-only mode</Label>
-                <p className="text-xs text-muted-foreground">Store key in browser only</p>
+                <Label className="text-sm font-medium">Client-only mode</Label>
+                <p className="text-xs text-muted-foreground mt-1">Store key in browser only</p>
               </div>
               <Switch
                 checked={newKey.clientOnly}
@@ -185,18 +196,31 @@ export default function ApiKeys() {
               />
             </div>
             {testResult && (
-              <div className={`p-3 rounded-lg flex items-center gap-2 ${testResult.valid ? "bg-green-500/20 text-green-400" : "bg-destructive/20 text-destructive"}`}>
-                {testResult.valid ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-                {testResult.valid ? "API key is valid!" : testResult.error}
+              <div className={`p-4 rounded-xl flex items-center gap-3 ${
+                testResult.valid 
+                  ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+                  : "bg-destructive/20 text-destructive border border-destructive/30"
+              }`}>
+                {testResult.valid ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
+                <span className="font-medium">{testResult.valid ? "API key is valid!" : testResult.error}</span>
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleTest} disabled={!newKey.provider || !newKey.key || isTesting}>
+          <DialogFooter className="gap-3">
+            <Button 
+              variant="outline" 
+              onClick={handleTest} 
+              disabled={!newKey.provider || !newKey.key || isTesting}
+              className="rounded-xl btn-3d"
+            >
               {isTesting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Test Key
             </Button>
-            <Button onClick={handleAdd} disabled={!newKey.provider || !newKey.key}>
+            <Button 
+              onClick={handleAdd} 
+              disabled={!newKey.provider || !newKey.key}
+              className="rounded-xl btn-3d-shiny text-foreground font-medium"
+            >
               Add Key
             </Button>
           </DialogFooter>

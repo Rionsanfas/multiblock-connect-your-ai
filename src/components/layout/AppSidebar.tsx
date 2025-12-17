@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/tooltip";
 
 const navItems = [
-  { icon: Layers, label: "Boards", href: "/dashboard" },
-  { icon: Key, label: "API Keys", href: "/settings/keys" },
-  { icon: CreditCard, label: "Pricing", href: "/pricing" },
-  { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: Layers, label: "Boards", href: "/dashboard", showAlways: true },
+  { icon: Key, label: "API Keys", href: "/settings/keys", showAlways: true },
+  { icon: CreditCard, label: "Pricing", href: "/pricing", showForFreePlanOnly: true },
+  { icon: Settings, label: "Settings", href: "/settings", showAlways: true },
 ];
 
 export function AppSidebar() {
@@ -80,6 +80,11 @@ export function AppSidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-2 space-y-1">
         {navItems.map((item) => {
+          // Show based on plan conditions
+          const isFreePlan = user?.plan?.toLowerCase() === 'free';
+          if (item.showForFreePlanOnly && !isFreePlan) return null;
+          if (!item.showAlways && !item.showForFreePlanOnly) return null;
+          
           const isActive = location.pathname === item.href;
           const NavItem = (
             <Link

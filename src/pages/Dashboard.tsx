@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Download, Trash2, FolderOpen } from "lucide-react";
+import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ export default function Dashboard() {
   return (
     <DashboardLayout>
       <div className="flex h-full">
-        {/* Main Content */}
+      {/* Main Content */}
         <div className="flex-1 p-6 overflow-auto">
           {/* Usage Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -77,7 +77,7 @@ export default function Dashboard() {
               limitMb={user.storage_limit_mb}
             />
             <GlassCard className="p-5 flex flex-col justify-center">
-              <Button onClick={handleCreateBoard} className="gap-2 w-full btn-3d-primary text-foreground font-medium rounded-xl py-3">
+              <Button onClick={handleCreateBoard} className="gap-2 w-full btn-3d-shiny text-foreground font-medium rounded-xl py-3">
                 <Plus className="h-4 w-4" />
                 New Board
               </Button>
@@ -107,13 +107,13 @@ export default function Dashboard() {
             <div className="flex items-center gap-1 bg-secondary/30 rounded-xl p-1 btn-3d">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "grid" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_2px_8px_hsl(var(--accent)/0.3)]" : "text-muted-foreground hover:text-foreground"}`}
+                className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "grid" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_0_12px_hsl(var(--accent)/0.4)]" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "list" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_2px_8px_hsl(var(--accent)/0.3)]" : "text-muted-foreground hover:text-foreground"}`}
+                className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "list" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_0_12px_hsl(var(--accent)/0.4)]" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <List className="h-4 w-4" />
               </button>
@@ -127,7 +127,7 @@ export default function Dashboard() {
               title="No boards yet"
               description="Create your first board to start building AI workflows"
               action={
-                <Button onClick={handleCreateBoard} className="gap-2 btn-3d-primary text-foreground font-medium rounded-xl">
+                <Button onClick={handleCreateBoard} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl">
                   <Plus className="h-4 w-4" />
                   Create Board
                 </Button>
@@ -148,40 +148,6 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Right Cover/Panel */}
-        <div className="hidden lg:block w-80 border-l border-border/10 bg-card/30 backdrop-blur-xl p-5">
-          <div className="rounded-2xl bg-secondary/30 p-5 mb-4">
-            <h3 className="font-semibold mb-2">Quick Stats</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Boards</span>
-                <span className="font-medium">{boards.length}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Blocks</span>
-                <span className="font-medium">{blocks.length}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Plan</span>
-                <span className="font-medium text-[hsl(var(--accent))]">{user.plan}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="rounded-2xl bg-secondary/30 p-5">
-            <h3 className="font-semibold mb-2">Recent Activity</h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              {boards.slice(0, 3).map((board) => (
-                <div key={board.id} className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[hsl(var(--accent))]" />
-                  <span className="truncate">{board.title}</span>
-                </div>
-              ))}
-              {boards.length === 0 && <p>No recent activity</p>}
-            </div>
-          </div>
         </div>
       </div>
 
@@ -249,10 +215,6 @@ function BoardCard({
           <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDuplicate(); }}>
             <Copy className="h-4 w-4 mr-2" />
             Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); }}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
