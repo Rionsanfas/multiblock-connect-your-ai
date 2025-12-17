@@ -113,7 +113,7 @@ const HowItWorks = () => {
         {/* Bento Grid */}
         <div className="hiw-bento-grid max-w-4xl mx-auto">
           {/* Card 1 - Add Blocks (Tall left card) */}
-          <div className="hiw-bento-card hiw-bento-tall hiw-card-3d hiw-card-3d-left">
+          <div className="hiw-bento-card hiw-bento-tall hiw-card-3d hiw-card-3d-left dot-grid-card">
             <div className="hiw-card-3d-inner">
               {/* 3D Plus Icon */}
               <div className="hiw-3d-icon-wrapper">
@@ -132,7 +132,7 @@ const HowItWorks = () => {
           </div>
 
           {/* Card 2 - Chat (Top right, wide) */}
-          <div className="hiw-bento-card hiw-bento-wide hiw-card-3d hiw-card-3d-right">
+          <div className="hiw-bento-card hiw-bento-wide hiw-card-3d hiw-card-3d-right dot-grid-card">
             <div className="hiw-card-3d-inner">
               {/* Sequential letter highlight text */}
               <div className="hiw-overflow-text-new">
@@ -149,7 +149,7 @@ const HowItWorks = () => {
           </div>
 
           {/* Card 3 - Connect (Bottom right, square) */}
-          <div className="hiw-bento-card hiw-bento-square hiw-card-3d hiw-card-3d-right">
+          <div className="hiw-bento-card hiw-bento-square hiw-card-3d hiw-card-3d-right dot-grid-card">
             <div className="hiw-card-3d-inner">
               {/* 3D Link Icon */}
               <div className="hiw-3d-icon-wrapper">

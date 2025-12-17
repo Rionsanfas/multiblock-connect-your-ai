@@ -47,7 +47,7 @@ const FAQ = () => {
   return (
     <section
       id="faq"
-      className="relative"
+      className="relative dot-grid-bg"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
       {/* Container */}
