@@ -105,7 +105,7 @@ const Navbar = () => {
         {/* CTA Buttons - hidden on mobile/tablet */}
         <div className="hidden lg:flex items-center gap-3 xl:gap-4">
           {isAuthenticated ? (
-            <Link to="/dashboard" className="btn-primary">
+            <Link to="/dashboard" className="btn-3d-shiny px-5 py-2.5 rounded-xl text-foreground">
               Dashboard
             </Link>
           ) : (
@@ -116,7 +116,7 @@ const Navbar = () => {
               >
                 Login
               </Link>
-              <Link to="/pricing" className="btn-primary">
+              <Link to="/pricing" className="btn-3d-shiny px-5 py-2.5 rounded-xl text-foreground">
                 Get Started
               </Link>
             </>
@@ -133,7 +133,7 @@ const Navbar = () => {
           aria-label="Toggle menu"
           aria-expanded={isOpen}
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isOpen ? <X size={24} className="icon-3d" /> : <Menu size={24} className="icon-3d" />}
         </button>
       </div>
 

@@ -18,12 +18,12 @@ const BLOCK_TEMPLATES = [
 ];
 
 export function BlocksSidebar({ boardId }: BlocksSidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const { blocks, createBlock } = useAppStore();
   const boardBlocks = blocks.filter((b) => b.board_id === boardId);
 
   const handleCreateEmpty = () => {
-    const newBlock = createBlock(boardId, {
+    createBlock(boardId, {
       title: "New Block",
       position: { x: 100 + boardBlocks.length * 50, y: 100 + boardBlocks.length * 50 },
     });
@@ -48,9 +48,9 @@ export function BlocksSidebar({ boardId }: BlocksSidebarProps) {
       {/* Collapse toggle */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-4 z-10 p-1.5 rounded-full bg-secondary border border-border/20 hover:bg-secondary/80 transition-colors"
+        className="absolute -right-3 top-4 z-10 p-2.5 rounded-full btn-3d-shiny border border-border/20 transition-all duration-200 hover:scale-110"
       >
-        {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+        {isCollapsed ? <ChevronRight className="h-4 w-4 icon-3d" /> : <ChevronLeft className="h-4 w-4 icon-3d" />}
       </button>
 
       {!isCollapsed && (
