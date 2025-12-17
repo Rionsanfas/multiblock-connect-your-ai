@@ -1,10 +1,12 @@
-import { Plus, Box, FileCode, ChevronDown } from "lucide-react";
+import { Plus, Box, FileCode, Focus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BlocksSidebarProps {
   boardId: string;
+  onCenterView?: () => void;
 }
 
 const BLOCK_TEMPLATES = [
@@ -14,7 +16,7 @@ const BLOCK_TEMPLATES = [
   { title: "Creative Writer", model: "claude-3-opus", prompt: "You are a creative writer." },
 ];
 
-export function BlocksSidebar({ boardId }: BlocksSidebarProps) {
+export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
   const { blocks, createBlock } = useAppStore();
   const boardBlocks = blocks.filter((b) => b.board_id === boardId);
 
@@ -37,7 +39,7 @@ export function BlocksSidebar({ boardId }: BlocksSidebarProps) {
   };
 
   return (
-    <aside className="absolute left-4 top-4 z-20">
+    <aside className="absolute left-4 top-4 z-20 flex flex-col gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="p-3 rounded-xl btn-3d-shiny text-foreground">
@@ -58,6 +60,20 @@ export function BlocksSidebar({ boardId }: BlocksSidebarProps) {
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+      
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button 
+            onClick={onCenterView}
+            className="p-3 rounded-xl btn-3d-shiny text-foreground"
+          >
+            <Focus className="h-5 w-5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <p>Center View</p>
+        </TooltipContent>
+      </Tooltip>
     </aside>
   );
 }
