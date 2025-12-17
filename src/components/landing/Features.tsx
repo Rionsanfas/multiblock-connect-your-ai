@@ -26,7 +26,7 @@ const Features = () => {
   return (
     <section
       id="features"
-      className="relative"
+      className="relative dot-grid-bg"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
       <div
@@ -68,7 +68,7 @@ const Features = () => {
           {features.map((feature, index) => (
             <div
               key={feature.title}
-              className="glass-card-hover group"
+              className="glass-card-hover group dot-grid-card"
               style={{
                 padding: "clamp(20px, 2.5vw, 28px)",
                 paddingTop: "clamp(12px, 1.5vw, 16px)",
@@ -78,11 +78,13 @@ const Features = () => {
               }}
             >
               {/* 3D Animated Icon */}
-              <Feature3DIcon type={feature.iconType} />
+              <div className="relative z-10">
+                <Feature3DIcon type={feature.iconType} />
+              </div>
 
               {/* Title */}
               <h3
-                className="font-semibold text-foreground text-wrap-balance text-center"
+                className="font-semibold text-foreground text-wrap-balance text-center relative z-10"
                 style={{
                   fontSize: "clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem)",
                   marginBottom: "clamp(10px, 1.5vw, 14px)",
@@ -94,7 +96,7 @@ const Features = () => {
 
               {/* Description */}
               <p
-                className="text-muted-foreground leading-relaxed text-break text-center"
+                className="text-muted-foreground leading-relaxed text-break text-center relative z-10"
                 style={{
                   fontSize: "clamp(0.875rem, 0.82rem + 0.2vw, 0.95rem)",
                   lineHeight: 1.6,
