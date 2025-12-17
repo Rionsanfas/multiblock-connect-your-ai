@@ -104,47 +104,45 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
 
       {/* Center section - Board controls */}
       {showBoardControls && (
-        <div className="flex items-center gap-1 bg-secondary/30 rounded-2xl p-1.5 btn-3d">
+        <div className="flex items-center gap-1 p-1.5 rounded-xl btn-soft" style={{ padding: "6px" }}>
           {/* Auto-chain toggle */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-secondary/40 transition-colors">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/30 transition-colors">
             <Link2 className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-medium text-muted-foreground">Auto-chain</span>
             <Switch
               checked={autoChainEnabled}
               onCheckedChange={toggleAutoChain}
-              className="data-[state=checked]:bg-[hsl(var(--accent))]"
             />
           </div>
           
-          <div className="w-px h-6 bg-border/20" />
+          <div className="w-px h-5 bg-border/20" />
           
           {/* Snap toggle */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-secondary/40 transition-colors">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/30 transition-colors">
             <Grid3X3 className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-medium text-muted-foreground">Snap</span>
             <Switch
               checked={snapToGrid}
               onCheckedChange={toggleSnapToGrid}
-              className="data-[state=checked]:bg-[hsl(var(--accent))]"
             />
           </div>
 
-          <div className="w-px h-6 bg-border/20" />
+          <div className="w-px h-5 bg-border/20" />
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1 px-2">
             <button
               onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-              className="p-2 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-all"
+              className="p-1.5 rounded-lg hover:bg-secondary/30 text-muted-foreground hover:text-foreground transition-all"
             >
               <ZoomOut className="h-4 w-4" />
             </button>
-            <span className="text-xs font-semibold text-muted-foreground w-12 text-center tabular-nums">
+            <span className="text-xs font-semibold text-muted-foreground w-10 text-center tabular-nums">
               {Math.round(zoom * 100)}%
             </span>
             <button
               onClick={() => setZoom(Math.min(2, zoom + 0.25))}
-              className="p-2 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-all"
+              className="p-1.5 rounded-lg hover:bg-secondary/30 text-muted-foreground hover:text-foreground transition-all"
             >
               <ZoomIn className="h-4 w-4" />
             </button>

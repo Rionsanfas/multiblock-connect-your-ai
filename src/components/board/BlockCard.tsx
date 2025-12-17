@@ -98,48 +98,48 @@ export function BlockCard({
   return (
     <div
       className={cn(
-        "absolute w-[300px] cursor-move select-none transition-all duration-200 gradient-border-card",
+        "absolute w-[280px] cursor-move select-none transition-all duration-200",
         isDragging && "z-50 scale-[1.02]",
-        isSelected && "ring-2 ring-foreground/20"
+        isSelected ? "btn-soft-active" : "btn-soft"
       )}
       style={{
         left: block.position.x,
         top: block.position.y,
+        padding: 0,
+        boxShadow: isDragging 
+          ? "0 16px 48px rgba(0,0,0,0.25), 0 0 20px hsl(var(--accent)/0.2)" 
+          : isSelected 
+            ? "0 8px 32px rgba(0,0,0,0.2), 0 0 16px hsl(var(--accent)/0.15)" 
+            : undefined
       }}
       onMouseDown={handleMouseDown}
       onDoubleClick={() => openBlockChat(block.id)}
     >
-      <div className="gradient-card-inner rounded-2xl"
-        style={{
-          boxShadow: isDragging 
-            ? "0 16px 48px rgba(0,0,0,0.15)" 
-            : isSelected 
-              ? "0 8px 32px rgba(0,0,0,0.12)" 
-              : "0 4px 16px rgba(0,0,0,0.08)"
-        }}
-      >
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 border-b border-border/20">
-        <div className="p-1 rounded-lg bg-secondary/50">
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+      <div className="flex items-center gap-2 p-3 border-b border-border/15">
+        <div className="p-1 rounded-lg bg-secondary/40">
+          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
         </div>
-        <h3 className="font-semibold flex-1 truncate">{block.title}</h3>
+        <h3 className={cn(
+          "font-semibold flex-1 truncate text-sm",
+          isSelected && "text-[hsl(var(--accent))]"
+        )}>{block.title}</h3>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <IconButton variant="ghost" size="sm" className="no-drag h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
+            <IconButton variant="ghost" size="sm" className="no-drag h-7 w-7">
+              <MoreHorizontal className="h-3.5 w-3.5" />
             </IconButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
-            <DropdownMenuItem onClick={() => openBlockChat(block.id)} className="rounded-lg">
+            <DropdownMenuItem onClick={() => openBlockChat(block.id)} className="rounded-lg text-sm">
               <MessageSquare className="h-4 w-4 mr-2" />
               Open Chat
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => duplicateBlock(block.id)} className="rounded-lg">
+            <DropdownMenuItem onClick={() => duplicateBlock(block.id)} className="rounded-lg text-sm">
               <Copy className="h-4 w-4 mr-2" />
               Duplicate
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => deleteBlock(block.id)} className="text-destructive rounded-lg">
+            <DropdownMenuItem onClick={() => deleteBlock(block.id)} className="text-destructive rounded-lg text-sm">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </DropdownMenuItem>
@@ -148,28 +148,29 @@ export function BlockCard({
       </div>
 
       {/* Content Preview */}
-      <div className="p-4 min-h-[80px]">
+      <div className="px-3 py-3 min-h-[60px]">
         {lastMessage ? (
-          <p className="text-sm text-muted-foreground line-clamp-3">
+          <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
             {lastMessage.content}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground/50 italic">
-            Double-click to start chatting
+          <p className="text-xs text-muted-foreground/50 italic">
+            Double-click to chat
           </p>
         )}
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between p-4 border-t border-border/20 bg-secondary/20 rounded-b-2xl">
+      <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/15 bg-secondary/10 rounded-b-2xl">
         <ProviderBadge provider={getProviderFromModel(block.model)} model={block.model} />
         <button
           onClick={(e) => { e.stopPropagation(); handleRun(); }}
           disabled={isRunning}
           className={cn(
-            "no-drag px-3 py-1.5 text-xs font-medium rounded-lg transition-all",
-            "bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground",
-            isRunning && "animate-pulse"
+            "no-drag px-2.5 py-1 text-xs font-medium rounded-lg transition-all",
+            isRunning 
+              ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground animate-pulse shadow-[0_0_8px_hsl(40,70%,50%/0.4)]"
+              : "bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground"
           )}
         >
           {isRunning ? "running..." : "rerun"}
@@ -178,18 +179,17 @@ export function BlockCard({
 
       {/* Connection Nodes */}
       <div
-        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-foreground border-2 border-background cursor-crosshair hover:scale-125 transition-transform no-drag shadow-lg"
+        className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-foreground border-2 border-background cursor-crosshair hover:scale-125 transition-transform no-drag shadow-lg"
         onMouseDown={(e) => { e.stopPropagation(); onStartConnection(); }}
         onMouseUp={(e) => { e.stopPropagation(); if (isConnecting) onEndConnection(); }}
       />
       <div
         className={cn(
-          "absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 border-foreground bg-background transition-all no-drag shadow-lg",
+          "absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-foreground bg-background transition-all no-drag shadow-lg",
           isConnecting && "scale-125 bg-foreground/20"
         )}
         onMouseUp={(e) => { e.stopPropagation(); if (isConnecting) onEndConnection(); }}
       />
-      </div>
     </div>
   );
 }

@@ -69,12 +69,12 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   return (
     <Dialog open onOpenChange={() => closeBlockChat()}>
-      <DialogContent className="max-w-3xl h-[80vh] flex flex-col bg-card/95 backdrop-blur-xl border-border/50 p-0">
+      <DialogContent className="max-w-2xl w-[90vw] h-[70vh] max-h-[600px] flex flex-col bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl p-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6),0_0_40px_-10px_hsl(var(--accent)/0.2)]">
         {/* Header */}
-        <DialogHeader className="px-6 py-4 border-b border-border/30">
+        <DialogHeader className="px-5 py-4 border-b border-border/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <DialogTitle className="text-lg">{block.title}</DialogTitle>
+              <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
               <ProviderBadge provider={getProviderFromModel(block.model)} model={block.model} />
             </div>
             <IconButton variant="ghost" size="sm" onClick={() => closeBlockChat()}>
@@ -84,11 +84,11 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
         </DialogHeader>
 
         {/* Messages */}
-        <div className="flex-1 overflow-auto px-6 py-4 space-y-4">
+        <div className="flex-1 overflow-auto px-5 py-4 space-y-3">
           {blockMessages.length === 0 && !streamingContent && (
-            <div className="text-center text-muted-foreground py-12">
-              <p className="text-lg mb-2">Start a conversation</p>
-              <p className="text-sm">Send a message to interact with this block</p>
+            <div className="text-center text-muted-foreground py-8">
+              <p className="text-sm mb-1">Start a conversation</p>
+              <p className="text-xs opacity-70">Send a message to interact with this block</p>
             </div>
           )}
 
@@ -96,21 +96,21 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
             <div
               key={msg.id}
               className={cn(
-                "group flex gap-3",
+                "group flex gap-2",
                 msg.role === "user" && "justify-end"
               )}
             >
               <div
                 className={cn(
-                  "max-w-[80%] rounded-xl px-4 py-3",
+                  "max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm",
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/50"
+                    ? "bg-[hsl(var(--accent))] text-white"
+                    : "btn-soft"
                 )}
               >
-                <p className="whitespace-pre-wrap">{msg.content}</p>
+                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                 {msg.meta && (
-                  <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border/20 text-xs opacity-70">
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/20 text-xs opacity-60">
                     <span>{msg.meta.tokens} tokens</span>
                     <span>${msg.meta.cost}</span>
                     <span>{msg.meta.latency_ms}ms</span>
@@ -120,11 +120,11 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               
               {/* Message actions */}
               <div className={cn(
-                "flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity",
+                "flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
                 msg.role === "user" && "order-first"
               )}>
                 <IconButton variant="ghost" size="sm" onClick={() => handleCopy(msg.content)} tooltip="Copy">
-                  <Copy className="h-3.5 w-3.5" />
+                  <Copy className="h-3 w-3" />
                 </IconButton>
                 <IconButton
                   variant="ghost"
@@ -132,7 +132,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                   onClick={() => deleteMessage(msg.id)}
                   tooltip="Delete"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                 </IconButton>
               </div>
             </div>
@@ -140,10 +140,10 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
           {/* Streaming message */}
           {streamingContent && (
-            <div className="flex gap-3">
-              <div className="max-w-[80%] rounded-xl px-4 py-3 bg-secondary/50">
-                <p className="whitespace-pre-wrap">{streamingContent}</p>
-                <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1" />
+            <div className="flex gap-2">
+              <div className="max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm btn-soft">
+                <p className="whitespace-pre-wrap leading-relaxed">{streamingContent}</p>
+                <span className="inline-block w-1.5 h-3.5 bg-[hsl(var(--accent))] animate-pulse ml-1" />
               </div>
             </div>
           )}
@@ -152,14 +152,14 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
         </div>
 
         {/* Input */}
-        <div className="px-6 py-4 border-t border-border/30">
+        <div className="px-5 py-4 border-t border-border/20">
           {input && (
             <div className="flex justify-between text-xs text-muted-foreground mb-2">
               <span>~{estimateTokens(input)} tokens</span>
               <span>~${estimateCost(estimateTokens(input))}</span>
             </div>
           )}
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -170,21 +170,19 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 }
               }}
               placeholder="Type your message..."
-              className="min-h-[60px] max-h-[200px] bg-secondary/50 resize-none"
+              className="min-h-[50px] max-h-[150px] bg-secondary/50 resize-none rounded-xl border-border/20 text-sm"
             />
-            <div className="flex flex-col gap-2">
-              <Button
-                onClick={handleSend}
-                disabled={!input.trim() || isRunning}
-                className="h-full"
-              >
-                {isRunning ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={handleSend}
+              disabled={!input.trim() || isRunning}
+              className="h-auto px-4 btn-3d-shiny text-foreground"
+            >
+              {isRunning ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
       </DialogContent>
