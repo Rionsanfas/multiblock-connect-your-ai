@@ -8,6 +8,7 @@ import { BlockSettings } from "@/components/board/BlockSettings";
 import { BlockChatModal } from "@/components/board/BlockChatModal";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function BoardCanvas() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,7 @@ export default function BoardCanvas() {
     zoom,
     isBlockChatOpen,
     chatBlockId,
+    createBlock,
     createConnection,
   } = useAppStore();
 
@@ -53,6 +55,22 @@ export default function BoardCanvas() {
       setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
     } else if (e.target === canvasRef.current) {
       selectBlock(null);
+    }
+  };
+
+  const handleCanvasDoubleClick = (e: React.MouseEvent) => {
+    // Only create block if double-clicking on the canvas itself, not on a block
+    if (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('board-canvas-bg')) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (rect) {
+        const x = (e.clientX - rect.left - panOffset.x) / zoom;
+        const y = (e.clientY - rect.top - panOffset.y) / zoom;
+        createBlock(id!, {
+          title: "New Block",
+          position: { x, y },
+        });
+        toast.success("Block created");
+      }
     }
   };
 
@@ -129,6 +147,7 @@ export default function BoardCanvas() {
           onMouseMove={handleCanvasMouseMove}
           onMouseUp={handleCanvasMouseUp}
           onMouseLeave={handleCanvasMouseUp}
+          onDoubleClick={handleCanvasDoubleClick}
         >
           <div
             className="absolute inset-0 origin-top-left"

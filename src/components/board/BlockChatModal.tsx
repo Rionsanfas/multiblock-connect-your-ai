@@ -69,7 +69,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   return (
     <Dialog open onOpenChange={() => closeBlockChat()}>
-      <DialogContent className="max-w-2xl w-[90vw] h-[70vh] max-h-[600px] flex flex-col bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl p-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6),0_0_40px_-10px_hsl(var(--accent)/0.2)]">
+      <DialogContent hideCloseButton className="max-w-2xl w-[90vw] h-[70vh] max-h-[600px] flex flex-col bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl p-0 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6),0_0_40px_-10px_hsl(var(--accent)/0.2)]">
         {/* Header */}
         <DialogHeader className="px-5 py-4 border-b border-border/20">
           <div className="flex items-center justify-between">
@@ -77,7 +77,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
               <ProviderBadge provider={getProviderFromModel(block.model)} model={block.model} />
             </div>
-            <IconButton variant="ghost" size="sm" onClick={() => closeBlockChat()}>
+            <IconButton variant="ghost" size="sm" onClick={() => closeBlockChat()} className="icon-3d">
               <X className="h-4 w-4" />
             </IconButton>
           </div>
@@ -178,9 +178,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               className="h-auto px-4 btn-3d-shiny text-foreground"
             >
               {isRunning ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin icon-3d" />
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-4 w-4 icon-3d" />
               )}
             </Button>
           </div>
