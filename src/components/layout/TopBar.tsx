@@ -5,17 +5,16 @@ import {
   Settings,
   ZoomIn,
   ZoomOut,
-  BarChart3,
   Check,
   Pencil,
   HelpCircle,
   Home,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAppStore } from "@/store/useAppStore";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface TopBarProps {
   boardId?: string;
@@ -31,7 +30,11 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
     updateBoard,
     zoom,
     setZoom,
+    blocks,
+    openBlockChat,
   } = useAppStore();
+
+  const boardBlocks = boardId ? blocks.filter((b) => b.board_id === boardId) : [];
 
   const handleTitleSave = () => {
     if (boardId && title.trim()) {
@@ -41,31 +44,14 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
     setIsEditing(false);
   };
 
-  const handleShowInstructions = () => {
-    toast.info(
-      <div className="space-y-2">
-        <p className="font-semibold">Board Instructions</p>
-        <ul className="text-sm space-y-1 list-disc pl-4">
-          <li>Double-click canvas to create a new block</li>
-          <li>Click a block to open chat</li>
-          <li>Drag blocks to reposition them</li>
-          <li>Connect blocks by dragging from connection nodes</li>
-          <li>Use zoom controls to zoom in/out</li>
-          <li>Alt + drag to pan the canvas</li>
-        </ul>
-      </div>,
-      { duration: 10000 }
-    );
-  };
-
   return (
     <header className="h-16 flex items-center justify-between px-5 gap-4">
       {/* Left section */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {showBoardControls && (
           <button
             onClick={() => navigate("/dashboard")}
-            className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
+            className="icon-3d p-2.5 rounded-xl"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -74,7 +60,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
         {/* Home link */}
         <Link
           to="/"
-          className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
+          className="icon-3d p-2.5 rounded-xl"
         >
           <Home className="h-4 w-4" />
         </Link>
@@ -90,7 +76,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                   className="h-10 w-56 bg-secondary/50 rounded-xl border-border/20"
                   autoFocus
                 />
-                <button onClick={handleTitleSave} className="p-2.5 rounded-xl hover:bg-secondary/50 text-foreground">
+                <button onClick={handleTitleSave} className="icon-3d p-2.5 rounded-xl">
                   <Check className="h-4 w-4" />
                 </button>
               </div>
@@ -114,7 +100,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
           <div className="flex items-center gap-1 px-2">
             <button
               onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-              className="p-1.5 rounded-lg hover:bg-secondary/30 text-muted-foreground hover:text-foreground transition-all"
+              className="icon-3d p-1.5 rounded-lg"
             >
               <ZoomOut className="h-4 w-4" />
             </button>
@@ -123,7 +109,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
             </span>
             <button
               onClick={() => setZoom(Math.min(2, zoom + 0.25))}
-              className="p-1.5 rounded-lg hover:bg-secondary/30 text-muted-foreground hover:text-foreground transition-all"
+              className="icon-3d p-1.5 rounded-lg"
             >
               <ZoomIn className="h-4 w-4" />
             </button>
@@ -135,19 +121,67 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
       <div className="flex items-center gap-2">
         {showBoardControls && (
           <>
-            <button
-              onClick={handleShowInstructions}
-              className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
-              title="Board Instructions"
-            >
-              <HelpCircle className="h-4 w-4" />
-            </button>
-            <button className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
-              <BarChart3 className="h-4 w-4" />
-            </button>
-            <button className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
-              <Settings className="h-4 w-4" />
-            </button>
+            {/* Instructions Popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="icon-3d p-2.5 rounded-xl"
+                  title="Board Instructions"
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="bottom" align="end">
+                <div className="space-y-2">
+                  <p className="font-semibold text-sm">Board Instructions</p>
+                  <ul className="text-xs space-y-1.5 list-disc pl-4 text-muted-foreground">
+                    <li>Double-click canvas to create a new block</li>
+                    <li>Click a block to open chat</li>
+                    <li>Drag blocks to reposition them</li>
+                    <li>Connect blocks by dragging from connection nodes</li>
+                    <li>Use zoom controls to zoom in/out</li>
+                    <li>Alt + drag to pan the canvas</li>
+                  </ul>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Settings Popover - All Blocks */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="icon-3d p-2.5 rounded-xl">
+                  <Settings className="h-4 w-4" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="bottom" align="end">
+                <div className="space-y-3">
+                  <p className="font-semibold text-sm">All Blocks</p>
+                  {boardBlocks.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No blocks yet. Double-click canvas to create one.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-auto">
+                      {boardBlocks.map((block) => (
+                        <div
+                          key={block.id}
+                          className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{block.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">{block.model}</p>
+                          </div>
+                          <button
+                            onClick={() => openBlockChat(block.id)}
+                            className="icon-3d p-1.5 rounded-lg ml-2"
+                          >
+                            <Settings className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </>
         )}
       </div>
