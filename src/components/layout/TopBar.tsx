@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Download,
   Settings,
   Play,
   ZoomIn,
@@ -163,10 +162,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
             <button className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
               <Settings className="h-4 w-4" />
             </button>
-            <button onClick={handleExport} className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
-              <Download className="h-4 w-4" />
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl btn-3d-primary text-foreground font-medium ml-2">
+            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl btn-3d-shiny text-foreground font-medium ml-2">
               <Play className="h-4 w-4" />
               Run All
             </button>
