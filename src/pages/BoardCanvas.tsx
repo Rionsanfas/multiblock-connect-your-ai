@@ -132,15 +132,15 @@ export default function BoardCanvas() {
 
   return (
     <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls hideSidebar>
-      <div className="flex h-full">
-        {/* Left Sidebar - Blocks List */}
+      <div className="flex h-full relative">
+        {/* Left Sidebar - Add Button */}
         <BlocksSidebar boardId={board.id} />
 
-        {/* Canvas Area */}
+        {/* Canvas Area - Much larger with panning */}
         <div
           ref={canvasRef}
           className={cn(
-            "flex-1 relative overflow-hidden board-canvas-bg",
+            "flex-1 relative overflow-auto board-canvas-bg cursor-grab",
             isPanning && "cursor-grabbing"
           )}
           onMouseDown={handleCanvasMouseDown}
@@ -149,9 +149,12 @@ export default function BoardCanvas() {
           onMouseLeave={handleCanvasMouseUp}
           onDoubleClick={handleCanvasDoubleClick}
         >
+          {/* Large virtual canvas for free movement */}
           <div
-            className="absolute inset-0 origin-top-left"
+            className="origin-top-left"
             style={{
+              width: "5000px",
+              height: "5000px",
               transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
             }}
           >

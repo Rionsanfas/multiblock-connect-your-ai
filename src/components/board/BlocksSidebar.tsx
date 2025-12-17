@@ -37,22 +37,22 @@ export function BlocksSidebar({ boardId }: BlocksSidebarProps) {
   };
 
   return (
-    <aside className="w-16 border-r border-border/10 bg-card/50 backdrop-blur-xl flex flex-col items-center pt-4">
+    <aside className="absolute left-4 top-4 z-20">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="p-3 rounded-xl btn-3d-shiny text-foreground">
-            <Plus className="h-5 w-5 icon-3d" />
+            <Plus className="h-5 w-5" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="right" className="w-48 bg-card/95 backdrop-blur-xl border-border/20 rounded-xl p-1">
           <DropdownMenuItem onClick={handleCreateEmpty} className="rounded-lg text-sm">
-            <Box className="h-4 w-4 mr-2 icon-3d" />
+            <Box className="h-4 w-4 mr-2" />
             Empty Block
           </DropdownMenuItem>
           <div className="px-2 py-1 text-xs text-muted-foreground font-medium">Templates</div>
           {BLOCK_TEMPLATES.map((template) => (
             <DropdownMenuItem key={template.title} onClick={() => handleCreateFromTemplate(template)} className="rounded-lg text-sm">
-              <FileCode className="h-4 w-4 mr-2 icon-3d" />
+              <FileCode className="h-4 w-4 mr-2" />
               {template.title}
             </DropdownMenuItem>
           ))}

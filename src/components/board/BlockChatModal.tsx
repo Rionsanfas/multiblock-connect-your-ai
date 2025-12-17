@@ -77,7 +77,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
               <ProviderBadge provider={getProviderFromModel(block.model)} model={block.model} />
             </div>
-            <IconButton variant="ghost" size="sm" onClick={() => closeBlockChat()} className="icon-3d">
+            <IconButton variant="ghost" size="sm" onClick={() => closeBlockChat()}>
               <X className="h-4 w-4" />
             </IconButton>
           </div>
@@ -178,9 +178,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               className="h-auto px-4 btn-3d-shiny text-foreground"
             >
               {isRunning ? (
-                <Loader2 className="h-4 w-4 animate-spin icon-3d" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Send className="h-4 w-4 icon-3d" />
+                <Send className="h-4 w-4" />
               )}
             </Button>
           </div>
