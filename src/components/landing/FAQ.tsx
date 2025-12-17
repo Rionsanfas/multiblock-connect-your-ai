@@ -1,4 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
 
 const faqs = [
   {
@@ -56,7 +57,7 @@ const FAQ = () => {
         style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
       >
         {/* Header */}
-        <div className="text-center" style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}>
+        <AnimatedSection delay={0} className="text-center" style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}>
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             FAQ
@@ -76,40 +77,41 @@ const FAQ = () => {
           >
             Everything you need to know about Multiblock.
           </p>
-        </div>
+        </AnimatedSection>
 
         {/* FAQ Accordion - max-width for readability */}
         <div className="max-w-3xl mx-auto">
           <Accordion type="single" collapsible className="space-y-3">
             {faqs.map((faq, index) => (
-              <AccordionItem
-                key={index}
-                value={`item-${index}`}
-                className="glass-card border-border rounded-xl overflow-hidden"
-                style={{ padding: "0 clamp(16px, 2.5vw, 24px)" }}
-              >
-                <AccordionTrigger
-                  className="text-left text-foreground hover:no-underline text-break"
-                  style={{
-                    fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
-                    paddingTop: "clamp(16px, 2vw, 20px)",
-                    paddingBottom: "clamp(16px, 2vw, 20px)",
-                    minHeight: "48px",
-                  }}
+              <AnimatedElement key={index} delay={index * 80}>
+                <AccordionItem
+                  value={`item-${index}`}
+                  className="glass-card border-border rounded-xl overflow-hidden"
+                  style={{ padding: "0 clamp(16px, 2.5vw, 24px)" }}
                 >
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent
-                  className="text-muted-foreground text-break"
-                  style={{
-                    fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
-                    paddingBottom: "clamp(16px, 2vw, 20px)",
-                    lineHeight: 1.6,
-                  }}
-                >
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
+                  <AccordionTrigger
+                    className="text-left text-foreground hover:no-underline text-break"
+                    style={{
+                      fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
+                      paddingTop: "clamp(16px, 2vw, 20px)",
+                      paddingBottom: "clamp(16px, 2vw, 20px)",
+                      minHeight: "48px",
+                    }}
+                  >
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent
+                    className="text-muted-foreground text-break"
+                    style={{
+                      fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
+                      paddingBottom: "clamp(16px, 2vw, 20px)",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              </AnimatedElement>
             ))}
           </Accordion>
         </div>

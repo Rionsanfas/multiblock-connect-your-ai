@@ -1,4 +1,5 @@
 import Feature3DIcon from "./Feature3DIcon";
+import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
 
 type IconType = "chat" | "connect" | "canvas";
 
@@ -34,7 +35,7 @@ const Features = () => {
         style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
       >
         {/* Header */}
-        <div className="text-center" style={{ marginBottom: "clamp(40px, 6vw, 72px)" }}>
+        <AnimatedSection delay={0} className="text-center" style={{ marginBottom: "clamp(40px, 6vw, 72px)" }}>
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             Features
@@ -54,7 +55,7 @@ const Features = () => {
           >
             Everything you need to orchestrate multiple AI models in a single, intuitive workspace.
           </p>
-        </div>
+        </AnimatedSection>
 
         {/* Premium Glassmorphism Feature Cards Grid with 3D Icons */}
         <div
@@ -66,45 +67,46 @@ const Features = () => {
           }}
         >
           {features.map((feature, index) => (
-            <div
+            <AnimatedElement
               key={feature.title}
-              className="glass-card-hover group dot-grid-card"
-              style={{
-                padding: "clamp(20px, 2.5vw, 28px)",
-                paddingTop: "clamp(12px, 1.5vw, 16px)",
-                opacity: 0,
-                animation: "fadeUp 0.6s ease-out forwards",
-                animationDelay: `${index * 100}ms`,
-              }}
+              delay={index * 150}
             >
-              {/* 3D Animated Icon */}
-              <div className="relative z-10">
-                <Feature3DIcon type={feature.iconType} />
+              <div
+                className="glass-card-hover group dot-grid-card h-full"
+                style={{
+                  padding: "clamp(20px, 2.5vw, 28px)",
+                  paddingTop: "clamp(12px, 1.5vw, 16px)",
+                }}
+              >
+                {/* 3D Animated Icon */}
+                <div className="relative z-10">
+                  <Feature3DIcon type={feature.iconType} />
+                </div>
+
+                {/* Title */}
+                <h3
+                  className="font-semibold text-foreground text-wrap-balance text-center relative z-10"
+                  style={{
+                    fontSize: "clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem)",
+                    marginBottom: "clamp(10px, 1.5vw, 14px)",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {feature.title}
+                </h3>
+
+                {/* Description */}
+                <p
+                  className="text-muted-foreground leading-relaxed text-break text-center relative z-10"
+                  style={{
+                    fontSize: "clamp(0.875rem, 0.82rem + 0.2vw, 0.95rem)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {feature.description}
+                </p>
               </div>
-
-              {/* Title */}
-              <h3
-                className="font-semibold text-foreground text-wrap-balance text-center relative z-10"
-                style={{
-                  fontSize: "clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem)",
-                  marginBottom: "clamp(10px, 1.5vw, 14px)",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                {feature.title}
-              </h3>
-
-              {/* Description */}
-              <p
-                className="text-muted-foreground leading-relaxed text-break text-center relative z-10"
-                style={{
-                  fontSize: "clamp(0.875rem, 0.82rem + 0.2vw, 0.95rem)",
-                  lineHeight: 1.6,
-                }}
-              >
-                {feature.description}
-              </p>
-            </div>
+            </AnimatedElement>
           ))}
         </div>
       </div>

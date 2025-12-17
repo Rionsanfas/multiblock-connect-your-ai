@@ -65,9 +65,9 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
         <TooltipTrigger asChild>
           <button 
             onClick={onCenterView}
-            className="p-2 rounded-xl key-icon-3d text-foreground"
+            className="p-3 rounded-xl key-icon-3d text-foreground"
           >
-            <Focus className="h-4 w-4" />
+            <Focus className="h-5 w-5" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="right">
