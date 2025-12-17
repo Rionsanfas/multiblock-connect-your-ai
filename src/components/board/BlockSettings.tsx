@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { X, Pencil, Check } from "lucide-react";
-import { GlassCard } from "@/components/ui/glass-card";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,10 +33,10 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
   };
 
   return (
-    <aside className="w-80 border-l border-border/30 bg-card/20 backdrop-blur-sm flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-border/30">
+    <aside className="w-80 border-l border-border/20 bg-card/30 backdrop-blur-xl flex flex-col">
+      <div className="flex items-center justify-between p-4 border-b border-border/20">
         <h3 className="font-semibold">Block Settings</h3>
-        <IconButton variant="ghost" size="sm" onClick={() => selectBlock(null)}>
+        <IconButton variant="soft" size="sm" onClick={() => selectBlock(null)}>
           <X className="h-4 w-4" />
         </IconButton>
       </div>
@@ -45,26 +44,26 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
       <div className="flex-1 overflow-auto p-4 space-y-6">
         {/* Title */}
         <div className="space-y-2">
-          <Label>Title</Label>
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Title</Label>
           {isEditingTitle ? (
             <div className="flex gap-2">
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleTitleSave()}
-                className="bg-secondary/50"
+                className="bg-secondary/50 rounded-xl border-border/30"
                 autoFocus
               />
-              <IconButton size="sm" onClick={handleTitleSave}>
+              <IconButton variant="soft" size="sm" onClick={handleTitleSave}>
                 <Check className="h-4 w-4" />
               </IconButton>
             </div>
           ) : (
             <button
               onClick={() => { setTitle(block.title); setIsEditingTitle(true); }}
-              className="w-full text-left p-2 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors flex items-center justify-between group"
+              className="w-full text-left p-3 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-colors flex items-center justify-between group"
             >
-              <span>{block.title}</span>
+              <span className="font-medium">{block.title}</span>
               <Pencil className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
           )}
@@ -72,17 +71,17 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
 
         {/* Model */}
         <div className="space-y-2">
-          <Label>Model</Label>
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Model</Label>
           <Select
             value={block.model}
             onValueChange={(value) => updateBlock(blockId, { model: value })}
           >
-            <SelectTrigger className="bg-secondary/50">
+            <SelectTrigger className="bg-secondary/40 rounded-xl border-border/20 h-11">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-card border-border">
+            <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
               {allModels.map(({ provider, model, name }) => (
-                <SelectItem key={model} value={model}>
+                <SelectItem key={model} value={model} className="rounded-lg">
                   <span className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{name}</span>
                     {model}
@@ -95,11 +94,11 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
 
         {/* System Prompt */}
         <div className="space-y-2">
-          <Label>System Prompt</Label>
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">System Prompt</Label>
           <Textarea
             value={block.system_prompt}
             onChange={(e) => updateBlock(blockId, { system_prompt: e.target.value })}
-            className="bg-secondary/50 min-h-[100px] resize-none"
+            className="bg-secondary/40 min-h-[100px] resize-none rounded-xl border-border/20"
             placeholder="You are a helpful assistant..."
           />
         </div>
@@ -107,41 +106,47 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
         {/* Temperature */}
         <div className="space-y-3">
           <div className="flex justify-between">
-            <Label>Temperature</Label>
-            <span className="text-sm text-muted-foreground">{block.config.temperature}</span>
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Temperature</Label>
+            <span className="text-sm font-semibold tabular-nums">{block.config.temperature}</span>
           </div>
-          <Slider
-            value={[block.config.temperature || 0.7]}
-            onValueChange={([value]) => updateBlock(blockId, { config: { ...block.config, temperature: value } })}
-            min={0}
-            max={2}
-            step={0.1}
-          />
+          <div className="px-1">
+            <Slider
+              value={[block.config.temperature || 0.7]}
+              onValueChange={([value]) => updateBlock(blockId, { config: { ...block.config, temperature: value } })}
+              min={0}
+              max={2}
+              step={0.1}
+              className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:rounded-full [&_[role=slider]]:bg-foreground [&_[role=slider]]:shadow-lg"
+            />
+          </div>
         </div>
 
         {/* Max Tokens */}
         <div className="space-y-3">
           <div className="flex justify-between">
-            <Label>Max Tokens</Label>
-            <span className="text-sm text-muted-foreground">{block.config.max_tokens}</span>
+            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Max Tokens</Label>
+            <span className="text-sm font-semibold tabular-nums">{block.config.max_tokens}</span>
           </div>
-          <Slider
-            value={[block.config.max_tokens || 2048]}
-            onValueChange={([value]) => updateBlock(blockId, { config: { ...block.config, max_tokens: value } })}
-            min={256}
-            max={8192}
-            step={256}
-          />
+          <div className="px-1">
+            <Slider
+              value={[block.config.max_tokens || 2048]}
+              onValueChange={([value]) => updateBlock(blockId, { config: { ...block.config, max_tokens: value } })}
+              min={256}
+              max={8192}
+              step={256}
+              className="[&_[role=slider]]:h-4 [&_[role=slider]]:w-4 [&_[role=slider]]:rounded-full [&_[role=slider]]:bg-foreground [&_[role=slider]]:shadow-lg"
+            />
+          </div>
         </div>
 
         {/* Position */}
-        <GlassCard className="p-3">
-          <Label className="text-xs text-muted-foreground">Position</Label>
-          <div className="flex gap-4 mt-2 text-sm">
+        <div className="p-4 rounded-xl bg-secondary/30">
+          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Position</Label>
+          <div className="flex gap-6 mt-2 text-sm font-medium">
             <span>X: {Math.round(block.position.x)}</span>
             <span>Y: {Math.round(block.position.y)}</span>
           </div>
-        </GlassCard>
+        </div>
       </div>
     </aside>
   );

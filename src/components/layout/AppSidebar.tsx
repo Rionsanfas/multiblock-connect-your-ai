@@ -6,14 +6,11 @@ import {
   Key,
   CreditCard,
   Settings,
-  HelpCircle,
-  LogOut,
   ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -31,50 +28,51 @@ const navItems = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { user, logout } = useAppStore();
+  const { user } = useAppStore();
 
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-card/30 backdrop-blur-xl border-r border-border/30 transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        "relative flex flex-col h-screen bg-card/50 backdrop-blur-xl border-r border-border/20 transition-all duration-300",
+        collapsed ? "w-[72px]" : "w-64"
       )}
     >
-      {/* Site Name */}
-      <div className="flex items-center gap-3 p-4 border-b border-border/30">
-        <span className="font-semibold text-lg">
-          {collapsed ? "M" : "MultiBlock"}
-        </span>
-      </div>
-
-      {/* User dropdown */}
+      {/* User Profile Section */}
       {user && (
-        <div className={cn("p-3 border-b border-border/30", collapsed && "px-2")}>
+        <div className={cn("p-4", collapsed && "px-3")}>
           <div
             className={cn(
-              "flex items-center gap-3 p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer",
+              "flex items-center gap-3 p-3 rounded-2xl bg-secondary/40 transition-all duration-200",
               collapsed && "justify-center p-2"
             )}
           >
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/20 text-primary text-sm">
+            <Avatar className="h-9 w-9 ring-2 ring-background shadow-lg">
+              <AvatarFallback className="bg-foreground text-background text-sm font-semibold">
                 {user.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-sm font-semibold truncate">{user.name}</p>
                 <p className="text-xs text-muted-foreground truncate">
                   {user.plan} plan
                 </p>
               </div>
+            )}
+            {!collapsed && (
+              <button
+                onClick={() => setCollapsed(!collapsed)}
+                className="p-1.5 rounded-lg hover:bg-secondary/60 transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+              </button>
             )}
           </div>
         </div>
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 px-3 py-2 space-y-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
           const NavItem = (
@@ -82,18 +80,15 @@ export function AppSidebar() {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                "relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                 isActive
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-foreground text-background shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
-                collapsed && "justify-center px-2"
+                collapsed && "justify-center px-3"
               )}
             >
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span className="text-sm">{item.label}</span>}
-              {isActive && !collapsed && (
-                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
-              )}
+              <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-background")} />
+              {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
             </Link>
           );
 
@@ -101,7 +96,7 @@ export function AppSidebar() {
             return (
               <Tooltip key={item.href}>
                 <TooltipTrigger asChild>{NavItem}</TooltipTrigger>
-                <TooltipContent side="right">{item.label}</TooltipContent>
+                <TooltipContent side="right" className="rounded-xl">{item.label}</TooltipContent>
               </Tooltip>
             );
           }
@@ -110,41 +105,17 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {/* Bottom actions */}
-      <div className="p-3 space-y-1 border-t border-border/30">
-        <button
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors",
-            collapsed && "justify-center px-2"
-          )}
-        >
-          <HelpCircle className="h-5 w-5" />
-          {!collapsed && <span className="text-sm">Help</span>}
-        </button>
-        <button
-          onClick={logout}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors",
-            collapsed && "justify-center px-2"
-          )}
-        >
-          <LogOut className="h-5 w-5" />
-          {!collapsed && <span className="text-sm">Log out</span>}
-        </button>
-      </div>
-
-      {/* Collapse button */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute top-20 -right-3 w-6 h-6 rounded-full bg-secondary border border-border flex items-center justify-center hover:bg-secondary/80 transition-colors"
-      >
-        <ChevronLeft
-          className={cn(
-            "h-4 w-4 transition-transform",
-            collapsed && "rotate-180"
-          )}
-        />
-      </button>
+      {/* Collapse button when collapsed */}
+      {collapsed && (
+        <div className="p-3 mt-auto">
+          <button
+            onClick={() => setCollapsed(false)}
+            className="w-full p-3 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-colors flex items-center justify-center"
+          >
+            <ChevronLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

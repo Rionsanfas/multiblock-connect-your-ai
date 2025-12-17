@@ -102,16 +102,16 @@ export default function Dashboard() {
             onClear={() => setSearch("")}
             className="flex-1 max-w-sm"
           />
-          <div className="flex items-center gap-1 bg-secondary/30 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-secondary/40 rounded-xl p-1">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded ${viewMode === "grid" ? "bg-secondary" : ""}`}
+              className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "grid" ? "bg-foreground text-background shadow-[0_2px_8px_rgba(0,0,0,0.15)]" : "text-muted-foreground hover:text-foreground"}`}
             >
               <LayoutGrid className="h-4 w-4" />
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${viewMode === "list" ? "bg-secondary" : ""}`}
+              className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "list" ? "bg-foreground text-background shadow-[0_2px_8px_rgba(0,0,0,0.15)]" : "text-muted-foreground hover:text-foreground"}`}
             >
               <List className="h-4 w-4" />
             </button>

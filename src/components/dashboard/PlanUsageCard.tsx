@@ -1,6 +1,5 @@
-import { LayoutGrid, Users, Crown } from "lucide-react";
+import { LayoutGrid, Users, Crown, ArrowRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { pricingPlans } from "@/mocks/seed";
@@ -28,27 +27,30 @@ export function PlanUsageCard({
   const seatPercentage = seatsLimit ? Math.min(((seatsUsed || 0) / seatsLimit) * 100, 100) : 0;
 
   return (
-    <GlassCard className="p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/20 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <Crown className="h-4 w-4 text-primary" />
-          <span className="font-medium text-sm">{planName}</span>
+          <div className="p-2 rounded-xl bg-foreground">
+            <Crown className="h-4 w-4 text-background" />
+          </div>
+          <span className="font-semibold">{planName}</span>
         </div>
         <Link to="/pricing">
-          <Button variant="ghost" size="sm" className="text-xs h-7">
+          <Button variant="ghost" size="sm" className="text-xs h-8 gap-1 hover:bg-secondary/60">
             Upgrade
+            <ArrowRight className="h-3 w-3" />
           </Button>
         </Link>
       </div>
 
       {/* Boards Usage */}
       <div className="mb-4">
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-          <div className="flex items-center gap-1">
-            <LayoutGrid className="h-3 w-3" />
-            <span>Boards</span>
+        <div className="flex items-center justify-between text-xs mb-2">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <LayoutGrid className="h-3.5 w-3.5" />
+            <span className="font-medium">Boards</span>
           </div>
-          <span>{boardsUsed} / {boardsLimit}</span>
+          <span className="font-semibold tabular-nums">{boardsUsed} / {boardsLimit}</span>
         </div>
         <Progress value={boardPercentage} className="h-1.5" />
       </div>
@@ -56,16 +58,16 @@ export function PlanUsageCard({
       {/* Seats Usage (for team plans) */}
       {seatsLimit && seatsLimit > 1 && (
         <div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-            <div className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              <span>Seats</span>
+          <div className="flex items-center justify-between text-xs mb-2">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Users className="h-3.5 w-3.5" />
+              <span className="font-medium">Seats</span>
             </div>
-            <span>{seatsUsed || 0} / {seatsLimit}</span>
+            <span className="font-semibold tabular-nums">{seatsUsed || 0} / {seatsLimit}</span>
           </div>
           <Progress value={seatPercentage} className="h-1.5" />
         </div>
       )}
-    </GlassCard>
+    </div>
   );
 }
