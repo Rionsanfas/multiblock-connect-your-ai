@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
   Settings,
@@ -8,15 +8,13 @@ import {
   BarChart3,
   Check,
   Pencil,
-  Link2,
-  Grid3X3,
+  HelpCircle,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { useAppStore } from "@/store/useAppStore";
-import { api } from "@/api";
 import { toast } from "sonner";
 
 interface TopBarProps {
@@ -31,10 +29,6 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
   const [title, setTitle] = useState(boardTitle || "");
   const {
     updateBoard,
-    autoChainEnabled,
-    toggleAutoChain,
-    snapToGrid,
-    toggleSnapToGrid,
     zoom,
     setZoom,
   } = useAppStore();
@@ -47,17 +41,21 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
     setIsEditing(false);
   };
 
-  const handleExport = async () => {
-    if (!boardId) return;
-    const data = await api.boards.export(boardId);
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${boardTitle || "board"}-export.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Board exported successfully");
+  const handleShowInstructions = () => {
+    toast.info(
+      <div className="space-y-2">
+        <p className="font-semibold">Board Instructions</p>
+        <ul className="text-sm space-y-1 list-disc pl-4">
+          <li>Double-click canvas to create a new block</li>
+          <li>Click a block to open chat</li>
+          <li>Drag blocks to reposition them</li>
+          <li>Connect blocks by dragging from connection nodes</li>
+          <li>Use zoom controls to zoom in/out</li>
+          <li>Alt + drag to pan the canvas</li>
+        </ul>
+      </div>,
+      { duration: 10000 }
+    );
   };
 
   return (
@@ -67,11 +65,19 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
         {showBoardControls && (
           <button
             onClick={() => navigate("/dashboard")}
-            className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors"
+            className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
         )}
+
+        {/* Home link */}
+        <Link
+          to="/"
+          className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Home className="h-4 w-4" />
+        </Link>
 
         {showBoardControls && boardTitle && (
           <div className="flex items-center gap-2">
@@ -84,7 +90,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                   className="h-10 w-56 bg-secondary/50 rounded-xl border-border/20"
                   autoFocus
                 />
-                <button onClick={handleTitleSave} className="p-2.5 rounded-xl btn-3d text-foreground">
+                <button onClick={handleTitleSave} className="p-2.5 rounded-xl hover:bg-secondary/50 text-foreground">
                   <Check className="h-4 w-4" />
                 </button>
               </div>
@@ -101,33 +107,9 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
         )}
       </div>
 
-      {/* Center section - Board controls */}
+      {/* Center section - Zoom controls only */}
       {showBoardControls && (
-        <div className="flex items-center gap-1 p-1.5 rounded-xl btn-soft" style={{ padding: "6px" }}>
-          {/* Auto-chain toggle */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/30 transition-colors">
-            <Link2 className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">Auto-chain</span>
-            <Switch
-              checked={autoChainEnabled}
-              onCheckedChange={toggleAutoChain}
-            />
-          </div>
-          
-          <div className="w-px h-5 bg-border/20" />
-          
-          {/* Snap toggle */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary/30 transition-colors">
-            <Grid3X3 className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground">Snap</span>
-            <Switch
-              checked={snapToGrid}
-              onCheckedChange={toggleSnapToGrid}
-            />
-          </div>
-
-          <div className="w-px h-5 bg-border/20" />
-
+        <div className="flex items-center gap-1">
           {/* Zoom controls */}
           <div className="flex items-center gap-1 px-2">
             <button
@@ -153,11 +135,18 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
       <div className="flex items-center gap-2">
         {showBoardControls && (
           <>
-            <button className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
-              <BarChart3 className="h-4 w-4 icon-3d" />
+            <button
+              onClick={handleShowInstructions}
+              className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors"
+              title="Board Instructions"
+            >
+              <HelpCircle className="h-4 w-4" />
             </button>
-            <button className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
-              <Settings className="h-4 w-4 icon-3d" />
+            <button className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
+              <BarChart3 className="h-4 w-4" />
+            </button>
+            <button className="p-2.5 rounded-xl hover:bg-secondary/50 text-muted-foreground hover:text-foreground transition-colors">
+              <Settings className="h-4 w-4" />
             </button>
           </>
         )}
