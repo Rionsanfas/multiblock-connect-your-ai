@@ -656,15 +656,18 @@
   /* Shiny gold button with animation */
   .btn-3d-shiny {
     position: relative;
-    background: linear-gradient(145deg, hsl(35 60% 55%) 0%, hsl(30 50% 40%) 50%, hsl(25 45% 30%) 100%);
-    border: 1px solid hsl(40 70% 60% / 0.5);
+    background: linear-gradient(145deg, hsl(35 60% 55%) 0%, hsl(40 70% 60%) 50%, hsl(35 60% 55%) 100%);
+    background-size: 200% 100%;
+    border: 1px solid hsl(50 80% 70% / 0.4);
     box-shadow: 
       0 4px 16px -2px hsl(40 70% 50% / 0.5),
       0 2px 8px -1px hsl(0 0% 0% / 0.3),
-      inset 0 1px 2px 0 hsl(50 80% 80% / 0.4),
-      inset 0 -2px 4px 0 hsl(0 0% 0% / 0.2);
+      inset 0 1px 2px 0 hsl(50 80% 80% / 0.5),
+      inset 0 -2px 4px 0 hsl(0 0% 0% / 0.2),
+      0 0 20px hsl(40 70% 50% / 0.3);
     overflow: hidden;
     transition: all 0.3s ease;
+    animation: goldShimmer 2s ease-in-out infinite;
   }
 
   .btn-3d-shiny::before {
@@ -677,20 +680,20 @@
     background: linear-gradient(
       90deg,
       transparent,
-      hsl(50 80% 80% / 0.4),
+      hsl(50 90% 85% / 0.6),
       transparent
     );
-    animation: shineSwipe 3s ease-in-out infinite;
+    animation: shineSwipe 2.5s ease-in-out infinite;
   }
 
   .btn-3d-shiny:hover {
     transform: translateY(-2px);
     box-shadow: 
-      0 8px 24px -2px hsl(40 70% 50% / 0.6),
+      0 8px 24px -2px hsl(40 70% 50% / 0.7),
       0 4px 12px -1px hsl(0 0% 0% / 0.4),
-      inset 0 1px 2px 0 hsl(50 80% 80% / 0.5),
+      inset 0 1px 2px 0 hsl(50 80% 80% / 0.6),
       inset 0 -2px 4px 0 hsl(0 0% 0% / 0.2),
-      0 0 30px hsl(40 70% 50% / 0.3);
+      0 0 40px hsl(40 70% 50% / 0.5);
   }
 
   .btn-3d-shiny:active {
@@ -724,6 +727,41 @@
     50% {
       background-position: 100% 50%;
     }
+  }
+
+  /* Soft button style (like image 4 reference) */
+  .btn-soft {
+    position: relative;
+    background: linear-gradient(145deg, hsl(0 0% 14%) 0%, hsl(0 0% 10%) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    text-align: left;
+    box-shadow: 
+      0 4px 12px -2px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+    transition: all 0.3s ease;
+  }
+
+  .btn-soft:hover {
+    background: linear-gradient(145deg, hsl(0 0% 16%) 0%, hsl(0 0% 12%) 100%);
+    border-color: hsl(0 0% 100% / 0.12);
+    transform: translateY(-1px);
+    box-shadow: 
+      0 6px 16px -2px hsl(0 0% 0% / 0.4),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+  }
+
+  .btn-soft-active {
+    background: linear-gradient(145deg, hsl(0 0% 14%) 0%, hsl(0 0% 10%) 100%);
+    border: 1px solid hsl(var(--accent) / 0.3);
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    text-align: left;
+    box-shadow: 
+      0 4px 12px -2px hsl(var(--accent) / 0.2),
+      0 0 20px hsl(var(--accent) / 0.15),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
   }
 
   /* 3D shiny white key icon */
