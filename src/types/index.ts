@@ -46,6 +46,8 @@ export interface BlockConfig {
   top_p?: number;
   frequency_penalty?: number;
   presence_penalty?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface Message {

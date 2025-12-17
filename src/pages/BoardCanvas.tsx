@@ -50,11 +50,13 @@ export default function BoardCanvas() {
   }, [board, id, navigate, setCurrentBoard]);
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.altKey)) {
-      setIsPanning(true);
-      setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-    } else if (e.target === canvasRef.current) {
-      selectBlock(null);
+    // Enable panning with regular left click on canvas background
+    if (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('board-canvas-bg')) {
+      if (e.button === 0) {
+        setIsPanning(true);
+        setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+        selectBlock(null);
+      }
     }
   };
 
@@ -122,9 +124,11 @@ export default function BoardCanvas() {
   const getBlockCenter = (blockId: string) => {
     const block = boardBlocks.find((b) => b.id === blockId);
     if (!block) return { x: 0, y: 0 };
+    const width = block.config?.width || 280;
+    const height = block.config?.height || 160;
     return {
-      x: block.position.x + 150,
-      y: block.position.y + 80,
+      x: block.position.x + width / 2,
+      y: block.position.y + height / 2,
     };
   };
 
@@ -140,8 +144,8 @@ export default function BoardCanvas() {
         <div
           ref={canvasRef}
           className={cn(
-            "flex-1 relative overflow-auto board-canvas-bg cursor-grab",
-            isPanning && "cursor-grabbing"
+            "flex-1 relative overflow-hidden board-canvas-bg",
+            isPanning ? "cursor-grabbing" : "cursor-grab"
           )}
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
