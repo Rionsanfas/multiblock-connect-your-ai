@@ -927,6 +927,13 @@
       radial-gradient(circle at 1px 1px, hsl(var(--border) / 0.5) 1.5px, transparent 0);
     background-size: 24px 24px;
     position: relative;
+    /* Hide scrollbars */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .board-canvas-bg::-webkit-scrollbar {
+    display: none;
   }
 
 }
