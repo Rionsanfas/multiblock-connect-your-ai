@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Play, Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { IconButton } from "@/components/ui/icon-button";
@@ -68,7 +68,7 @@ export function BlockCard({
     setIsDragging(false);
   };
 
-  useState(() => {
+  useEffect(() => {
     if (isDragging) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
@@ -77,7 +77,7 @@ export function BlockCard({
         window.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  });
+  }, [isDragging]);
 
   const handleRun = async () => {
     setIsRunning(true);
@@ -96,13 +96,13 @@ export function BlockCard({
   };
 
   return (
-    <GlassCard
-      variant={isSelected ? "solid" : "hover"}
-      glow={isSelected}
+    <div
       className={cn(
-        "absolute w-[300px] cursor-move select-none transition-shadow",
-        isDragging && "shadow-2xl z-50",
-        isSelected && "ring-2 ring-primary/50"
+        "absolute w-[300px] cursor-move select-none transition-all duration-200",
+        "bg-card/60 backdrop-blur-xl rounded-2xl border border-border/20",
+        "shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
+        isDragging && "shadow-[0_16px_48px_rgba(0,0,0,0.15)] z-50 scale-[1.02]",
+        isSelected && "ring-2 ring-foreground/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
       )}
       style={{
         left: block.position.x,
@@ -112,25 +112,27 @@ export function BlockCard({
       onDoubleClick={() => openBlockChat(block.id)}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 p-3 border-b border-border/30">
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
-        <h3 className="font-medium flex-1 truncate">{block.title}</h3>
+      <div className="flex items-center gap-2 p-4 border-b border-border/20">
+        <div className="p-1 rounded-lg bg-secondary/50">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <h3 className="font-semibold flex-1 truncate">{block.title}</h3>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <IconButton variant="ghost" size="sm" className="no-drag">
+            <IconButton variant="ghost" size="sm" className="no-drag h-8 w-8">
               <MoreHorizontal className="h-4 w-4" />
             </IconButton>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-card border-border">
-            <DropdownMenuItem onClick={() => openBlockChat(block.id)}>
+          <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
+            <DropdownMenuItem onClick={() => openBlockChat(block.id)} className="rounded-lg">
               <MessageSquare className="h-4 w-4 mr-2" />
               Open Chat
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => duplicateBlock(block.id)}>
+            <DropdownMenuItem onClick={() => duplicateBlock(block.id)} className="rounded-lg">
               <Copy className="h-4 w-4 mr-2" />
               Duplicate
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => deleteBlock(block.id)} className="text-destructive">
+            <DropdownMenuItem onClick={() => deleteBlock(block.id)} className="text-destructive rounded-lg">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </DropdownMenuItem>
@@ -139,7 +141,7 @@ export function BlockCard({
       </div>
 
       {/* Content Preview */}
-      <div className="p-3 min-h-[80px]">
+      <div className="p-4 min-h-[80px]">
         {lastMessage ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
             {lastMessage.content}
@@ -152,13 +154,14 @@ export function BlockCard({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between p-3 border-t border-border/30">
+      <div className="flex items-center justify-between p-4 border-t border-border/20 bg-secondary/20 rounded-b-2xl">
         <ProviderBadge provider={getProviderFromModel(block.model)} model={block.model} />
         <button
           onClick={(e) => { e.stopPropagation(); handleRun(); }}
           disabled={isRunning}
           className={cn(
-            "no-drag text-sm text-muted-foreground hover:text-foreground transition-colors",
+            "no-drag px-3 py-1.5 text-xs font-medium rounded-lg transition-all",
+            "bg-secondary/60 hover:bg-secondary text-muted-foreground hover:text-foreground",
             isRunning && "animate-pulse"
           )}
         >
@@ -168,17 +171,17 @@ export function BlockCard({
 
       {/* Connection Nodes */}
       <div
-        className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary border-2 border-background cursor-crosshair hover:scale-125 transition-transform no-drag"
+        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-foreground border-2 border-background cursor-crosshair hover:scale-125 transition-transform no-drag shadow-lg"
         onMouseDown={(e) => { e.stopPropagation(); onStartConnection(); }}
         onMouseUp={(e) => { e.stopPropagation(); if (isConnecting) onEndConnection(); }}
       />
       <div
         className={cn(
-          "absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-primary bg-background transition-all no-drag",
-          isConnecting && "scale-125 bg-primary/20"
+          "absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 border-foreground bg-background transition-all no-drag shadow-lg",
+          isConnecting && "scale-125 bg-foreground/20"
         )}
         onMouseUp={(e) => { e.stopPropagation(); if (isConnecting) onEndConnection(); }}
       />
-    </GlassCard>
+    </div>
   );
 }

@@ -113,7 +113,7 @@ export default function BoardCanvas() {
   if (!board) return null;
 
   return (
-    <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls>
+    <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls hideSidebar>
       <div className="flex h-full">
         {/* Left Sidebar - Blocks List */}
         <BlocksSidebar boardId={board.id} />

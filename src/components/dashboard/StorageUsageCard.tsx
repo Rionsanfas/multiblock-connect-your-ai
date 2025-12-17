@@ -1,6 +1,5 @@
 import { HardDrive, Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { GlassCard } from "@/components/ui/glass-card";
 import {
   Tooltip,
   TooltipContent,
@@ -29,17 +28,21 @@ export function StorageUsageCard({ usedMb, limitMb }: StorageUsageCardProps) {
 
   return (
     <TooltipProvider>
-      <GlassCard className="p-5">
-        <div className="flex items-center justify-between mb-3">
+      <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/20 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <HardDrive className="h-4 w-4 text-primary" />
-            <span className="font-medium text-sm">Storage</span>
+            <div className="p-2 rounded-xl bg-secondary/60">
+              <HardDrive className="h-4 w-4" />
+            </div>
+            <span className="font-semibold">Storage</span>
           </div>
           <Tooltip>
             <TooltipTrigger>
-              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+              <div className="p-1.5 rounded-lg hover:bg-secondary/60 transition-colors">
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </div>
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent className="rounded-xl">
               <p className="max-w-xs text-xs">
                 Storage covers messages, blocks, and uploaded files
               </p>
@@ -49,25 +52,25 @@ export function StorageUsageCard({ usedMb, limitMb }: StorageUsageCardProps) {
 
         <Progress 
           value={percentage} 
-          className={`h-2 mb-2 ${isAtLimit ? '[&>div]:bg-destructive' : isNearLimit ? '[&>div]:bg-warning' : ''}`}
+          className={`h-2 mb-3 ${isAtLimit ? '[&>div]:bg-destructive' : isNearLimit ? '[&>div]:bg-warning' : ''}`}
         />
 
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{formatStorage(usedMb)} used</span>
-          <span>{formatStorage(limitMb)} total</span>
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{formatStorage(usedMb)} used</span>
+          <span className="font-semibold tabular-nums">{formatStorage(limitMb)} total</span>
         </div>
 
         {isNearLimit && !isAtLimit && (
-          <p className="text-xs text-warning mt-2">
+          <p className="text-xs text-warning mt-3 p-2 rounded-lg bg-warning/10">
             Approaching storage limit
           </p>
         )}
         {isAtLimit && (
-          <p className="text-xs text-destructive mt-2">
+          <p className="text-xs text-destructive mt-3 p-2 rounded-lg bg-destructive/10">
             Storage almost full - consider upgrading
           </p>
         )}
-      </GlassCard>
+      </div>
     </TooltipProvider>
   );
 }

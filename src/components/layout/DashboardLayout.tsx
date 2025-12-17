@@ -7,6 +7,7 @@ interface DashboardLayoutProps {
   boardId?: string;
   boardTitle?: string;
   showBoardControls?: boolean;
+  hideSidebar?: boolean;
 }
 
 export function DashboardLayout({
@@ -14,10 +15,11 @@ export function DashboardLayout({
   boardId,
   boardTitle,
   showBoardControls = false,
+  hideSidebar = false,
 }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen w-full bg-background noise-bg">
-      <AppSidebar />
+      {!hideSidebar && <AppSidebar />}
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar
           boardId={boardId}
