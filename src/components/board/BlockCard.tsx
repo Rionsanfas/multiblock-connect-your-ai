@@ -113,7 +113,7 @@ export function BlockCard({
             : undefined
       }}
       onMouseDown={handleMouseDown}
-      onDoubleClick={() => openBlockChat(block.id)}
+      onClick={() => openBlockChat(block.id)}
     >
       {/* Header */}
       <div className="flex items-center gap-2 p-3 border-b border-border/15">
@@ -155,7 +155,7 @@ export function BlockCard({
           </p>
         ) : (
           <p className="text-xs text-muted-foreground/50 italic">
-            Double-click to chat
+            Click to chat
           </p>
         )}
       </div>

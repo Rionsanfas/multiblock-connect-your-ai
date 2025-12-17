@@ -76,16 +76,14 @@ export default function Dashboard() {
               usedMb={user.storage_used_mb}
               limitMb={user.storage_limit_mb}
             />
-            <div className="gradient-border-card">
-              <div className="gradient-card-inner p-5 flex flex-col justify-center">
-                <Button onClick={handleCreateBoard} className="gap-2 w-full btn-3d-shiny text-foreground font-medium rounded-xl py-3">
-                  <Plus className="h-4 w-4" />
-                  New Board
-                </Button>
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  {user.boards_limit - user.boards_used} boards remaining
-                </p>
-              </div>
+            <div className="flex flex-col justify-center items-center h-full">
+              <Button onClick={handleCreateBoard} className="gap-2 btn-gold-edge text-foreground font-medium rounded-xl py-3 px-6">
+                <Plus className="h-4 w-4" />
+                New Board
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                {user.boards_limit - user.boards_used} boards remaining
+              </p>
             </div>
           </div>
 

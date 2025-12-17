@@ -110,7 +110,9 @@ export function AppSidebar() {
                   animation: isActive ? "slideInFromLeft 0.5s ease-out forwards" : "none"
                 }}
               />
-              <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-colors duration-200", isActive && "text-[hsl(var(--accent))]")} />
+              <div className={cn("icon-3d p-1.5 rounded-lg", isActive && "icon-3d-active")}>
+                <item.icon className={cn("h-4 w-4 flex-shrink-0 transition-all duration-200 text-foreground/90", isActive && "text-foreground drop-shadow-[0_0_6px_hsl(0_0%_100%/0.5)]")} />
+              </div>
               {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
             </Link>
           );
