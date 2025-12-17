@@ -1,8 +1,15 @@
 import { ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { HeroBlocks } from "./HeroBlocks";
+import { useIntroAnimation } from "@/hooks/useScrollAnimation";
 
 const Hero = () => {
+  const badge = useIntroAnimation(100, 900);
+  const headline = useIntroAnimation(200, 900);
+  const subheadline = useIntroAnimation(350, 900);
+  const buttons = useIntroAnimation(500, 900);
+  const visual = useIntroAnimation(300, 1000);
+
   return (
     <section className="relative min-h-screen overflow-hidden" style={{ paddingTop: "clamp(80px, 12vw, 128px)", paddingBottom: "clamp(48px, 6vw, 80px)" }}>
       {/* Soft Warm Noisy Background */}
@@ -26,13 +33,14 @@ const Hero = () => {
           <div className="text-center lg:text-left order-2 lg:order-1">
             {/* Badge */}
             <div 
-              className="inline-flex items-center gap-2 rounded-full bg-secondary/50 border border-border animate-fade-up"
+              className="inline-flex items-center gap-2 rounded-full bg-secondary/50 border border-border"
               style={{ 
                 paddingLeft: "clamp(12px, 2vw, 16px)",
                 paddingRight: "clamp(12px, 2vw, 16px)",
                 paddingTop: "clamp(6px, 1vw, 8px)",
                 paddingBottom: "clamp(6px, 1vw, 8px)",
                 marginBottom: "clamp(20px, 3vw, 32px)",
+                ...badge.style,
               }}
             >
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse motion-reduce:animate-none" />
@@ -44,10 +52,11 @@ const Hero = () => {
               Uses text-wrap: balance for better line distribution.
             */}
             <h1 
-              className="font-bold text-foreground leading-tight animate-fade-up delay-100 text-wrap-balance"
+              className="font-bold text-foreground leading-tight text-wrap-balance"
               style={{ 
                 fontSize: "clamp(1.75rem, 1rem + 4vw, 4.5rem)",
                 marginBottom: "clamp(16px, 2vw, 24px)",
+                ...headline.style,
               }}
             >
               One Workspace.
@@ -57,11 +66,12 @@ const Hero = () => {
 
             {/* Sub-headline with proper text wrapping */}
             <p 
-              className="text-muted-foreground max-w-xl mx-auto lg:mx-0 animate-fade-up delay-200 text-break"
+              className="text-muted-foreground max-w-xl mx-auto lg:mx-0 text-break"
               style={{ 
                 fontSize: "clamp(0.875rem, 0.75rem + 0.5vw, 1.25rem)",
                 marginBottom: "clamp(24px, 4vw, 40px)",
                 lineHeight: 1.6,
+                ...subheadline.style,
               }}
             >
               Create blocks for different AI models, chat with them, and connect outputs 
@@ -70,8 +80,8 @@ const Hero = () => {
 
             {/* CTA Buttons - stack on mobile, row on sm+ */}
             <div 
-              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start animate-fade-up delay-300"
-              style={{ gap: "clamp(12px, 2vw, 16px)" }}
+              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start"
+              style={{ gap: "clamp(12px, 2vw, 16px)", ...buttons.style }}
             >
               <Link 
                 to="/auth" 
@@ -95,10 +105,11 @@ const Hero = () => {
             Height scales with viewport, centered on mobile.
           */}
           <div 
-            className="order-1 lg:order-2 animate-fade-up delay-200 flex items-center justify-center"
+            className="order-1 lg:order-2 flex items-center justify-center"
             style={{ 
               minHeight: "clamp(250px, 40vw, 600px)",
               maxHeight: "70vh",
+              ...visual.style,
             }}
           >
             <HeroBlocks />

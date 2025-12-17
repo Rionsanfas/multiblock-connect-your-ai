@@ -250,7 +250,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 }
               }}
               placeholder="Type your message..."
-              className="min-h-[50px] max-h-[150px] bg-secondary/50 resize-none rounded-xl border-border/20 text-sm"
+              className="min-h-[50px] max-h-[150px] resize-none rounded-xl border-border/30 text-sm input-3d"
             />
             <button
               onClick={handleSend}
