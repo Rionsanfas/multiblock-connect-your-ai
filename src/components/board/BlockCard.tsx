@@ -302,67 +302,17 @@ export function BlockCard({
         onMouseUp={(e) => { e.stopPropagation(); if (isConnecting) onEndConnection(); }}
       />
 
-      {/* Floating Resize Handles - only show on hover/selected */}
+      {/* Single floating resize handle - top right corner only */}
       {(isSelected || isHoveringResize) && (
-        <>
-          {/* Corner handles - floating outside block */}
-          <div
-            className={cn(
-              "absolute w-4 h-4 rounded-full cursor-nw-resize no-drag transition-all duration-200",
-              "bg-background border-2 border-foreground/60 shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
-              "hover:scale-125 hover:border-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-            )}
-            style={{ top: -8, left: -8 }}
-            onMouseDown={(e) => handleResizeStart(e, 'nw')}
-          />
-          <div
-            className={cn(
-              "absolute w-4 h-4 rounded-full cursor-ne-resize no-drag transition-all duration-200",
-              "bg-background border-2 border-foreground/60 shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
-              "hover:scale-125 hover:border-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-            )}
-            style={{ top: -8, right: -8 }}
-            onMouseDown={(e) => handleResizeStart(e, 'ne')}
-          />
-          <div
-            className={cn(
-              "absolute w-4 h-4 rounded-full cursor-sw-resize no-drag transition-all duration-200",
-              "bg-background border-2 border-foreground/60 shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
-              "hover:scale-125 hover:border-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-            )}
-            style={{ bottom: -8, left: -8 }}
-            onMouseDown={(e) => handleResizeStart(e, 'sw')}
-          />
-          <div
-            className={cn(
-              "absolute w-4 h-4 rounded-full cursor-se-resize no-drag transition-all duration-200",
-              "bg-background border-2 border-foreground/60 shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
-              "hover:scale-125 hover:border-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
-            )}
-            style={{ bottom: -8, right: -8 }}
-            onMouseDown={(e) => handleResizeStart(e, 'se')}
-          />
-          
-          {/* Side handles for horizontal resizing */}
-          <div
-            className={cn(
-              "absolute w-3 h-8 rounded-full cursor-w-resize no-drag transition-all duration-200",
-              "bg-background/80 border border-foreground/40 shadow-[0_2px_8px_rgba(0,0,0,0.3)]",
-              "hover:bg-background hover:border-foreground/60 hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-            )}
-            style={{ top: "50%", left: -10, transform: "translateY(-50%)" }}
-            onMouseDown={(e) => handleResizeStart(e, 'w')}
-          />
-          <div
-            className={cn(
-              "absolute w-3 h-8 rounded-full cursor-e-resize no-drag transition-all duration-200",
-              "bg-background/80 border border-foreground/40 shadow-[0_2px_8px_rgba(0,0,0,0.3)]",
-              "hover:bg-background hover:border-foreground/60 hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-            )}
-            style={{ top: "50%", right: -10, transform: "translateY(-50%)" }}
-            onMouseDown={(e) => handleResizeStart(e, 'e')}
-          />
-        </>
+        <div
+          className={cn(
+            "absolute w-5 h-5 rounded-full cursor-ne-resize no-drag transition-all duration-300",
+            "bg-foreground/50 shadow-[0_4px_16px_rgba(0,0,0,0.6)]",
+            "hover:bg-foreground/80 hover:scale-125 hover:shadow-[0_6px_20px_rgba(0,0,0,0.7)]"
+          )}
+          style={{ top: -14, right: -14 }}
+          onMouseDown={(e) => handleResizeStart(e, 'ne')}
+        />
       )}
     </div>
   );

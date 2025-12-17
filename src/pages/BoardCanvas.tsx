@@ -11,6 +11,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 
+const DEFAULT_BLOCK_WIDTH = 280;
+const DEFAULT_BLOCK_HEIGHT = 160;
+
 export default function BoardCanvas() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -41,6 +44,38 @@ export default function BoardCanvas() {
   const boardConnections = connections.filter((c) =>
     boardBlocks.some((b) => b.id === c.from_block || b.id === c.to_block)
   );
+
+  const handleCenterView = useCallback(() => {
+    if (boardBlocks.length === 0) {
+      toast.info("No blocks to center on");
+      return;
+    }
+    
+    // Calculate bounding box of all blocks
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    boardBlocks.forEach(block => {
+      const width = block.config?.width || DEFAULT_BLOCK_WIDTH;
+      const height = block.config?.height || DEFAULT_BLOCK_HEIGHT;
+      minX = Math.min(minX, block.position.x);
+      minY = Math.min(minY, block.position.y);
+      maxX = Math.max(maxX, block.position.x + width);
+      maxY = Math.max(maxY, block.position.y + height);
+    });
+    
+    // Calculate center of all blocks
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // Get canvas dimensions
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    // Calculate pan offset to center the blocks
+    const newPanX = (rect.width / 2) - (centerX * zoom);
+    const newPanY = (rect.height / 2) - (centerY * zoom);
+    
+    setPanOffset({ x: newPanX, y: newPanY });
+  }, [boardBlocks, zoom]);
 
   useEffect(() => {
     if (board) {
@@ -162,7 +197,7 @@ export default function BoardCanvas() {
   return (
     <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls hideSidebar>
       <div className="flex h-full relative">
-        <BlocksSidebar boardId={board.id} />
+        <BlocksSidebar boardId={board.id} onCenterView={handleCenterView} />
 
         <ContextMenu>
           <ContextMenuTrigger asChild>
@@ -224,12 +259,14 @@ export default function BoardCanvas() {
               </div>
             </div>
           </ContextMenuTrigger>
-          <ContextMenuContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl min-w-[160px]">
+          <ContextMenuContent className="bg-card/90 backdrop-blur-2xl border border-border/40 rounded-2xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
             <ContextMenuItem 
               onClick={handleCreateBlockAtContext}
-              className="rounded-lg gap-2 cursor-pointer"
+              className="rounded-xl gap-3 cursor-pointer px-4 py-3 text-sm font-medium transition-all duration-200 hover:bg-accent/20 focus:bg-accent/20 data-[highlighted]:bg-accent/20"
             >
-              <Plus className="h-4 w-4" />
+              <div className="p-2 rounded-xl bg-secondary/60 border border-border/30 shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                <Plus className="h-4 w-4" />
+              </div>
               Create Block
             </ContextMenuItem>
           </ContextMenuContent>
