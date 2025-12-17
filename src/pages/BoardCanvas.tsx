@@ -4,11 +4,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BlockCard } from "@/components/board/BlockCard";
 import { ConnectionLine } from "@/components/board/ConnectionLine";
 import { BlocksSidebar } from "@/components/board/BlocksSidebar";
-
 import { BlockChatModal } from "@/components/board/BlockChatModal";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 
 export default function BoardCanvas() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,7 @@ export default function BoardCanvas() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
 
   const {
     boards,
@@ -50,9 +52,10 @@ export default function BoardCanvas() {
   }, [board, id, navigate, setCurrentBoard]);
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    // Enable panning with regular left click on canvas background
-    if (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('board-canvas-bg')) {
-      if (e.button === 0) {
+    const target = e.target as HTMLElement;
+    // Only enable panning on canvas background, not on blocks
+    if (target === canvasRef.current || target.classList.contains('board-canvas-bg') || target.closest('.canvas-inner')) {
+      if (e.button === 0 && !target.closest('.block-card')) {
         setIsPanning(true);
         setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
         selectBlock(null);
@@ -61,8 +64,8 @@ export default function BoardCanvas() {
   };
 
   const handleCanvasDoubleClick = (e: React.MouseEvent) => {
-    // Only create block if double-clicking on the canvas itself, not on a block
-    if (e.target === canvasRef.current || (e.target as HTMLElement).classList.contains('board-canvas-bg')) {
+    const target = e.target as HTMLElement;
+    if (target === canvasRef.current || target.classList.contains('board-canvas-bg') || (target.closest('.canvas-inner') && !target.closest('.block-card'))) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
         const x = (e.clientX - rect.left - panOffset.x) / zoom;
@@ -76,7 +79,29 @@ export default function BoardCanvas() {
     }
   };
 
-  const handleCanvasMouseMove = (e: React.MouseEvent) => {
+  const handleContextMenu = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // Only show context menu on empty canvas space
+    if (target === canvasRef.current || target.classList.contains('board-canvas-bg') || (target.closest('.canvas-inner') && !target.closest('.block-card'))) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (rect) {
+        setContextMenuPos({
+          x: (e.clientX - rect.left - panOffset.x) / zoom,
+          y: (e.clientY - rect.top - panOffset.y) / zoom,
+        });
+      }
+    }
+  };
+
+  const handleCreateBlockAtContext = () => {
+    createBlock(id!, {
+      title: "New Block",
+      position: contextMenuPos,
+    });
+    toast.success("Block created");
+  };
+
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
       setPanOffset({
         x: e.clientX - dragStart.x,
@@ -92,7 +117,7 @@ export default function BoardCanvas() {
         });
       }
     }
-  };
+  }, [isPanning, dragStart, connectingFrom, panOffset, zoom]);
 
   const handleCanvasMouseUp = () => {
     setIsPanning(false);
@@ -137,73 +162,80 @@ export default function BoardCanvas() {
   return (
     <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls hideSidebar>
       <div className="flex h-full relative">
-        {/* Left Sidebar - Add Button */}
         <BlocksSidebar boardId={board.id} />
 
-        {/* Canvas Area - Much larger with panning */}
-        <div
-          ref={canvasRef}
-          className={cn(
-            "flex-1 relative overflow-hidden board-canvas-bg",
-            isPanning ? "cursor-grabbing" : "cursor-grab"
-          )}
-          onMouseDown={handleCanvasMouseDown}
-          onMouseMove={handleCanvasMouseMove}
-          onMouseUp={handleCanvasMouseUp}
-          onMouseLeave={handleCanvasMouseUp}
-          onDoubleClick={handleCanvasDoubleClick}
-        >
-          {/* Large virtual canvas for free movement */}
-          <div
-            className="origin-top-left"
-            style={{
-              width: "5000px",
-              height: "5000px",
-              transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
-            }}
-          >
-            {/* Connection Lines */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: "visible" }}>
-              {boardConnections.map((conn) => {
-                const from = getBlockCenter(conn.from_block);
-                const to = getBlockCenter(conn.to_block);
-                return (
-                  <ConnectionLine
-                    key={conn.id}
-                    from={from}
-                    to={to}
-                    connectionId={conn.id}
-                  />
-                );
-              })}
-              {/* Drawing connection */}
-              {connectingFrom && (
-                <ConnectionLine
-                  from={getBlockCenter(connectingFrom)}
-                  to={mousePos}
-                  isDrawing
-                />
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <div
+              ref={canvasRef}
+              className={cn(
+                "flex-1 relative overflow-hidden board-canvas-bg",
+                isPanning ? "cursor-grabbing" : "cursor-grab"
               )}
-            </svg>
+              onMouseDown={handleCanvasMouseDown}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseUp={handleCanvasMouseUp}
+              onMouseLeave={handleCanvasMouseUp}
+              onDoubleClick={handleCanvasDoubleClick}
+              onContextMenu={handleContextMenu}
+            >
+              <div
+                className="canvas-inner origin-top-left"
+                style={{
+                  width: "5000px",
+                  height: "5000px",
+                  transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+                  willChange: "transform",
+                }}
+              >
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: "visible" }}>
+                  {boardConnections.map((conn) => {
+                    const from = getBlockCenter(conn.from_block);
+                    const to = getBlockCenter(conn.to_block);
+                    return (
+                      <ConnectionLine
+                        key={conn.id}
+                        from={from}
+                        to={to}
+                        connectionId={conn.id}
+                      />
+                    );
+                  })}
+                  {connectingFrom && (
+                    <ConnectionLine
+                      from={getBlockCenter(connectingFrom)}
+                      to={mousePos}
+                      isDrawing
+                    />
+                  )}
+                </svg>
 
-            {/* Blocks */}
-            {boardBlocks.map((block) => (
-              <BlockCard
-                key={block.id}
-                block={block}
-                isSelected={selectedBlockId === block.id}
-                onSelect={() => selectBlock(block.id)}
-                onStartConnection={() => handleStartConnection(block.id)}
-                onEndConnection={() => handleEndConnection(block.id)}
-                isConnecting={!!connectingFrom}
-              />
-            ))}
-          </div>
-        </div>
-
+                {boardBlocks.map((block) => (
+                  <BlockCard
+                    key={block.id}
+                    block={block}
+                    isSelected={selectedBlockId === block.id}
+                    onSelect={() => selectBlock(block.id)}
+                    onStartConnection={() => handleStartConnection(block.id)}
+                    onEndConnection={() => handleEndConnection(block.id)}
+                    isConnecting={!!connectingFrom}
+                  />
+                ))}
+              </div>
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl min-w-[160px]">
+            <ContextMenuItem 
+              onClick={handleCreateBlockAtContext}
+              className="rounded-lg gap-2 cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              Create Block
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
       </div>
 
-      {/* Block Chat Modal */}
       {isBlockChatOpen && chatBlockId && <BlockChatModal blockId={chatBlockId} />}
     </DashboardLayout>
   );

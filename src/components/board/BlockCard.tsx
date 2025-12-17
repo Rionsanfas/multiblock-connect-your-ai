@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical } from "lucide-react";
-import { GlassCard } from "@/components/ui/glass-card";
+import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -37,6 +36,7 @@ export function BlockCard({
   const [isRunning, setIsRunning] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeCorner, setResizeCorner] = useState<string | null>(null);
+  const [isHoveringResize, setIsHoveringResize] = useState(false);
   const [size, setSize] = useState({ 
     width: block.config?.width || DEFAULT_WIDTH, 
     height: block.config?.height || DEFAULT_HEIGHT 
@@ -75,18 +75,19 @@ export function BlockCard({
 
   const handleMouseMove = (e: MouseEvent) => {
     if (isDragging && !isResizing) {
-      // Check if moved more than 5px to consider it a drag
       const dx = Math.abs(e.clientX - startPos.current.x);
       const dy = Math.abs(e.clientY - startPos.current.y);
-      if (dx > 5 || dy > 5) {
+      if (dx > 3 || dy > 3) {
         setHasDragged(true);
       }
       
-      // Account for zoom when calculating new position
       const newX = e.clientX / zoom - dragOffset.current.x;
       const newY = e.clientY / zoom - dragOffset.current.y;
       
-      updateBlockPosition(block.id, { x: newX, y: newY });
+      // Use requestAnimationFrame for smoother updates
+      requestAnimationFrame(() => {
+        updateBlockPosition(block.id, { x: newX, y: newY });
+      });
     }
   };
 
@@ -95,13 +96,11 @@ export function BlockCard({
   };
 
   const handleClick = () => {
-    // Only open chat if not dragged and not resizing
     if (!hasDragged && !isResizing) {
       openBlockChat(block.id);
     }
   };
 
-  // Resize handlers
   const handleResizeStart = (e: React.MouseEvent, corner: string) => {
     e.stopPropagation();
     e.preventDefault();
@@ -123,25 +122,39 @@ export function BlockCard({
     let newX = startBlockPos.current.x;
     let newY = startBlockPos.current.y;
     
-    if (resizeCorner.includes('e')) {
+    // All corners resize proportionally from opposite corner
+    if (resizeCorner === 'se') {
       newWidth = Math.max(MIN_WIDTH, startSize.current.width + deltaX);
-    }
-    if (resizeCorner.includes('w')) {
+      newHeight = Math.max(MIN_HEIGHT, startSize.current.height + deltaY);
+    } else if (resizeCorner === 'sw') {
+      const widthDelta = Math.min(deltaX, startSize.current.width - MIN_WIDTH);
+      newWidth = startSize.current.width - widthDelta;
+      newX = startBlockPos.current.x + widthDelta;
+      newHeight = Math.max(MIN_HEIGHT, startSize.current.height + deltaY);
+    } else if (resizeCorner === 'ne') {
+      newWidth = Math.max(MIN_WIDTH, startSize.current.width + deltaX);
+      const heightDelta = Math.min(deltaY, startSize.current.height - MIN_HEIGHT);
+      newHeight = startSize.current.height - heightDelta;
+      newY = startBlockPos.current.y + heightDelta;
+    } else if (resizeCorner === 'nw') {
+      const widthDelta = Math.min(deltaX, startSize.current.width - MIN_WIDTH);
+      newWidth = startSize.current.width - widthDelta;
+      newX = startBlockPos.current.x + widthDelta;
+      const heightDelta = Math.min(deltaY, startSize.current.height - MIN_HEIGHT);
+      newHeight = startSize.current.height - heightDelta;
+      newY = startBlockPos.current.y + heightDelta;
+    } else if (resizeCorner === 'e') {
+      newWidth = Math.max(MIN_WIDTH, startSize.current.width + deltaX);
+    } else if (resizeCorner === 'w') {
       const widthDelta = Math.min(deltaX, startSize.current.width - MIN_WIDTH);
       newWidth = startSize.current.width - widthDelta;
       newX = startBlockPos.current.x + widthDelta;
     }
-    if (resizeCorner.includes('s')) {
-      newHeight = Math.max(MIN_HEIGHT, startSize.current.height + deltaY);
-    }
-    if (resizeCorner.includes('n')) {
-      const heightDelta = Math.min(deltaY, startSize.current.height - MIN_HEIGHT);
-      newHeight = startSize.current.height - heightDelta;
-      newY = startBlockPos.current.y + heightDelta;
-    }
     
-    setSize({ width: newWidth, height: newHeight });
-    updateBlockPosition(block.id, { x: newX, y: newY });
+    requestAnimationFrame(() => {
+      setSize({ width: newWidth, height: newHeight });
+      updateBlockPosition(block.id, { x: newX, y: newY });
+    });
   };
 
   const handleResizeEnd = () => {
@@ -178,9 +191,7 @@ export function BlockCard({
     setIsRunning(true);
     toast.info("Running block...");
     
-    const result = await api.blocks.run(block.id, "Continue the conversation", (chunk) => {
-      // Streaming handled by store
-    });
+    const result = await api.blocks.run(block.id, "Continue the conversation", (chunk) => {});
     
     if (result.success) {
       toast.success("Block completed");
@@ -193,8 +204,8 @@ export function BlockCard({
   return (
     <div
       className={cn(
-        "absolute cursor-move select-none transition-shadow duration-200",
-        isDragging && "z-50",
+        "block-card absolute select-none transition-shadow duration-150",
+        isDragging ? "cursor-grabbing z-50" : "cursor-move",
         isResizing && "z-50",
         isSelected ? "btn-soft-active" : "btn-soft"
       )}
@@ -204,13 +215,16 @@ export function BlockCard({
         width: size.width,
         padding: 0,
         boxShadow: isDragging 
-          ? "0 16px 48px rgba(0,0,0,0.25), 0 0 20px hsl(var(--accent)/0.2)" 
+          ? "0 20px 60px rgba(0,0,0,0.35), 0 0 24px hsl(var(--accent)/0.25)" 
           : isSelected 
             ? "0 8px 32px rgba(0,0,0,0.2), 0 0 16px hsl(var(--accent)/0.15)" 
-            : undefined
+            : undefined,
+        willChange: isDragging ? "transform" : "auto",
       }}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
+      onMouseEnter={() => setIsHoveringResize(true)}
+      onMouseLeave={() => !isResizing && setIsHoveringResize(false)}
     >
       {/* Header */}
       <div className="flex items-center gap-2 p-3 border-b border-border/15">
@@ -288,41 +302,64 @@ export function BlockCard({
         onMouseUp={(e) => { e.stopPropagation(); if (isConnecting) onEndConnection(); }}
       />
 
-      {/* Resize Handles */}
-      {isSelected && (
+      {/* Floating Resize Handles - only show on hover/selected */}
+      {(isSelected || isHoveringResize) && (
         <>
-          {/* Corner handles */}
+          {/* Corner handles - floating outside block */}
           <div
-            className="absolute -top-1 -left-1 w-3 h-3 bg-foreground rounded-sm cursor-nw-resize no-drag hover:scale-110 transition-transform shadow-md"
+            className={cn(
+              "absolute w-4 h-4 rounded-full cursor-nw-resize no-drag transition-all duration-200",
+              "bg-background border-2 border-foreground/60 shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
+              "hover:scale-125 hover:border-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+            )}
+            style={{ top: -8, left: -8 }}
             onMouseDown={(e) => handleResizeStart(e, 'nw')}
           />
           <div
-            className="absolute -top-1 -right-1 w-3 h-3 bg-foreground rounded-sm cursor-ne-resize no-drag hover:scale-110 transition-transform shadow-md"
+            className={cn(
+              "absolute w-4 h-4 rounded-full cursor-ne-resize no-drag transition-all duration-200",
+              "bg-background border-2 border-foreground/60 shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
+              "hover:scale-125 hover:border-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+            )}
+            style={{ top: -8, right: -8 }}
             onMouseDown={(e) => handleResizeStart(e, 'ne')}
           />
           <div
-            className="absolute -bottom-1 -left-1 w-3 h-3 bg-foreground rounded-sm cursor-sw-resize no-drag hover:scale-110 transition-transform shadow-md"
+            className={cn(
+              "absolute w-4 h-4 rounded-full cursor-sw-resize no-drag transition-all duration-200",
+              "bg-background border-2 border-foreground/60 shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
+              "hover:scale-125 hover:border-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+            )}
+            style={{ bottom: -8, left: -8 }}
             onMouseDown={(e) => handleResizeStart(e, 'sw')}
           />
           <div
-            className="absolute -bottom-1 -right-1 w-3 h-3 bg-foreground rounded-sm cursor-se-resize no-drag hover:scale-110 transition-transform shadow-md"
+            className={cn(
+              "absolute w-4 h-4 rounded-full cursor-se-resize no-drag transition-all duration-200",
+              "bg-background border-2 border-foreground/60 shadow-[0_2px_8px_rgba(0,0,0,0.4)]",
+              "hover:scale-125 hover:border-foreground hover:shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
+            )}
+            style={{ bottom: -8, right: -8 }}
             onMouseDown={(e) => handleResizeStart(e, 'se')}
           />
-          {/* Edge handles */}
+          
+          {/* Side handles for horizontal resizing */}
           <div
-            className="absolute -top-1 left-1/2 -translate-x-1/2 w-6 h-2 bg-foreground/70 rounded-sm cursor-n-resize no-drag hover:bg-foreground transition-colors"
-            onMouseDown={(e) => handleResizeStart(e, 'n')}
-          />
-          <div
-            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-2 bg-foreground/70 rounded-sm cursor-s-resize no-drag hover:bg-foreground transition-colors"
-            onMouseDown={(e) => handleResizeStart(e, 's')}
-          />
-          <div
-            className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-6 bg-foreground/70 rounded-sm cursor-w-resize no-drag hover:bg-foreground transition-colors"
+            className={cn(
+              "absolute w-3 h-8 rounded-full cursor-w-resize no-drag transition-all duration-200",
+              "bg-background/80 border border-foreground/40 shadow-[0_2px_8px_rgba(0,0,0,0.3)]",
+              "hover:bg-background hover:border-foreground/60 hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+            )}
+            style={{ top: "50%", left: -10, transform: "translateY(-50%)" }}
             onMouseDown={(e) => handleResizeStart(e, 'w')}
           />
           <div
-            className="absolute top-1/2 -right-1 -translate-y-1/2 w-2 h-6 bg-foreground/70 rounded-sm cursor-e-resize no-drag hover:bg-foreground transition-colors"
+            className={cn(
+              "absolute w-3 h-8 rounded-full cursor-e-resize no-drag transition-all duration-200",
+              "bg-background/80 border border-foreground/40 shadow-[0_2px_8px_rgba(0,0,0,0.3)]",
+              "hover:bg-background hover:border-foreground/60 hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+            )}
+            style={{ top: "50%", right: -10, transform: "translateY(-50%)" }}
             onMouseDown={(e) => handleResizeStart(e, 'e')}
           />
         </>
