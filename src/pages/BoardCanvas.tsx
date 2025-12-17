@@ -122,7 +122,7 @@ export default function BoardCanvas() {
         <div
           ref={canvasRef}
           className={cn(
-            "flex-1 relative overflow-hidden bg-[radial-gradient(circle_at_1px_1px,hsl(var(--border)/0.3)_1px,transparent_0)] bg-[size:40px_40px]",
+            "flex-1 relative overflow-hidden board-canvas-bg",
             isPanning && "cursor-grabbing"
           )}
           onMouseDown={handleCanvasMouseDown}
