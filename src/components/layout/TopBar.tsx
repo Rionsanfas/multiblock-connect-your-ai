@@ -59,7 +59,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
   };
 
   return (
-    <header className="h-16 border-b border-border/10 bg-card/50 backdrop-blur-xl flex items-center justify-between px-5 gap-4">
+    <header className="h-16 flex items-center justify-between px-5 gap-4">
       {/* Left section */}
       <div className="flex items-center gap-4">
         {showBoardControls && (

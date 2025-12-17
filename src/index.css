@@ -929,28 +929,6 @@
     position: relative;
   }
 
-  .board-canvas-bg::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: 
-      radial-gradient(circle at 10% 20%, hsl(var(--accent) / 0.08) 0%, transparent 20%),
-      radial-gradient(circle at 90% 80%, hsl(220 50% 50% / 0.06) 0%, transparent 18%),
-      radial-gradient(circle at 50% 50%, hsl(280 40% 50% / 0.05) 0%, transparent 25%),
-      radial-gradient(circle at 20% 70%, hsl(var(--accent) / 0.06) 0%, transparent 15%),
-      radial-gradient(circle at 80% 30%, hsl(220 50% 50% / 0.05) 0%, transparent 12%),
-      radial-gradient(circle at 35% 10%, hsl(280 40% 50% / 0.04) 0%, transparent 10%),
-      radial-gradient(circle at 65% 90%, hsl(var(--accent) / 0.05) 0%, transparent 12%),
-      radial-gradient(circle at 5% 50%, hsl(220 50% 50% / 0.04) 0%, transparent 8%),
-      radial-gradient(circle at 95% 50%, hsl(280 40% 50% / 0.04) 0%, transparent 8%),
-      radial-gradient(circle at 40% 40%, hsl(var(--accent) / 0.03) 0%, transparent 6%),
-      radial-gradient(circle at 60% 60%, hsl(220 50% 50% / 0.03) 0%, transparent 6%),
-      radial-gradient(circle at 25% 85%, hsl(280 40% 50% / 0.03) 0%, transparent 5%),
-      radial-gradient(circle at 75% 15%, hsl(var(--accent) / 0.03) 0%, transparent 5%),
-      radial-gradient(circle at 15% 35%, hsl(220 50% 50% / 0.025) 0%, transparent 4%),
-      radial-gradient(circle at 85% 65%, hsl(280 40% 50% / 0.025) 0%, transparent 4%);
-    pointer-events: none;
-  }
 }
 
 @layer utilities {
