@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BlockCard } from "@/components/board/BlockCard";
 import { ConnectionLine } from "@/components/board/ConnectionLine";
 import { BlocksSidebar } from "@/components/board/BlocksSidebar";
-import { BlockSettings } from "@/components/board/BlockSettings";
+
 import { BlockChatModal } from "@/components/board/BlockChatModal";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
@@ -197,8 +197,6 @@ export default function BoardCanvas() {
           </div>
         </div>
 
-        {/* Right Sidebar - Block Settings */}
-        {selectedBlockId && <BlockSettings blockId={selectedBlockId} />}
       </div>
 
       {/* Block Chat Modal */}
