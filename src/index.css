@@ -1516,15 +1516,15 @@
   pointer-events: none;
   z-index: 0;
   mask-image:
-    radial-gradient(ellipse 120px 120px at 0% 0%, black 0%, transparent 50%),
-    radial-gradient(ellipse 120px 120px at 100% 100%, black 0%, transparent 50%),
-    radial-gradient(ellipse 100px 100px at 100% 0%, black 0%, transparent 50%),
-    radial-gradient(ellipse 100px 100px at 0% 100%, black 0%, transparent 50%);
+    radial-gradient(ellipse 120px 120px at 0% 0%, black 0%, transparent 20%),
+    radial-gradient(ellipse 120px 120px at 100% 100%, black 0%, transparent 20%),
+    radial-gradient(ellipse 100px 100px at 100% 0%, black 0%, transparent 20%),
+    radial-gradient(ellipse 100px 100px at 0% 100%, black 0%, transparent 20%);
   -webkit-mask-image:
-    radial-gradient(ellipse 120px 120px at 0% 0%, black 0%, transparent 50%),
-    radial-gradient(ellipse 120px 120px at 100% 100%, black 0%, transparent 50%),
-    radial-gradient(ellipse 100px 100px at 100% 0%, black 0%, transparent 50%),
-    radial-gradient(ellipse 100px 100px at 0% 100%, black 0%, transparent 50%);
+    radial-gradient(ellipse 120px 120px at 0% 0%, black 0%, transparent 20%),
+    radial-gradient(ellipse 120px 120px at 100% 100%, black 0%, transparent 20%),
+    radial-gradient(ellipse 100px 100px at 100% 0%, black 0%, transparent 20%),
+    radial-gradient(ellipse 100px 100px at 0% 100%, black 0%, transparent 20%);
 }
 
 /* Dot grid overlay - full coverage but subtle */
