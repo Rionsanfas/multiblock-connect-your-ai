@@ -237,8 +237,8 @@ export function BlockCard({
         )}>{block.title}</h3>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <IconButton variant="ghost" size="sm" className="no-drag h-7 w-7">
-              <MoreHorizontal className="h-3.5 w-3.5" />
+            <IconButton variant="ghost" size="sm" className="no-drag h-8 w-8">
+              <MoreHorizontal className="h-5 w-5" />
             </IconButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">

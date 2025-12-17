@@ -101,7 +101,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               {/* Settings Popover */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="icon-3d p-2 rounded-lg">
+                  <button className="key-icon-3d p-2 rounded-lg">
                     <Settings className="h-4 w-4" />
                   </button>
                 </PopoverTrigger>
@@ -120,7 +120,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                           className="bg-secondary/50 rounded-lg border-border/30 h-9"
                           autoFocus
                         />
-                        <button className="icon-3d p-2 rounded-lg" onClick={handleTitleSave}>
+                        <button className="key-icon-3d p-2 rounded-lg" onClick={handleTitleSave}>
                           <Check className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -171,7 +171,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 </PopoverContent>
               </Popover>
               
-              <button className="icon-3d p-2 rounded-lg" onClick={() => closeBlockChat()}>
+              <button className="key-icon-3d p-2 rounded-lg" onClick={() => closeBlockChat()}>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -211,11 +211,11 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 "flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
                 msg.role === "user" && "order-first"
               )}>
-                <button className="icon-3d p-1.5 rounded-lg" onClick={() => handleCopy(msg.content)}>
+                <button className="key-icon-3d p-1.5 rounded-lg" onClick={() => handleCopy(msg.content)}>
                   <Copy className="h-3 w-3" />
                 </button>
                 <button
-                  className="icon-3d p-1.5 rounded-lg"
+                  className="key-icon-3d p-1.5 rounded-lg"
                   onClick={() => deleteMessage(msg.id)}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -256,7 +256,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               onClick={handleSend}
               disabled={!input.trim() || isRunning}
               className={cn(
-                "icon-3d h-auto px-4 rounded-xl transition-all",
+                "key-icon-3d h-auto px-4 py-3 rounded-xl transition-all",
                 (!input.trim() || isRunning) && "opacity-50 cursor-not-allowed"
               )}
             >

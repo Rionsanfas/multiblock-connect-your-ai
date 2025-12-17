@@ -67,7 +67,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
         {showBoardControls && (
           <button
             onClick={() => navigate("/dashboard")}
-            className="icon-3d p-2.5 rounded-xl"
+            className="key-icon-3d p-2.5 rounded-xl"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -76,7 +76,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
         {/* Home link */}
         <Link
           to="/"
-          className="icon-3d p-2.5 rounded-xl"
+          className="key-icon-3d p-2.5 rounded-xl"
         >
           <Home className="h-4 w-4" />
         </Link>
@@ -92,7 +92,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                   className="h-10 w-56 bg-secondary/50 rounded-xl border-border/20"
                   autoFocus
                 />
-                <button onClick={handleTitleSave} className="icon-3d p-2.5 rounded-xl">
+                <button onClick={handleTitleSave} className="key-icon-3d p-2.5 rounded-xl">
                   <Check className="h-4 w-4" />
                 </button>
               </div>
@@ -116,7 +116,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
           <div className="flex items-center gap-1 px-2">
             <button
               onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-              className="icon-3d p-1.5 rounded-lg"
+              className="key-icon-3d p-1.5 rounded-lg"
             >
               <ZoomOut className="h-4 w-4" />
             </button>
@@ -125,7 +125,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
             </span>
             <button
               onClick={() => setZoom(Math.min(2, zoom + 0.25))}
-              className="icon-3d p-1.5 rounded-lg"
+              className="key-icon-3d p-1.5 rounded-lg"
             >
               <ZoomIn className="h-4 w-4" />
             </button>
@@ -141,7 +141,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
             <Popover>
               <PopoverTrigger asChild>
                 <button
-                  className="icon-3d p-2.5 rounded-xl"
+                  className="key-icon-3d p-2.5 rounded-xl"
                   title="Board Instructions"
                 >
                   <HelpCircle className="h-4 w-4" />
@@ -166,7 +166,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
             {/* Settings Popover - All Blocks with inline settings */}
             <Popover>
               <PopoverTrigger asChild>
-                <button className="icon-3d p-2.5 rounded-xl">
+                <button className="key-icon-3d p-2.5 rounded-xl">
                   <Settings className="h-4 w-4" />
                 </button>
               </PopoverTrigger>
@@ -185,7 +185,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                                 <p className="text-sm font-medium truncate">{block.title}</p>
                                 <p className="text-xs text-muted-foreground truncate">{block.model}</p>
                               </div>
-                              <button className="icon-3d p-1.5 rounded-lg ml-2">
+                              <button className="key-icon-3d p-1.5 rounded-lg ml-2">
                                 <Settings className="h-3.5 w-3.5" />
                               </button>
                             </div>
@@ -205,7 +205,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                                     className="bg-secondary/50 rounded-lg border-border/30 h-9"
                                     autoFocus
                                   />
-                                  <button className="icon-3d p-2 rounded-lg" onClick={() => handleBlockTitleSave(block.id)}>
+                                  <button className="key-icon-3d p-2 rounded-lg" onClick={() => handleBlockTitleSave(block.id)}>
                                     <Check className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
