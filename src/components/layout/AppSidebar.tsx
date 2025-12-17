@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/tooltip";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
   { icon: Layers, label: "Boards", href: "/dashboard" },
   { icon: Key, label: "API Keys", href: "/settings/keys" },
   { icon: CreditCard, label: "Pricing", href: "/pricing" },
@@ -33,16 +32,31 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "relative flex flex-col h-screen bg-card/50 backdrop-blur-xl border-r border-border/20 transition-all duration-300",
+        "relative flex flex-col h-screen bg-card/80 backdrop-blur-xl border-r border-border/10 transition-all duration-300",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
+      {/* Dashboard Title */}
+      <div className={cn("p-5 pb-2", collapsed && "px-3")}>
+        <div className={cn("flex items-center justify-between", collapsed && "justify-center")}>
+          {!collapsed && (
+            <h1 className="text-lg font-semibold text-foreground tracking-tight">Dashboard</h1>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-2 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-all duration-200"
+          >
+            <ChevronLeft className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", collapsed && "rotate-180")} />
+          </button>
+        </div>
+      </div>
+
       {/* User Profile Section */}
       {user && (
-        <div className={cn("p-4", collapsed && "px-3")}>
+        <div className={cn("px-4 pb-4", collapsed && "px-3")}>
           <div
             className={cn(
-              "flex items-center gap-3 p-3 rounded-2xl bg-secondary/40 transition-all duration-200",
+              "flex items-center gap-3 p-3 rounded-2xl bg-secondary/30 transition-all duration-200",
               collapsed && "justify-center p-2"
             )}
           >
@@ -59,14 +73,6 @@ export function AppSidebar() {
                 </p>
               </div>
             )}
-            {!collapsed && (
-              <button
-                onClick={() => setCollapsed(!collapsed)}
-                className="p-1.5 rounded-lg hover:bg-secondary/60 transition-colors"
-              >
-                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -80,14 +86,26 @@ export function AppSidebar() {
               key={item.href}
               to={item.href}
               className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                "sidebar-nav-item group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 overflow-hidden",
                 isActive
-                  ? "bg-foreground text-background shadow-[0_4px_12px_rgba(0,0,0,0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
+                  ? "bg-secondary/60 text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/30",
                 collapsed && "justify-center px-3"
               )}
             >
-              <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-background")} />
+              {/* Gold highlight indicator */}
+              <span
+                className={cn(
+                  "sidebar-indicator absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full transition-all duration-500 ease-out",
+                  isActive
+                    ? "bg-gradient-to-b from-[hsl(var(--accent))] via-[hsl(var(--glow-warm))] to-[hsl(var(--accent))] opacity-100 shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
+                    : "bg-transparent opacity-0 group-hover:opacity-40 group-hover:bg-[hsl(var(--accent)/0.5)]"
+                )}
+                style={{
+                  animation: isActive ? "slideInFromLeft 0.5s ease-out forwards" : "none"
+                }}
+              />
+              <item.icon className={cn("h-5 w-5 flex-shrink-0 transition-colors duration-200", isActive && "text-[hsl(var(--accent))]")} />
               {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
             </Link>
           );
@@ -104,18 +122,6 @@ export function AppSidebar() {
           return NavItem;
         })}
       </nav>
-
-      {/* Collapse button when collapsed */}
-      {collapsed && (
-        <div className="p-3 mt-auto">
-          <button
-            onClick={() => setCollapsed(false)}
-            className="w-full p-3 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-colors flex items-center justify-center"
-          >
-            <ChevronLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
-          </button>
-        </div>
-      )}
     </aside>
   );
 }

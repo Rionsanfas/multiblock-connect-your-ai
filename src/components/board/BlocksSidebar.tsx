@@ -40,17 +40,17 @@ export function BlocksSidebar({ boardId }: BlocksSidebarProps) {
   };
 
   return (
-    <aside className="w-64 border-r border-border/20 bg-card/30 backdrop-blur-xl flex flex-col">
-      <div className="p-4 border-b border-border/20">
+    <aside className="w-64 border-r border-border/10 bg-card/50 backdrop-blur-xl flex flex-col">
+      <div className="p-4 border-b border-border/10">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="soft-primary" className="w-full gap-2">
+            <Button className="w-full gap-2 btn-3d-primary text-foreground font-medium rounded-xl py-3">
               <Plus className="h-4 w-4" />
               New Block
               <ChevronDown className="h-4 w-4 ml-auto" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 bg-card/95 backdrop-blur-xl border-border/30 rounded-xl p-1">
+          <DropdownMenuContent align="start" className="w-56 bg-card/95 backdrop-blur-xl border-border/20 rounded-xl p-1">
             <DropdownMenuItem onClick={handleCreateEmpty} className="rounded-lg">
               <Box className="h-4 w-4 mr-2" />
               Empty Block
@@ -89,16 +89,28 @@ function BlockListItem({ block }: { block: { id: string; title: string; model: s
   return (
     <div
       className={cn(
-        "p-3 rounded-xl cursor-pointer transition-all duration-200",
+        "sidebar-nav-item group relative p-3 rounded-xl cursor-pointer transition-all duration-200 overflow-hidden",
         isSelected 
-          ? "bg-foreground text-background shadow-[0_4px_12px_rgba(0,0,0,0.15)]" 
-          : "bg-secondary/40 hover:bg-secondary/60"
+          ? "bg-secondary/60 text-foreground" 
+          : "bg-secondary/30 hover:bg-secondary/50"
       )}
       onClick={() => selectBlock(block.id)}
       onDoubleClick={() => openBlockChat(block.id)}
     >
-      <h4 className={cn("font-medium text-sm truncate", isSelected && "text-background")}>{block.title}</h4>
-      <p className={cn("text-xs mt-1", isSelected ? "text-background/70" : "text-muted-foreground")}>{block.model}</p>
+      {/* Gold highlight indicator */}
+      <span
+        className={cn(
+          "sidebar-indicator absolute right-0 top-1/2 -translate-y-1/2 w-1 h-10 rounded-l-full transition-all duration-500 ease-out",
+          isSelected
+            ? "bg-gradient-to-b from-[hsl(var(--accent))] via-[hsl(var(--glow-warm))] to-[hsl(var(--accent))] opacity-100 shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
+            : "bg-transparent opacity-0 group-hover:opacity-40 group-hover:bg-[hsl(var(--accent)/0.5)]"
+        )}
+        style={{
+          animation: isSelected ? "slideInFromLeft 0.5s ease-out forwards" : "none"
+        }}
+      />
+      <h4 className={cn("font-medium text-sm truncate", isSelected && "text-[hsl(var(--accent))]")}>{block.title}</h4>
+      <p className={cn("text-xs mt-1", isSelected ? "text-muted-foreground" : "text-muted-foreground/70")}>{block.model}</p>
     </div>
   );
 }
