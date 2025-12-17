@@ -1,11 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { X, Send, Loader2, Copy, Trash2, Settings, Pencil, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { IconButton } from "@/components/ui/icon-button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -103,11 +101,11 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               {/* Settings Popover */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <IconButton variant="ghost" size="sm">
+                  <button className="icon-3d p-2 rounded-lg">
                     <Settings className="h-4 w-4" />
-                  </IconButton>
+                  </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]">
+                <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="bottom" align="end">
                   <div className="font-semibold text-sm">Block Settings</div>
                   
                   {/* Title */}
@@ -122,9 +120,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                           className="bg-secondary/50 rounded-lg border-border/30 h-9"
                           autoFocus
                         />
-                        <IconButton variant="soft" size="sm" onClick={handleTitleSave}>
+                        <button className="icon-3d p-2 rounded-lg" onClick={handleTitleSave}>
                           <Check className="h-3.5 w-3.5" />
-                        </IconButton>
+                        </button>
                       </div>
                     ) : (
                       <button
@@ -173,9 +171,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 </PopoverContent>
               </Popover>
               
-              <IconButton variant="ghost" size="sm" onClick={() => closeBlockChat()}>
+              <button className="icon-3d p-2 rounded-lg" onClick={() => closeBlockChat()}>
                 <X className="h-4 w-4" />
-              </IconButton>
+              </button>
             </div>
           </div>
         </DialogHeader>
@@ -206,13 +204,6 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 )}
               >
                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                {msg.meta && (
-                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/20 text-xs opacity-60">
-                    <span>{msg.meta.tokens} tokens</span>
-                    <span>${msg.meta.cost}</span>
-                    <span>{msg.meta.latency_ms}ms</span>
-                  </div>
-                )}
               </div>
               
               {/* Message actions */}
@@ -220,17 +211,15 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 "flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
                 msg.role === "user" && "order-first"
               )}>
-                <IconButton variant="ghost" size="sm" onClick={() => handleCopy(msg.content)} tooltip="Copy">
+                <button className="icon-3d p-1.5 rounded-lg" onClick={() => handleCopy(msg.content)}>
                   <Copy className="h-3 w-3" />
-                </IconButton>
-                <IconButton
-                  variant="ghost"
-                  size="sm"
+                </button>
+                <button
+                  className="icon-3d p-1.5 rounded-lg"
                   onClick={() => deleteMessage(msg.id)}
-                  tooltip="Delete"
                 >
                   <Trash2 className="h-3 w-3" />
-                </IconButton>
+                </button>
               </div>
             </div>
           ))}
@@ -250,12 +239,6 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
         {/* Input */}
         <div className="px-5 py-4 border-t border-border/20">
-          {input && (
-            <div className="flex justify-between text-xs text-muted-foreground mb-2">
-              <span>~{estimateTokens(input)} tokens</span>
-              <span>~${estimateCost(estimateTokens(input))}</span>
-            </div>
-          )}
           <div className="flex gap-2">
             <Textarea
               value={input}
@@ -269,17 +252,20 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               placeholder="Type your message..."
               className="min-h-[50px] max-h-[150px] bg-secondary/50 resize-none rounded-xl border-border/20 text-sm"
             />
-            <Button
+            <button
               onClick={handleSend}
               disabled={!input.trim() || isRunning}
-              className="h-auto px-4 bg-secondary/60 hover:bg-secondary/80 border border-border/30 text-foreground rounded-xl"
+              className={cn(
+                "icon-3d h-auto px-4 rounded-xl transition-all",
+                (!input.trim() || isRunning) && "opacity-50 cursor-not-allowed"
+              )}
             >
               {isRunning ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </DialogContent>

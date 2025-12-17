@@ -28,8 +28,10 @@ export function BlockCard({
   isConnecting,
 }: BlockCardProps) {
   const [isDragging, setIsDragging] = useState(false);
+  const [hasDragged, setHasDragged] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
+  const startPos = useRef({ x: 0, y: 0 });
 
   const { updateBlockPosition, duplicateBlock, deleteBlock, openBlockChat, messages } = useAppStore();
 
@@ -49,6 +51,8 @@ export function BlockCard({
     if ((e.target as HTMLElement).closest(".no-drag")) return;
     e.stopPropagation();
     setIsDragging(true);
+    setHasDragged(false);
+    startPos.current = { x: e.clientX, y: e.clientY };
     dragOffset.current = {
       x: e.clientX - block.position.x,
       y: e.clientY - block.position.y,
@@ -58,6 +62,14 @@ export function BlockCard({
 
   const handleMouseMove = (e: MouseEvent) => {
     if (!isDragging) return;
+    
+    // Check if moved more than 5px to consider it a drag
+    const dx = Math.abs(e.clientX - startPos.current.x);
+    const dy = Math.abs(e.clientY - startPos.current.y);
+    if (dx > 5 || dy > 5) {
+      setHasDragged(true);
+    }
+    
     updateBlockPosition(block.id, {
       x: e.clientX - dragOffset.current.x,
       y: e.clientY - dragOffset.current.y,
@@ -66,6 +78,13 @@ export function BlockCard({
 
   const handleMouseUp = () => {
     setIsDragging(false);
+  };
+
+  const handleClick = () => {
+    // Only open chat if not dragged
+    if (!hasDragged) {
+      openBlockChat(block.id);
+    }
   };
 
   useEffect(() => {
@@ -113,7 +132,7 @@ export function BlockCard({
             : undefined
       }}
       onMouseDown={handleMouseDown}
-      onClick={() => openBlockChat(block.id)}
+      onClick={handleClick}
     >
       {/* Header */}
       <div className="flex items-center gap-2 p-3 border-b border-border/15">
