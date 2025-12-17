@@ -98,11 +98,9 @@ export function BlockCard({
   return (
     <div
       className={cn(
-        "absolute w-[300px] cursor-move select-none transition-all duration-200",
-        "bg-card/60 backdrop-blur-xl rounded-2xl border border-border/20",
-        "shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
-        isDragging && "shadow-[0_16px_48px_rgba(0,0,0,0.15)] z-50 scale-[1.02]",
-        isSelected && "ring-2 ring-foreground/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+        "absolute w-[300px] cursor-move select-none transition-all duration-200 gradient-border-card",
+        isDragging && "z-50 scale-[1.02]",
+        isSelected && "ring-2 ring-foreground/20"
       )}
       style={{
         left: block.position.x,
@@ -111,6 +109,15 @@ export function BlockCard({
       onMouseDown={handleMouseDown}
       onDoubleClick={() => openBlockChat(block.id)}
     >
+      <div className="gradient-card-inner rounded-2xl"
+        style={{
+          boxShadow: isDragging 
+            ? "0 16px 48px rgba(0,0,0,0.15)" 
+            : isSelected 
+              ? "0 8px 32px rgba(0,0,0,0.12)" 
+              : "0 4px 16px rgba(0,0,0,0.08)"
+        }}
+      >
       {/* Header */}
       <div className="flex items-center gap-2 p-4 border-b border-border/20">
         <div className="p-1 rounded-lg bg-secondary/50">
@@ -182,6 +189,7 @@ export function BlockCard({
         )}
         onMouseUp={(e) => { e.stopPropagation(); if (isConnecting) onEndConnection(); }}
       />
+      </div>
     </div>
   );
 }

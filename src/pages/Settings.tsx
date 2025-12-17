@@ -243,16 +243,6 @@ export default function Settings() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Download Your Data</p>
-                      <p className="text-sm text-muted-foreground">
-                        Get a copy of all your data
-                      </p>
-                    </div>
-                    <Button variant="outline">Request Download</Button>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div>
                       <p className="font-medium">Privacy Policy</p>
                       <p className="text-sm text-muted-foreground">
                         Read our privacy policy

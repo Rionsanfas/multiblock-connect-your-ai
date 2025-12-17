@@ -76,15 +76,17 @@ export default function Dashboard() {
               usedMb={user.storage_used_mb}
               limitMb={user.storage_limit_mb}
             />
-            <GlassCard className="p-5 flex flex-col justify-center">
-              <Button onClick={handleCreateBoard} className="gap-2 w-full btn-3d-shiny text-foreground font-medium rounded-xl py-3">
-                <Plus className="h-4 w-4" />
-                New Board
-              </Button>
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                {user.boards_limit - user.boards_used} boards remaining
-              </p>
-            </GlassCard>
+            <div className="gradient-border-card">
+              <div className="gradient-card-inner p-5 flex flex-col justify-center">
+                <Button onClick={handleCreateBoard} className="gap-2 w-full btn-3d-shiny text-foreground font-medium rounded-xl py-3">
+                  <Plus className="h-4 w-4" />
+                  New Board
+                </Button>
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  {user.boards_limit - user.boards_used} boards remaining
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Header */}
@@ -104,19 +106,21 @@ export default function Dashboard() {
               onClear={() => setSearch("")}
               className="flex-1 max-w-sm"
             />
-            <div className="flex items-center gap-1 bg-secondary/30 rounded-xl p-1 btn-3d">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "grid" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_0_12px_hsl(var(--accent)/0.4)]" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "list" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_0_12px_hsl(var(--accent)/0.4)]" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                <List className="h-4 w-4" />
-              </button>
+            <div className="flex items-center gap-1 bg-secondary/30 rounded-xl p-1 gradient-border-card">
+              <div className="gradient-card-inner flex items-center gap-1 p-1 rounded-xl">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "grid" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_0_12px_hsl(var(--accent)/0.4)]" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "list" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_0_12px_hsl(var(--accent)/0.4)]" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
 

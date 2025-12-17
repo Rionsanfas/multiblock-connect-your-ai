@@ -99,25 +99,18 @@ export default function ApiKeys() {
               <GlassCard key={key.id} variant="soft" className="p-5 rounded-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{
-                        backgroundColor: `${MODEL_PROVIDERS[key.provider as keyof typeof MODEL_PROVIDERS]?.color || "hsl(0 0% 60%)"}20`,
-                      }}
-                    >
-                      <Key className="h-5 w-5" style={{
-                        color: MODEL_PROVIDERS[key.provider as keyof typeof MODEL_PROVIDERS]?.color || "hsl(0 0% 60%)",
-                      }} />
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 key-icon-3d">
+                      <Key className="h-5 w-5 text-white drop-shadow-[0_2px_4px_rgba(255,255,255,0.3)]" />
                     </div>
                     <div>
-                      <h3 className="font-semibold capitalize text-lg">{key.provider}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <h3 className="font-semibold capitalize text-lg text-white">{key.provider}</h3>
+                      <div className="flex items-center gap-2 text-sm text-white/60 mt-1">
                         <span className="font-mono">{showKeys[key.id] ? key.key_masked : "••••••••••••"}</span>
                         <button 
                           onClick={() => toggleShowKey(key.id)}
-                          className="p-1 rounded-lg hover:bg-secondary/50 transition-colors"
+                          className="p-1 rounded-lg hover:bg-white/10 transition-colors"
                         >
-                          {showKeys[key.id] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          {showKeys[key.id] ? <EyeOff className="h-3.5 w-3.5 text-white/60" /> : <Eye className="h-3.5 w-3.5 text-white/60" />}
                         </button>
                       </div>
                     </div>
@@ -126,12 +119,12 @@ export default function ApiKeys() {
                     <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
                       key.is_valid 
                         ? "bg-green-500/20 text-green-400 border border-green-500/30" 
-                        : "gold-shine text-foreground"
+                        : "bg-white/10 text-white/70 border border-white/20"
                     }`}>
                       {key.is_valid ? "Valid" : "Unverified"}
                     </span>
                     {key.client_only && (
-                      <span className="text-xs px-3 py-1.5 rounded-full bg-secondary/60 text-muted-foreground border border-border/20">
+                      <span className="text-xs px-3 py-1.5 rounded-full bg-white/10 text-white/60 border border-white/20">
                         Client-only
                       </span>
                     )}
