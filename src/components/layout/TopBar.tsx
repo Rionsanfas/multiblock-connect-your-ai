@@ -63,18 +63,16 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
   };
 
   return (
-    <header className="h-16 border-b border-border/20 bg-card/30 backdrop-blur-xl flex items-center justify-between px-5 gap-4">
+    <header className="h-16 border-b border-border/10 bg-card/50 backdrop-blur-xl flex items-center justify-between px-5 gap-4">
       {/* Left section */}
       <div className="flex items-center gap-4">
         {showBoardControls && (
-          <IconButton
-            variant="soft"
-            size="md"
+          <button
             onClick={() => navigate("/dashboard")}
-            tooltip="Back to Dashboard"
+            className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-          </IconButton>
+          </button>
         )}
 
         {showBoardControls && boardTitle && (
@@ -85,17 +83,17 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleTitleSave()}
-                  className="h-10 w-56 bg-secondary/50 rounded-xl border-border/30"
+                  className="h-10 w-56 bg-secondary/50 rounded-xl border-border/20"
                   autoFocus
                 />
-                <IconButton variant="soft" size="md" onClick={handleTitleSave}>
+                <button onClick={handleTitleSave} className="p-2.5 rounded-xl btn-3d text-foreground">
                   <Check className="h-4 w-4" />
-                </IconButton>
+                </button>
               </div>
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 text-lg font-semibold hover:text-primary transition-colors group"
+                className="flex items-center gap-2 text-lg font-semibold hover:text-[hsl(var(--accent))] transition-colors group"
               >
                 {boardTitle}
                 <Pencil className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -107,54 +105,50 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
 
       {/* Center section - Board controls */}
       {showBoardControls && (
-        <div className="flex items-center gap-1 bg-secondary/40 rounded-2xl p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+        <div className="flex items-center gap-1 bg-secondary/30 rounded-2xl p-1.5 btn-3d">
           {/* Auto-chain toggle */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-secondary/60 transition-colors">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-secondary/40 transition-colors">
             <Link2 className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-medium text-muted-foreground">Auto-chain</span>
             <Switch
               checked={autoChainEnabled}
               onCheckedChange={toggleAutoChain}
-              className="data-[state=checked]:bg-foreground"
+              className="data-[state=checked]:bg-[hsl(var(--accent))]"
             />
           </div>
           
-          <div className="w-px h-6 bg-border/30" />
+          <div className="w-px h-6 bg-border/20" />
           
           {/* Snap toggle */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-secondary/60 transition-colors">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-secondary/40 transition-colors">
             <Grid3X3 className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs font-medium text-muted-foreground">Snap</span>
             <Switch
               checked={snapToGrid}
               onCheckedChange={toggleSnapToGrid}
-              className="data-[state=checked]:bg-foreground"
+              className="data-[state=checked]:bg-[hsl(var(--accent))]"
             />
           </div>
 
-          <div className="w-px h-6 bg-border/30" />
+          <div className="w-px h-6 bg-border/20" />
 
           {/* Zoom controls */}
           <div className="flex items-center gap-1 px-2">
-            <IconButton
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setZoom(Math.max(0.25, zoom - 0.25))}
-              tooltip="Zoom Out"
+              className="p-2 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-all"
             >
               <ZoomOut className="h-4 w-4" />
-            </IconButton>
+            </button>
             <span className="text-xs font-semibold text-muted-foreground w-12 text-center tabular-nums">
               {Math.round(zoom * 100)}%
             </span>
-            <IconButton
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setZoom(Math.min(2, zoom + 0.25))}
-              tooltip="Zoom In"
+              className="p-2 rounded-lg hover:bg-secondary/40 text-muted-foreground hover:text-foreground transition-all"
             >
               <ZoomIn className="h-4 w-4" />
-            </IconButton>
+            </button>
           </div>
         </div>
       )}
@@ -163,19 +157,19 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
       <div className="flex items-center gap-2">
         {showBoardControls && (
           <>
-            <IconButton variant="soft" tooltip="Analytics">
+            <button className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
               <BarChart3 className="h-4 w-4" />
-            </IconButton>
-            <IconButton variant="soft" tooltip="Settings">
+            </button>
+            <button className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
               <Settings className="h-4 w-4" />
-            </IconButton>
-            <IconButton variant="soft" onClick={handleExport} tooltip="Export">
+            </button>
+            <button onClick={handleExport} className="p-2.5 rounded-xl btn-3d text-muted-foreground hover:text-foreground transition-colors">
               <Download className="h-4 w-4" />
-            </IconButton>
-            <Button variant="soft-primary" size="default" className="gap-2 ml-2">
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl btn-3d-primary text-foreground font-medium ml-2">
               <Play className="h-4 w-4" />
               Run All
-            </Button>
+            </button>
           </>
         )}
       </div>

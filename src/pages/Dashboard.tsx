@@ -60,92 +60,129 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Usage Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <PlanUsageCard
-            planId={user.plan}
-            boardsUsed={user.boards_used}
-            boardsLimit={user.boards_limit}
-            seatsUsed={user.seats_used}
-            seatsLimit={user.seats}
-          />
-          <StorageUsageCard
-            usedMb={user.storage_used_mb}
-            limitMb={user.storage_limit_mb}
-          />
-          <GlassCard className="p-5 flex flex-col justify-center">
-            <Button onClick={handleCreateBoard} className="gap-2 w-full">
-              <Plus className="h-4 w-4" />
-              New Board
-            </Button>
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              {user.boards_limit - user.boards_used} boards remaining
-            </p>
-          </GlassCard>
-        </div>
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Your Boards</h1>
-            <p className="text-muted-foreground">{boards.length} boards</p>
-          </div>
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex items-center gap-4 mb-6">
-          <SearchBar
-            placeholder="Search boards..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClear={() => setSearch("")}
-            className="flex-1 max-w-sm"
-          />
-          <div className="flex items-center gap-1 bg-secondary/40 rounded-xl p-1">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "grid" ? "bg-foreground text-background shadow-[0_2px_8px_rgba(0,0,0,0.15)]" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "list" ? "bg-foreground text-background shadow-[0_2px_8px_rgba(0,0,0,0.15)]" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Boards Grid/List */}
-        {filteredBoards.length === 0 ? (
-          <EmptyState
-            icon={FolderOpen}
-            title="No boards yet"
-            description="Create your first board to start building AI workflows"
-            action={
-              <Button onClick={handleCreateBoard} className="gap-2">
+      <div className="flex h-full">
+        {/* Main Content */}
+        <div className="flex-1 p-6 overflow-auto">
+          {/* Usage Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <PlanUsageCard
+              planId={user.plan}
+              boardsUsed={user.boards_used}
+              boardsLimit={user.boards_limit}
+              seatsUsed={user.seats_used}
+              seatsLimit={user.seats}
+            />
+            <StorageUsageCard
+              usedMb={user.storage_used_mb}
+              limitMb={user.storage_limit_mb}
+            />
+            <GlassCard className="p-5 flex flex-col justify-center">
+              <Button onClick={handleCreateBoard} className="gap-2 w-full btn-3d-primary text-foreground font-medium rounded-xl py-3">
                 <Plus className="h-4 w-4" />
-                Create Board
+                New Board
               </Button>
-            }
-          />
-        ) : (
-          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
-            {filteredBoards.map((board) => (
-              <BoardCard
-                key={board.id}
-                board={board}
-                blockCount={getBlockCount(board.id)}
-                viewMode={viewMode}
-                onOpen={() => navigate(`/board/${board.id}`)}
-                onDuplicate={() => handleDuplicate(board.id)}
-                onDelete={() => setDeleteId(board.id)}
-              />
-            ))}
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                {user.boards_limit - user.boards_used} boards remaining
+              </p>
+            </GlassCard>
           </div>
-        )}
+
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-2xl font-bold">Your Boards</h1>
+              <p className="text-muted-foreground">{boards.length} boards</p>
+            </div>
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex items-center gap-4 mb-6">
+            <SearchBar
+              placeholder="Search boards..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClear={() => setSearch("")}
+              className="flex-1 max-w-sm"
+            />
+            <div className="flex items-center gap-1 bg-secondary/30 rounded-xl p-1 btn-3d">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "grid" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_2px_8px_hsl(var(--accent)/0.3)]" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2.5 rounded-lg transition-all duration-200 ${viewMode === "list" ? "bg-[hsl(var(--accent))] text-foreground shadow-[0_2px_8px_hsl(var(--accent)/0.3)]" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Boards Grid/List */}
+          {filteredBoards.length === 0 ? (
+            <EmptyState
+              icon={FolderOpen}
+              title="No boards yet"
+              description="Create your first board to start building AI workflows"
+              action={
+                <Button onClick={handleCreateBoard} className="gap-2 btn-3d-primary text-foreground font-medium rounded-xl">
+                  <Plus className="h-4 w-4" />
+                  Create Board
+                </Button>
+              }
+            />
+          ) : (
+            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
+              {filteredBoards.map((board) => (
+                <BoardCard
+                  key={board.id}
+                  board={board}
+                  blockCount={getBlockCount(board.id)}
+                  viewMode={viewMode}
+                  onOpen={() => navigate(`/board/${board.id}`)}
+                  onDuplicate={() => handleDuplicate(board.id)}
+                  onDelete={() => setDeleteId(board.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right Cover/Panel */}
+        <div className="hidden lg:block w-80 border-l border-border/10 bg-card/30 backdrop-blur-xl p-5">
+          <div className="rounded-2xl bg-secondary/30 p-5 mb-4">
+            <h3 className="font-semibold mb-2">Quick Stats</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Total Boards</span>
+                <span className="font-medium">{boards.length}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Total Blocks</span>
+                <span className="font-medium">{blocks.length}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Plan</span>
+                <span className="font-medium text-[hsl(var(--accent))]">{user.plan}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="rounded-2xl bg-secondary/30 p-5">
+            <h3 className="font-semibold mb-2">Recent Activity</h3>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              {boards.slice(0, 3).map((board) => (
+                <div key={board.id} className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[hsl(var(--accent))]" />
+                  <span className="truncate">{board.title}</span>
+                </div>
+              ))}
+              {boards.length === 0 && <p>No recent activity</p>}
+            </div>
+          </div>
+        </div>
       </div>
 
       <ConfirmDialog
