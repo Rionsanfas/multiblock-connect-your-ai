@@ -56,6 +56,7 @@ export interface Message {
   block_id: string;
   role: 'system' | 'user' | 'assistant';
   content: string;
+  size_bytes: number; // Size of content in bytes for usage tracking
   meta?: {
     tokens?: number;
     cost?: number;
@@ -63,6 +64,20 @@ export interface Message {
     latency_ms?: number;
   };
   created_at: string;
+}
+
+// Usage tracking types
+export interface BlockUsage {
+  block_id: string;
+  message_count: number;
+  total_bytes: number;
+}
+
+export interface BoardUsage {
+  board_id: string;
+  block_count: number;
+  message_count: number;
+  total_bytes: number;
 }
 
 export interface Connection {

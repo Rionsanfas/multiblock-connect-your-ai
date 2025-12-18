@@ -257,6 +257,7 @@ export const seedData = {
       block_id: 'block-1',
       role: 'user',
       content: 'What is a black hole and how does it form?',
+      size_bytes: 44,
       created_at: '2024-01-20T15:00:00Z',
     },
     {
@@ -264,6 +265,7 @@ export const seedData = {
       block_id: 'block-1',
       role: 'assistant',
       content: 'A black hole is a region in space where the gravitational pull is so strong that nothing, not even light, can escape from it. This occurs when a massive star collapses under its own gravity at the end of its life cycle. The boundary surrounding a black hole is called the event horizon; once something crosses this boundary, it cannot escape.',
+      size_bytes: 349,
       meta: { tokens: 156, cost: 0.0023, model: 'gpt-4o', latency_ms: 1240 },
       created_at: '2024-01-20T15:00:05Z',
     },
@@ -272,6 +274,7 @@ export const seedData = {
       block_id: 'block-2',
       role: 'user',
       content: 'Explain the theory of relativity in simple terms.',
+      size_bytes: 49,
       created_at: '2024-01-20T15:10:00Z',
     },
     {
@@ -279,6 +282,7 @@ export const seedData = {
       block_id: 'block-2',
       role: 'assistant',
       content: 'The theory of relativity, developed by Albert Einstein in the early 20th century, fundamentally changed our understanding of physics. It consists of two main parts: special relativity and general relativity. Special relativity deals with objects moving at constant speeds, while general relativity explains gravity as the curvature of spacetime caused by mass and energy.',
+      size_bytes: 371,
       meta: { tokens: 142, cost: 0.0018, model: 'claude-3-sonnet', latency_ms: 980 },
       created_at: '2024-01-20T15:10:08Z',
     },

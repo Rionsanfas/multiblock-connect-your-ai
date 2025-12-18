@@ -8,6 +8,7 @@ import { ProviderBadge } from "@/components/ui/provider-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAppStore } from "@/store/useAppStore";
+import { useBlockMessages, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { api } from "@/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -25,9 +26,12 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [title, setTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { blocks, messages, closeBlockChat, deleteMessage, updateBlock } = useAppStore();
+  const { blocks, closeBlockChat, deleteMessage, updateBlock } = useAppStore();
   const block = blocks.find((b) => b.id === blockId);
-  const blockMessages = messages.filter((m) => m.block_id === blockId);
+  
+  // Use the new hooks for messages and usage
+  const blockMessages = useBlockMessages(blockId);
+  const blockUsage = useBlockUsage(blockId);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,6 +100,11 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
             <div className="flex items-center gap-3">
               <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
               <ProviderBadge provider={getProviderFromModel(block.model)} model={block.model} />
+              {blockUsage && (
+                <span className="text-xs text-muted-foreground">
+                  {blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {/* Settings Popover */}

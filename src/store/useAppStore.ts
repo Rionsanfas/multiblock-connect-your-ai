@@ -60,7 +60,7 @@ interface AppState {
   updateBlockPosition: (id: string, position: { x: number; y: number }) => void;
   
   // Message actions
-  addMessage: (message: Omit<Message, 'id' | 'created_at'>) => Message;
+  addMessage: (message: Omit<Message, 'id' | 'created_at' | 'size_bytes'>) => Message;
   updateMessage: (id: string, updates: Partial<Message>) => void;
   deleteMessage: (id: string) => void;
   
@@ -303,9 +303,13 @@ export const useAppStore = create<AppState>()(
       
       // Message actions
       addMessage: (messageData) => {
+        // Calculate size_bytes from content
+        const sizeBytes = new TextEncoder().encode(messageData.content).length;
+        
         const message: Message = {
           id: generateId(),
           ...messageData,
+          size_bytes: sizeBytes,
           created_at: new Date().toISOString(),
         };
         set((state) => ({ messages: [...state.messages, message] }));
