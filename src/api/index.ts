@@ -30,18 +30,24 @@ export const api = {
   
   // Board endpoints
   boards: {
-    // GET /api/boards
+    // GET /api/boards - Returns only boards owned by current user
     list: async (): Promise<Board[]> => {
       await delay(400);
-      const { boards } = useAppStore.getState();
-      return boards;
+      const { boards, user } = useAppStore.getState();
+      // Filter by user ownership - in production this is done by RLS
+      if (!user) return [];
+      return boards.filter((b) => b.user_id === user.id);
     },
     
-    // GET /api/boards/:id
+    // GET /api/boards/:id - Only returns if owned by current user
     get: async (id: string): Promise<Board | null> => {
       await delay(300);
-      const { boards } = useAppStore.getState();
-      return boards.find((b) => b.id === id) || null;
+      const { boards, user } = useAppStore.getState();
+      if (!user) return null;
+      const board = boards.find((b) => b.id === id);
+      // Verify ownership
+      if (board && board.user_id !== user.id) return null;
+      return board || null;
     },
     
     // POST /api/boards

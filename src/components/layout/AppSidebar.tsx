@@ -9,7 +9,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAppStore } from "@/store/useAppStore";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Tooltip,
@@ -27,7 +27,7 @@ const navItems = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { user } = useAppStore();
+  const { user } = useCurrentUser();
 
   return (
     <aside
