@@ -11,9 +11,9 @@ const Hero = () => {
 
   useEffect(() => {
     // Start main elements after a brief delay
-    const timer1 = setTimeout(() => setPhase(1), 100);
-    // Secondary elements appear after main elements settle
-    const timer2 = setTimeout(() => setPhase(2), 700);
+    const timer1 = setTimeout(() => setPhase(1), 200);
+    // Secondary elements appear after main elements settle - increased pause
+    const timer2 = setTimeout(() => setPhase(2), 1400);
     
     return () => {
       clearTimeout(timer1);
@@ -23,26 +23,26 @@ const Hero = () => {
 
   const mainStyle = {
     opacity: phase >= 1 ? 1 : 0,
-    transform: phase >= 1 ? 'translateY(0)' : 'translateY(40px)',
-    transition: 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
+    transform: phase >= 1 ? 'translateY(0)' : 'translateY(50px)',
+    transition: 'opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1), transform 2s cubic-bezier(0.16, 1, 0.3, 1)',
   };
 
   const visualStyle = {
     opacity: phase >= 1 ? 1 : 0,
-    transform: phase >= 1 ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.98)',
-    transition: 'opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s',
+    transform: phase >= 1 ? 'translateY(0) scale(1)' : 'translateY(40px) scale(0.96)',
+    transition: 'opacity 2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, transform 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s',
   };
 
   const badgeStyle = {
     opacity: phase >= 2 ? 1 : 0,
-    transform: phase >= 2 ? 'translateY(0)' : 'translateY(20px)',
-    transition: 'opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+    transform: phase >= 2 ? 'translateY(0)' : 'translateY(25px)',
+    transition: 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
   };
 
   const buttonsStyle = {
     opacity: phase >= 2 ? 1 : 0,
-    transform: phase >= 2 ? 'translateY(0)' : 'translateY(15px)',
-    transition: 'opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s',
+    transform: phase >= 2 ? 'translateY(0)' : 'translateY(20px)',
+    transition: 'opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s',
   };
 
   return (

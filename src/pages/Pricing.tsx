@@ -89,10 +89,9 @@ export default function Pricing() {
                   {individualPlans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''}`}
+                      className={`pricing-card-glow ${plan.highlight ? 'scale-105 z-10' : ''}`}
                     >
-                      <div className="premium-card-gradient" />
-                      <div className="premium-card-content p-6 relative">
+                      <div className="p-6 relative">
                         {plan.badge && (
                           <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs font-semibold rounded-full z-10 ${
                             plan.highlight 
@@ -118,16 +117,22 @@ export default function Pricing() {
 
                         {/* Key Stats */}
                         <div className="space-y-3 mb-6 p-4 rounded-xl bg-muted/20 border border-border/30">
-                          <div className="flex items-center gap-2 text-sm">
-                            <LayoutGrid className="h-4 w-4 text-accent" />
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="icon-3d-box">
+                              <LayoutGrid className="h-4 w-4 text-accent" />
+                            </div>
                             <span>{plan.boards} board{plan.boards > 1 ? 's' : ''}</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Plus className="h-4 w-4 text-accent" />
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="icon-3d-box">
+                              <Plus className="h-4 w-4 text-accent" />
+                            </div>
                             <span>{plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <HardDrive className="h-4 w-4 text-accent" />
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="icon-3d-box">
+                              <HardDrive className="h-4 w-4 text-accent" />
+                            </div>
                             <span>{formatStorage(plan.storage_mb)} storage</span>
                             <Tooltip>
                               <TooltipTrigger>
@@ -170,10 +175,9 @@ export default function Pricing() {
                   {teamPlans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''}`}
+                      className={`pricing-card-glow ${plan.highlight ? 'scale-105 z-10' : ''}`}
                     >
-                      <div className="premium-card-gradient" />
-                      <div className="premium-card-content p-6 relative">
+                      <div className="p-6 relative">
                         {plan.badge && (
                           <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-full shadow-[0_0_20px_hsl(var(--accent)/0.4)]">
                             {plan.badge}
@@ -193,20 +197,28 @@ export default function Pricing() {
 
                         {/* Key Stats */}
                         <div className="space-y-3 mb-6 p-4 rounded-xl bg-muted/20 border border-border/30">
-                          <div className="flex items-center gap-2 text-sm">
-                            <LayoutGrid className="h-4 w-4 text-accent" />
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="icon-3d-box">
+                              <LayoutGrid className="h-4 w-4 text-accent" />
+                            </div>
                             <span>{plan.boards} boards</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Plus className="h-4 w-4 text-accent" />
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="icon-3d-box">
+                              <Plus className="h-4 w-4 text-accent" />
+                            </div>
                             <span>Unlimited blocks/board</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Users className="h-4 w-4 text-accent" />
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="icon-3d-box">
+                              <Users className="h-4 w-4 text-accent" />
+                            </div>
                             <span>{plan.seats} team seats</span>
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <HardDrive className="h-4 w-4 text-accent" />
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="icon-3d-box">
+                              <HardDrive className="h-4 w-4 text-accent" />
+                            </div>
                             <span>{formatStorage(plan.storage_mb)} storage</span>
                             <Tooltip>
                               <TooltipTrigger>
