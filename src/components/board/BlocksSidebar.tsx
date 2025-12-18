@@ -31,7 +31,7 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
   const handleCreateFromTemplate = (template: typeof BLOCK_TEMPLATES[0]) => {
     createBlock({
       title: template.title,
-      model: template.model,
+      model_id: template.model,
       system_prompt: template.prompt,
       position: { x: 100 + boardBlocks.length * 50, y: 100 + boardBlocks.length * 50 },
     });

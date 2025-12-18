@@ -183,7 +183,8 @@ export default function BoardCanvas() {
         createConnection({
           from_block: connectingFrom,
           to_block: toBlockId,
-          mode: "append",
+          context_type: "full",
+          enabled: true,
         });
       }
     }

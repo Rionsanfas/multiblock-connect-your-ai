@@ -273,7 +273,7 @@ export function BlockCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/15 bg-secondary/10 rounded-b-2xl">
-        <ProviderBadge provider={getProviderFromModel(block.model)} model={block.model} />
+        <ProviderBadge provider={getProviderFromModel(block.model_id)} model={block.model_id} />
         <button
           onClick={(e) => { e.stopPropagation(); handleRun(); }}
           disabled={isRunning}
