@@ -32,6 +32,7 @@ export interface Block {
   id: string;
   board_id: string;
   title: string;
+  type: 'chat' | 'prompt' | 'custom'; // Block type for future extensibility
   model: string;
   system_prompt: string;
   config: BlockConfig;

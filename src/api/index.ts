@@ -102,6 +102,122 @@ export const api = {
   
   // Block endpoints
   blocks: {
+    // GET /api/boards/:boardId/blocks - Returns blocks for a board with ownership check
+    list: async (boardId: string): Promise<Block[]> => {
+      await delay(300);
+      const { blocks, boards, user } = useAppStore.getState();
+      if (!user) return [];
+      
+      // Verify board ownership
+      const board = boards.find((b) => b.id === boardId);
+      if (!board || board.user_id !== user.id) return [];
+      
+      return blocks.filter((b) => b.board_id === boardId);
+    },
+    
+    // GET /api/blocks/:id - Returns block with ownership check via board
+    get: async (id: string): Promise<Block | null> => {
+      await delay(200);
+      const { blocks, boards, user } = useAppStore.getState();
+      if (!user) return null;
+      
+      const block = blocks.find((b) => b.id === id);
+      if (!block) return null;
+      
+      // Verify ownership through board
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) return null;
+      
+      return block;
+    },
+    
+    // POST /api/boards/:boardId/blocks
+    create: async (boardId: string, data: Partial<Block>): Promise<Block> => {
+      await delay(400);
+      const { createBlock, boards, user } = useAppStore.getState();
+      if (!user) throw new Error('Not authenticated');
+      
+      // Verify board ownership
+      const board = boards.find((b) => b.id === boardId);
+      if (!board || board.user_id !== user.id) {
+        throw new Error('Board not found or access denied');
+      }
+      
+      return createBlock(boardId, data);
+    },
+    
+    // PUT /api/blocks/:id
+    update: async (id: string, updates: Partial<Block>): Promise<void> => {
+      await delay(300);
+      const { updateBlock, blocks, boards, user } = useAppStore.getState();
+      if (!user) throw new Error('Not authenticated');
+      
+      const block = blocks.find((b) => b.id === id);
+      if (!block) throw new Error('Block not found');
+      
+      // Verify ownership through board
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) {
+        throw new Error('Access denied');
+      }
+      
+      updateBlock(id, updates);
+    },
+    
+    // PUT /api/blocks/:id/position
+    updatePosition: async (id: string, position: { x: number; y: number }): Promise<void> => {
+      await delay(100); // Fast for drag operations
+      const { updateBlockPosition, blocks, boards, user } = useAppStore.getState();
+      if (!user) throw new Error('Not authenticated');
+      
+      const block = blocks.find((b) => b.id === id);
+      if (!block) throw new Error('Block not found');
+      
+      // Verify ownership through board
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) {
+        throw new Error('Access denied');
+      }
+      
+      updateBlockPosition(id, position);
+    },
+    
+    // DELETE /api/blocks/:id
+    delete: async (id: string): Promise<void> => {
+      await delay(300);
+      const { deleteBlock, blocks, boards, user } = useAppStore.getState();
+      if (!user) throw new Error('Not authenticated');
+      
+      const block = blocks.find((b) => b.id === id);
+      if (!block) throw new Error('Block not found');
+      
+      // Verify ownership through board
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) {
+        throw new Error('Access denied');
+      }
+      
+      deleteBlock(id);
+    },
+    
+    // POST /api/blocks/:id/duplicate
+    duplicate: async (id: string): Promise<Block> => {
+      await delay(400);
+      const { duplicateBlock, blocks, boards, user } = useAppStore.getState();
+      if (!user) throw new Error('Not authenticated');
+      
+      const block = blocks.find((b) => b.id === id);
+      if (!block) throw new Error('Block not found');
+      
+      // Verify ownership through board
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) {
+        throw new Error('Access denied');
+      }
+      
+      return duplicateBlock(id);
+    },
+    
     // POST /api/blocks/run
     run: async (
       blockId: string,
@@ -115,11 +231,20 @@ export const api = {
       }
       lastRunTime = now;
       
-      const { blocks, addMessage } = useAppStore.getState();
-      const block = blocks.find((b) => b.id === blockId);
+      const { blocks, boards, user, addMessage } = useAppStore.getState();
+      if (!user) {
+        return { success: false, error: 'Not authenticated' };
+      }
       
+      const block = blocks.find((b) => b.id === blockId);
       if (!block) {
         return { success: false, error: 'Block not found' };
+      }
+      
+      // Verify ownership through board
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) {
+        return { success: false, error: 'Access denied' };
       }
       
       // Add user message

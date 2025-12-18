@@ -7,6 +7,8 @@ import { BlocksSidebar } from "@/components/board/BlocksSidebar";
 import { BlockChatModal } from "@/components/board/BlockChatModal";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useAppStore } from "@/store/useAppStore";
+import { useCurrentUser, useUserBoard } from "@/hooks/useCurrentUser";
+import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
@@ -25,9 +27,13 @@ export default function BoardCanvas() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
 
+  // Use ownership-aware hooks
+  const { user } = useCurrentUser();
+  const board = useUserBoard(id);
+  const boardBlocks = useBoardBlocks(id);
+  const { createBlock } = useBlockActions(id || '');
+
   const {
-    boards,
-    blocks,
     connections,
     selectedBlockId,
     selectBlock,
@@ -35,12 +41,10 @@ export default function BoardCanvas() {
     zoom,
     isBlockChatOpen,
     chatBlockId,
-    createBlock,
     createConnection,
   } = useAppStore();
 
-  const board = boards.find((b) => b.id === id);
-  const boardBlocks = blocks.filter((b) => b.board_id === id);
+  // Filter connections for this board's blocks
   const boardConnections = connections.filter((c) =>
     boardBlocks.some((b) => b.id === c.from_block || b.id === c.to_block)
   );
@@ -78,13 +82,18 @@ export default function BoardCanvas() {
   }, [boardBlocks, zoom]);
 
   useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
     if (board) {
       setCurrentBoard(board);
     } else if (id) {
+      // Board not found or access denied
       navigate("/dashboard");
     }
     return () => setCurrentBoard(null);
-  }, [board, id, navigate, setCurrentBoard]);
+  }, [board, id, navigate, setCurrentBoard, user]);
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -105,7 +114,7 @@ export default function BoardCanvas() {
       if (rect) {
         const x = (e.clientX - rect.left - panOffset.x) / zoom;
         const y = (e.clientY - rect.top - panOffset.y) / zoom;
-        createBlock(id!, {
+        createBlock({
           title: "New Block",
           position: { x, y },
         });
@@ -129,7 +138,7 @@ export default function BoardCanvas() {
   };
 
   const handleCreateBlockAtContext = () => {
-    createBlock(id!, {
+    createBlock({
       title: "New Block",
       position: contextMenuPos,
     });
