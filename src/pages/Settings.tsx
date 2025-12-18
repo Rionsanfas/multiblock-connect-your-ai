@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppStore } from "@/store/useAppStore";
 import { toast } from "sonner";
-import { User, Shield, Cookie, Bell, Trash2, Crown, HardDrive, LayoutGrid, Users } from "lucide-react";
+import { User, Shield, Cookie, Bell, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { mockUser, pricingPlans, boardAddons } from "@/mocks/seed";
 import { GlassCard } from "@/components/ui/glass-card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Settings() {
   const { user } = useAppStore();
@@ -21,6 +22,24 @@ export default function Settings() {
     name: user?.name || "",
     email: user?.email || "",
   });
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setProfileImage(event.target?.result as string);
+        toast.success("Profile picture updated");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const [cookies, setCookies] = useState({
     essential: true,
@@ -91,6 +110,37 @@ export default function Settings() {
                 <CardDescription>Update your personal details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Profile Picture */}
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    <Avatar className="h-24 w-24 border-2 border-border">
+                      <AvatarImage src={profileImage || undefined} alt="Profile" />
+                      <AvatarFallback className="text-2xl bg-muted">
+                        {profileForm.name?.charAt(0)?.toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </div>
+                  <div>
+                    <p className="font-medium">Profile Picture</p>
+                    <p className="text-sm text-muted-foreground">
+                      Upload a new profile picture (max 5MB)
+                    </p>
+                  </div>
+                </div>
+                <Separator />
                 <div className="space-y-2">
                   <Label htmlFor="name">Display Name</Label>
                   <Input
