@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Loader2, Copy, Trash2, Settings, Pencil, Check, Quote, Sparkles } from "lucide-react";
+import { X, Send, Loader2, Copy, Trash2, Settings, Pencil, Check, Quote, Sparkles, ChevronDown, Brain, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -7,14 +7,16 @@ import { Label } from "@/components/ui/label";
 import { ProviderBadge } from "@/components/ui/provider-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { useBlockMessages, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { useTextSelection } from "@/hooks/useTextSelection";
 import { TextSelectionPopover } from "./TextSelectionPopover";
+import { useUserApiKeys, useHasValidKey } from "@/hooks/useApiKeys";
 import { api } from "@/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { MODEL_PROVIDERS } from "@/types";
+import { MODEL_PROVIDERS, Provider } from "@/types";
 
 interface BlockChatModalProps {
   blockId: string;
@@ -50,9 +52,20 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   if (!block) return null;
 
+  // API keys for model access
+  const userApiKeys = useUserApiKeys();
+
   const allModels = Object.entries(MODEL_PROVIDERS).flatMap(([provider, info]) =>
-    info.models.map((model) => ({ provider, model, name: info.name }))
+    info.models.map((model) => ({ provider: provider as Provider, model, name: info.name }))
   );
+
+  // Get models grouped by provider for the dropdown
+  const modelsByProvider = Object.entries(MODEL_PROVIDERS).map(([provider, info]) => ({
+    provider: provider as Provider,
+    name: info.name,
+    models: info.models.slice(0, 8), // Show first 8 models per provider
+    hasKey: userApiKeys.some(k => k.provider === provider && k.is_valid),
+  }));
 
   const getProviderFromModel = (model: string) => {
     if (model.includes("gpt")) return "openai";
@@ -60,7 +73,18 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     if (model.includes("gemini")) return "google";
     if (model.includes("pplx")) return "perplexity";
     if (model.includes("grok")) return "xai";
+    if (model.includes("command") || model.includes("cohere")) return "cohere";
+    if (model.includes("mistral") || model.includes("mixtral")) return "mistral";
     return "openai";
+  };
+
+  const handleModelSwitch = (newModel: string) => {
+    const previousModel = block.model_id;
+    updateBlock(blockId, { model_id: newModel });
+    toast.success(
+      `Switched to ${newModel}`,
+      { description: "Chat history preserved - continue your conversation" }
+    );
   };
 
   const handleTitleSave = () => {
@@ -106,7 +130,66 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
-              <ProviderBadge provider={getProviderFromModel(block.model_id)} model={block.model_id} />
+              
+              {/* Model Switcher Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-all group border border-border/20">
+                    <ProviderBadge provider={getProviderFromModel(block.model_id)} model={block.model_id} />
+                    <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="w-72 max-h-80 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)]" 
+                  align="start"
+                >
+                  <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20">
+                    <Brain className="h-3 w-3" />
+                    <span>Switch model - chat history preserved</span>
+                  </div>
+                  
+                  {modelsByProvider.map(({ provider, name, models, hasKey }) => (
+                    <div key={provider}>
+                      <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
+                        <span className="text-xs font-medium">{name}</span>
+                        {hasKey ? (
+                          <span className="flex items-center gap-1 text-[10px] text-green-500">
+                            <Zap className="h-2.5 w-2.5" />
+                            Connected
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">No key</span>
+                        )}
+                      </DropdownMenuLabel>
+                      {models.map((model) => (
+                        <DropdownMenuItem
+                          key={model}
+                          className={cn(
+                            "mx-1 rounded-md cursor-pointer",
+                            !hasKey && "opacity-50 cursor-not-allowed",
+                            block.model_id === model && "bg-primary/10"
+                          )}
+                          disabled={!hasKey}
+                          onClick={() => hasKey && handleModelSwitch(model)}
+                        >
+                          <span className="flex items-center gap-2 w-full">
+                            <span className={cn(
+                              "w-1.5 h-1.5 rounded-full",
+                              block.model_id === model ? "bg-primary" : "bg-muted-foreground/30"
+                            )} />
+                            <span className="text-sm truncate">{model}</span>
+                            {block.model_id === model && (
+                              <Check className="h-3 w-3 ml-auto text-primary" />
+                            )}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator className="my-1" />
+                    </div>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               {blockUsage && (
                 <span className="text-xs text-muted-foreground">
                   {blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}
