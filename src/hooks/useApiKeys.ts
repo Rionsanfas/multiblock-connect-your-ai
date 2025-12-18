@@ -32,6 +32,7 @@ export function useApiKeysByProvider(): Record<Provider, ApiKey[]> {
       google: [],
       cohere: [],
       mistral: [],
+      meta: [],
       perplexity: [],
       xai: [],
     };
@@ -87,7 +88,7 @@ export function useConfiguredProviders(): Provider[] {
  */
 export function useMissingProviders(): Provider[] {
   const configuredProviders = useConfiguredProviders();
-  const allProviders: Provider[] = ['openai', 'anthropic', 'google', 'cohere', 'mistral', 'perplexity', 'xai'];
+  const allProviders: Provider[] = ['openai', 'anthropic', 'google', 'cohere', 'mistral', 'meta', 'perplexity', 'xai'];
   
   return useMemo(() => {
     return allProviders.filter((p) => !configuredProviders.includes(p));
