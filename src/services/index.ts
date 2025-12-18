@@ -11,3 +11,12 @@ export type { AuthService } from './authService';
 
 // Re-export hooks for convenience
 export { useBoardBlocks, useBlock, useBlockActions, useBoardBlockStats } from '@/hooks/useBoardBlocks';
+export { 
+  useBlockMessages, 
+  useBlockUsage, 
+  useBoardUsage, 
+  useMessageActions, 
+  useTotalUsage,
+  calculateByteSize,
+  formatBytes 
+} from '@/hooks/useBlockMessages';

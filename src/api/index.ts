@@ -293,6 +293,81 @@ export const api = {
     },
   },
   
+  // Message endpoints
+  messages: {
+    // GET /api/blocks/:blockId/messages - Returns messages for a block with ownership check
+    list: async (blockId: string): Promise<Message[]> => {
+      await delay(200);
+      const { blocks, boards, messages, user } = useAppStore.getState();
+      if (!user) return [];
+      
+      const block = blocks.find((b) => b.id === blockId);
+      if (!block) return [];
+      
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) return [];
+      
+      return messages
+        .filter((m) => m.block_id === blockId)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    },
+    
+    // POST /api/blocks/:blockId/messages
+    create: async (blockId: string, content: string, role: 'user' | 'assistant' | 'system' = 'user'): Promise<Message | null> => {
+      await delay(200);
+      const { blocks, boards, addMessage, user } = useAppStore.getState();
+      if (!user) return null;
+      
+      const block = blocks.find((b) => b.id === blockId);
+      if (!block) return null;
+      
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) return null;
+      
+      return addMessage({
+        block_id: blockId,
+        role,
+        content,
+      });
+    },
+    
+    // DELETE /api/messages/:id
+    delete: async (messageId: string): Promise<boolean> => {
+      await delay(200);
+      const { messages, blocks, boards, deleteMessage, user } = useAppStore.getState();
+      if (!user) return false;
+      
+      const message = messages.find((m) => m.id === messageId);
+      if (!message) return false;
+      
+      const block = blocks.find((b) => b.id === message.block_id);
+      if (!block) return false;
+      
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) return false;
+      
+      deleteMessage(messageId);
+      return true;
+    },
+    
+    // DELETE /api/blocks/:blockId/messages - Clear all messages for a block
+    clearBlock: async (blockId: string): Promise<boolean> => {
+      await delay(300);
+      const { blocks, boards, messages, deleteMessage, user } = useAppStore.getState();
+      if (!user) return false;
+      
+      const block = blocks.find((b) => b.id === blockId);
+      if (!block) return false;
+      
+      const board = boards.find((b) => b.id === block.board_id);
+      if (!board || board.user_id !== user.id) return false;
+      
+      const blockMessages = messages.filter((m) => m.block_id === blockId);
+      blockMessages.forEach((m) => deleteMessage(m.id));
+      return true;
+    },
+  },
+  
   // API Keys endpoints
   keys: {
     // POST /api/keys/test

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen } from "lucide-react";
+import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen, MessageSquare, HardDrive } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { useCurrentUser, useUserBoards, useUserStats } from "@/hooks/useCurrentUser";
+import { useTotalUsage, useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { api } from "@/api";
 import { toast } from "sonner";
 import type { Board } from "@/types";
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const { user, isAuthenticated } = useCurrentUser();
   const userBoards = useUserBoards();
   const stats = useUserStats();
+  const totalUsage = useTotalUsage();
   
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -68,7 +70,7 @@ export default function Dashboard() {
       {/* Main Content */}
         <div className="flex-1 p-6 overflow-auto">
           {/* Usage Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <PlanUsageCard
               planId={stats.plan}
               boardsUsed={stats.boardsUsed}
@@ -80,6 +82,19 @@ export default function Dashboard() {
               usedMb={stats.storageUsedMb}
               limitMb={stats.storageLimitMb}
             />
+            
+            {/* Message Usage Card */}
+            <GlassCard className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Messages</span>
+              </div>
+              <div className="text-2xl font-bold">{totalUsage.message_count}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {formatBytes(totalUsage.total_bytes)} total
+              </div>
+            </GlassCard>
+            
             <div className="flex flex-col justify-center items-center h-full">
               <Button onClick={handleCreateBoard} className="gap-2 btn-glow-edge text-primary font-medium rounded-xl py-3 px-6 bg-transparent hover:bg-transparent">
                 <Plus className="h-4 w-4" />
@@ -140,7 +155,7 @@ export default function Dashboard() {
           ) : (
             <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
               {filteredBoards.map((board) => (
-                <BoardCard
+                <BoardCardWithUsage
                   key={board.id}
                   board={board}
                   blockCount={getBlockCount(board.id)}
@@ -168,6 +183,19 @@ export default function Dashboard() {
   );
 }
 
+// Wrapper component that includes usage data
+function BoardCardWithUsage(props: {
+  board: Board;
+  blockCount: number;
+  viewMode: "grid" | "list";
+  onOpen: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  const boardUsage = useBoardUsage(props.board.id);
+  return <BoardCard {...props} usage={boardUsage} />;
+}
+
 function BoardCard({
   board,
   blockCount,
@@ -175,6 +203,7 @@ function BoardCard({
   onOpen,
   onDuplicate,
   onDelete,
+  usage,
 }: {
   board: Board;
   blockCount: number;
@@ -182,6 +211,7 @@ function BoardCard({
   onOpen: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  usage?: { message_count: number; total_bytes: number } | null;
 }) {
   return (
     <GlassCard
@@ -195,6 +225,14 @@ function BoardCard({
         </h3>
         <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
           <span>{blockCount} blocks</span>
+          {usage && usage.message_count > 0 && (
+            <>
+              <span>•</span>
+              <span>{usage.message_count} msgs</span>
+              <span>•</span>
+              <span>{formatBytes(usage.total_bytes)}</span>
+            </>
+          )}
           <span>•</span>
           <span>{new Date(board.updated_at).toLocaleDateString()}</span>
         </div>
