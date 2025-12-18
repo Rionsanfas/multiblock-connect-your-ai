@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppStore } from "@/store/useAppStore";
 import { toast } from "sonner";
-import { User, Shield, Cookie, Bell, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera } from "lucide-react";
+import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { mockUser, pricingPlans, boardAddons } from "@/mocks/seed";
@@ -43,15 +43,7 @@ export default function Settings() {
 
   const [cookies, setCookies] = useState({
     essential: true,
-    analytics: true,
     personalization: true,
-    marketing: false,
-  });
-
-  const [notifications, setNotifications] = useState({
-    email: true,
-    browser: false,
-    updates: true,
   });
 
   const handleProfileSave = () => {
@@ -75,7 +67,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="plan" className="space-y-6">
-          <TabsList className="bg-card/50 border border-border/50 flex-wrap h-auto gap-1 p-1">
+          <TabsList className="tabs-3d flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="plan" className="gap-2">
               <Crown className="h-4 w-4" />
               Plan
@@ -87,10 +79,6 @@ export default function Settings() {
             <TabsTrigger value="cookies" className="gap-2">
               <Cookie className="h-4 w-4" />
               Cookies
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2">
-              <Bell className="h-4 w-4" />
-              Notifications
             </TabsTrigger>
             <TabsTrigger value="privacy" className="gap-2">
               <Shield className="h-4 w-4" />
@@ -104,7 +92,7 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="profile">
-            <Card className="bg-card/80 backdrop-blur-xl border-border/50">
+            <Card className="settings-card-3d">
               <CardHeader>
                 <CardTitle>Profile Information</CardTitle>
                 <CardDescription>Update your personal details</CardDescription>
@@ -166,7 +154,7 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="cookies">
-            <Card className="bg-card/80 backdrop-blur-xl border-border/50">
+            <Card className="settings-card-3d">
               <CardHeader>
                 <CardTitle>Cookie Preferences</CardTitle>
                 <CardDescription>
@@ -190,19 +178,6 @@ export default function Settings() {
                 <Separator />
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Analytics Cookies</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Help us understand how you use the site
-                    </p>
-                  </div>
-                  <Switch
-                    checked={cookies.analytics}
-                    onCheckedChange={(checked) => setCookies({ ...cookies, analytics: checked })}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
                     <Label>Personalization Cookies</Label>
                     <p className="text-sm text-muted-foreground">
                       Remember your preferences and settings
@@ -213,79 +188,15 @@ export default function Settings() {
                     onCheckedChange={(checked) => setCookies({ ...cookies, personalization: checked })}
                   />
                 </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Marketing Cookies</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Used for targeted advertising
-                    </p>
-                  </div>
-                  <Switch
-                    checked={cookies.marketing}
-                    onCheckedChange={(checked) => setCookies({ ...cookies, marketing: checked })}
-                  />
-                </div>
                 <Button onClick={handleCookieSave}>Save Preferences</Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="notifications">
-            <Card className="bg-card/80 backdrop-blur-xl border-border/50">
-              <CardHeader>
-                <CardTitle>Notification Settings</CardTitle>
-                <CardDescription>Choose how you want to be notified</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive updates and alerts via email
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.email}
-                    onCheckedChange={(checked) => setNotifications({ ...notifications, email: checked })}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Browser Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Get push notifications in your browser
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.browser}
-                    onCheckedChange={(checked) => setNotifications({ ...notifications, browser: checked })}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Product Updates</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Be notified about new features and improvements
-                    </p>
-                  </div>
-                  <Switch
-                    checked={notifications.updates}
-                    onCheckedChange={(checked) => setNotifications({ ...notifications, updates: checked })}
-                  />
-                </div>
-                <Button onClick={() => toast.success("Notification settings saved")}>
-                  Save Preferences
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           <TabsContent value="privacy">
             <div className="space-y-6">
-              <Card className="bg-card/80 backdrop-blur-xl border-border/50">
+              <Card className="settings-card-3d">
                 <CardHeader>
                   <CardTitle>Privacy & Data</CardTitle>
                   <CardDescription>Manage your data and privacy settings</CardDescription>

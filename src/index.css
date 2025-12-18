@@ -729,6 +729,91 @@
     }
   }
 
+  /* Shiny Select Dropdown - like create new block button */
+  .select-trigger-shiny {
+    background: linear-gradient(145deg, hsl(0 0% 14%) 0%, hsl(0 0% 10%) 100%);
+    border: 1px solid hsl(var(--accent) / 0.25);
+    border-radius: 0.75rem;
+    height: 3rem;
+    box-shadow: 
+      0 4px 12px -2px hsl(0 0% 0% / 0.3),
+      0 0 20px -4px hsl(var(--accent) / 0.2),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+    transition: all 0.3s ease;
+  }
+
+  .select-trigger-shiny:hover {
+    border-color: hsl(var(--accent) / 0.4);
+    box-shadow: 
+      0 4px 16px -2px hsl(0 0% 0% / 0.4),
+      0 0 30px -4px hsl(var(--accent) / 0.3),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+  }
+
+  .select-trigger-shiny:focus {
+    border-color: hsl(var(--accent) / 0.5);
+    box-shadow: 
+      0 0 0 2px hsl(var(--accent) / 0.2),
+      0 4px 16px -2px hsl(0 0% 0% / 0.4),
+      0 0 30px -4px hsl(var(--accent) / 0.3);
+  }
+
+  .select-content-shiny {
+    background: linear-gradient(145deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
+    border: 1px solid hsl(var(--accent) / 0.2);
+    border-radius: 0.75rem;
+    box-shadow: 
+      0 8px 32px -4px hsl(0 0% 0% / 0.5),
+      0 0 30px -8px hsl(var(--accent) / 0.2),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
+    backdrop-filter: blur(16px);
+  }
+
+  .select-item-shiny {
+    border-radius: 0.5rem;
+    margin: 2px 4px;
+    padding: 0.75rem 2rem 0.75rem 2.5rem;
+    transition: all 0.2s ease;
+  }
+
+  .select-item-shiny:focus {
+    background: linear-gradient(145deg, hsl(var(--accent) / 0.3) 0%, hsl(var(--accent) / 0.2) 100%);
+    color: hsl(var(--foreground));
+    box-shadow: 
+      0 0 20px -4px hsl(var(--accent) / 0.4),
+      inset 0 1px 0 0 hsl(var(--accent) / 0.3);
+  }
+
+  .select-item-shiny[data-state="checked"] {
+    background: linear-gradient(145deg, hsl(var(--accent) / 0.25) 0%, hsl(var(--accent) / 0.15) 100%);
+  }
+
+  /* Settings Card 3D Style */
+  .settings-card-3d {
+    background: linear-gradient(
+      145deg,
+      hsl(0 0% 10% / 0.9),
+      hsl(0 0% 6% / 0.95)
+    );
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    border-radius: 1rem;
+    backdrop-filter: blur(24px);
+    box-shadow: 
+      0 8px 32px -8px hsl(0 0% 0% / 0.5),
+      0 4px 16px -4px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
+    transition: all 0.3s ease;
+  }
+
+  .settings-card-3d:hover {
+    border-color: hsl(0 0% 100% / 0.12);
+    box-shadow: 
+      0 12px 40px -8px hsl(0 0% 0% / 0.6),
+      0 4px 16px -4px hsl(0 0% 0% / 0.4),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+    transform: translateY(-2px);
+  }
+
   /* Soft button style (like image 4 reference) */
   .btn-soft {
     position: relative;
@@ -2364,6 +2449,49 @@
   overflow: hidden;
   border: 1px solid hsl(var(--border));
   perspective: 1000px;
+}
+
+/* Featured First Card - Unique Style */
+.hiw-card-featured {
+  background: linear-gradient(
+    145deg,
+    hsl(0 0% 10% / 0.95),
+    hsl(0 0% 6% / 0.98)
+  );
+  border: 1px solid hsl(var(--accent) / 0.3);
+  box-shadow: 
+    0 0 40px hsl(var(--accent) / 0.15),
+    0 0 80px hsl(var(--accent) / 0.08),
+    inset 0 1px 0 hsl(0 0% 100% / 0.05);
+}
+
+.hiw-card-featured::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--accent) / 0.5),
+    transparent
+  );
+}
+
+.hiw-card-featured::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    hsl(var(--accent) / 0.5),
+    transparent 70%
+  );
 }
 
 /* 3D Card Effect */

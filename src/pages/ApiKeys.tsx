@@ -116,18 +116,6 @@ export default function ApiKeys() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
-                      key.is_valid 
-                        ? "bg-green-500/20 text-green-400 border border-green-500/30" 
-                        : "bg-white/10 text-white/70 border border-white/20"
-                    }`}>
-                      {key.is_valid ? "Valid" : "Unverified"}
-                    </span>
-                    {key.client_only && (
-                      <span className="text-xs px-3 py-1.5 rounded-full bg-white/10 text-white/60 border border-white/20">
-                        Client-only
-                      </span>
-                    )}
                     <button
                       onClick={() => setDeleteId(key.id)}
                       className="p-2.5 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105"
@@ -152,15 +140,15 @@ export default function ApiKeys() {
             <div className="space-y-2">
               <Label className="text-sm font-medium">Provider</Label>
               <Select value={newKey.provider} onValueChange={(v) => setNewKey({ ...newKey, provider: v })}>
-                <SelectTrigger className="bg-secondary/40 border-border/20 rounded-xl h-12">
+                <SelectTrigger className="select-trigger-shiny">
                   <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
-                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/20 rounded-xl">
+                <SelectContent className="select-content-shiny">
                   {Object.entries(MODEL_PROVIDERS).map(([key, value]) => (
                     <SelectItem 
                       key={key} 
                       value={key}
-                      className="rounded-lg focus:bg-[hsl(var(--accent))] focus:text-foreground"
+                      className="select-item-shiny"
                     >
                       {value.name}
                     </SelectItem>
@@ -176,16 +164,6 @@ export default function ApiKeys() {
                 onChange={(e) => setNewKey({ ...newKey, key: e.target.value })}
                 placeholder="sk-..."
                 className="bg-secondary/40 border-border/20 rounded-xl h-12"
-              />
-            </div>
-            <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/30">
-              <div>
-                <Label className="text-sm font-medium">Client-only mode</Label>
-                <p className="text-xs text-muted-foreground mt-1">Store key in browser only</p>
-              </div>
-              <Switch
-                checked={newKey.clientOnly}
-                onCheckedChange={(c) => setNewKey({ ...newKey, clientOnly: c })}
               />
             </div>
             {testResult && (

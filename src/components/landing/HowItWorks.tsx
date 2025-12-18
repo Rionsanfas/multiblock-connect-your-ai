@@ -113,9 +113,9 @@ const HowItWorks = () => {
 
         {/* Bento Grid */}
         <div className="hiw-bento-grid max-w-4xl mx-auto">
-          {/* Card 1 - Add Blocks (Tall left card) */}
+          {/* Card 1 - Add Blocks (Tall left card) - Unique style */}
           <AnimatedElement delay={100}>
-            <div className="hiw-bento-card hiw-bento-tall hiw-card-3d hiw-card-3d-left dot-grid-card h-full">
+            <div className="hiw-bento-card hiw-bento-tall hiw-card-3d hiw-card-3d-left hiw-card-featured dot-grid-card h-full">
               <div className="hiw-card-3d-inner">
                 {/* 3D Plus Icon */}
                 <div className="hiw-3d-icon-wrapper">
