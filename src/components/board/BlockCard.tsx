@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical } from "lucide-react";
+import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical, Move, Quote } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { BlockTransferDialog } from "./BlockTransferDialog";
 import { useAppStore } from "@/store/useAppStore";
 import { api } from "@/api";
 import { toast } from "sonner";
@@ -36,6 +37,8 @@ export function BlockCard({
   const [isRunning, setIsRunning] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeCorner, setResizeCorner] = useState<string | null>(null);
+  const [isHoveringResize, setIsHoveringResize] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [isHoveringResize, setIsHoveringResize] = useState(false);
   const [size, setSize] = useState({ 
     width: block.config?.width || DEFAULT_WIDTH, 
@@ -250,6 +253,11 @@ export function BlockCard({
               <Copy className="h-4 w-4 mr-2" />
               Duplicate
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowTransferDialog(true)} className="rounded-lg text-sm">
+              <Move className="h-4 w-4 mr-2" />
+              Copy/Move to Board
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => deleteBlock(block.id)} className="text-destructive rounded-lg text-sm">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete

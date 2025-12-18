@@ -53,9 +53,20 @@ interface AppState {
   
   // Block actions
   createBlock: (boardId: string, block: Partial<Block>) => Block;
+  createBlockFromSelection: (params: {
+    boardId: string;
+    sourceBlockId: string;
+    sourceMessageId: string;
+    selectedText: string;
+    modelId?: string;
+    title?: string;
+    position?: { x: number; y: number };
+  }) => Block;
   updateBlock: (id: string, updates: Partial<Block>) => void;
   deleteBlock: (id: string) => void;
-  duplicateBlock: (id: string) => Block;
+  duplicateBlock: (id: string, options?: { withMessages?: boolean }) => Block;
+  duplicateBlockToBoard: (blockId: string, targetBoardId: string, options?: { withMessages?: boolean }) => Block;
+  moveBlockToBoard: (blockId: string, targetBoardId: string) => Block;
   selectBlock: (id: string | null) => void;
   updateBlockPosition: (id: string, position: { x: number; y: number }) => void;
   
@@ -245,9 +256,41 @@ export const useAppStore = create<AppState>()(
           system_prompt: blockData.system_prompt || 'You are a helpful assistant.',
           config: blockData.config || { temperature: 0.7, max_tokens: 2048 },
           position: blockData.position || { x: 100, y: 100 },
+          source_context: blockData.source_context,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
+        set((state) => ({ blocks: [...state.blocks, block] }));
+        return block;
+      },
+      
+      createBlockFromSelection: (params) => {
+        const { boardId, sourceBlockId, sourceMessageId, selectedText, modelId, title, position } = params;
+        const state = get();
+        
+        const sourceBlock = state.blocks.find((b) => b.id === sourceBlockId);
+        if (!sourceBlock) throw new Error('Source block not found');
+        
+        const block: Block = {
+          id: generateId(),
+          board_id: boardId,
+          title: title || `From: ${sourceBlock.title}`,
+          type: 'chat',
+          model_id: modelId || sourceBlock.model_id,
+          system_prompt: 'You are a helpful assistant. Analyze and respond based on the provided context.',
+          config: { temperature: 0.7, max_tokens: 2048 },
+          position: position || { x: sourceBlock.position.x + 350, y: sourceBlock.position.y },
+          source_context: {
+            source_block_id: sourceBlockId,
+            source_block_title: sourceBlock.title,
+            source_message_id: sourceMessageId,
+            selected_text: selectedText,
+            created_at: new Date().toISOString(),
+          },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        
         set((state) => ({ blocks: [...state.blocks, block] }));
         return block;
       },
@@ -269,20 +312,120 @@ export const useAppStore = create<AppState>()(
         }));
       },
       
-      duplicateBlock: (id) => {
-        const original = get().blocks.find((b) => b.id === id);
+      duplicateBlock: (id, options = {}) => {
+        const state = get();
+        const original = state.blocks.find((b) => b.id === id);
         if (!original) throw new Error('Block not found');
         
+        const newBlockId = generateId();
         const block: Block = {
           ...original,
-          id: generateId(),
+          id: newBlockId,
           title: `${original.title} (Copy)`,
           position: { x: original.position.x + 50, y: original.position.y + 50 },
+          source_context: undefined, // Don't copy source context
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        set((state) => ({ blocks: [...state.blocks, block] }));
+        
+        // Optionally copy messages
+        let newMessages: Message[] = [];
+        if (options.withMessages) {
+          const originalMessages = state.messages.filter((m) => m.block_id === id);
+          newMessages = originalMessages.map((m) => ({
+            ...m,
+            id: generateId(),
+            block_id: newBlockId,
+            created_at: new Date().toISOString(),
+          }));
+        }
+        
+        set((state) => ({ 
+          blocks: [...state.blocks, block],
+          messages: [...state.messages, ...newMessages],
+        }));
         return block;
+      },
+      
+      duplicateBlockToBoard: (blockId, targetBoardId, options = {}) => {
+        const state = get();
+        const original = state.blocks.find((b) => b.id === blockId);
+        if (!original) throw new Error('Block not found');
+        
+        const targetBoard = state.boards.find((b) => b.id === targetBoardId);
+        if (!targetBoard) throw new Error('Target board not found');
+        
+        // Verify ownership
+        if (state.user && targetBoard.user_id !== state.user.id) {
+          throw new Error('Cannot duplicate to board you do not own');
+        }
+        
+        const newBlockId = generateId();
+        const block: Block = {
+          ...original,
+          id: newBlockId,
+          board_id: targetBoardId,
+          title: original.board_id === targetBoardId ? `${original.title} (Copy)` : original.title,
+          position: { x: 100, y: 100 }, // Reset position for new board
+          source_context: undefined,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        
+        // Optionally copy messages
+        let newMessages: Message[] = [];
+        if (options.withMessages) {
+          const originalMessages = state.messages.filter((m) => m.block_id === blockId);
+          newMessages = originalMessages.map((m) => ({
+            ...m,
+            id: generateId(),
+            block_id: newBlockId,
+            created_at: new Date().toISOString(),
+          }));
+        }
+        
+        set((state) => ({ 
+          blocks: [...state.blocks, block],
+          messages: [...state.messages, ...newMessages],
+        }));
+        return block;
+      },
+      
+      moveBlockToBoard: (blockId, targetBoardId) => {
+        const state = get();
+        const original = state.blocks.find((b) => b.id === blockId);
+        if (!original) throw new Error('Block not found');
+        
+        const targetBoard = state.boards.find((b) => b.id === targetBoardId);
+        if (!targetBoard) throw new Error('Target board not found');
+        
+        // Verify ownership
+        if (state.user && targetBoard.user_id !== state.user.id) {
+          throw new Error('Cannot move to board you do not own');
+        }
+        
+        // Remove connections since they won't make sense in the new board
+        const blockConnections = state.connections.filter(
+          (c) => c.from_block === blockId || c.to_block === blockId
+        );
+        
+        set((state) => ({
+          blocks: state.blocks.map((b) =>
+            b.id === blockId
+              ? {
+                  ...b,
+                  board_id: targetBoardId,
+                  position: { x: 100, y: 100 },
+                  updated_at: new Date().toISOString(),
+                }
+              : b
+          ),
+          connections: state.connections.filter(
+            (c) => c.from_block !== blockId && c.to_block !== blockId
+          ),
+        }));
+        
+        return { ...original, board_id: targetBoardId };
       },
       
       selectBlock: (id) => set({ selectedBlockId: id }),
