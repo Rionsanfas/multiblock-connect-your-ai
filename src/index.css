@@ -820,55 +820,170 @@
     color: hsl(var(--foreground));
   }
 
-  /* Hero cinematic lighting effect */
+  /* Hero cinematic lighting effect - soft, strong, with shadows */
   .hero-lighting {
     position: absolute;
     inset: 0;
     pointer-events: none;
     overflow: hidden;
+    z-index: 1;
   }
 
+  /* Main top-right light beam */
   .hero-lighting::before {
     content: '';
     position: absolute;
-    top: -20%;
-    right: -10%;
-    width: 60%;
-    height: 80%;
-    background: radial-gradient(
-      ellipse 100% 100% at 70% 30%,
-      hsl(40 50% 60% / 0.12) 0%,
-      hsl(30 40% 50% / 0.06) 40%,
-      transparent 70%
-    );
-    filter: blur(40px);
+    top: -30%;
+    right: -15%;
+    width: 80%;
+    height: 100%;
+    background: 
+      radial-gradient(
+        ellipse 80% 60% at 60% 30%,
+        hsl(260 60% 70% / 0.25) 0%,
+        hsl(280 50% 60% / 0.15) 20%,
+        hsl(220 60% 60% / 0.08) 40%,
+        transparent 65%
+      ),
+      radial-gradient(
+        ellipse 60% 50% at 70% 40%,
+        hsl(40 60% 65% / 0.12) 0%,
+        hsl(30 50% 55% / 0.06) 30%,
+        transparent 60%
+      );
+    filter: blur(60px);
     opacity: 0;
-    transition: opacity 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .hero-lighting.active::before {
     opacity: 1;
   }
 
+  /* Secondary left-side light */
   .hero-lighting::after {
     content: '';
     position: absolute;
-    top: 10%;
-    left: -5%;
-    width: 40%;
-    height: 60%;
-    background: radial-gradient(
-      ellipse 100% 100% at 30% 50%,
-      hsl(40 45% 55% / 0.08) 0%,
-      transparent 60%
-    );
-    filter: blur(50px);
+    top: 5%;
+    left: -10%;
+    width: 50%;
+    height: 70%;
+    background: 
+      radial-gradient(
+        ellipse 90% 80% at 30% 50%,
+        hsl(260 55% 65% / 0.18) 0%,
+        hsl(240 50% 55% / 0.1) 30%,
+        transparent 60%
+      );
+    filter: blur(70px);
     opacity: 0;
-    transition: opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
+    transition: opacity 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s;
   }
 
   .hero-lighting.active::after {
     opacity: 1;
+  }
+
+  /* Hero element shadow styling - add to elements */
+  .hero-shadow-text {
+    text-shadow: 
+      0 4px 20px hsl(260 60% 50% / 0.3),
+      0 8px 40px hsl(280 50% 45% / 0.2),
+      0 0 60px hsl(260 50% 60% / 0.15);
+  }
+
+  .hero-shadow-element {
+    filter: drop-shadow(0 10px 30px hsl(260 50% 40% / 0.4)) drop-shadow(0 4px 15px hsl(280 60% 50% / 0.25));
+  }
+
+  /* Additional center light bloom */
+  .hero-light-bloom {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 60%;
+    background: radial-gradient(
+      ellipse 60% 50% at 50% 50%,
+      hsl(270 50% 60% / 0.1) 0%,
+      transparent 50%
+    );
+    filter: blur(80px);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 2.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s;
+  }
+
+  .hero-light-bloom.active {
+    opacity: 1;
+  }
+
+  /* Dashboard icon box style */
+  .dashboard-icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.625rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(145deg, hsl(0 0% 14%) 0%, hsl(0 0% 10%) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow: 
+      0 4px 12px -2px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
+  }
+
+  /* Button with green/gold left glow effect */
+  .btn-glow-edge {
+    position: relative;
+    background: transparent;
+    border: 1px solid hsl(0 0% 100% / 0.12);
+    border-radius: 0.75rem;
+    overflow: visible;
+    transition: all 0.3s ease;
+  }
+
+  .btn-glow-edge::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 70%;
+    background: linear-gradient(
+      180deg,
+      hsl(40 70% 55% / 0.9) 0%,
+      hsl(35 60% 50% / 1) 50%,
+      hsl(40 70% 55% / 0.9) 100%
+    );
+    border-radius: 4px;
+    box-shadow: 
+      0 0 15px hsl(40 70% 50% / 0.8),
+      0 0 30px hsl(40 60% 45% / 0.5),
+      0 0 45px hsl(40 50% 40% / 0.3);
+    animation: glowPulse 2s ease-in-out infinite;
+  }
+
+  .btn-glow-edge:hover {
+    border-color: hsl(40 60% 50% / 0.3);
+    background: hsl(40 50% 50% / 0.05);
+  }
+
+  .btn-glow-edge:hover::before {
+    box-shadow: 
+      0 0 20px hsl(40 70% 50% / 1),
+      0 0 40px hsl(40 60% 45% / 0.6),
+      0 0 60px hsl(40 50% 40% / 0.4);
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      opacity: 0.9;
+    }
+    50% {
+      opacity: 1;
+    }
   }
 
   /* Gradient border card effect (like pricing cards) */

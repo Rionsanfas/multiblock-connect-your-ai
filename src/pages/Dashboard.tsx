@@ -77,7 +77,7 @@ export default function Dashboard() {
               limitMb={user.storage_limit_mb}
             />
             <div className="flex flex-col justify-center items-center h-full">
-              <Button onClick={handleCreateBoard} className="gap-2 btn-gold-edge text-foreground font-medium rounded-xl py-3 px-6">
+              <Button onClick={handleCreateBoard} className="gap-2 btn-glow-edge text-primary font-medium rounded-xl py-3 px-6 bg-transparent hover:bg-transparent">
                 <Plus className="h-4 w-4" />
                 New Board
               </Button>

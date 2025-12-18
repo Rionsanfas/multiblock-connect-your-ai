@@ -53,6 +53,7 @@ const Hero = () => {
       
       {/* Cinematic Lighting Effect */}
       <div className={`hero-lighting ${phase >= 1 ? 'active' : ''}`} />
+      <div className={`hero-light-bloom ${phase >= 1 ? 'active' : ''}`} />
       
       {/* Container */}
       <div 
@@ -81,7 +82,7 @@ const Hero = () => {
 
             {/* Headline - Primary */}
             <h1 
-              className="font-bold text-foreground leading-tight text-wrap-balance"
+              className="font-bold text-foreground leading-tight text-wrap-balance hero-shadow-text"
               style={{ 
                 fontSize: "clamp(1.75rem, 1rem + 4vw, 4.5rem)",
                 marginBottom: "clamp(16px, 2vw, 24px)",
@@ -131,7 +132,7 @@ const Hero = () => {
 
           {/* Right: Connected Blocks Visual - Primary */}
           <div 
-            className="order-1 lg:order-2 flex items-center justify-center"
+            className="order-1 lg:order-2 flex items-center justify-center hero-shadow-element"
             style={{ 
               minHeight: "clamp(250px, 40vw, 600px)",
               maxHeight: "70vh",
