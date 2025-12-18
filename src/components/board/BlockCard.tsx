@@ -39,7 +39,6 @@ export function BlockCard({
   const [resizeCorner, setResizeCorner] = useState<string | null>(null);
   const [isHoveringResize, setIsHoveringResize] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
-  const [isHoveringResize, setIsHoveringResize] = useState(false);
   const [size, setSize] = useState({ 
     width: block.config?.width || DEFAULT_WIDTH, 
     height: block.config?.height || DEFAULT_HEIGHT 
