@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Loader2, Copy, Trash2, Settings, Pencil, Check } from "lucide-react";
+import { X, Send, Loader2, Copy, Trash2, Settings, Pencil, Check, Quote, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAppStore } from "@/store/useAppStore";
 import { useBlockMessages, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
+import { useTextSelection } from "@/hooks/useTextSelection";
+import { TextSelectionPopover } from "./TextSelectionPopover";
 import { api } from "@/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -25,6 +27,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { blocks, closeBlockChat, deleteMessage, updateBlock } = useAppStore();
   const block = blocks.find((b) => b.id === blockId);
@@ -32,6 +35,10 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   // Use the new hooks for messages and usage
   const blockMessages = useBlockMessages(blockId);
   const blockUsage = useBlockUsage(blockId);
+  
+  // Text selection for creating new blocks
+  const { selectedText, messageId, selectionRect, hasSelection, clearSelection } = 
+    useTextSelection(messagesContainerRef);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -166,17 +173,6 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* System Prompt */}
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">System Prompt</Label>
-                    <Textarea
-                      value={block.system_prompt}
-                      onChange={(e) => updateBlock(blockId, { system_prompt: e.target.value })}
-                      className="bg-secondary/40 min-h-[80px] resize-none rounded-lg border-border/20 text-sm"
-                      placeholder="You are a helpful assistant..."
-                    />
-                  </div>
                 </PopoverContent>
               </Popover>
               
@@ -187,18 +183,45 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           </div>
         </DialogHeader>
 
+        {/* Source Context Banner */}
+        {block.source_context && (
+          <div className="px-5 py-3 bg-[hsl(var(--accent)/0.1)] border-b border-[hsl(var(--accent)/0.2)]">
+            <div className="flex items-start gap-2">
+              <Quote className="h-4 w-4 text-[hsl(var(--accent))] mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                  <Sparkles className="h-3 w-3 text-[hsl(var(--accent))]" />
+                  <span>Context from <strong>{block.source_context.source_block_title}</strong></span>
+                </div>
+                <p className="text-sm line-clamp-2 text-foreground/80">
+                  "{block.source_context.selected_text}"
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Messages */}
-        <div className="flex-1 overflow-auto px-5 py-4 space-y-3">
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-auto px-5 py-4 space-y-3"
+        >
           {blockMessages.length === 0 && !streamingContent && (
             <div className="text-center text-muted-foreground py-8">
               <p className="text-sm mb-1">Start a conversation</p>
-              <p className="text-xs opacity-70">Send a message to interact with this block</p>
+              <p className="text-xs opacity-70">
+                {block.source_context 
+                  ? "Use the context above to guide your conversation"
+                  : "Send a message to interact with this block"
+                }
+              </p>
             </div>
           )}
 
           {blockMessages.map((msg) => (
             <div
               key={msg.id}
+              data-message-id={msg.id}
               className={cn(
                 "group flex gap-2",
                 msg.role === "user" && "justify-end"
@@ -206,7 +229,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
             >
               <div
                 className={cn(
-                  "max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm",
+                  "max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm select-text",
                   msg.role === "user"
                     ? "user-message-bubble"
                     : "btn-soft"
@@ -245,6 +268,19 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Text Selection Popover */}
+        {hasSelection && messageId && (
+          <TextSelectionPopover
+            selectedText={selectedText}
+            messageId={messageId}
+            blockId={blockId}
+            boardId={block.board_id}
+            selectionRect={selectionRect}
+            containerRef={messagesContainerRef}
+            onClose={clearSelection}
+          />
+        )}
 
         {/* Input */}
         <div className="px-5 py-4 border-t border-border/20">

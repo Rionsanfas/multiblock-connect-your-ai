@@ -37,8 +37,18 @@ export interface Block {
   system_prompt: string;
   config: BlockConfig;
   position: { x: number; y: number };
+  source_context?: SourceContext; // Context this block was created from
   created_at: string;
   updated_at: string;
+}
+
+// Represents text selected from another block that creates this block
+export interface SourceContext {
+  source_block_id: string;
+  source_block_title: string;
+  source_message_id: string;
+  selected_text: string;
+  created_at: string;
 }
 
 export interface BlockConfig {
