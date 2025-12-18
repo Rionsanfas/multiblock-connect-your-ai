@@ -122,7 +122,7 @@ export interface BlockContext {
 // MODEL & PROVIDER ABSTRACTION
 // ============================================
 
-export type Provider = 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral' | 'perplexity' | 'xai';
+export type Provider = 'openai' | 'anthropic' | 'google' | 'cohere' | 'mistral' | 'perplexity' | 'xai' | 'meta';
 
 export interface ModelConfig {
   id: string; // e.g., 'gpt-4o', 'claude-3-sonnet'
@@ -145,6 +145,8 @@ export interface ProviderInfo {
   color: string;
   logo?: string;
   website: string;
+  apiKeyUrl: string; // URL to get API key
+  description: string;
 }
 
 // ============================================
@@ -157,42 +159,64 @@ export const PROVIDERS: Record<Provider, ProviderInfo> = {
     name: 'OpenAI',
     color: 'hsl(142 70% 45%)',
     website: 'https://openai.com',
+    apiKeyUrl: 'https://platform.openai.com/api-keys',
+    description: 'GPT-4, GPT-5, and DALL-E models',
   },
   anthropic: {
     id: 'anthropic',
     name: 'Anthropic',
     color: 'hsl(24 90% 55%)',
     website: 'https://anthropic.com',
+    apiKeyUrl: 'https://console.anthropic.com/settings/keys',
+    description: 'Claude family of AI assistants',
   },
   google: {
     id: 'google',
     name: 'Google',
     color: 'hsl(217 90% 60%)',
     website: 'https://ai.google',
+    apiKeyUrl: 'https://aistudio.google.com/apikey',
+    description: 'Gemini and PaLM models',
   },
   cohere: {
     id: 'cohere',
     name: 'Cohere',
     color: 'hsl(340 70% 55%)',
     website: 'https://cohere.com',
+    apiKeyUrl: 'https://dashboard.cohere.com/api-keys',
+    description: 'Command and embed models',
   },
   mistral: {
     id: 'mistral',
     name: 'Mistral',
     color: 'hsl(25 95% 55%)',
     website: 'https://mistral.ai',
+    apiKeyUrl: 'https://console.mistral.ai/api-keys',
+    description: 'Mistral and Mixtral models',
+  },
+  meta: {
+    id: 'meta',
+    name: 'Meta',
+    color: 'hsl(214 89% 52%)',
+    website: 'https://llama.meta.com',
+    apiKeyUrl: 'https://llama.meta.com/llama-downloads',
+    description: 'LLaMA open-weight models',
   },
   perplexity: {
     id: 'perplexity',
     name: 'Perplexity',
     color: 'hsl(280 70% 60%)',
     website: 'https://perplexity.ai',
+    apiKeyUrl: 'https://www.perplexity.ai/settings/api',
+    description: 'Search-augmented AI models',
   },
   xai: {
     id: 'xai',
     name: 'xAI',
     color: 'hsl(0 0% 70%)',
     website: 'https://x.ai',
+    apiKeyUrl: 'https://console.x.ai',
+    description: 'Grok AI models',
   },
 };
 
@@ -298,6 +322,23 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   { id: 'grok-2-mini', provider: 'xai', name: 'Grok 2 Mini', description: 'Fast Grok 2 variant.', context_window: 128000, max_output_tokens: 4096, input_cost_per_1k: 0.0002, output_cost_per_1k: 0.001, supports_vision: false, supports_functions: true, speed: 'fast', quality: 'standard' },
   { id: 'grok-1.5', provider: 'xai', name: 'Grok 1.5', description: 'Previous generation.', context_window: 128000, max_output_tokens: 4096, input_cost_per_1k: 0.001, output_cost_per_1k: 0.005, supports_vision: false, supports_functions: false, speed: 'medium', quality: 'high' },
   { id: 'grok-vision', provider: 'xai', name: 'Grok Vision', description: 'Vision-capable Grok.', context_window: 128000, max_output_tokens: 4096, input_cost_per_1k: 0.003, output_cost_per_1k: 0.015, supports_vision: true, supports_functions: true, speed: 'medium', quality: 'high' },
+
+  // ===== Meta Models (15) =====
+  { id: 'llama-3.3-70b', provider: 'meta', name: 'LLaMA 3.3 70B', description: 'Latest flagship open model.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.00059, output_cost_per_1k: 0.00079, supports_vision: false, supports_functions: true, speed: 'medium', quality: 'premium' },
+  { id: 'llama-3.2-90b-vision', provider: 'meta', name: 'LLaMA 3.2 90B Vision', description: 'Multimodal with vision support.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.0009, output_cost_per_1k: 0.0009, supports_vision: true, supports_functions: true, speed: 'slow', quality: 'premium' },
+  { id: 'llama-3.2-11b-vision', provider: 'meta', name: 'LLaMA 3.2 11B Vision', description: 'Compact vision model.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.000055, output_cost_per_1k: 0.000055, supports_vision: true, supports_functions: true, speed: 'fast', quality: 'high' },
+  { id: 'llama-3.2-3b', provider: 'meta', name: 'LLaMA 3.2 3B', description: 'Lightweight efficient model.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.00003, output_cost_per_1k: 0.00003, supports_vision: false, supports_functions: true, speed: 'fast', quality: 'standard' },
+  { id: 'llama-3.2-1b', provider: 'meta', name: 'LLaMA 3.2 1B', description: 'Ultra-compact model.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.00001, output_cost_per_1k: 0.00001, supports_vision: false, supports_functions: false, speed: 'fast', quality: 'standard' },
+  { id: 'llama-3.1-405b', provider: 'meta', name: 'LLaMA 3.1 405B', description: 'Largest open model available.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.003, output_cost_per_1k: 0.003, supports_vision: false, supports_functions: true, speed: 'slow', quality: 'premium' },
+  { id: 'llama-3.1-70b', provider: 'meta', name: 'LLaMA 3.1 70B', description: 'High-quality balanced model.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.00059, output_cost_per_1k: 0.00079, supports_vision: false, supports_functions: true, speed: 'medium', quality: 'high' },
+  { id: 'llama-3.1-8b', provider: 'meta', name: 'LLaMA 3.1 8B', description: 'Fast and efficient.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.00005, output_cost_per_1k: 0.00005, supports_vision: false, supports_functions: true, speed: 'fast', quality: 'standard' },
+  { id: 'llama-3-70b', provider: 'meta', name: 'LLaMA 3 70B', description: 'Previous flagship model.', context_window: 8192, max_output_tokens: 4096, input_cost_per_1k: 0.00059, output_cost_per_1k: 0.00079, supports_vision: false, supports_functions: true, speed: 'medium', quality: 'high' },
+  { id: 'llama-3-8b', provider: 'meta', name: 'LLaMA 3 8B', description: 'Compact previous gen.', context_window: 8192, max_output_tokens: 4096, input_cost_per_1k: 0.00005, output_cost_per_1k: 0.00005, supports_vision: false, supports_functions: true, speed: 'fast', quality: 'standard' },
+  { id: 'llama-guard-3', provider: 'meta', name: 'LLaMA Guard 3', description: 'Safety classifier model.', context_window: 8192, max_output_tokens: 1024, input_cost_per_1k: 0.0002, output_cost_per_1k: 0.0002, supports_vision: false, supports_functions: false, speed: 'fast', quality: 'high' },
+  { id: 'code-llama-70b', provider: 'meta', name: 'Code LLaMA 70B', description: 'Code-specialized model.', context_window: 16384, max_output_tokens: 4096, input_cost_per_1k: 0.0007, output_cost_per_1k: 0.0007, supports_vision: false, supports_functions: true, speed: 'medium', quality: 'high' },
+  { id: 'code-llama-34b', provider: 'meta', name: 'Code LLaMA 34B', description: 'Balanced code model.', context_window: 16384, max_output_tokens: 4096, input_cost_per_1k: 0.0004, output_cost_per_1k: 0.0004, supports_vision: false, supports_functions: true, speed: 'fast', quality: 'high' },
+  { id: 'code-llama-13b', provider: 'meta', name: 'Code LLaMA 13B', description: 'Lightweight code model.', context_window: 16384, max_output_tokens: 4096, input_cost_per_1k: 0.0002, output_cost_per_1k: 0.0002, supports_vision: false, supports_functions: false, speed: 'fast', quality: 'standard' },
+  { id: 'code-llama-7b', provider: 'meta', name: 'Code LLaMA 7B', description: 'Fast code assistant.', context_window: 16384, max_output_tokens: 4096, input_cost_per_1k: 0.0001, output_cost_per_1k: 0.0001, supports_vision: false, supports_functions: false, speed: 'fast', quality: 'standard' },
 ];
 
 // Helper to get model config by ID

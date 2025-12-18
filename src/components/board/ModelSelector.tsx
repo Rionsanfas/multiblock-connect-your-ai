@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Check, ChevronDown, ChevronUp, Lock, Plus, Zap, Star } from "lucide-react";
+import { useState } from "react";
+import { Check, ChevronDown, ChevronUp, Lock, Plus, Zap, Star, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,11 +43,18 @@ export function ModelSelector({ open, onOpenChange, selectedModelId, onSelect, o
     onOpenChange(false);
   };
 
+  const handleGetApiKey = (provider: ProviderInfo) => {
+    window.open(provider.apiKeyUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20 rounded-2xl max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Select Model</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Choose a model from your connected providers
+          </p>
         </DialogHeader>
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6">
@@ -79,18 +86,38 @@ export function ModelSelector({ open, onOpenChange, selectedModelId, onSelect, o
                         </Badge>
                       )}
                     </div>
-                    {!hasKey && onAddApiKey && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onAddApiKey(provider.id)}
-                        className="text-xs gap-1"
-                      >
-                        <Plus className="h-3 w-3" />
-                        Add Key
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {!hasKey && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleGetApiKey(provider)}
+                            className="text-xs gap-1 text-muted-foreground hover:text-foreground"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Get API Key
+                          </Button>
+                          {onAddApiKey && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onAddApiKey(provider.id)}
+                              className="text-xs gap-1"
+                            >
+                              <Plus className="h-3 w-3" />
+                              Add Key
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Provider description */}
+                  <p className="text-xs text-muted-foreground ml-5">
+                    {provider.description}
+                  </p>
 
                   <div className="grid gap-2">
                     {visibleModels.map((model) => {
@@ -161,3 +188,6 @@ export function ModelSelector({ open, onOpenChange, selectedModelId, onSelect, o
     </Dialog>
   );
 }
+
+// Type import for provider info
+import type { ProviderInfo } from "@/types";

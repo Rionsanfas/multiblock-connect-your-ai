@@ -46,6 +46,7 @@ export function useModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
       google: [],
       cohere: [],
       mistral: [],
+      meta: [],
       perplexity: [],
       xai: [],
     };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Key, Eye, EyeOff, Trash2, Check, X, Loader2, Shield, Star } from "lucide-react";
+import { Plus, Key, Eye, EyeOff, Trash2, Check, X, Loader2, Shield, Star, ExternalLink } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -235,6 +235,21 @@ export default function ApiKeys() {
                 </SelectContent>
               </Select>
             </div>
+            {/* Get API Key Link */}
+            {newKey.provider && (
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-secondary/30 border border-border/20">
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Don't have a key?</span>
+                <a
+                  href={PROVIDERS[newKey.provider as Provider].apiKeyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Get one from {PROVIDERS[newKey.provider as Provider].name}
+                </a>
+              </div>
+            )}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Name (optional)</Label>
               <Input

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Loader2, Copy, Trash2, Settings, Pencil, Check, Quote, Sparkles, ChevronDown, Brain, Zap } from "lucide-react";
+import { X, Send, Loader2, Copy, Trash2, Settings, Pencil, Check, Quote, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -12,11 +12,13 @@ import { useAppStore } from "@/store/useAppStore";
 import { useBlockMessages, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { useTextSelection } from "@/hooks/useTextSelection";
 import { TextSelectionPopover } from "./TextSelectionPopover";
-import { useUserApiKeys, useHasValidKey } from "@/hooks/useApiKeys";
+import { useUserApiKeys } from "@/hooks/useApiKeys";
+import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useModelConfig";
+import { getModelConfig, PROVIDERS, type Provider } from "@/types";
 import { api } from "@/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { MODEL_PROVIDERS, Provider } from "@/types";
+import { useNavigate } from "react-router-dom";
 
 interface BlockChatModalProps {
   blockId: string;
@@ -30,9 +32,15 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [title, setTitle] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const { blocks, closeBlockChat, deleteMessage, updateBlock } = useAppStore();
   const block = blocks.find((b) => b.id === blockId);
+  
+  // Use hooks for models and API keys
+  const userApiKeys = useUserApiKeys();
+  const modelsByProvider = useModelsGroupedByProvider();
+  const providers = useAvailableProviders();
   
   // Use the new hooks for messages and usage
   const blockMessages = useBlockMessages(blockId);
@@ -52,37 +60,33 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   if (!block) return null;
 
-  // API keys for model access
-  const userApiKeys = useUserApiKeys();
+  // Get current model config
+  const currentModel = getModelConfig(block.model_id);
+  const currentProvider = currentModel?.provider;
 
-  const allModels = Object.entries(MODEL_PROVIDERS).flatMap(([provider, info]) =>
-    info.models.map((model) => ({ provider: provider as Provider, model, name: info.name }))
-  );
+  // Check if user has API key for current provider
+  const hasKeyForCurrentProvider = currentProvider 
+    ? userApiKeys.some(k => k.provider === currentProvider && k.is_valid)
+    : false;
 
-  // Get models grouped by provider for the dropdown
-  const modelsByProvider = Object.entries(MODEL_PROVIDERS).map(([provider, info]) => ({
-    provider: provider as Provider,
-    name: info.name,
-    models: info.models.slice(0, 8), // Show first 8 models per provider
-    hasKey: userApiKeys.some(k => k.provider === provider && k.is_valid),
-  }));
+  // Get provider info for model dropdown
+  const getProviderHasKey = (provider: Provider) => 
+    userApiKeys.some(k => k.provider === provider && k.is_valid);
 
-  const getProviderFromModel = (model: string) => {
-    if (model.includes("gpt")) return "openai";
-    if (model.includes("claude")) return "anthropic";
-    if (model.includes("gemini")) return "google";
-    if (model.includes("pplx")) return "perplexity";
-    if (model.includes("grok")) return "xai";
-    if (model.includes("command") || model.includes("cohere")) return "cohere";
-    if (model.includes("mistral") || model.includes("mixtral")) return "mistral";
-    return "openai";
-  };
-
-  const handleModelSwitch = (newModel: string) => {
+  const handleModelSwitch = (newModelId: string) => {
+    const newModel = getModelConfig(newModelId);
+    if (!newModel) return;
+    
+    const hasKey = getProviderHasKey(newModel.provider);
+    if (!hasKey) {
+      toast.error(`Add an API key for ${PROVIDERS[newModel.provider].name} first`);
+      return;
+    }
+    
     const previousModel = block.model_id;
-    updateBlock(blockId, { model_id: newModel });
+    updateBlock(blockId, { model_id: newModelId });
     toast.success(
-      `Switched to ${newModel}`,
+      `Switched to ${newModel.name}`,
       { description: "Chat history preserved - continue your conversation" }
     );
   };
@@ -96,6 +100,18 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   const handleSend = async () => {
     if (!input.trim() || isRunning) return;
+    
+    // Check if user has API key for current provider
+    if (!hasKeyForCurrentProvider) {
+      toast.error("No API key configured", {
+        description: `Add an API key for ${currentProvider ? PROVIDERS[currentProvider].name : 'this provider'} to send messages`,
+        action: {
+          label: "Add Key",
+          onClick: () => navigate("/api-keys")
+        }
+      });
+      return;
+    }
 
     const userInput = input.trim();
     setInput("");
@@ -119,8 +135,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     toast.success("Copied to clipboard");
   };
 
-  const estimateTokens = (text: string) => Math.ceil(text.length / 4);
-  const estimateCost = (tokens: number) => (tokens * 0.00001).toFixed(4);
+  const handleGoToApiKeys = () => {
+    navigate("/api-keys");
+  };
 
   return (
     <Dialog open onOpenChange={() => closeBlockChat()}>
@@ -134,13 +151,23 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               {/* Model Switcher Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 hover:bg-secondary/70 transition-all group border border-border/20">
-                    <ProviderBadge provider={getProviderFromModel(block.model_id)} model={block.model_id} />
+                  <button className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all group border border-border/20",
+                    hasKeyForCurrentProvider 
+                      ? "bg-secondary/50 hover:bg-secondary/70" 
+                      : "bg-destructive/10 border-destructive/30"
+                  )}>
+                    {currentModel ? (
+                      <ProviderBadge provider={currentModel.provider} model={currentModel.name} />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Select Model</span>
+                    )}
+                    {!hasKeyForCurrentProvider && <Lock className="h-3 w-3 text-destructive" />}
                     <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent 
-                  className="w-72 max-h-80 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)]" 
+                  className="w-80 max-h-96 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)]" 
                   align="start"
                 >
                   <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20">
@@ -148,45 +175,77 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                     <span>Switch model - chat history preserved</span>
                   </div>
                   
-                  {modelsByProvider.map(({ provider, name, models, hasKey }) => (
-                    <div key={provider}>
-                      <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
-                        <span className="text-xs font-medium">{name}</span>
-                        {hasKey ? (
-                          <span className="flex items-center gap-1 text-[10px] text-green-500">
-                            <Zap className="h-2.5 w-2.5" />
-                            Connected
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground">No key</span>
-                        )}
-                      </DropdownMenuLabel>
-                      {models.map((model) => (
-                        <DropdownMenuItem
-                          key={model}
-                          className={cn(
-                            "mx-1 rounded-md cursor-pointer",
-                            !hasKey && "opacity-50 cursor-not-allowed",
-                            block.model_id === model && "bg-primary/10"
+                  {providers.map((provider) => {
+                    const hasKey = getProviderHasKey(provider.id);
+                    const models = (modelsByProvider[provider.id] || []).slice(0, 8);
+                    
+                    return (
+                      <div key={provider.id}>
+                        <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-2 h-2 rounded-full" 
+                              style={{ backgroundColor: provider.color }} 
+                            />
+                            <span className="text-xs font-medium">{provider.name}</span>
+                          </div>
+                          {hasKey ? (
+                            <span className="flex items-center gap-1 text-[10px] text-green-500">
+                              <Zap className="h-2.5 w-2.5" />
+                              Connected
+                            </span>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(provider.apiKeyUrl, '_blank');
+                              }}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                            >
+                              <ExternalLink className="h-2.5 w-2.5" />
+                              Get Key
+                            </button>
                           )}
-                          disabled={!hasKey}
-                          onClick={() => hasKey && handleModelSwitch(model)}
-                        >
-                          <span className="flex items-center gap-2 w-full">
-                            <span className={cn(
-                              "w-1.5 h-1.5 rounded-full",
-                              block.model_id === model ? "bg-primary" : "bg-muted-foreground/30"
-                            )} />
-                            <span className="text-sm truncate">{model}</span>
-                            {block.model_id === model && (
-                              <Check className="h-3 w-3 ml-auto text-primary" />
+                        </DropdownMenuLabel>
+                        {models.map((model) => (
+                          <DropdownMenuItem
+                            key={model.id}
+                            className={cn(
+                              "mx-1 rounded-md cursor-pointer",
+                              !hasKey && "opacity-50 cursor-not-allowed",
+                              block.model_id === model.id && "bg-primary/10"
                             )}
-                          </span>
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator className="my-1" />
-                    </div>
-                  ))}
+                            disabled={!hasKey}
+                            onClick={() => hasKey && handleModelSwitch(model.id)}
+                          >
+                            <span className="flex items-center gap-2 w-full">
+                              <span className={cn(
+                                "w-1.5 h-1.5 rounded-full",
+                                block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30"
+                              )} />
+                              <span className="text-sm truncate flex-1">{model.name}</span>
+                              {!hasKey && <Lock className="h-3 w-3 text-muted-foreground" />}
+                              {block.model_id === model.id && (
+                                <Check className="h-3 w-3 text-primary" />
+                              )}
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator className="my-1" />
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Add API Key action */}
+                  <DropdownMenuItem
+                    className="mx-1 rounded-md cursor-pointer text-primary"
+                    onClick={handleGoToApiKeys}
+                  >
+                    <span className="flex items-center gap-2 w-full text-sm">
+                      <Zap className="h-3 w-3" />
+                      Manage API Keys
+                    </span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -234,27 +293,21 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                     )}
                   </div>
 
-                  {/* Model */}
+                  {/* Current Model Info */}
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Model</Label>
-                    <Select
-                      value={block.model_id}
-                      onValueChange={(value) => updateBlock(blockId, { model_id: value })}
-                    >
-                      <SelectTrigger className="bg-secondary/40 rounded-lg border-border/20 h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-lg">
-                        {allModels.map(({ provider, model, name }) => (
-                          <SelectItem key={model} value={model} className="rounded-md">
-                            <span className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground">{name}</span>
-                              {model}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-xs text-muted-foreground">Current Model</Label>
+                    <div className="p-2 rounded-lg bg-secondary/40 text-sm">
+                      {currentModel ? (
+                        <div className="flex items-center justify-between">
+                          <span>{currentModel.name}</span>
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {currentModel.provider}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">No model selected</span>
+                      )}
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -265,6 +318,24 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
             </div>
           </div>
         </DialogHeader>
+
+        {/* No API Key Warning */}
+        {!hasKeyForCurrentProvider && currentProvider && (
+          <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm">
+                <Lock className="h-4 w-4 text-destructive" />
+                <span>No API key for {PROVIDERS[currentProvider].name}</span>
+              </div>
+              <button
+                onClick={handleGoToApiKeys}
+                className="text-xs text-primary hover:underline"
+              >
+                Add API Key
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Source Context Banner */}
         {block.source_context && (
@@ -377,15 +448,19 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                   handleSend();
                 }
               }}
-              placeholder="Type your message..."
-              className="min-h-[50px] max-h-[150px] resize-none rounded-xl border-border/30 text-sm input-3d"
+              placeholder={hasKeyForCurrentProvider ? "Type your message..." : "Add an API key to send messages..."}
+              disabled={!hasKeyForCurrentProvider}
+              className={cn(
+                "min-h-[50px] max-h-[150px] resize-none rounded-xl border-border/30 text-sm input-3d",
+                !hasKeyForCurrentProvider && "opacity-50"
+              )}
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim() || isRunning}
+              disabled={!input.trim() || isRunning || !hasKeyForCurrentProvider}
               className={cn(
                 "key-icon-3d h-auto px-4 py-3 rounded-xl transition-all",
-                (!input.trim() || isRunning) && "opacity-50 cursor-not-allowed"
+                (!input.trim() || isRunning || !hasKeyForCurrentProvider) && "opacity-50 cursor-not-allowed"
               )}
             >
               {isRunning ? (
