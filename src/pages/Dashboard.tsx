@@ -9,31 +9,35 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
+import { useCurrentUser, useUserBoards, useUserStats } from "@/hooks/useCurrentUser";
 import { api } from "@/api";
 import { toast } from "sonner";
 import type { Board } from "@/types";
 import { StorageUsageCard } from "@/components/dashboard/StorageUsageCard";
 import { PlanUsageCard } from "@/components/dashboard/PlanUsageCard";
-import { mockUser } from "@/mocks/seed";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { boards, blocks, deleteBoard, isAuthenticated } = useAppStore();
+  const { blocks, deleteBoard } = useAppStore();
+  const { user, isAuthenticated } = useCurrentUser();
+  const userBoards = useUserBoards();
+  const stats = useUserStats();
+  
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Redirect if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     navigate("/auth");
     return null;
   }
 
   const filteredBoards = useMemo(() => {
-    return boards.filter((b) =>
+    return userBoards.filter((b) =>
       b.title.toLowerCase().includes(search.toLowerCase())
     );
-  }, [boards, search]);
+  }, [userBoards, search]);
 
   const handleCreateBoard = async () => {
     const board = await api.boards.create("Untitled Board");
@@ -55,8 +59,8 @@ export default function Dashboard() {
 
   const getBlockCount = (boardId: string) => blocks.filter((b) => b.board_id === boardId).length;
 
-  // TODO: Replace mockUser with actual user from Supabase auth
-  const user = mockUser;
+  // Use stats from hook - ensures consistent data
+  if (!stats) return null;
 
   return (
     <DashboardLayout>
@@ -66,15 +70,15 @@ export default function Dashboard() {
           {/* Usage Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <PlanUsageCard
-              planId={user.plan}
-              boardsUsed={user.boards_used}
-              boardsLimit={user.boards_limit}
-              seatsUsed={user.seats_used}
-              seatsLimit={user.seats}
+              planId={stats.plan}
+              boardsUsed={stats.boardsUsed}
+              boardsLimit={stats.boardsLimit}
+              seatsUsed={stats.seatsUsed}
+              seatsLimit={stats.seatsLimit}
             />
             <StorageUsageCard
-              usedMb={user.storage_used_mb}
-              limitMb={user.storage_limit_mb}
+              usedMb={stats.storageUsedMb}
+              limitMb={stats.storageLimitMb}
             />
             <div className="flex flex-col justify-center items-center h-full">
               <Button onClick={handleCreateBoard} className="gap-2 btn-glow-edge text-primary font-medium rounded-xl py-3 px-6 bg-transparent hover:bg-transparent">
@@ -82,7 +86,7 @@ export default function Dashboard() {
                 New Board
               </Button>
               <p className="text-xs text-muted-foreground text-center mt-3">
-                {user.boards_limit - user.boards_used} boards remaining
+                {stats.boardsRemaining} boards remaining
               </p>
             </div>
           </div>
@@ -91,7 +95,7 @@ export default function Dashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
               <h1 className="text-2xl font-bold">Your Boards</h1>
-              <p className="text-muted-foreground">{boards.length} boards</p>
+              <p className="text-muted-foreground">{userBoards.length} boards</p>
             </div>
           </div>
 

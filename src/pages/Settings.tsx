@@ -7,17 +7,17 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAppStore } from "@/store/useAppStore";
+import { useCurrentUser, useUserStats } from "@/hooks/useCurrentUser";
 import { toast } from "sonner";
 import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
-import { mockUser, pricingPlans, boardAddons } from "@/mocks/seed";
+import { pricingPlans, boardAddons } from "@/mocks/seed";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Settings() {
-  const { user } = useAppStore();
+  const { user } = useCurrentUser();
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -275,12 +275,15 @@ const formatPrice = (cents: number): string => {
 };
 
 function PlanUsageSection() {
-  // TODO: Replace with actual user data from Supabase
-  const user = mockUser;
-  const plan = pricingPlans.find(p => p.id === user.plan);
+  const { user } = useCurrentUser();
+  const stats = useUserStats();
   
-  const storagePercentage = Math.min((user.storage_used_mb / user.storage_limit_mb) * 100, 100);
-  const boardsPercentage = Math.min((user.boards_used / user.boards_limit) * 100, 100);
+  if (!user || !stats) return null;
+  
+  const plan = pricingPlans.find(p => p.id === stats.plan);
+  
+  const storagePercentage = Math.min((stats.storageUsedMb / stats.storageLimitMb) * 100, 100);
+  const boardsPercentage = Math.min((stats.boardsUsed / stats.boardsLimit) * 100, 100);
   const isStorageNearLimit = storagePercentage >= 80;
 
   return (
@@ -317,7 +320,7 @@ function PlanUsageSection() {
               </div>
               <Progress value={boardsPercentage} className="h-2 mb-2" />
               <p className="text-xs text-muted-foreground">
-                {user.boards_used} of {user.boards_limit} boards used
+                {stats.boardsUsed} of {stats.boardsLimit} boards used
               </p>
             </GlassCard>
 
@@ -332,7 +335,7 @@ function PlanUsageSection() {
                 className={`h-2 mb-2 ${isStorageNearLimit ? '[&>div]:bg-amber-500' : ''}`}
               />
               <p className="text-xs text-muted-foreground">
-                {formatStorage(user.storage_used_mb)} of {formatStorage(user.storage_limit_mb)} used
+                {formatStorage(stats.storageUsedMb)} of {formatStorage(stats.storageLimitMb)} used
               </p>
               {isStorageNearLimit && (
                 <p className="text-xs text-amber-500 mt-1">Approaching storage limit</p>

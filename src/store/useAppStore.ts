@@ -1,18 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, Board, Block, Message, Connection, ApiKey, LtdOffer } from '@/types';
-import { seedData } from '@/mocks/seed';
+import { seedData, mockUser } from '@/mocks/seed';
 
 interface AppState {
-  // Auth
+  // Auth - current user state
   user: User | null;
   isAuthenticated: boolean;
   
-  // Boards
+  // Boards - all boards (filtered by user_id in selectors)
   boards: Board[];
   currentBoard: Board | null;
   
-  // Blocks
+  // Blocks - all blocks (filtered by board_id in selectors)
   blocks: Block[];
   selectedBlockId: string | null;
   
@@ -22,7 +22,7 @@ interface AppState {
   // Connections
   connections: Connection[];
   
-  // API Keys
+  // API Keys - per user in production
   apiKeys: ApiKey[];
   
   // LTD Offers
@@ -35,10 +35,14 @@ interface AppState {
   snapToGrid: boolean;
   zoom: number;
   
-  // Actions
+  // Auth Actions
   setUser: (user: User | null) => void;
   login: (email: string) => void;
   logout: () => void;
+  
+  // Selector helpers for user-scoped data
+  getUserBoards: () => Board[];
+  canCreateBoard: () => boolean;
   
   // Board actions
   createBoard: (title: string) => Board;
@@ -105,15 +109,12 @@ export const useAppStore = create<AppState>()(
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       
       login: (email) => {
+        // Use mockUser as template but with provided email
+        // This ensures consistent user ID for data ownership
         const user: User = {
-          id: generateId(),
+          ...mockUser,
           email,
           name: email.split('@')[0],
-          plan: 'free',
-          boards_limit: 1,
-          boards_used: get().boards.length,
-          storage_limit_mb: 100,
-          storage_used_mb: 0,
           created_at: new Date().toISOString(),
         };
         set({ user, isAuthenticated: true });
@@ -121,17 +122,39 @@ export const useAppStore = create<AppState>()(
       
       logout: () => set({ user: null, isAuthenticated: false }),
       
+      // Selector: Get boards owned by current user
+      getUserBoards: () => {
+        const state = get();
+        if (!state.user) return [];
+        return state.boards.filter((b) => b.user_id === state.user!.id);
+      },
+      
+      // Selector: Check if user can create more boards
+      canCreateBoard: () => {
+        const state = get();
+        if (!state.user) return false;
+        const userBoards = state.boards.filter((b) => b.user_id === state.user!.id);
+        return userBoards.length < state.user.boards_limit;
+      },
+      
       // Board actions
       createBoard: (title) => {
+        const state = get();
+        const userId = state.user?.id;
+        
+        if (!userId) {
+          throw new Error('Cannot create board: No authenticated user');
+        }
+        
         const board: Board = {
           id: generateId(),
           title,
-          user_id: get().user?.id || 'anonymous',
+          user_id: userId, // Explicit user ownership
           metadata: {},
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        set((state) => ({ boards: [...state.boards, board] }));
+        set((s) => ({ boards: [...s.boards, board] }));
         return board;
       },
       
@@ -155,13 +178,26 @@ export const useAppStore = create<AppState>()(
       },
       
       duplicateBoard: (id) => {
-        const original = get().boards.find((b) => b.id === id);
+        const state = get();
+        const userId = state.user?.id;
+        
+        if (!userId) {
+          throw new Error('Cannot duplicate board: No authenticated user');
+        }
+        
+        const original = state.boards.find((b) => b.id === id);
         if (!original) throw new Error('Board not found');
+        
+        // Verify ownership before duplicating
+        if (original.user_id !== userId) {
+          throw new Error('Cannot duplicate: Board does not belong to user');
+        }
         
         const newBoard: Board = {
           ...original,
           id: generateId(),
           title: `${original.title} (Copy)`,
+          user_id: userId, // Ensure new board has correct ownership
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
