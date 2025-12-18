@@ -1,6 +1,6 @@
 import { Plus, Box, FileCode, Focus } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useAppStore } from "@/store/useAppStore";
+import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -17,11 +17,11 @@ const BLOCK_TEMPLATES = [
 ];
 
 export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
-  const { blocks, createBlock } = useAppStore();
-  const boardBlocks = blocks.filter((b) => b.board_id === boardId);
+  const boardBlocks = useBoardBlocks(boardId);
+  const { createBlock } = useBlockActions(boardId);
 
   const handleCreateEmpty = () => {
-    createBlock(boardId, {
+    createBlock({
       title: "New Block",
       position: { x: 100 + boardBlocks.length * 50, y: 100 + boardBlocks.length * 50 },
     });
@@ -29,7 +29,7 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
   };
 
   const handleCreateFromTemplate = (template: typeof BLOCK_TEMPLATES[0]) => {
-    createBlock(boardId, {
+    createBlock({
       title: template.title,
       model: template.model,
       system_prompt: template.prompt,

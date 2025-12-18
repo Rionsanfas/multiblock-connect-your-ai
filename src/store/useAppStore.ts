@@ -239,6 +239,7 @@ export const useAppStore = create<AppState>()(
           id: generateId(),
           board_id: boardId,
           title: blockData.title || 'New Block',
+          type: blockData.type || 'chat',
           model: blockData.model || 'gpt-4o',
           system_prompt: blockData.system_prompt || 'You are a helpful assistant.',
           config: blockData.config || { temperature: 0.7, max_tokens: 2048 },
@@ -293,7 +294,9 @@ export const useAppStore = create<AppState>()(
         
         set((state) => ({
           blocks: state.blocks.map((b) =>
-            b.id === id ? { ...b, position: snappedPosition } : b
+            b.id === id 
+              ? { ...b, position: snappedPosition, updated_at: new Date().toISOString() } 
+              : b
           ),
         }));
       },
