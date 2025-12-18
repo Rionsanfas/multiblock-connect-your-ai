@@ -199,7 +199,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 className={cn(
                   "max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm",
                   msg.role === "user"
-                    ? "bg-gradient-to-r from-[hsl(35,45%,35%)] to-[hsl(40,50%,40%)] text-foreground border border-[hsl(40,50%,45%/0.3)]"
+                    ? "user-message-bubble"
                     : "btn-soft"
                 )}
               >
