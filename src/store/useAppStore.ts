@@ -65,7 +65,8 @@ interface AppState {
   deleteMessage: (id: string) => void;
   
   // Connection actions
-  createConnection: (connection: Omit<Connection, 'id'>) => Connection;
+  createConnection: (connection: Omit<Connection, 'id' | 'created_at' | 'updated_at'>) => Connection;
+  updateConnection: (id: string, updates: Partial<Connection>) => void;
   deleteConnection: (id: string) => void;
   
   // API Key actions
@@ -240,7 +241,7 @@ export const useAppStore = create<AppState>()(
           board_id: boardId,
           title: blockData.title || 'New Block',
           type: blockData.type || 'chat',
-          model: blockData.model || 'gpt-4o',
+          model_id: blockData.model_id || 'gpt-4o',
           system_prompt: blockData.system_prompt || 'You are a helpful assistant.',
           config: blockData.config || { temperature: 0.7, max_tokens: 2048 },
           position: blockData.position || { x: 100, y: 100 },
@@ -331,9 +332,19 @@ export const useAppStore = create<AppState>()(
         const connection: Connection = {
           id: generateId(),
           ...connData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
         set((state) => ({ connections: [...state.connections, connection] }));
         return connection;
+      },
+      
+      updateConnection: (id, updates) => {
+        set((state) => ({
+          connections: state.connections.map((c) =>
+            c.id === id ? { ...c, ...updates, updated_at: new Date().toISOString() } : c
+          ),
+        }));
       },
       
       deleteConnection: (id) => {

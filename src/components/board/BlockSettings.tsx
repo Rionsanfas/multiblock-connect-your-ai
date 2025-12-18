@@ -73,8 +73,8 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
         <div className="space-y-2">
           <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Model</Label>
           <Select
-            value={block.model}
-            onValueChange={(value) => updateBlock(blockId, { model: value })}
+            value={block.model_id}
+            onValueChange={(value) => updateBlock(blockId, { model_id: value })}
           >
             <SelectTrigger className="bg-secondary/40 rounded-xl border-border/20 h-11">
               <SelectValue />

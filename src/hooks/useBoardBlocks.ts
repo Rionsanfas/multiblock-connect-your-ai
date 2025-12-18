@@ -142,7 +142,7 @@ export function useBoardBlockStats(boardId: string | undefined) {
   return useMemo(() => ({
     total: blocks.length,
     byModel: blocks.reduce((acc, block) => {
-      acc[block.model] = (acc[block.model] || 0) + 1;
+      acc[block.model_id] = (acc[block.model_id] || 0) + 1;
       return acc;
     }, {} as Record<string, number>),
     lastUpdated: blocks.length > 0

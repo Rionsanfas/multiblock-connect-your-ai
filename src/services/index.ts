@@ -20,3 +20,23 @@ export {
   calculateByteSize,
   formatBytes 
 } from '@/hooks/useBlockMessages';
+export {
+  useBoardConnections,
+  useBlockIncomingConnections,
+  useBlockOutgoingConnections,
+  useBlockIncomingContext,
+  useConnectionActions,
+  useBlockConnectionStats,
+} from '@/hooks/useBlockConnections';
+export {
+  useBlockModelConfig,
+  useAvailableModels,
+  useModelsGroupedByProvider,
+  useAvailableProviders,
+  useModelCapabilities,
+  formatModelCost,
+  formatContextWindow,
+  getSpeedBadge,
+  getQualityBadge,
+  estimateCost,
+} from '@/hooks/useModelConfig';

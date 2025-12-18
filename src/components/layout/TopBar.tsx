@@ -183,7 +183,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors cursor-pointer">
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate">{block.title}</p>
-                                <p className="text-xs text-muted-foreground truncate">{block.model}</p>
+                                <p className="text-xs text-muted-foreground truncate">{block.model_id}</p>
                               </div>
                               <button className="key-icon-3d p-1.5 rounded-lg ml-2">
                                 <Settings className="h-3.5 w-3.5" />
@@ -224,8 +224,8 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                             <div className="space-y-2">
                               <Label className="text-xs text-muted-foreground">Model</Label>
                               <Select
-                                value={block.model}
-                                onValueChange={(value) => updateBlock(block.id, { model: value })}
+                                value={block.model_id}
+                                onValueChange={(value) => updateBlock(block.id, { model_id: value })}
                               >
                                 <SelectTrigger className="bg-secondary/40 rounded-lg border-border/20 h-9">
                                   <SelectValue />

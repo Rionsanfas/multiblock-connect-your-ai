@@ -99,7 +99,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
-              <ProviderBadge provider={getProviderFromModel(block.model)} model={block.model} />
+              <ProviderBadge provider={getProviderFromModel(block.model_id)} model={block.model_id} />
               {blockUsage && (
                 <span className="text-xs text-muted-foreground">
                   {blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}
@@ -148,8 +148,8 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Model</Label>
                     <Select
-                      value={block.model}
-                      onValueChange={(value) => updateBlock(blockId, { model: value })}
+                      value={block.model_id}
+                      onValueChange={(value) => updateBlock(blockId, { model_id: value })}
                     >
                       <SelectTrigger className="bg-secondary/40 rounded-lg border-border/20 h-9">
                         <SelectValue />

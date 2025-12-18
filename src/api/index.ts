@@ -284,7 +284,7 @@ export const api = {
         meta: {
           tokens: Math.floor(fullResponse.length / 4),
           cost: parseFloat((fullResponse.length * 0.00001).toFixed(4)),
-          model: block.model,
+          model: block.model_id,
           latency_ms: mockResponses.length * 300,
         },
       });
