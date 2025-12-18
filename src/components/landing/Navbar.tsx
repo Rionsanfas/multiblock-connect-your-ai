@@ -30,12 +30,12 @@ const Navbar = () => {
       {/* Desktop Pill Navbar */}
       <div
         className={cn(
-          "hidden lg:flex items-center gap-2 rounded-full transition-all duration-500 ease-out",
+          "hidden lg:flex items-center gap-3 rounded-full transition-all duration-500 ease-out",
           "border border-border/40 backdrop-blur-xl",
           "bg-card/60 shadow-[0_4px_24px_-4px_hsl(0_0%_0%/0.4),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]",
           isScrolled && "bg-card/80 border-border/60"
         )}
-        style={{ padding: "6px 8px" }}
+        style={{ padding: "8px 12px" }}
       >
         {/* Logo */}
         <Link 

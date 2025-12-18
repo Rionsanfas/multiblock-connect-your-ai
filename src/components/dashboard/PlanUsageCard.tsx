@@ -30,8 +30,8 @@ export function PlanUsageCard({
     <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/20 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-foreground">
-            <Crown className="h-4 w-4 text-background" />
+          <div className="dashboard-icon-box">
+            <Crown className="h-4 w-4 text-foreground" />
           </div>
           <span className="font-semibold">{planName}</span>
         </div>
