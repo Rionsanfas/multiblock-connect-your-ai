@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, Board, Block, Message, Connection, ApiKey, LtdOffer } from '@/types';
-import { seedData, mockUser } from '@/mocks/seed';
+import type { User, Board, Block, Message, Connection, ApiKey, LtdOffer, Team, TeamMember, Seat, Subscription, UserPlan } from '@/types';
+import { seedData, mockUser, mockTeams, mockTeamMembers, mockSeats, mockSubscriptions, mockUserPlans } from '@/mocks/seed';
 
 interface AppState {
   // Auth - current user state
@@ -24,6 +24,13 @@ interface AppState {
   
   // API Keys - per user in production
   apiKeys: ApiKey[];
+  
+  // Teams & Subscriptions
+  teams: Team[];
+  teamMembers: TeamMember[];
+  seats: Seat[];
+  subscriptions: Subscription[];
+  userPlans: UserPlan[];
   
   // LTD Offers
   ltdOffers: LtdOffer[];
@@ -81,8 +88,16 @@ interface AppState {
   deleteConnection: (id: string) => void;
   
   // API Key actions
-  addApiKey: (key: Omit<ApiKey, 'id' | 'created_at'>) => void;
+  addApiKey: (key: Omit<ApiKey, 'id' | 'created_at' | 'updated_at'>) => void;
+  updateApiKey: (id: string, updates: Partial<ApiKey>) => void;
   removeApiKey: (id: string) => void;
+  
+  // Team & subscription selectors
+  getUserTeams: () => Team[];
+  getUserSubscription: () => Subscription | undefined;
+  getUserPlan: () => UserPlan | undefined;
+  getTeamMembers: (teamId: string) => TeamMember[];
+  getTeamSeats: (teamId: string) => Seat[];
   
   // UI actions
   openBlockChat: (blockId: string) => void;
@@ -110,6 +125,11 @@ export const useAppStore = create<AppState>()(
       messages: seedData.messages,
       connections: seedData.connections,
       apiKeys: seedData.apiKeys,
+      teams: mockTeams,
+      teamMembers: mockTeamMembers,
+      seats: mockSeats,
+      subscriptions: mockSubscriptions,
+      userPlans: mockUserPlans,
       ltdOffers: seedData.ltdOffers,
       isBlockChatOpen: false,
       chatBlockId: null,
@@ -500,12 +520,54 @@ export const useAppStore = create<AppState>()(
           id: generateId(),
           ...keyData,
           created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
         set((state) => ({ apiKeys: [...state.apiKeys, apiKey] }));
       },
       
+      updateApiKey: (id, updates) => {
+        set((state) => ({
+          apiKeys: state.apiKeys.map((k) =>
+            k.id === id ? { ...k, ...updates, updated_at: new Date().toISOString() } : k
+          ),
+        }));
+      },
+      
       removeApiKey: (id) => {
         set((state) => ({ apiKeys: state.apiKeys.filter((k) => k.id !== id) }));
+      },
+      
+      // Team & subscription selectors
+      getUserTeams: () => {
+        const state = get();
+        if (!state.user) return [];
+        // Get teams where user is owner or member
+        const memberTeamIds = state.teamMembers
+          .filter((m) => m.user_id === state.user!.id && m.status === 'active')
+          .map((m) => m.team_id);
+        return state.teams.filter((t) => memberTeamIds.includes(t.id));
+      },
+      
+      getUserSubscription: () => {
+        const state = get();
+        if (!state.user) return undefined;
+        return state.subscriptions.find((s) => s.user_id === state.user!.id && s.status === 'active');
+      },
+      
+      getUserPlan: () => {
+        const state = get();
+        if (!state.user) return undefined;
+        return state.userPlans.find((p) => p.user_id === state.user!.id);
+      },
+      
+      getTeamMembers: (teamId) => {
+        const state = get();
+        return state.teamMembers.filter((m) => m.team_id === teamId);
+      },
+      
+      getTeamSeats: (teamId) => {
+        const state = get();
+        return state.seats.filter((s) => s.team_id === teamId);
       },
       
       // UI actions
@@ -527,6 +589,11 @@ export const useAppStore = create<AppState>()(
           messages: seedData.messages,
           connections: seedData.connections,
           apiKeys: seedData.apiKeys,
+          teams: mockTeams,
+          teamMembers: mockTeamMembers,
+          seats: mockSeats,
+          subscriptions: mockSubscriptions,
+          userPlans: mockUserPlans,
           ltdOffers: seedData.ltdOffers,
           isBlockChatOpen: false,
           chatBlockId: null,
