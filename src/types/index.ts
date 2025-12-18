@@ -376,41 +376,178 @@ export const getModelsByProvider = (provider: Provider): ModelConfig[] => {
 };
 
 // ============================================
-// API KEYS & OTHER TYPES
+// API KEYS SYSTEM (BYOK)
 // ============================================
 
 export interface ApiKey {
   id: string;
-  provider: string;
-  key_masked: string;
+  user_id: string; // Owner of the key
+  provider: Provider;
+  name: string; // User-defined label for the key
+  key_masked: string; // Only last 4 chars visible: "sk-...Xk4m"
+  key_hash: string; // Mock hash for validation (real impl would use bcrypt)
+  encryption_method: 'aes-256-gcm' | 'mock'; // Mock for now, real encryption later
   is_valid: boolean;
-  client_only: boolean;
+  is_default: boolean; // Default key for this provider
+  usage_count: number; // Track API calls made with this key
+  last_used_at?: string;
+  expires_at?: string; // Optional expiration
   created_at: string;
+  updated_at: string;
 }
 
-// Subscription Plans
+// Block can optionally reference a specific API key
+export interface BlockApiKeyReference {
+  block_id: string;
+  api_key_id: string; // Reference to ApiKey.id, not raw value
+}
+
+// ============================================
+// PLANS & SUBSCRIPTIONS
+// ============================================
+
+export type PlanTier = 'free' | 'pro' | 'team' | 'enterprise';
+export type BillingPeriod = 'monthly' | 'yearly' | 'lifetime';
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'cancelled' | 'expired';
+
 export interface PricingPlan {
   id: string;
   name: string;
-  tier: 'free' | 'pro' | 'team';
+  tier: PlanTier;
   price_cents: number;
-  billing_period: 'monthly' | 'yearly';
+  billing_period: BillingPeriod;
+  // Limits (placeholders - not enforced yet)
   boards: number;
   blocks_per_board: number | 'unlimited';
   storage_mb: number;
   seats: number;
+  // Feature flags
   features: string[];
+  capabilities: PlanCapabilities;
   highlight?: boolean;
   badge?: string;
+  // Metadata
+  sort_order: number;
+  is_active: boolean;
 }
 
-// Board Add-ons
+export interface PlanCapabilities {
+  api_access: boolean;
+  custom_models: boolean;
+  priority_support: boolean;
+  export_json: boolean;
+  export_pdf: boolean;
+  sso_enabled: boolean;
+  audit_logs: boolean;
+  custom_branding: boolean;
+  webhooks: boolean;
+  advanced_analytics: boolean;
+}
+
+// ============================================
+// TEAMS & SEATS
+// ============================================
+
+export type TeamRole = 'owner' | 'admin' | 'member' | 'viewer';
+
+export interface Team {
+  id: string;
+  name: string;
+  slug: string; // URL-friendly identifier
+  owner_id: string; // User ID of the team owner
+  avatar_url?: string;
+  settings: TeamSettings;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TeamSettings {
+  default_model_id?: string;
+  require_api_keys: boolean; // Force members to use their own keys
+  allow_member_invites: boolean;
+  shared_boards_enabled: boolean;
+}
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  user_id: string;
+  role: TeamRole;
+  invited_by: string; // User ID who invited
+  invited_at: string;
+  joined_at?: string; // null if pending
+  status: 'pending' | 'active' | 'suspended';
+}
+
+export interface Seat {
+  id: string;
+  team_id: string;
+  user_id?: string; // null if unassigned
+  assigned_at?: string;
+  seat_type: 'included' | 'addon'; // Whether it came with plan or was purchased
+  is_active: boolean;
+}
+
+// ============================================
+// SUBSCRIPTIONS
+// ============================================
+
+export interface Subscription {
+  id: string;
+  user_id?: string; // For individual subscriptions
+  team_id?: string; // For team subscriptions
+  plan_id: string;
+  status: SubscriptionStatus;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  cancelled_at?: string;
+  trial_start?: string;
+  trial_end?: string;
+  // Payment placeholder
+  payment_method_id?: string;
+  // Addons
+  addon_ids: string[];
+  // Metadata
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================
+// BOARD ADD-ONS
+// ============================================
+
 export interface BoardAddon {
   id: string;
   name: string;
   boards: number;
   storage_mb: number;
   price_cents: number;
+  is_active: boolean;
+}
+
+// ============================================
+// USER PLAN (Current state)
+// ============================================
+
+export interface UserPlan {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  subscription_id?: string;
+  team_id?: string; // If part of a team plan
+  status: SubscriptionStatus;
+  // Computed limits (from plan + addons)
+  effective_boards_limit: number;
+  effective_storage_mb: number;
+  effective_seats: number;
+  // Usage tracking
+  boards_used: number;
+  storage_used_mb: number;
+  // Timestamps
+  purchased_at: string;
+  expires_at?: string;
+  addon_ids: string[];
 }
 
 // Legacy LTD Offers (keeping for backward compatibility)
@@ -430,16 +567,6 @@ export interface LtdOffer {
   total_quantity: number;
   sold: number;
   highlight?: boolean;
-}
-
-export interface UserPlan {
-  id: string;
-  user_id: string;
-  plan_id: string;
-  status: 'active' | 'pending' | 'cancelled';
-  purchased_at: string;
-  expires_at?: string;
-  addons?: string[];
 }
 
 // Legacy export for backward compatibility

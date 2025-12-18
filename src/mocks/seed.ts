@@ -1,4 +1,50 @@
-import type { Board, Block, Message, Connection, ApiKey, LtdOffer, PricingPlan, BoardAddon, User } from '@/types';
+import type { 
+  Board, Block, Message, Connection, ApiKey, LtdOffer, PricingPlan, 
+  BoardAddon, User, Team, TeamMember, Seat, Subscription, UserPlan,
+  PlanCapabilities
+} from '@/types';
+
+// ============================================
+// DEFAULT PLAN CAPABILITIES
+// ============================================
+const FREE_CAPABILITIES: PlanCapabilities = {
+  api_access: false,
+  custom_models: false,
+  priority_support: false,
+  export_json: false,
+  export_pdf: false,
+  sso_enabled: false,
+  audit_logs: false,
+  custom_branding: false,
+  webhooks: false,
+  advanced_analytics: false,
+};
+
+const PRO_CAPABILITIES: PlanCapabilities = {
+  api_access: true,
+  custom_models: true,
+  priority_support: true,
+  export_json: true,
+  export_pdf: true,
+  sso_enabled: false,
+  audit_logs: false,
+  custom_branding: false,
+  webhooks: true,
+  advanced_analytics: true,
+};
+
+const TEAM_CAPABILITIES: PlanCapabilities = {
+  api_access: true,
+  custom_models: true,
+  priority_support: true,
+  export_json: true,
+  export_pdf: true,
+  sso_enabled: true,
+  audit_logs: true,
+  custom_branding: true,
+  webhooks: true,
+  advanced_analytics: true,
+};
 
 // ============================================
 // PRICING PLANS - TODO: Replace with Supabase data
@@ -21,17 +67,20 @@ export const pricingPlans: PricingPlan[] = [
       'Basic AI models',
       'Community support',
     ],
+    capabilities: FREE_CAPABILITIES,
     badge: 'Free Forever',
+    sort_order: 0,
+    is_active: true,
   },
   {
     id: 'pro-50',
     name: 'Pro 50',
     tier: 'pro',
-    price_cents: 9900, // $99/year
+    price_cents: 9900,
     billing_period: 'yearly',
     boards: 50,
     blocks_per_board: 'unlimited',
-    storage_mb: 5120, // 5 GB
+    storage_mb: 5120,
     seats: 1,
     features: [
       '50 boards',
@@ -42,17 +91,20 @@ export const pricingPlans: PricingPlan[] = [
       'Export to JSON',
       'API access',
     ],
+    capabilities: PRO_CAPABILITIES,
     badge: 'Yearly subscription',
+    sort_order: 1,
+    is_active: true,
   },
   {
     id: 'pro-100',
     name: 'Pro 100',
     tier: 'pro',
-    price_cents: 14900, // $149/year
+    price_cents: 14900,
     billing_period: 'yearly',
     boards: 100,
     blocks_per_board: 'unlimited',
-    storage_mb: 10240, // 10 GB
+    storage_mb: 10240,
     seats: 1,
     features: [
       '100 boards',
@@ -64,18 +116,21 @@ export const pricingPlans: PricingPlan[] = [
       'API access',
       'Custom templates',
     ],
+    capabilities: PRO_CAPABILITIES,
     highlight: true,
     badge: 'Best Value',
+    sort_order: 2,
+    is_active: true,
   },
   {
     id: 'team-50',
     name: 'Team 50',
     tier: 'team',
-    price_cents: 12900, // $129/year
+    price_cents: 12900,
     billing_period: 'yearly',
     boards: 50,
     blocks_per_board: 'unlimited',
-    storage_mb: 20480, // 20 GB
+    storage_mb: 20480,
     seats: 5,
     features: [
       '50 boards',
@@ -87,17 +142,20 @@ export const pricingPlans: PricingPlan[] = [
       'Admin dashboard',
       'Priority support',
     ],
+    capabilities: TEAM_CAPABILITIES,
     badge: 'Yearly subscription for teams',
+    sort_order: 3,
+    is_active: true,
   },
   {
     id: 'team-100',
     name: 'Team 100',
     tier: 'team',
-    price_cents: 16900, // $169/year
+    price_cents: 16900,
     billing_period: 'yearly',
     boards: 100,
     blocks_per_board: 'unlimited',
-    storage_mb: 30720, // 30 GB
+    storage_mb: 30720,
     seats: 10,
     features: [
       '100 boards',
@@ -110,7 +168,10 @@ export const pricingPlans: PricingPlan[] = [
       'SSO integration',
       'Priority support',
     ],
+    capabilities: TEAM_CAPABILITIES,
     badge: 'Yearly subscription for teams',
+    sort_order: 4,
+    is_active: true,
   },
 ];
 
@@ -123,28 +184,135 @@ export const boardAddons: BoardAddon[] = [
     name: '5 Extra Boards',
     boards: 5,
     storage_mb: 500,
-    price_cents: 500, // $5
+    price_cents: 500,
+    is_active: true,
   },
   {
     id: 'addon-20',
     name: '20 Extra Boards',
     boards: 20,
-    storage_mb: 2048, // 2 GB
-    price_cents: 1500, // $15
+    storage_mb: 2048,
+    price_cents: 1500,
+    is_active: true,
   },
   {
     id: 'addon-50',
     name: '50 Extra Boards',
     boards: 50,
-    storage_mb: 5120, // 5 GB
-    price_cents: 3000, // $30
+    storage_mb: 5120,
+    price_cents: 3000,
+    is_active: true,
   },
   {
     id: 'addon-100',
     name: '100 Extra Boards',
     boards: 100,
-    storage_mb: 10240, // 10 GB
-    price_cents: 5000, // $50
+    storage_mb: 10240,
+    price_cents: 5000,
+    is_active: true,
+  },
+];
+
+// ============================================
+// MOCK TEAMS
+// ============================================
+export const mockTeams: Team[] = [
+  {
+    id: 'team-1',
+    name: 'Acme Research',
+    slug: 'acme-research',
+    owner_id: 'user-1',
+    settings: {
+      require_api_keys: false,
+      allow_member_invites: true,
+      shared_boards_enabled: true,
+    },
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-15T00:00:00Z',
+  },
+];
+
+export const mockTeamMembers: TeamMember[] = [
+  {
+    id: 'member-1',
+    team_id: 'team-1',
+    user_id: 'user-1',
+    role: 'owner',
+    invited_by: 'user-1',
+    invited_at: '2024-01-01T00:00:00Z',
+    joined_at: '2024-01-01T00:00:00Z',
+    status: 'active',
+  },
+  {
+    id: 'member-2',
+    team_id: 'team-1',
+    user_id: 'user-2',
+    role: 'member',
+    invited_by: 'user-1',
+    invited_at: '2024-01-10T00:00:00Z',
+    joined_at: '2024-01-11T00:00:00Z',
+    status: 'active',
+  },
+];
+
+export const mockSeats: Seat[] = [
+  {
+    id: 'seat-1',
+    team_id: 'team-1',
+    user_id: 'user-1',
+    assigned_at: '2024-01-01T00:00:00Z',
+    seat_type: 'included',
+    is_active: true,
+  },
+  {
+    id: 'seat-2',
+    team_id: 'team-1',
+    user_id: 'user-2',
+    assigned_at: '2024-01-11T00:00:00Z',
+    seat_type: 'included',
+    is_active: true,
+  },
+  {
+    id: 'seat-3',
+    team_id: 'team-1',
+    user_id: undefined, // Unassigned seat
+    seat_type: 'included',
+    is_active: true,
+  },
+];
+
+// ============================================
+// MOCK SUBSCRIPTIONS
+// ============================================
+export const mockSubscriptions: Subscription[] = [
+  {
+    id: 'sub-1',
+    user_id: 'user-1',
+    plan_id: 'pro-50',
+    status: 'active',
+    current_period_start: '2024-01-01T00:00:00Z',
+    current_period_end: '2025-01-01T00:00:00Z',
+    cancel_at_period_end: false,
+    addon_ids: [],
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  },
+];
+
+export const mockUserPlans: UserPlan[] = [
+  {
+    id: 'uplan-1',
+    user_id: 'user-1',
+    plan_id: 'pro-50',
+    subscription_id: 'sub-1',
+    status: 'active',
+    effective_boards_limit: 50,
+    effective_storage_mb: 5120,
+    effective_seats: 1,
+    boards_used: 3,
+    storage_used_mb: 1250,
+    purchased_at: '2024-01-01T00:00:00Z',
+    addon_ids: [],
   },
 ];
 
@@ -159,7 +327,7 @@ export const mockUser: User = {
   boards_limit: 50,
   boards_used: 3,
   storage_limit_mb: 5120,
-  storage_used_mb: 1250, // Mock: ~1.2 GB used
+  storage_used_mb: 1250,
   created_at: '2024-01-01T00:00:00Z',
 };
 
@@ -313,21 +481,42 @@ export const seedData = {
   apiKeys: [
     {
       id: 'key-1',
+      user_id: 'user-1',
       provider: 'openai',
+      name: 'Primary OpenAI Key',
       key_masked: 'sk-...Xk4m',
+      key_hash: 'mock-hash-openai-1',
+      encryption_method: 'mock',
       is_valid: true,
-      client_only: false,
+      is_default: true,
+      usage_count: 142,
+      last_used_at: '2024-01-20T15:00:00Z',
       created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-20T15:00:00Z',
     },
     {
       id: 'key-2',
+      user_id: 'user-1',
       provider: 'anthropic',
+      name: 'Claude API Key',
       key_masked: 'sk-ant-...9f2a',
+      key_hash: 'mock-hash-anthropic-1',
+      encryption_method: 'mock',
       is_valid: true,
-      client_only: false,
+      is_default: true,
+      usage_count: 87,
+      last_used_at: '2024-01-19T10:30:00Z',
       created_at: '2024-01-05T00:00:00Z',
+      updated_at: '2024-01-19T10:30:00Z',
     },
   ] as ApiKey[],
+  
+  // Teams, subscriptions, seats from mock data
+  teams: mockTeams,
+  teamMembers: mockTeamMembers,
+  seats: mockSeats,
+  subscriptions: mockSubscriptions,
+  userPlans: mockUserPlans,
   
   // Legacy LTD offers (keeping for backward compatibility)
   ltdOffers: [] as LtdOffer[],
