@@ -74,11 +74,7 @@ const Pricing = () => {
                   <div className="premium-card-content h-full" style={{ padding: "clamp(20px, 3vw, 32px)" }}>
                     {plan.badge && (
                       <div
-                        className={`absolute top-2 left-1/2 -translate-x-1/2 rounded-full font-semibold z-10 ${
-                          plan.highlight
-                            ? "bg-accent text-accent-foreground shadow-[0_0_20px_hsl(var(--accent)/0.4)]"
-                            : "bg-muted text-muted-foreground"
-                        }`}
+                        className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full z-10 badge-3d-shiny"
                         style={{
                           padding: "4px 12px",
                           fontSize: "clamp(0.55rem, 0.5rem + 0.12vw, 0.65rem)",
@@ -90,7 +86,7 @@ const Pricing = () => {
 
                     <div style={{ marginBottom: "clamp(16px, 2.5vw, 24px)" }}>
                       <h3
-                        className={`font-bold ${plan.highlight ? "plan-title-animated" : "text-foreground"}`}
+                        className={`font-bold ${plan.highlight ? "text-gold-shine" : "text-foreground"}`}
                         style={{
                           fontSize: "clamp(1.125rem, 1rem + 0.5vw, 1.5rem)",
                           marginBottom: "12px",
@@ -210,7 +206,7 @@ const Pricing = () => {
                       to="/pricing"
                       className={`block text-center w-full rounded-full font-medium transition-all duration-300 ${
                         plan.highlight
-                          ? "bg-accent text-accent-foreground shadow-[0_4px_20px_hsl(var(--accent)/0.35)] hover:shadow-[0_6px_28px_hsl(var(--accent)/0.5)] hover:-translate-y-0.5"
+                          ? "btn-pricing-shiny"
                           : "border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5"
                       }`}
                       style={{ padding: "12px 24px" }}

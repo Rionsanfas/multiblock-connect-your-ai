@@ -78,7 +78,7 @@ export default function Pricing() {
 
             {/* Plan Type Tabs */}
             <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as "individual" | "team")} className="mb-12">
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+              <TabsList className="tabs-3d grid w-full max-w-md mx-auto grid-cols-2">
                 <TabsTrigger value="individual">Individual</TabsTrigger>
                 <TabsTrigger value="team">Teams</TabsTrigger>
               </TabsList>
@@ -89,20 +89,17 @@ export default function Pricing() {
                   {individualPlans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`pricing-card-glow ${plan.highlight ? 'scale-105 z-10' : ''}`}
+                      className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''}`}
                     >
-                      <div className="p-6 relative">
+                      <div className="premium-card-gradient" />
+                      <div className="premium-card-content p-6 relative">
                         {plan.badge && (
-                          <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs font-semibold rounded-full z-10 ${
-                            plan.highlight 
-                              ? "bg-accent text-accent-foreground shadow-[0_0_20px_hsl(var(--accent)/0.4)]" 
-                              : "bg-muted text-muted-foreground"
-                          }`}>
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs rounded-full z-10 badge-3d-shiny">
                             {plan.badge}
                           </div>
                         )}
 
-                        <h3 className={`text-2xl font-bold mb-3 ${plan.highlight ? 'plan-title-animated' : 'text-foreground'}`}>
+                        <h3 className={`text-2xl font-bold mb-3 ${plan.highlight ? 'text-gold-shine' : 'text-foreground'}`}>
                           {plan.name}
                         </h3>
                         
@@ -155,14 +152,12 @@ export default function Pricing() {
                           ))}
                         </ul>
 
-                        <Button
+                        <button
                           onClick={() => handleSelectPlan(plan.id)}
-                          className="w-full"
-                          variant={plan.highlight ? "pill-accent" : "pill-outline"}
-                          size="lg"
+                          className={`w-full ${plan.highlight ? 'btn-pricing-shiny' : 'btn-outline rounded-full'}`}
                         >
                           {plan.price_cents === 0 ? "Get Started Free" : "Subscribe Now"}
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -175,16 +170,17 @@ export default function Pricing() {
                   {teamPlans.map((plan) => (
                     <div
                       key={plan.id}
-                      className={`pricing-card-glow ${plan.highlight ? 'scale-105 z-10' : ''}`}
+                      className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''}`}
                     >
-                      <div className="p-6 relative">
+                      <div className="premium-card-gradient" />
+                      <div className="premium-card-content p-6 relative">
                         {plan.badge && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-accent text-accent-foreground text-xs font-semibold rounded-full shadow-[0_0_20px_hsl(var(--accent)/0.4)]">
+                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs rounded-full z-10 badge-3d-shiny">
                             {plan.badge}
                           </div>
                         )}
 
-                        <h3 className={`text-2xl font-bold mb-3 ${plan.highlight ? 'plan-title-animated' : 'text-foreground'}`}>
+                        <h3 className={`text-2xl font-bold mb-3 ${plan.highlight ? 'text-gold-shine' : 'text-foreground'}`}>
                           {plan.name}
                         </h3>
                         
@@ -241,14 +237,12 @@ export default function Pricing() {
                           ))}
                         </ul>
 
-                        <Button
+                        <button
                           onClick={() => handleSelectPlan(plan.id)}
-                          className="w-full"
-                          variant="pill-accent"
-                          size="lg"
+                          className="w-full btn-pricing-shiny"
                         >
                           Subscribe Now
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   ))}

@@ -1026,49 +1026,130 @@
       inset 0 -2px 4px 0 hsl(0 0% 0% / 0.15);
   }
   
-  /* Pricing card with left glow effect */
-  .pricing-card-glow {
+  /* 3D Badge style (gold shiny) */
+  .badge-3d-shiny {
     position: relative;
-    background: linear-gradient(145deg, hsl(0 0% 10%) 0%, hsl(0 0% 6%) 100%);
-    border: 1px solid hsl(0 0% 100% / 0.08);
-    border-radius: 1.25rem;
-    overflow: visible;
-    transition: all 0.4s ease;
+    background: linear-gradient(145deg, hsl(35 60% 55%) 0%, hsl(40 70% 60%) 50%, hsl(35 60% 55%) 100%);
+    background-size: 200% 100%;
+    color: hsl(0 0% 10%);
+    font-weight: 600;
+    border: 1px solid hsl(50 80% 70% / 0.4);
     box-shadow: 
-      -6px 0 16px -4px hsl(100 70% 50% / 0.25),
-      0 8px 24px -4px hsl(0 0% 0% / 0.4),
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.05);
+      0 4px 12px -2px hsl(40 70% 50% / 0.5),
+      0 2px 6px -1px hsl(0 0% 0% / 0.3),
+      inset 0 1px 2px 0 hsl(50 80% 80% / 0.5),
+      inset 0 -2px 4px 0 hsl(0 0% 0% / 0.2);
+    overflow: hidden;
+    animation: goldShimmer 2s ease-in-out infinite;
   }
 
-  .pricing-card-glow::before {
+  .badge-3d-shiny::before {
     content: '';
     position: absolute;
-    left: -6px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 50%;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(
-      180deg,
-      hsl(100 80% 55% / 0.7) 0%,
-      hsl(100 90% 50% / 1) 50%,
-      hsl(100 80% 55% / 0.7) 100%
+      90deg,
+      transparent,
+      hsl(50 90% 85% / 0.6),
+      transparent
     );
-    border-radius: 3px;
-    box-shadow: 
-      0 0 10px 2px hsl(100 80% 50% / 0.8),
-      0 0 20px 4px hsl(100 70% 45% / 0.5),
-      0 0 35px 6px hsl(100 60% 40% / 0.25);
-    animation: glowPulse 2.5s ease-in-out infinite;
+    animation: shineSwipe 2.5s ease-in-out infinite;
   }
 
-  .pricing-card-glow:hover {
-    border-color: hsl(100 60% 50% / 0.15);
-    transform: translateY(-4px);
+  /* 3D Button style (gold shiny) for pricing buttons */
+  .btn-pricing-shiny {
+    position: relative;
+    background: linear-gradient(145deg, hsl(35 60% 55%) 0%, hsl(40 70% 60%) 50%, hsl(35 60% 55%) 100%);
+    background-size: 200% 100%;
+    color: hsl(0 0% 10%);
+    font-weight: 600;
+    border: 1px solid hsl(50 80% 70% / 0.4);
+    border-radius: 9999px;
+    padding: 12px 24px;
     box-shadow: 
-      -10px 0 24px -4px hsl(100 70% 50% / 0.4),
-      0 12px 32px -4px hsl(0 0% 0% / 0.5),
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+      0 4px 16px -2px hsl(40 70% 50% / 0.5),
+      0 2px 8px -1px hsl(0 0% 0% / 0.3),
+      inset 0 1px 2px 0 hsl(50 80% 80% / 0.5),
+      inset 0 -2px 4px 0 hsl(0 0% 0% / 0.2),
+      0 0 20px hsl(40 70% 50% / 0.3);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: goldShimmer 2s ease-in-out infinite;
+  }
+
+  .btn-pricing-shiny::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(50 90% 85% / 0.6),
+      transparent
+    );
+    animation: shineSwipe 2.5s ease-in-out infinite;
+  }
+
+  .btn-pricing-shiny:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 24px -2px hsl(40 70% 50% / 0.7),
+      0 4px 12px -1px hsl(0 0% 0% / 0.4),
+      inset 0 1px 2px 0 hsl(50 80% 80% / 0.6),
+      inset 0 -2px 4px 0 hsl(0 0% 0% / 0.2),
+      0 0 40px hsl(40 70% 50% / 0.5);
+  }
+
+  /* Gold text effect for plan titles */
+  .text-gold-shine {
+    background: linear-gradient(
+      135deg,
+      hsl(35 60% 55%) 0%,
+      hsl(40 80% 70%) 50%,
+      hsl(35 60% 55%) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 8px hsl(40 70% 50% / 0.4);
+    animation: goldShimmer 3s ease-in-out infinite;
+  }
+
+  /* 3D Tabs styling */
+  .tabs-3d {
+    position: relative;
+    background: linear-gradient(145deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    border-radius: 9999px;
+    padding: 4px;
+    box-shadow: 
+      0 4px 12px -2px hsl(0 0% 0% / 0.4),
+      inset 0 1px 1px 0 hsl(0 0% 100% / 0.05),
+      inset 0 -2px 4px 0 hsl(0 0% 0% / 0.15);
+  }
+
+  .tabs-3d [data-state="active"] {
+    background: linear-gradient(145deg, hsl(35 60% 55%) 0%, hsl(40 70% 60%) 50%, hsl(35 60% 55%) 100%) !important;
+    color: hsl(0 0% 10%) !important;
+    font-weight: 600;
+    box-shadow: 
+      0 2px 8px -1px hsl(40 70% 50% / 0.4),
+      inset 0 1px 2px 0 hsl(50 80% 80% / 0.4);
+  }
+
+  .tabs-3d [data-state="inactive"] {
+    color: hsl(0 0% 55%);
+  }
+
+  .tabs-3d [data-state="inactive"]:hover {
+    color: hsl(0 0% 75%);
   }
 
   /* Gradient border card effect (like pricing cards) */
