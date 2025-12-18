@@ -6,18 +6,15 @@ import { cn } from "@/lib/utils";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAtTop, setIsAtTop] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { isAuthenticated } = useAppStore();
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      setIsAtTop(scrollY < 50);
+      setIsScrolled(window.scrollY > 20);
     };
 
-    // Check initial position
     handleScroll();
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -28,61 +25,36 @@ const Navbar = () => {
     { label: "FAQ", href: "#faq" },
   ];
 
-  // Text color: use contrasting color when background is hidden (white text against hero)
-  const textColor = isAtTop ? "text-muted-foreground" : "text-white";
-  const textHoverColor = isAtTop ? "hover:text-foreground" : "hover:text-white/80";
-  const logoColor = isAtTop ? "text-foreground" : "text-white";
-  const menuIconColor = isAtTop ? "text-foreground" : "text-white";
-
   return (
-    <nav
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50",
-        "transition-all duration-300 ease-[cubic-bezier(0.2,0.9,0.2,1)]",
-        "motion-reduce:transition-none",
-        isAtTop
-          ? "bg-background/80 backdrop-blur-md border-b border-border/50"
-          : "bg-transparent border-b border-transparent"
-      )}
-    >
-      {/* 
-        Flush edge-to-edge navbar with fluid padding.
-        Uses clamp() for responsive horizontal padding.
-      */}
-      <div 
-        className="w-full flex items-center justify-between"
-        style={{ 
-          paddingLeft: "clamp(16px, 4vw, 32px)",
-          paddingRight: "clamp(16px, 4vw, 32px)",
-          paddingTop: "clamp(12px, 2vw, 16px)",
-          paddingBottom: "clamp(12px, 2vw, 16px)",
-        }}
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4">
+      {/* Desktop Pill Navbar */}
+      <div
+        className={cn(
+          "hidden lg:flex items-center gap-2 rounded-full transition-all duration-500 ease-out",
+          "border border-border/40 backdrop-blur-xl",
+          "bg-card/60 shadow-[0_4px_24px_-4px_hsl(0_0%_0%/0.4),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]",
+          isScrolled && "bg-card/80 border-border/60"
+        )}
+        style={{ padding: "6px 8px" }}
       >
-        {/* Site Name Only */}
-        <Link to="/" className="flex items-center">
-          <span 
-            className={cn(
-              "font-semibold transition-colors duration-300", 
-              logoColor
-            )}
-            style={{ fontSize: "clamp(1rem, 0.9rem + 0.5vw, 1.25rem)" }}
-          >
+        {/* Logo */}
+        <Link 
+          to="/" 
+          className="flex items-center px-3 py-2 rounded-full hover:bg-secondary/50 transition-colors"
+        >
+          <span className="font-semibold text-foreground text-sm">
             MultiBlock
           </span>
         </Link>
 
-        {/* Desktop Nav - hidden on mobile/tablet, visible on laptop+ */}
-        <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+        {/* Nav Links */}
+        <div className="flex items-center">
           {navLinks.map((link) =>
             link.isRoute ? (
               <Link
                 key={link.label}
                 to={link.href}
-                className={cn(
-                  "transition-colors duration-300 text-fluid-sm",
-                  textColor, 
-                  textHoverColor
-                )}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary/40"
               >
                 {link.label}
               </Link>
@@ -90,11 +62,7 @@ const Navbar = () => {
               <a
                 key={link.label}
                 href={link.href}
-                className={cn(
-                  "transition-colors duration-300 text-fluid-sm",
-                  textColor, 
-                  textHoverColor
-                )}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary/40"
               >
                 {link.label}
               </a>
@@ -102,62 +70,69 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* CTA Buttons - hidden on mobile/tablet */}
-        <div className="hidden lg:flex items-center gap-3 xl:gap-4">
+        {/* CTA */}
+        <div className="flex items-center gap-2 pl-2">
           {isAuthenticated ? (
-            <Link to="/dashboard" className="btn-3d-shiny px-5 py-2.5 rounded-xl text-foreground">
+            <Link
+              to="/dashboard"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
               Dashboard
             </Link>
           ) : (
             <>
               <Link
                 to="/auth"
-                className={cn("transition-colors text-fluid-sm", textColor, textHoverColor)}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary/40"
               >
                 Login
               </Link>
-              <Link to="/pricing" className="btn-3d-shiny px-5 py-2.5 rounded-xl text-foreground">
+              <Link
+                to="/pricing"
+                className="px-4 py-2 text-sm font-medium rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1"
+              >
                 Get Started
+                <span className="text-xs">↗</span>
               </Link>
             </>
           )}
         </div>
+      </div>
 
-        {/* Mobile Menu Toggle - larger touch target (min 44px) */}
+      {/* Mobile Header */}
+      <div
+        className={cn(
+          "lg:hidden w-full flex items-center justify-between rounded-full transition-all duration-500",
+          "border border-border/40 backdrop-blur-xl px-4 py-2",
+          "bg-card/60 shadow-[0_4px_24px_-4px_hsl(0_0%_0%/0.4),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]"
+        )}
+      >
+        <Link to="/" className="flex items-center">
+          <span className="font-semibold text-foreground text-sm">MultiBlock</span>
+        </Link>
+
         <button
-          className={cn(
-            "lg:hidden p-2 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors duration-300",
-            menuIconColor
-          )}
+          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground"
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
           aria-expanded={isOpen}
         >
-          {isOpen ? <X size={24} className="icon-3d" /> : <Menu size={24} className="icon-3d" />}
+          {isOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
-      {/* 
-        Mobile Menu - full width with responsive padding.
-        Uses scrollable-modal class for overflow handling.
-      */}
+      {/* Mobile Menu Dropdown */}
       {isOpen && (
-        <div 
-          className="lg:hidden bg-card/95 backdrop-blur-xl border-t border-border/50 animate-fade-in scrollable-modal"
-          style={{ 
-            marginLeft: "clamp(12px, 3vw, 24px)",
-            marginRight: "clamp(12px, 3vw, 24px)",
-            marginBottom: "clamp(12px, 3vw, 24px)",
-            borderRadius: "var(--radius)",
-          }}
+        <div
+          className="lg:hidden absolute top-20 left-4 right-4 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)] animate-fade-in overflow-hidden"
         >
-          <div className="flex flex-col gap-1 p-4">
+          <div className="flex flex-col p-3">
             {navLinks.map((link) =>
               link.isRoute ? (
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="text-foreground hover:bg-secondary/50 transition-colors duration-300 py-3 px-4 rounded-lg text-fluid-base min-h-[48px] flex items-center"
+                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-xl text-sm"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
@@ -166,18 +141,18 @@ const Navbar = () => {
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-foreground hover:bg-secondary/50 transition-colors duration-300 py-3 px-4 rounded-lg text-fluid-base min-h-[48px] flex items-center"
+                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-xl text-sm"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
                 </a>
               )
             )}
-            <div className="border-t border-border/30 my-3" />
+            <div className="border-t border-border/30 my-2" />
             {isAuthenticated ? (
               <Link
                 to="/dashboard"
-                className="btn-primary text-center w-full"
+                className="bg-primary text-primary-foreground text-center py-3 px-4 rounded-xl text-sm font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 Dashboard
@@ -186,14 +161,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/auth"
-                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-lg text-fluid-base min-h-[48px] flex items-center"
+                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-xl text-sm"
                   onClick={() => setIsOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   to="/pricing"
-                  className="btn-primary text-center w-full mt-2"
+                  className="bg-primary text-primary-foreground text-center py-3 px-4 rounded-xl text-sm font-medium mt-1"
                   onClick={() => setIsOpen(false)}
                 >
                   Get Started
