@@ -509,6 +509,21 @@ export const seedData = {
       created_at: '2024-01-05T00:00:00Z',
       updated_at: '2024-01-19T10:30:00Z',
     },
+    {
+      id: 'key-3',
+      user_id: 'user-1',
+      provider: 'google',
+      name: 'Google AI Key',
+      key_masked: 'AIza...7mN2',
+      key_hash: 'mock-hash-google-1',
+      encryption_method: 'mock',
+      is_valid: true,
+      is_default: true,
+      usage_count: 56,
+      last_used_at: '2024-01-18T14:20:00Z',
+      created_at: '2024-01-08T00:00:00Z',
+      updated_at: '2024-01-18T14:20:00Z',
+    },
   ] as ApiKey[],
   
   // Teams, subscriptions, seats from mock data
