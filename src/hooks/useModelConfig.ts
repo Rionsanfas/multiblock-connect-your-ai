@@ -12,7 +12,7 @@ import {
   type ModelConfig, 
   type Provider, 
   type ProviderInfo 
-} from '@/types';
+} from '@/config/models';
 
 /**
  * Get the model configuration for a specific block
