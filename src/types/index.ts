@@ -123,6 +123,8 @@ export interface BlockContext {
 // Re-export from canonical config
 // ============================================
 
+import type { Provider as ProviderType } from '@/config/models';
+
 export type { Provider, ProviderInfo, ModelConfig } from '@/config/models';
 export { 
   PROVIDERS, 
@@ -136,6 +138,9 @@ export {
   providerSupportsImageGeneration,
   providerSupportsVision
 } from '@/config/models';
+
+// Local type alias for use within this file
+type Provider = ProviderType;
 
 // ============================================
 // API KEYS SYSTEM (BYOK)
