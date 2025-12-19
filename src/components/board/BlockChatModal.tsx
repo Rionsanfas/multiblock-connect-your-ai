@@ -1,21 +1,22 @@
-import { useState, useRef, useEffect } from "react";
-import { X, Send, Loader2, Copy, Trash2, Settings, Pencil, Check, Quote, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { X, Settings, Pencil, Check, Quote, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProviderBadge } from "@/components/ui/provider-badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { useBlockMessages, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { useTextSelection } from "@/hooks/useTextSelection";
 import { TextSelectionPopover } from "./TextSelectionPopover";
+import { ChatMessage } from "@/components/chat/ChatMessage";
+import { ChatInput } from "@/components/chat/ChatInput";
+import { AdvancedOptions, DEFAULT_CHAT_OPTIONS, type ChatOptions } from "@/components/chat/AdvancedOptions";
+import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
 import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useModelConfig";
 import { getModelConfig, PROVIDERS, type Provider } from "@/types";
-import { api } from "@/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -25,28 +26,25 @@ interface BlockChatModalProps {
 }
 
 export function BlockChatModal({ blockId }: BlockChatModalProps) {
-  const [input, setInput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState("");
+  const [chatOptions, setChatOptions] = useState<ChatOptions>(DEFAULT_CHAT_OPTIONS);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const { blocks, closeBlockChat, deleteMessage, updateBlock } = useAppStore();
+  const { blocks, closeBlockChat, deleteMessage, updateBlock, addMessage, updateMessage } = useAppStore();
   const block = blocks.find((b) => b.id === blockId);
   
-  // Use hooks for models and API keys
   const userApiKeys = useUserApiKeys();
   const modelsByProvider = useModelsGroupedByProvider();
   const providers = useAvailableProviders();
-  
-  // Use the new hooks for messages and usage
   const blockMessages = useBlockMessages(blockId);
   const blockUsage = useBlockUsage(blockId);
   
-  // Text selection for creating new blocks
   const { selectedText, messageId, selectionRect, hasSelection, clearSelection } = 
     useTextSelection(messagesContainerRef);
 
@@ -58,19 +56,13 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     if (block) setTitle(block.title);
   }, [block]);
 
-  if (!block) return null;
-
-  // Get current model config
-  const currentModel = block.model_id ? getModelConfig(block.model_id) : null;
+  const currentModel = block?.model_id ? getModelConfig(block.model_id) : null;
   const currentProvider = currentModel?.provider;
-  const needsModelSelection = !block.model_id || !currentModel;
-
-  // Check if user has API key for current provider (keys considered valid by default)
+  const needsModelSelection = !block?.model_id || !currentModel;
   const hasKeyForCurrentProvider = currentProvider 
     ? userApiKeys.some(k => k.provider === currentProvider)
     : false;
 
-  // Get provider info for model dropdown - keys considered valid if they exist
   const getProviderHasKey = (provider: Provider) => 
     userApiKeys.some(k => k.provider === provider);
 
@@ -84,12 +76,8 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
       return;
     }
     
-    const previousModel = block.model_id;
     updateBlock(blockId, { model_id: newModelId });
-    toast.success(
-      `Switched to ${newModel.name}`,
-      { description: "Chat history preserved - continue your conversation" }
-    );
+    toast.success(`Switched to ${newModel.name}`);
   };
 
   const handleTitleSave = () => {
@@ -99,64 +87,108 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     setIsEditingTitle(false);
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isRunning) return;
+  const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[]) => {
+    if (!content.trim() || isRunning || !block) return;
     
-    // Check if user has API key for current provider
     if (!hasKeyForCurrentProvider) {
       toast.error("No API key configured", {
-        description: `Add an API key for ${currentProvider ? PROVIDERS[currentProvider].name : 'this provider'} to send messages`,
-        action: {
-          label: "Add Key",
-          onClick: () => navigate("/api-keys")
-        }
+        description: `Add an API key for ${currentProvider ? PROVIDERS[currentProvider].name : 'this provider'}`,
+        action: { label: "Add Key", onClick: () => navigate("/api-keys") }
       });
       return;
     }
 
-    const userInput = input.trim();
-    setInput("");
+    // Add user message
+    const userMessage = addMessage({
+      block_id: blockId,
+      role: 'user',
+      content: content,
+    });
+
     setIsRunning(true);
     setStreamingContent("");
 
-    const result = await api.blocks.run(blockId, userInput, (chunk) => {
-      setStreamingContent((prev) => prev + chunk);
-    });
+    // Build conversation history
+    const history = chatService.buildConversationHistory(
+      [...blockMessages, userMessage],
+      block.system_prompt,
+      block.source_context?.selected_text
+    );
 
-    if (!result.success) {
-      toast.error(result.error || "Failed to run block");
+    // Use mock streaming for now (real API calls when keys are properly stored)
+    await chatService.mockStreamChat(
+      block.model_id,
+      history,
+      {
+        onChunk: (chunk) => {
+          setStreamingContent(prev => prev + chunk);
+        },
+        onComplete: (fullResponse, meta) => {
+          addMessage({
+            block_id: blockId,
+            role: 'assistant',
+            content: fullResponse,
+            meta,
+          });
+          setStreamingContent("");
+          setIsRunning(false);
+        },
+        onError: (error) => {
+          toast.error("Failed to get response", { description: error });
+          setStreamingContent("");
+          setIsRunning(false);
+        },
+      }
+    );
+  }, [block, blockId, blockMessages, hasKeyForCurrentProvider, currentProvider, isRunning, addMessage, navigate]);
+
+  const handleStop = useCallback(() => {
+    chatService.stopGeneration();
+    if (streamingContent) {
+      addMessage({
+        block_id: blockId,
+        role: 'assistant',
+        content: streamingContent + " [stopped]",
+      });
     }
-
     setStreamingContent("");
     setIsRunning(false);
-  };
+  }, [blockId, streamingContent, addMessage]);
 
-  const handleCopy = (content: string) => {
-    navigator.clipboard.writeText(content);
-    toast.success("Copied to clipboard");
-  };
+  const handleRetry = useCallback(async (message: any) => {
+    // Find the user message before this assistant message
+    const messageIndex = blockMessages.findIndex(m => m.id === message.id);
+    if (messageIndex <= 0) return;
 
-  const handleGoToApiKeys = () => {
-    navigate("/api-keys");
-  };
+    const userMessage = blockMessages[messageIndex - 1];
+    if (userMessage.role !== 'user') return;
+
+    // Delete the old assistant message
+    deleteMessage(message.id);
+
+    // Re-send with the same user message content
+    handleSend(userMessage.content);
+  }, [blockMessages, deleteMessage, handleSend]);
+
+  const handleGoToApiKeys = () => navigate("/api-keys");
+
+  if (!block) return null;
 
   return (
     <Dialog open onOpenChange={() => closeBlockChat()}>
-      <DialogContent hideCloseButton className="max-w-2xl w-[90vw] h-[70vh] max-h-[600px] flex flex-col rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06),0_0_0_1px_hsl(0_0%_100%/0.05)]">
+      <DialogContent hideCloseButton className="max-w-2xl w-[90vw] h-[80vh] max-h-[700px] flex flex-col rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)]">
         {/* Header */}
-        <DialogHeader className="px-5 py-4 border-b border-border/20">
+        <DialogHeader className="px-5 py-4 border-b border-border/20 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
               
-              {/* Model Switcher Dropdown */}
+              {/* Model Switcher */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all group border border-border/20",
-                    hasKeyForCurrentProvider 
-                      ? "bg-secondary/50 hover:bg-secondary/70" 
-                      : "bg-destructive/10 border-destructive/30"
+                    hasKeyForCurrentProvider ? "bg-secondary/50 hover:bg-secondary/70" : "bg-destructive/10 border-destructive/30"
                   )}>
                     {currentModel ? (
                       <ProviderBadge provider={currentModel.provider} model={currentModel.name} />
@@ -164,13 +196,10 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                       <span className="text-sm text-muted-foreground">Select Model</span>
                     )}
                     {!hasKeyForCurrentProvider && <Lock className="h-3 w-3 text-destructive" />}
-                    <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  className="w-80 max-h-96 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)]" 
-                  align="start"
-                >
+                <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
                   <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20">
                     <Brain className="h-3 w-3" />
                     <span>Switch model - chat history preserved</span>
@@ -178,57 +207,35 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                   
                   {providers.map((provider) => {
                     const hasKey = getProviderHasKey(provider.id);
-                    const models = (modelsByProvider[provider.id] || []).slice(0, 8);
+                    const models = (modelsByProvider[provider.id] || []).slice(0, 6);
                     
                     return (
                       <div key={provider.id}>
                         <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
                           <div className="flex items-center gap-2">
-                            <div 
-                              className="w-2 h-2 rounded-full" 
-                              style={{ backgroundColor: provider.color }} 
-                            />
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: provider.color }} />
                             <span className="text-xs font-medium">{provider.name}</span>
                           </div>
                           {hasKey ? (
                             <span className="flex items-center gap-1 text-[10px] text-green-500">
-                              <Zap className="h-2.5 w-2.5" />
-                              Connected
+                              <Zap className="h-2.5 w-2.5" />Connected
                             </span>
                           ) : (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(provider.apiKeyUrl, '_blank');
-                              }}
-                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
-                            >
-                              <ExternalLink className="h-2.5 w-2.5" />
-                              Get Key
+                            <button onClick={(e) => { e.stopPropagation(); window.open(provider.apiKeyUrl, '_blank'); }}
+                              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground">
+                              <ExternalLink className="h-2.5 w-2.5" />Get Key
                             </button>
                           )}
                         </DropdownMenuLabel>
                         {models.map((model) => (
-                          <DropdownMenuItem
-                            key={model.id}
-                            className={cn(
-                              "mx-1 rounded-md cursor-pointer",
-                              !hasKey && "opacity-50 cursor-not-allowed",
-                              block.model_id === model.id && "bg-primary/10"
-                            )}
-                            disabled={!hasKey}
-                            onClick={() => hasKey && handleModelSwitch(model.id)}
-                          >
+                          <DropdownMenuItem key={model.id} disabled={!hasKey}
+                            className={cn("mx-1 rounded-md", !hasKey && "opacity-50", block.model_id === model.id && "bg-primary/10")}
+                            onClick={() => hasKey && handleModelSwitch(model.id)}>
                             <span className="flex items-center gap-2 w-full">
-                              <span className={cn(
-                                "w-1.5 h-1.5 rounded-full",
-                                block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30"
-                              )} />
+                              <span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} />
                               <span className="text-sm truncate flex-1">{model.name}</span>
                               {!hasKey && <Lock className="h-3 w-3 text-muted-foreground" />}
-                              {block.model_id === model.id && (
-                                <Check className="h-3 w-3 text-primary" />
-                              )}
+                              {block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}
                             </span>
                           </DropdownMenuItem>
                         ))}
@@ -237,15 +244,8 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                     );
                   })}
                   
-                  {/* Add API Key action */}
-                  <DropdownMenuItem
-                    className="mx-1 rounded-md cursor-pointer text-primary"
-                    onClick={handleGoToApiKeys}
-                  >
-                    <span className="flex items-center gap-2 w-full text-sm">
-                      <Zap className="h-3 w-3" />
-                      Manage API Keys
-                    </span>
+                  <DropdownMenuItem className="mx-1 rounded-md text-primary" onClick={handleGoToApiKeys}>
+                    <Zap className="h-3 w-3 mr-2" />Manage API Keys
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -257,62 +257,33 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* Settings Popover */}
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="key-icon-3d p-2 rounded-lg">
-                    <Settings className="h-4 w-4" />
-                  </button>
+                  <button className="key-icon-3d p-2 rounded-lg"><Settings className="h-4 w-4" /></button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="bottom" align="end">
+                <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl" side="bottom" align="end">
                   <div className="font-semibold text-sm">Block Settings</div>
-                  
-                  {/* Title */}
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Title</Label>
                     {isEditingTitle ? (
                       <div className="flex gap-2">
-                        <Input
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
+                        <Input value={title} onChange={(e) => setTitle(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && handleTitleSave()}
-                          className="bg-secondary/50 rounded-lg border-border/30 h-9"
-                          autoFocus
-                        />
+                          className="bg-secondary/50 rounded-lg border-border/30 h-9" autoFocus />
                         <button className="key-icon-3d p-2 rounded-lg" onClick={handleTitleSave}>
                           <Check className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => { setTitle(block.title); setIsEditingTitle(true); }}
-                        className="w-full text-left p-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors flex items-center justify-between group text-sm"
-                      >
+                      <button onClick={() => { setTitle(block.title); setIsEditingTitle(true); }}
+                        className="w-full text-left p-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors flex items-center justify-between group text-sm">
                         <span>{block.title}</span>
                         <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     )}
                   </div>
-
-                  {/* Current Model Info */}
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Current Model</Label>
-                    <div className="p-2 rounded-lg bg-secondary/40 text-sm">
-                      {currentModel ? (
-                        <div className="flex items-center justify-between">
-                          <span>{currentModel.name}</span>
-                          <span className="text-xs text-muted-foreground capitalize">
-                            {currentModel.provider}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">No model selected</span>
-                      )}
-                    </div>
-                  </div>
                 </PopoverContent>
               </Popover>
-              
               <button className="key-icon-3d p-2 rounded-lg" onClick={() => closeBlockChat()}>
                 <X className="h-4 w-4" />
               </button>
@@ -322,41 +293,34 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
         {/* No API Key Warning */}
         {!hasKeyForCurrentProvider && currentProvider && (
-          <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20">
+          <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 <Lock className="h-4 w-4 text-destructive" />
                 <span>No API key for {PROVIDERS[currentProvider].name}</span>
               </div>
-              <button
-                onClick={handleGoToApiKeys}
-                className="text-xs text-primary hover:underline"
-              >
-                Add API Key
-              </button>
+              <button onClick={handleGoToApiKeys} className="text-xs text-primary hover:underline">Add API Key</button>
             </div>
           </div>
         )}
 
-        {/* Source Context Banner */}
+        {/* Source Context */}
         {block.source_context && (
-          <div className="px-5 py-3 bg-[hsl(var(--accent)/0.1)] border-b border-[hsl(var(--accent)/0.2)]">
+          <div className="px-5 py-3 bg-accent/10 border-b border-accent/20 flex-shrink-0">
             <div className="flex items-start gap-2">
-              <Quote className="h-4 w-4 text-[hsl(var(--accent))] mt-0.5 flex-shrink-0" />
+              <Quote className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                  <Sparkles className="h-3 w-3 text-[hsl(var(--accent))]" />
+                  <Sparkles className="h-3 w-3 text-accent" />
                   <span>Context from <strong>{block.source_context.source_block_title}</strong></span>
                 </div>
-                <p className="text-sm line-clamp-2 text-foreground/80">
-                  "{block.source_context.selected_text}"
-                </p>
+                <p className="text-sm line-clamp-2 text-foreground/80">"{block.source_context.selected_text}"</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Model Selection Required Screen */}
+        {/* Model Selection Screen */}
         {needsModelSelection ? (
           <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
             <div className="text-center mb-6">
@@ -364,54 +328,32 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 <Brain className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-2">Select a Model</h3>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Choose an AI model to power this block before you can start chatting
-              </p>
+              <p className="text-sm text-muted-foreground max-w-xs">Choose an AI model to start chatting</p>
             </div>
-            
             <div className="w-full max-w-sm space-y-3">
               {providers.slice(0, 4).map((provider) => {
                 const hasKey = getProviderHasKey(provider.id);
                 const models = (modelsByProvider[provider.id] || []).slice(0, 3);
-                
                 return (
                   <div key={provider.id} className="rounded-xl border border-border/30 p-3 bg-secondary/20">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: provider.color }} 
-                        />
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: provider.color }} />
                         <span className="text-sm font-medium">{provider.name}</span>
                       </div>
                       {hasKey ? (
-                        <span className="flex items-center gap-1 text-[10px] text-green-500">
-                          <Zap className="h-2.5 w-2.5" />
-                          Ready
-                        </span>
+                        <span className="flex items-center gap-1 text-[10px] text-green-500"><Zap className="h-2.5 w-2.5" />Ready</span>
                       ) : (
-                        <button
-                          onClick={() => window.open(provider.apiKeyUrl, '_blank')}
-                          className="text-[10px] text-primary hover:underline flex items-center gap-1"
-                        >
-                          <ExternalLink className="h-2.5 w-2.5" />
-                          Get Key
+                        <button onClick={() => window.open(provider.apiKeyUrl, '_blank')} className="text-[10px] text-primary hover:underline flex items-center gap-1">
+                          <ExternalLink className="h-2.5 w-2.5" />Get Key
                         </button>
                       )}
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {models.map((model) => (
-                        <button
-                          key={model.id}
-                          disabled={!hasKey}
-                          onClick={() => hasKey && handleModelSwitch(model.id)}
-                          className={cn(
-                            "px-2 py-1 text-xs rounded-lg transition-all",
-                            hasKey 
-                              ? "bg-secondary/50 hover:bg-secondary text-foreground cursor-pointer" 
-                              : "bg-muted/30 text-muted-foreground cursor-not-allowed"
-                          )}
-                        >
+                        <button key={model.id} disabled={!hasKey} onClick={() => hasKey && handleModelSwitch(model.id)}
+                          className={cn("px-2 py-1 text-xs rounded-lg transition-all",
+                            hasKey ? "bg-secondary/50 hover:bg-secondary text-foreground cursor-pointer" : "bg-muted/30 text-muted-foreground cursor-not-allowed")}>
                           {model.name}
                         </button>
                       ))}
@@ -419,135 +361,69 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                   </div>
                 );
               })}
-              
-              <button
-                onClick={handleGoToApiKeys}
-                className="w-full py-2 text-sm text-primary hover:underline flex items-center justify-center gap-2"
-              >
-                <Zap className="h-3 w-3" />
-                Manage API Keys
+              <button onClick={handleGoToApiKeys} className="w-full py-2 text-sm text-primary hover:underline flex items-center justify-center gap-2">
+                <Zap className="h-3 w-3" />Manage API Keys
               </button>
             </div>
           </div>
         ) : (
-          /* Messages */
-          <div 
-            ref={messagesContainerRef}
-            className="flex-1 overflow-auto px-5 py-4 space-y-3"
-          >
-            {blockMessages.length === 0 && !streamingContent && (
-              <div className="text-center text-muted-foreground py-8">
-                <p className="text-sm mb-1">Start a conversation</p>
-                <p className="text-xs opacity-70">
-                  {block.source_context 
-                    ? "Use the context above to guide your conversation"
-                    : "Send a message to interact with this block"
-                  }
-                </p>
-              </div>
+          <>
+            {/* Messages */}
+            <div ref={messagesContainerRef} className="flex-1 overflow-auto px-5 py-4 space-y-4">
+              {blockMessages.length === 0 && !streamingContent && (
+                <div className="text-center text-muted-foreground py-8">
+                  <p className="text-sm mb-1">Start a conversation</p>
+                  <p className="text-xs opacity-70">
+                    {block.source_context ? "Use the context above to guide your conversation" : "Send a message to interact with this block"}
+                  </p>
+                </div>
+              )}
+
+              {blockMessages.map((msg) => (
+                <ChatMessage
+                  key={msg.id}
+                  message={msg}
+                  onDelete={deleteMessage}
+                  onRetry={msg.role === 'assistant' ? handleRetry : undefined}
+                />
+              ))}
+
+              {/* Streaming message */}
+              {streamingContent && (
+                <ChatMessage
+                  message={{
+                    id: 'streaming',
+                    block_id: blockId,
+                    role: 'assistant',
+                    content: streamingContent,
+                    size_bytes: 0,
+                    created_at: new Date().toISOString(),
+                  }}
+                  isStreaming
+                />
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Text Selection Popover */}
+            {hasSelection && messageId && (
+              <TextSelectionPopover selectedText={selectedText} messageId={messageId} blockId={blockId}
+                boardId={block.board_id} selectionRect={selectionRect} containerRef={messagesContainerRef} onClose={clearSelection} />
             )}
 
-          {blockMessages.map((msg) => (
-            <div
-              key={msg.id}
-              data-message-id={msg.id}
-              className={cn(
-                "group flex gap-2",
-                msg.role === "user" && "justify-end"
-              )}
-            >
-              <div
-                className={cn(
-                  "max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm select-text",
-                  msg.role === "user"
-                    ? "user-message-bubble"
-                    : "btn-soft"
-                )}
-              >
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-              </div>
-              
-              {/* Message actions */}
-              <div className={cn(
-                "flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
-                msg.role === "user" && "order-first"
-              )}>
-                <button className="key-icon-3d p-1.5 rounded-lg" onClick={() => handleCopy(msg.content)}>
-                  <Copy className="h-3 w-3" />
-                </button>
-                <button
-                  className="key-icon-3d p-1.5 rounded-lg"
-                  onClick={() => deleteMessage(msg.id)}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          ))}
+            {/* Advanced Options */}
+            <AdvancedOptions options={chatOptions} onChange={setChatOptions} />
 
-          {/* Streaming message */}
-          {streamingContent && (
-            <div className="flex gap-2">
-              <div className="max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm btn-soft">
-                <p className="whitespace-pre-wrap leading-relaxed">{streamingContent}</p>
-                <span className="inline-block w-1.5 h-3.5 bg-[hsl(var(--accent))] animate-pulse ml-1" />
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-          </div>
-        )}
-
-        {/* Text Selection Popover */}
-        {!needsModelSelection && hasSelection && messageId && (
-          <TextSelectionPopover
-            selectedText={selectedText}
-            messageId={messageId}
-            blockId={blockId}
-            boardId={block.board_id}
-            selectionRect={selectionRect}
-            containerRef={messagesContainerRef}
-            onClose={clearSelection}
-          />
-        )}
-
-        {/* Input - only show when model is selected */}
-        {!needsModelSelection && (
-          <div className="px-5 py-4 border-t border-border/20">
-            <div className="flex gap-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder={hasKeyForCurrentProvider ? "Type your message..." : "Add an API key to send messages..."}
-                disabled={!hasKeyForCurrentProvider}
-                className={cn(
-                  "min-h-[50px] max-h-[150px] resize-none rounded-xl border-border/30 text-sm input-3d",
-                  !hasKeyForCurrentProvider && "opacity-50"
-                )}
-              />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || isRunning || !hasKeyForCurrentProvider}
-                className={cn(
-                  "key-icon-3d h-auto px-4 py-3 rounded-xl transition-all",
-                  (!input.trim() || isRunning || !hasKeyForCurrentProvider) && "opacity-50 cursor-not-allowed"
-                )}
-              >
-                {isRunning ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
+            {/* Input */}
+            <ChatInput
+              onSend={handleSend}
+              onStop={handleStop}
+              isRunning={isRunning}
+              disabled={!hasKeyForCurrentProvider}
+              placeholder={hasKeyForCurrentProvider ? "Type your message..." : "Add an API key to send messages..."}
+            />
+          </>
         )}
       </DialogContent>
     </Dialog>
