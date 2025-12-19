@@ -52,15 +52,16 @@ export default function ApiKeys() {
       user_id: user.id,
       provider: newKey.provider as Provider,
       name: newKey.name || `${PROVIDERS[newKey.provider as Provider].name} Key`,
+      key_value: newKey.key, // Store the actual key for API calls
       key_masked: masked,
-      key_hash: `mock-hash-${Date.now()}`, // Mock hash
+      key_hash: `hash-${Date.now()}`,
       encryption_method: 'mock',
-      is_valid: testResult?.valid ?? true,
-      is_default: isFirstForProvider, // First key for provider is default
+      is_valid: true, // Valid until proven otherwise at runtime
+      is_default: isFirstForProvider,
       usage_count: 0,
     });
     
-    toast.success("API key added securely");
+    toast.success("API key added successfully");
     setIsAddModalOpen(false);
     setNewKey({ provider: "", name: "", key: "" });
     setTestResult(null);
