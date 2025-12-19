@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen, MessageSquare, HardDrive } from "lucide-react";
+import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { useCurrentUser, useUserBoards, useUserStats } from "@/hooks/useCurrentUser";
-import { useTotalUsage, useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
+import { useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
+import { usePlanEnforcement } from "@/hooks/usePlanLimits";
 import { api } from "@/api";
 import { toast } from "sonner";
 import type { Board } from "@/types";
@@ -23,7 +24,7 @@ export default function Dashboard() {
   const { user, isAuthenticated } = useCurrentUser();
   const userBoards = useUserBoards();
   const stats = useUserStats();
-  const totalUsage = useTotalUsage();
+  const { enforceCreateBoard, canCreateBoard, boardsRemaining, isFree } = usePlanEnforcement();
   
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -42,6 +43,9 @@ export default function Dashboard() {
   }, [userBoards, search]);
 
   const handleCreateBoard = async () => {
+    // Enforce plan limits
+    if (!enforceCreateBoard()) return;
+    
     const board = await api.boards.create("Untitled Board");
     toast.success("Board created");
     navigate(`/board/${board.id}`);
@@ -70,7 +74,7 @@ export default function Dashboard() {
       {/* Main Content */}
         <div className="flex-1 p-6 overflow-auto">
           {/* Usage Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <PlanUsageCard
               planId={stats.plan}
               boardsUsed={stats.boardsUsed}
@@ -82,17 +86,29 @@ export default function Dashboard() {
               usedMb={stats.storageUsedMb}
               limitMb={stats.storageLimitMb}
             />
-            <div className="flex flex-col justify-center items-center h-full">
-              <Button onClick={handleCreateBoard} className="gap-2 btn-glow-edge text-primary font-medium rounded-xl py-3 px-6 bg-transparent hover:bg-transparent">
+            <GlassCard className="flex flex-col justify-center items-center p-6">
+              <Button 
+                onClick={handleCreateBoard} 
+                disabled={!canCreateBoard}
+                className="gap-2 btn-glow-edge text-primary font-medium rounded-xl py-3 px-6 bg-transparent hover:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Plus className="h-4 w-4" />
                 New Board
               </Button>
               <p className="text-xs text-muted-foreground text-center mt-3">
-                {stats.boardsRemaining} boards remaining
+                {boardsRemaining} {boardsRemaining === 1 ? 'board' : 'boards'} remaining
               </p>
-            </div>
+              {isFree && !canCreateBoard && (
+                <Button 
+                  variant="link" 
+                  className="text-xs text-primary mt-1 p-0 h-auto"
+                  onClick={() => navigate("/pricing")}
+                >
+                  Upgrade for more
+                </Button>
+              )}
+            </GlassCard>
           </div>
-
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>

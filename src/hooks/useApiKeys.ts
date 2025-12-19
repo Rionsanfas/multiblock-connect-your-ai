@@ -49,25 +49,34 @@ export function useApiKeysByProvider(): Record<Provider, ApiKey[]> {
 
 /**
  * Get the default API key for a specific provider
+ * Keys are considered valid by default - validation happens at runtime
  */
 export function useDefaultApiKey(provider: Provider): ApiKey | undefined {
   const keys = useUserApiKeys();
   
   return useMemo(() => {
-    return keys.find((k) => k.provider === provider && k.is_default && k.is_valid);
+    // First try to find a default key that's marked valid
+    const defaultValid = keys.find((k) => k.provider === provider && k.is_default && k.is_valid);
+    if (defaultValid) return defaultValid;
+    
+    // Then try any key for this provider (consider keys valid by default)
+    return keys.find((k) => k.provider === provider && k.is_default) || 
+           keys.find((k) => k.provider === provider);
   }, [keys, provider]);
 }
 
 /**
- * Check if user has a valid API key for a provider
+ * Check if user has an API key for a provider
+ * Keys are considered valid by default - actual validation happens at runtime when used
  */
 export function useHasValidKey(provider: Provider): boolean {
   const keys = useUserApiKeys();
-  return useMemo(() => keys.some((k) => k.provider === provider && k.is_valid), [keys, provider]);
+  // Consider any key for the provider as valid - runtime validation will verify
+  return useMemo(() => keys.some((k) => k.provider === provider), [keys, provider]);
 }
 
 /**
- * Get providers that have valid API keys configured
+ * Get providers that have API keys configured
  */
 export function useConfiguredProviders(): Provider[] {
   const keys = useUserApiKeys();
@@ -75,9 +84,7 @@ export function useConfiguredProviders(): Provider[] {
   return useMemo(() => {
     const providers = new Set<Provider>();
     keys.forEach((k) => {
-      if (k.is_valid) {
-        providers.add(k.provider);
-      }
+      providers.add(k.provider);
     });
     return Array.from(providers);
   }, [keys]);

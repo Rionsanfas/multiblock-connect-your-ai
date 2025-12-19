@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useCurrentUser } from './useCurrentUser';
+import { usePlanEnforcement } from './usePlanLimits';
 import type { Block } from '@/types';
 
 /**
@@ -50,10 +51,11 @@ export function useBlock(blockId: string | undefined) {
 }
 
 /**
- * Hook providing block operations with proper ownership validation.
+ * Hook providing block operations with proper ownership validation and plan limits enforcement.
  */
 export function useBlockActions(boardId: string) {
   const { user } = useCurrentUser();
+  const { enforceCreateBlock } = usePlanEnforcement();
   const { 
     boards,
     createBlock: storeCreateBlock, 
@@ -75,8 +77,14 @@ export function useBlockActions(boardId: string) {
     if (!canModify) {
       throw new Error('Cannot create block: Board access denied');
     }
+    
+    // Enforce plan limits
+    if (!enforceCreateBlock(boardId)) {
+      return null;
+    }
+    
     return storeCreateBlock(boardId, data);
-  }, [boardId, canModify, storeCreateBlock]);
+  }, [boardId, canModify, storeCreateBlock, enforceCreateBlock]);
 
   const updateBlock = useCallback((blockId: string, updates: Partial<Block>) => {
     if (!canModify) {
