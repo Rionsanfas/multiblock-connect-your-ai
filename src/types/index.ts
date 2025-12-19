@@ -365,8 +365,9 @@ export interface ApiKey {
   user_id: string; // Owner of the key
   provider: Provider;
   name: string; // User-defined label for the key
+  key_value: string; // The actual API key value (stored for real API calls)
   key_masked: string; // Only last 4 chars visible: "sk-...Xk4m"
-  key_hash: string; // Mock hash for validation (real impl would use bcrypt)
+  key_hash: string; // Hash for validation (real impl would use bcrypt)
   encryption_method: 'aes-256-gcm' | 'mock'; // Mock for now, real encryption later
   is_valid: boolean;
   is_default: boolean; // Default key for this provider

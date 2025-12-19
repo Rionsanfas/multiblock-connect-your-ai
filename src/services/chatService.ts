@@ -72,14 +72,12 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
 class ChatService {
   private abortController: AbortController | null = null;
 
-  // Get API key for a provider
-  // NOTE: In production, this would decrypt the key. For mock, we use the hash as a placeholder.
+  // Get API key for a provider - uses the stored actual key
   private getApiKey(provider: Provider): string | null {
     const { apiKeys } = useAppStore.getState();
     const apiKeyRecord = apiKeys.find(k => k.provider === provider);
-    // In a real implementation, this would decrypt the stored key
-    // For now, we use key_hash as a placeholder (mock API key)
-    return apiKeyRecord?.key_hash || null;
+    // Return the actual stored API key value
+    return apiKeyRecord?.key_value || null;
   }
 
   // Build conversation history for API call
@@ -132,7 +130,7 @@ class ChatService {
     return this.abortController !== null;
   }
 
-  // Stream chat completion
+  // Stream chat completion - REAL API CALLS ONLY
   async streamChat(
     modelId: string,
     messages: ChatMessage[],
@@ -141,7 +139,7 @@ class ChatService {
   ): Promise<void> {
     const modelConfig = getModelConfig(modelId);
     if (!modelConfig) {
-      callbacks.onError('Unknown model');
+      callbacks.onError(`Unknown model: ${modelId}`);
       return;
     }
 
@@ -149,7 +147,7 @@ class ChatService {
     const apiKey = this.getApiKey(provider);
 
     if (!apiKey) {
-      callbacks.onError(`No API key configured for ${provider}`);
+      callbacks.onError(`No API key configured for ${provider}. Please add your API key in Settings > API Keys.`);
       return;
     }
 
@@ -170,22 +168,28 @@ class ChatService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        let errorMessage = 'API request failed';
+        let errorMessage = `API request failed (${response.status})`;
         
         try {
           const errorJson = JSON.parse(errorText);
           errorMessage = errorJson.error?.message || errorJson.message || errorMessage;
         } catch {
-          errorMessage = errorText || `HTTP ${response.status}`;
+          if (errorText) {
+            errorMessage = errorText.substring(0, 200);
+          }
         }
 
-        // Handle specific error codes
+        // Handle specific error codes with clear messages
         if (response.status === 401) {
-          errorMessage = 'Invalid API key - please check your credentials';
+          errorMessage = `Invalid API key for ${provider} - please check your credentials in Settings > API Keys`;
+        } else if (response.status === 403) {
+          errorMessage = `Access denied by ${provider} - your API key may lack required permissions`;
         } else if (response.status === 429) {
-          errorMessage = 'Rate limit exceeded - please try again later';
+          errorMessage = `Rate limit exceeded on ${provider} - please try again in a few moments`;
         } else if (response.status === 402) {
-          errorMessage = 'Insufficient credits - please add funds to your account';
+          errorMessage = `Insufficient credits on ${provider} - please add funds to your provider account`;
+        } else if (response.status === 500 || response.status === 502 || response.status === 503) {
+          errorMessage = `${provider} service is temporarily unavailable - please try again`;
         }
 
         callbacks.onError(errorMessage);
@@ -195,7 +199,7 @@ class ChatService {
       // Handle streaming response
       const reader = response.body?.getReader();
       if (!reader) {
-        callbacks.onError('Failed to get response reader');
+        callbacks.onError('Failed to initialize response stream');
         return;
       }
 
@@ -226,7 +230,7 @@ class ChatService {
                 callbacks.onChunk(content);
               }
             } catch {
-              // Skip invalid JSON lines
+              // Skip invalid JSON lines - this is normal for SSE
             }
           }
         }
@@ -234,8 +238,7 @@ class ChatService {
 
       const latency = Date.now() - startTime;
       const meta: MessageMeta = {
-        tokens: Math.floor(fullResponse.length / 4),
-        cost: parseFloat((fullResponse.length * 0.00001).toFixed(4)),
+        tokens: Math.floor(fullResponse.length / 4), // Rough estimate
         model: modelId,
         latency_ms: latency,
       };
@@ -245,16 +248,21 @@ class ChatService {
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          // User stopped generation
+          // User stopped generation - complete with partial response
           callbacks.onComplete(fullResponse, {
             model: modelId,
             latency_ms: Date.now() - startTime,
           });
           return;
         }
-        callbacks.onError(error.message);
+        // Network or other errors
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          callbacks.onError(`Network error connecting to ${provider} - check your internet connection`);
+        } else {
+          callbacks.onError(`Error: ${error.message}`);
+        }
       } else {
-        callbacks.onError('Unknown error occurred');
+        callbacks.onError('An unexpected error occurred');
       }
     } finally {
       this.abortController = null;
@@ -336,6 +344,7 @@ class ChatService {
         'Content-Type': 'application/json',
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
         model: modelId,
@@ -360,7 +369,7 @@ class ChatService {
     config?: { temperature?: number; maxTokens?: number },
     signal?: AbortSignal
   ): Promise<Response> {
-    const endpoint = `${PROVIDER_ENDPOINTS.google}/${modelId}:streamGenerateContent?key=${apiKey}`;
+    const endpoint = `${PROVIDER_ENDPOINTS.google}/${modelId}:streamGenerateContent?key=${apiKey}&alt=sse`;
 
     // Convert to Gemini format
     const contents = messages
@@ -389,7 +398,7 @@ class ChatService {
     });
   }
 
-  // Extract content from streaming response
+  // Extract content from streaming response based on provider
   private extractContent(parsed: any, provider: Provider): string {
     switch (provider) {
       case 'anthropic':
@@ -400,59 +409,8 @@ class ChatService {
       case 'google':
         return parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
       default:
-        // OpenAI-compatible
+        // OpenAI-compatible format
         return parsed.choices?.[0]?.delta?.content || '';
-    }
-  }
-
-  // Mock streaming for testing/development
-  async mockStreamChat(
-    modelId: string,
-    messages: ChatMessage[],
-    callbacks: StreamCallbacks
-  ): Promise<void> {
-    this.abortController = new AbortController();
-    const startTime = Date.now();
-
-    const mockResponses = [
-      "Based on the context of our conversation, ",
-      "I can provide several insights here. ",
-      "First, it's important to understand that ",
-      "the underlying principles involve careful consideration. ",
-      "Additionally, we should note that ",
-      "this connects to broader concepts in the field. ",
-      "\n\n```typescript\nconst example = 'Hello World';\nconsole.log(example);\n```\n\n",
-      "In conclusion, the evidence suggests ",
-      "a comprehensive understanding requires ",
-      "considering **multiple perspectives** and approaches.",
-    ];
-
-    let fullResponse = '';
-
-    try {
-      for (const chunk of mockResponses) {
-        // Check if aborted
-        if (this.abortController?.signal.aborted) {
-          break;
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 150));
-        fullResponse += chunk;
-        callbacks.onChunk(chunk);
-      }
-
-      callbacks.onComplete(fullResponse, {
-        tokens: Math.floor(fullResponse.length / 4),
-        cost: 0.001,
-        model: modelId,
-        latency_ms: Date.now() - startTime,
-      });
-    } catch (error) {
-      if (error instanceof Error && error.name !== 'AbortError') {
-        callbacks.onError(error.message);
-      }
-    } finally {
-      this.abortController = null;
     }
   }
 }

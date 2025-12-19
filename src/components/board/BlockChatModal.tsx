@@ -115,8 +115,8 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
       block.source_context?.selected_text
     );
 
-    // Use mock streaming for now (real API calls when keys are properly stored)
-    await chatService.mockStreamChat(
+    // Real API call to the selected provider
+    await chatService.streamChat(
       block.model_id,
       history,
       {
@@ -134,11 +134,12 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           setIsRunning(false);
         },
         onError: (error) => {
-          toast.error("Failed to get response", { description: error });
+          toast.error("API Error", { description: error });
           setStreamingContent("");
           setIsRunning(false);
         },
-      }
+      },
+      { temperature: chatOptions.temperature, maxTokens: chatOptions.maxTokens }
     );
   }, [block, blockId, blockMessages, hasKeyForCurrentProvider, currentProvider, isRunning, addMessage, navigate]);
 
