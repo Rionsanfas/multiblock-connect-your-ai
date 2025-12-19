@@ -61,17 +61,18 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   if (!block) return null;
 
   // Get current model config
-  const currentModel = getModelConfig(block.model_id);
+  const currentModel = block.model_id ? getModelConfig(block.model_id) : null;
   const currentProvider = currentModel?.provider;
+  const needsModelSelection = !block.model_id || !currentModel;
 
-  // Check if user has API key for current provider
+  // Check if user has API key for current provider (keys considered valid by default)
   const hasKeyForCurrentProvider = currentProvider 
-    ? userApiKeys.some(k => k.provider === currentProvider && k.is_valid)
+    ? userApiKeys.some(k => k.provider === currentProvider)
     : false;
 
-  // Get provider info for model dropdown
+  // Get provider info for model dropdown - keys considered valid if they exist
   const getProviderHasKey = (provider: Provider) => 
-    userApiKeys.some(k => k.provider === provider && k.is_valid);
+    userApiKeys.some(k => k.provider === provider);
 
   const handleModelSwitch = (newModelId: string) => {
     const newModel = getModelConfig(newModelId);
@@ -355,22 +356,96 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           </div>
         )}
 
-        {/* Messages */}
-        <div 
-          ref={messagesContainerRef}
-          className="flex-1 overflow-auto px-5 py-4 space-y-3"
-        >
-          {blockMessages.length === 0 && !streamingContent && (
-            <div className="text-center text-muted-foreground py-8">
-              <p className="text-sm mb-1">Start a conversation</p>
-              <p className="text-xs opacity-70">
-                {block.source_context 
-                  ? "Use the context above to guide your conversation"
-                  : "Send a message to interact with this block"
-                }
+        {/* Model Selection Required Screen */}
+        {needsModelSelection ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-secondary/50 flex items-center justify-center mx-auto mb-4">
+                <Brain className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Select a Model</h3>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Choose an AI model to power this block before you can start chatting
               </p>
             </div>
-          )}
+            
+            <div className="w-full max-w-sm space-y-3">
+              {providers.slice(0, 4).map((provider) => {
+                const hasKey = getProviderHasKey(provider.id);
+                const models = (modelsByProvider[provider.id] || []).slice(0, 3);
+                
+                return (
+                  <div key={provider.id} className="rounded-xl border border-border/30 p-3 bg-secondary/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: provider.color }} 
+                        />
+                        <span className="text-sm font-medium">{provider.name}</span>
+                      </div>
+                      {hasKey ? (
+                        <span className="flex items-center gap-1 text-[10px] text-green-500">
+                          <Zap className="h-2.5 w-2.5" />
+                          Ready
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => window.open(provider.apiKeyUrl, '_blank')}
+                          className="text-[10px] text-primary hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-2.5 w-2.5" />
+                          Get Key
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {models.map((model) => (
+                        <button
+                          key={model.id}
+                          disabled={!hasKey}
+                          onClick={() => hasKey && handleModelSwitch(model.id)}
+                          className={cn(
+                            "px-2 py-1 text-xs rounded-lg transition-all",
+                            hasKey 
+                              ? "bg-secondary/50 hover:bg-secondary text-foreground cursor-pointer" 
+                              : "bg-muted/30 text-muted-foreground cursor-not-allowed"
+                          )}
+                        >
+                          {model.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              <button
+                onClick={handleGoToApiKeys}
+                className="w-full py-2 text-sm text-primary hover:underline flex items-center justify-center gap-2"
+              >
+                <Zap className="h-3 w-3" />
+                Manage API Keys
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Messages */
+          <div 
+            ref={messagesContainerRef}
+            className="flex-1 overflow-auto px-5 py-4 space-y-3"
+          >
+            {blockMessages.length === 0 && !streamingContent && (
+              <div className="text-center text-muted-foreground py-8">
+                <p className="text-sm mb-1">Start a conversation</p>
+                <p className="text-xs opacity-70">
+                  {block.source_context 
+                    ? "Use the context above to guide your conversation"
+                    : "Send a message to interact with this block"
+                  }
+                </p>
+              </div>
+            )}
 
           {blockMessages.map((msg) => (
             <div
@@ -421,10 +496,11 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           )}
 
           <div ref={messagesEndRef} />
-        </div>
+          </div>
+        )}
 
         {/* Text Selection Popover */}
-        {hasSelection && messageId && (
+        {!needsModelSelection && hasSelection && messageId && (
           <TextSelectionPopover
             selectedText={selectedText}
             messageId={messageId}
@@ -436,41 +512,43 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           />
         )}
 
-        {/* Input */}
-        <div className="px-5 py-4 border-t border-border/20">
-          <div className="flex gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={hasKeyForCurrentProvider ? "Type your message..." : "Add an API key to send messages..."}
-              disabled={!hasKeyForCurrentProvider}
-              className={cn(
-                "min-h-[50px] max-h-[150px] resize-none rounded-xl border-border/30 text-sm input-3d",
-                !hasKeyForCurrentProvider && "opacity-50"
-              )}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isRunning || !hasKeyForCurrentProvider}
-              className={cn(
-                "key-icon-3d h-auto px-4 py-3 rounded-xl transition-all",
-                (!input.trim() || isRunning || !hasKeyForCurrentProvider) && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              {isRunning ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </button>
+        {/* Input - only show when model is selected */}
+        {!needsModelSelection && (
+          <div className="px-5 py-4 border-t border-border/20">
+            <div className="flex gap-2">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder={hasKeyForCurrentProvider ? "Type your message..." : "Add an API key to send messages..."}
+                disabled={!hasKeyForCurrentProvider}
+                className={cn(
+                  "min-h-[50px] max-h-[150px] resize-none rounded-xl border-border/30 text-sm input-3d",
+                  !hasKeyForCurrentProvider && "opacity-50"
+                )}
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || isRunning || !hasKeyForCurrentProvider}
+                className={cn(
+                  "key-icon-3d h-auto px-4 py-3 rounded-xl transition-all",
+                  (!input.trim() || isRunning || !hasKeyForCurrentProvider) && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {isRunning ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -114,11 +114,14 @@ export default function BoardCanvas() {
       if (rect) {
         const x = (e.clientX - rect.left - panOffset.x) / zoom;
         const y = (e.clientY - rect.top - panOffset.y) / zoom;
-        createBlock({
+        const newBlock = createBlock({
           title: "New Block",
           position: { x, y },
+          model_id: '', // Empty - requires model selection
         });
-        toast.success("Block created");
+        if (newBlock) {
+          toast.success("Block created - select a model to start chatting");
+        }
       }
     }
   };
@@ -138,11 +141,14 @@ export default function BoardCanvas() {
   };
 
   const handleCreateBlockAtContext = () => {
-    createBlock({
+    const newBlock = createBlock({
       title: "New Block",
       position: contextMenuPos,
+      model_id: '', // Empty - requires model selection
     });
-    toast.success("Block created");
+    if (newBlock) {
+      toast.success("Block created - select a model to start chatting");
+    }
   };
 
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {

@@ -56,8 +56,9 @@ export function BlockCard({
   const lastMessage = blockMessages[blockMessages.length - 1];
 
   // Use canonical model config to get provider
-  const modelConfig = getModelConfig(block.model_id);
-  const provider = modelConfig?.provider || "openai";
+  const modelConfig = block.model_id ? getModelConfig(block.model_id) : null;
+  const provider = modelConfig?.provider || null;
+  const needsModelSelection = !block.model_id || !modelConfig;
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest(".no-drag")) return;
@@ -275,6 +276,10 @@ export function BlockCard({
           <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
             {lastMessage.content}
           </p>
+        ) : needsModelSelection ? (
+          <p className="text-xs text-amber-500/80 italic">
+            Select a model to start chatting
+          </p>
         ) : (
           <p className="text-xs text-muted-foreground/50 italic">
             Click to chat
@@ -282,9 +287,12 @@ export function BlockCard({
         )}
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/15 bg-secondary/10 rounded-b-2xl">
-        <ProviderBadge provider={provider} model={modelConfig?.name || block.model_id} />
+        {provider ? (
+          <ProviderBadge provider={provider} model={modelConfig?.name || block.model_id} />
+        ) : (
+          <span className="text-xs text-amber-500">No model selected</span>
+        )}
         <button
           onClick={(e) => { e.stopPropagation(); handleRun(); }}
           disabled={isRunning}

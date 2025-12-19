@@ -275,7 +275,7 @@ export const useAppStore = create<AppState>()(
           board_id: boardId,
           title: blockData.title || 'New Block',
           type: blockData.type || 'chat',
-          model_id: blockData.model_id || 'gpt-4o',
+          model_id: blockData.model_id ?? '', // Empty by default - requires model selection
           system_prompt: blockData.system_prompt || 'You are a helpful assistant.',
           config: blockData.config || { temperature: 0.7, max_tokens: 2048 },
           position: blockData.position || { x: 100, y: 100 },
