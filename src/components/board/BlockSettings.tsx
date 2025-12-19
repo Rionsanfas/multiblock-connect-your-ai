@@ -83,11 +83,11 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
-              {allModels.map(({ provider, model, name }) => (
+              {allModels.map(({ provider, model, providerName, modelName }) => (
                 <SelectItem key={model} value={model} className="rounded-lg">
                   <span className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{name}</span>
-                    {model}
+                    <span className="text-xs text-muted-foreground">{providerName}</span>
+                    {modelName}
                   </span>
                 </SelectItem>
               ))}

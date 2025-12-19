@@ -21,6 +21,7 @@ interface AppState {
   
   // Connections
   connections: Connection[];
+  selectedConnectionId: string | null;
   
   // API Keys - per user in production
   apiKeys: ApiKey[];
@@ -86,6 +87,7 @@ interface AppState {
   createConnection: (connection: Omit<Connection, 'id' | 'created_at' | 'updated_at'>) => Connection;
   updateConnection: (id: string, updates: Partial<Connection>) => void;
   deleteConnection: (id: string) => void;
+  selectConnection: (id: string | null) => void;
   
   // API Key actions
   addApiKey: (key: Omit<ApiKey, 'id' | 'created_at' | 'updated_at'>) => void;
@@ -124,6 +126,7 @@ export const useAppStore = create<AppState>()(
       selectedBlockId: null,
       messages: seedData.messages,
       connections: seedData.connections,
+      selectedConnectionId: null,
       apiKeys: seedData.apiKeys,
       teams: mockTeams,
       teamMembers: mockTeamMembers,
@@ -511,8 +514,13 @@ export const useAppStore = create<AppState>()(
       },
       
       deleteConnection: (id) => {
-        set((state) => ({ connections: state.connections.filter((c) => c.id !== id) }));
+        set((state) => ({ 
+          connections: state.connections.filter((c) => c.id !== id),
+          selectedConnectionId: state.selectedConnectionId === id ? null : state.selectedConnectionId,
+        }));
       },
+      
+      selectConnection: (id) => set({ selectedConnectionId: id }),
       
       // API Key actions
       addApiKey: (keyData) => {
@@ -588,6 +596,7 @@ export const useAppStore = create<AppState>()(
           selectedBlockId: null,
           messages: seedData.messages,
           connections: seedData.connections,
+          selectedConnectionId: null,
           apiKeys: seedData.apiKeys,
           teams: mockTeams,
           teamMembers: mockTeamMembers,
