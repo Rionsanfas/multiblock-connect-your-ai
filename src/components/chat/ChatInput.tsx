@@ -1,0 +1,231 @@
+import { useState, useRef, useCallback } from 'react';
+import { Send, Square, Paperclip, X, Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import type { ChatAttachment } from '@/services/chatService';
+
+interface ChatInputProps {
+  onSend: (content: string, attachments?: ChatAttachment[]) => void;
+  onStop?: () => void;
+  isRunning?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_TYPES = [
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'application/json',
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+];
+
+export function ChatInput({
+  onSend,
+  onStop,
+  isRunning,
+  disabled,
+  placeholder = 'Type your message...',
+}: ChatInputProps) {
+  const [input, setInput] = useState('');
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSend = useCallback(() => {
+    if (!input.trim() && attachments.length === 0) return;
+    if (isRunning) return;
+
+    onSend(input.trim(), attachments.length > 0 ? attachments : undefined);
+    setInput('');
+    setAttachments([]);
+  }, [input, attachments, isRunning, onSend]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const processFile = async (file: File): Promise<ChatAttachment | null> => {
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`File too large: ${file.name} (max 10MB)`);
+      return null;
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error(`Unsupported file type: ${file.type}`);
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+        const content = reader.result as string;
+        resolve({
+          id: Math.random().toString(36).substring(2, 15),
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          content: file.type.startsWith('image/') 
+            ? content // Base64 for images
+            : content.replace(/^data:[^;]+;base64,/, ''), // Raw for text
+        });
+      };
+
+      reader.onerror = () => {
+        toast.error(`Failed to read file: ${file.name}`);
+        resolve(null);
+      };
+
+      if (file.type.startsWith('image/')) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.readAsText(file);
+      }
+    });
+  };
+
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files) return;
+
+    const newAttachments: ChatAttachment[] = [];
+    
+    for (const file of Array.from(files)) {
+      const attachment = await processFile(file);
+      if (attachment) {
+        newAttachments.push(attachment);
+      }
+    }
+
+    setAttachments(prev => [...prev, ...newAttachments]);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    await handleFileSelect(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id));
+  };
+
+  return (
+    <div
+      className={cn(
+        "relative border-t border-border/20 bg-card/50",
+        isDragging && "ring-2 ring-primary ring-inset"
+      )}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
+      {/* Attachments preview */}
+      {attachments.length > 0 && (
+        <div className="px-4 pt-3 flex flex-wrap gap-2">
+          {attachments.map((att) => (
+            <div
+              key={att.id}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/50 text-xs group"
+            >
+              <Paperclip className="h-3 w-3 text-muted-foreground" />
+              <span className="truncate max-w-[150px]">{att.name}</span>
+              <button
+                onClick={() => removeAttachment(att.id)}
+                className="p-0.5 rounded hover:bg-destructive/20 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Drag overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 bg-primary/10 backdrop-blur-sm flex items-center justify-center z-10">
+          <div className="text-sm font-medium text-primary">Drop files here</div>
+        </div>
+      )}
+
+      {/* Input area */}
+      <div className="px-4 py-3">
+        <div className="flex items-end gap-2">
+          {/* Attachment button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled}
+            className={cn(
+              "p-2.5 rounded-xl transition-all hover:bg-secondary/50",
+              disabled && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <Paperclip className="h-5 w-5 text-muted-foreground" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={ALLOWED_TYPES.join(',')}
+            onChange={(e) => handleFileSelect(e.target.files)}
+            className="hidden"
+          />
+
+          {/* Text input */}
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            className={cn(
+              "min-h-[44px] max-h-[200px] resize-none rounded-xl border-border/30 text-sm bg-secondary/30 focus:bg-secondary/50 transition-colors",
+              disabled && "opacity-50"
+            )}
+            rows={1}
+          />
+
+          {/* Send/Stop button */}
+          {isRunning ? (
+            <button
+              onClick={onStop}
+              className="p-2.5 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all"
+            >
+              <Square className="h-5 w-5 fill-current" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={disabled || (!input.trim() && attachments.length === 0)}
+              className={cn(
+                "p-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all",
+                (disabled || (!input.trim() && attachments.length === 0)) && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Send className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
