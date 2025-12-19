@@ -80,22 +80,42 @@ class ChatService {
     return apiKeyRecord?.key_value || null;
   }
 
-  // Build conversation history for API call
+  // Build conversation history for API call with model identity and URL context
   buildConversationHistory(
     messages: Message[],
+    modelId: string,
     systemPrompt?: string,
-    sourceContext?: string
+    sourceContext?: string,
+    incomingBlockContext?: string
   ): ChatMessage[] {
     const history: ChatMessage[] = [];
 
-    // Add system prompt
-    if (systemPrompt || sourceContext) {
-      let systemContent = systemPrompt || 'You are a helpful assistant.';
-      if (sourceContext) {
-        systemContent += `\n\nContext for reference:\n"${sourceContext}"`;
-      }
-      history.push({ role: 'system', content: systemContent });
+    // Get model config for identity injection
+    const modelConfig = getModelConfig(modelId);
+    const modelName = modelConfig?.name || modelId;
+    const providerName = modelConfig?.provider 
+      ? modelConfig.provider.charAt(0).toUpperCase() + modelConfig.provider.slice(1)
+      : 'AI';
+
+    // Build system prompt with model identity
+    let systemContent = systemPrompt || 'You are a helpful assistant.';
+    
+    // Inject model identity - this prevents the AI from lying about what it is
+    systemContent = `You are ${modelName}, an AI model by ${providerName}. ` +
+      `When asked about your identity, always truthfully state that you are ${modelName}.\n\n` +
+      systemContent;
+
+    // Add source context from block creation
+    if (sourceContext) {
+      systemContent += `\n\nContext provided:\n"${sourceContext}"`;
     }
+
+    // Add context from connected blocks
+    if (incomingBlockContext) {
+      systemContent += `\n\nContext from connected blocks:\n${incomingBlockContext}`;
+    }
+
+    history.push({ role: 'system', content: systemContent });
 
     // Add conversation messages
     for (const msg of messages) {
@@ -107,14 +127,29 @@ class ChatService {
           content: `[Context from connected block]\n${msg.content}`,
         });
       } else {
+        // Auto-detect URLs in user messages and note them
+        let content = msg.content;
+        if (msg.role === 'user') {
+          const urls = this.extractUrls(content);
+          if (urls.length > 0) {
+            content += `\n\n[Note: This message contains ${urls.length === 1 ? 'a URL' : 'URLs'}: ${urls.join(', ')}. Please consider this context if relevant.]`;
+          }
+        }
         history.push({
           role: msg.role as 'user' | 'assistant',
-          content: msg.content,
+          content,
         });
       }
     }
 
     return history;
+  }
+
+  // Extract URLs from text
+  private extractUrls(text: string): string[] {
+    const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
+    const matches = text.match(urlRegex);
+    return matches || [];
   }
 
   // Stop current generation

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Settings, Pencil, Check, Quote, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink } from "lucide-react";
+import { X, Settings, Pencil, Check, Quote, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +12,10 @@ import { useTextSelection } from "@/hooks/useTextSelection";
 import { TextSelectionPopover } from "./TextSelectionPopover";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
-import { AdvancedOptions, DEFAULT_CHAT_OPTIONS, type ChatOptions } from "@/components/chat/AdvancedOptions";
 import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
 import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useModelConfig";
+import { useBlockIncomingContext } from "@/hooks/useBlockConnections";
 import { getModelConfig, PROVIDERS, type Provider } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -28,15 +28,13 @@ interface BlockChatModalProps {
 export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
-  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState("");
-  const [chatOptions, setChatOptions] = useState<ChatOptions>(DEFAULT_CHAT_OPTIONS);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const { blocks, closeBlockChat, deleteMessage, updateBlock, addMessage, updateMessage } = useAppStore();
+  const { blocks, closeBlockChat, deleteMessage, updateBlock, addMessage } = useAppStore();
   const block = blocks.find((b) => b.id === blockId);
   
   const userApiKeys = useUserApiKeys();
@@ -44,6 +42,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const providers = useAvailableProviders();
   const blockMessages = useBlockMessages(blockId);
   const blockUsage = useBlockUsage(blockId);
+  const incomingContext = useBlockIncomingContext(blockId);
   
   const { selectedText, messageId, selectionRect, hasSelection, clearSelection } = 
     useTextSelection(messagesContainerRef);
@@ -108,11 +107,18 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     setIsRunning(true);
     setStreamingContent("");
 
-    // Build conversation history
+    // Build incoming block context from connections
+    const connectedContext = incomingContext.length > 0
+      ? incomingContext.map(ctx => `[From "${ctx.source_block_title}"]:\n${ctx.content}`).join('\n\n')
+      : undefined;
+
+    // Build conversation history with model identity and connected block context
     const history = chatService.buildConversationHistory(
       [...blockMessages, userMessage],
+      block.model_id,
       block.system_prompt,
-      block.source_context?.selected_text
+      block.source_context?.selected_text,
+      connectedContext
     );
 
     // Real API call to the selected provider
@@ -138,10 +144,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           setStreamingContent("");
           setIsRunning(false);
         },
-      },
-      { temperature: chatOptions.temperature, maxTokens: chatOptions.maxTokens }
+      }
     );
-  }, [block, blockId, blockMessages, hasKeyForCurrentProvider, currentProvider, isRunning, addMessage, navigate]);
+  }, [block, blockId, blockMessages, hasKeyForCurrentProvider, currentProvider, isRunning, addMessage, navigate, incomingContext]);
 
   const handleStop = useCallback(() => {
     chatService.stopGeneration();
@@ -321,6 +326,21 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           </div>
         )}
 
+        {/* Connected Block Context Indicator */}
+        {incomingContext.length > 0 && (
+          <div className="px-5 py-2 bg-primary/5 border-b border-primary/20 flex-shrink-0">
+            <div className="flex items-center gap-2 text-xs">
+              <Link2 className="h-3.5 w-3.5 text-primary" />
+              <span className="text-muted-foreground">
+                Receiving context from {incomingContext.length} connected {incomingContext.length === 1 ? 'block' : 'blocks'}:
+              </span>
+              <span className="text-foreground font-medium">
+                {incomingContext.map(ctx => ctx.source_block_title).join(', ')}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Model Selection Screen */}
         {needsModelSelection ? (
           <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
@@ -412,9 +432,6 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               <TextSelectionPopover selectedText={selectedText} messageId={messageId} blockId={blockId}
                 boardId={block.board_id} selectionRect={selectionRect} containerRef={messagesContainerRef} onClose={clearSelection} />
             )}
-
-            {/* Advanced Options */}
-            <AdvancedOptions options={chatOptions} onChange={setChatOptions} />
 
             {/* Input */}
             <ChatInput
