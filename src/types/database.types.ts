@@ -1,6 +1,7 @@
 // ============================================
 // THINKBLOCKS DATABASE TYPES
 // TypeScript types matching Supabase schema
+// Version: 2.0.0
 // ============================================
 
 // ============================================
@@ -9,20 +10,23 @@
 
 export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek';
 
+export type AppRole = 'user' | 'admin' | 'super_admin';
+
+export type SubscriptionTier = 'free' | 'pro' | 'team' | 'enterprise';
+
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'paused';
+
 // ============================================
-// TABLE TYPES
+// TABLE TYPES: PROFILES
 // ============================================
 
-/**
- * User profile linked to Supabase Auth
- */
 export interface Profile {
-  id: string; // UUID, matches auth.users.id
+  id: string;
   email: string;
   full_name: string | null;
   avatar_url: string | null;
-  created_at: string; // ISO timestamp
-  updated_at: string; // ISO timestamp
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ProfileInsert {
@@ -38,17 +42,135 @@ export interface ProfileUpdate {
   avatar_url?: string | null;
 }
 
-/**
- * User-provided API keys for LLM providers
- */
+// ============================================
+// TABLE TYPES: USER ROLES
+// ============================================
+
+export interface UserRole {
+  id: string;
+  user_id: string;
+  role: AppRole;
+  created_at: string;
+}
+
+export interface UserRoleInsert {
+  user_id: string;
+  role?: AppRole;
+}
+
+// ============================================
+// TABLE TYPES: SUBSCRIPTION PLANS
+// ============================================
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  tier: SubscriptionTier;
+  description: string | null;
+  price_monthly: number;
+  price_yearly: number;
+  max_boards: number;
+  max_blocks_per_board: number;
+  max_messages_per_day: number;
+  max_api_keys: number;
+  max_seats: number;
+  features: string[];
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionPlanInsert {
+  name: string;
+  tier: SubscriptionTier;
+  description?: string | null;
+  price_monthly?: number;
+  price_yearly?: number;
+  max_boards?: number;
+  max_blocks_per_board?: number;
+  max_messages_per_day?: number;
+  max_api_keys?: number;
+  max_seats?: number;
+  features?: string[];
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface SubscriptionPlanUpdate {
+  name?: string;
+  description?: string | null;
+  price_monthly?: number;
+  price_yearly?: number;
+  max_boards?: number;
+  max_blocks_per_board?: number;
+  max_messages_per_day?: number;
+  max_api_keys?: number;
+  max_seats?: number;
+  features?: string[];
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+// ============================================
+// TABLE TYPES: USER SUBSCRIPTIONS
+// ============================================
+
+export interface UserSubscription {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  status: SubscriptionStatus;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  seats_used: number;
+  messages_used_today: number;
+  messages_reset_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserSubscriptionInsert {
+  user_id: string;
+  plan_id: string;
+  status?: SubscriptionStatus;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  cancel_at_period_end?: boolean;
+  seats_used?: number;
+  messages_used_today?: number;
+}
+
+export interface UserSubscriptionUpdate {
+  plan_id?: string;
+  status?: SubscriptionStatus;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  cancel_at_period_end?: boolean;
+  seats_used?: number;
+  messages_used_today?: number;
+  messages_reset_at?: string;
+}
+
+// ============================================
+// TABLE TYPES: API KEYS
+// ============================================
+
 export interface ApiKey {
-  id: string; // UUID
-  user_id: string; // UUID
+  id: string;
+  user_id: string;
   provider: LLMProvider;
   api_key_encrypted: string;
-  key_hint: string | null; // Last 4 chars for display
+  key_hint: string | null;
   is_valid: boolean;
-  last_validated_at: string | null; // ISO timestamp
+  last_validated_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -68,15 +190,20 @@ export interface ApiKeyUpdate {
   last_validated_at?: string | null;
 }
 
-/**
- * User workspace containing blocks
- */
+// ============================================
+// TABLE TYPES: BOARDS
+// ============================================
+
 export interface Board {
-  id: string; // UUID
-  user_id: string; // UUID
+  id: string;
+  user_id: string;
   name: string;
   description: string | null;
   is_archived: boolean;
+  is_public: boolean;
+  canvas_zoom: number;
+  canvas_position_x: number;
+  canvas_position_y: number;
   created_at: string;
   updated_at: string;
 }
@@ -85,21 +212,30 @@ export interface BoardInsert {
   user_id: string;
   name?: string;
   description?: string | null;
+  is_public?: boolean;
+  canvas_zoom?: number;
+  canvas_position_x?: number;
+  canvas_position_y?: number;
 }
 
 export interface BoardUpdate {
   name?: string;
   description?: string | null;
   is_archived?: boolean;
+  is_public?: boolean;
+  canvas_zoom?: number;
+  canvas_position_x?: number;
+  canvas_position_y?: number;
 }
 
-/**
- * AI chat block on a board
- */
+// ============================================
+// TABLE TYPES: BLOCKS
+// ============================================
+
 export interface Block {
-  id: string; // UUID
-  board_id: string; // UUID
-  user_id: string; // UUID
+  id: string;
+  board_id: string;
+  user_id: string;
   provider: LLMProvider;
   model_id: string;
   position_x: number;
@@ -109,6 +245,7 @@ export interface Block {
   title: string;
   color: string | null;
   is_collapsed: boolean;
+  system_prompt: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -124,6 +261,7 @@ export interface BlockInsert {
   height?: number;
   title?: string;
   color?: string | null;
+  system_prompt?: string | null;
 }
 
 export interface BlockUpdate {
@@ -136,16 +274,18 @@ export interface BlockUpdate {
   title?: string;
   color?: string | null;
   is_collapsed?: boolean;
+  system_prompt?: string | null;
 }
 
-/**
- * Directional connection between blocks
- */
+// ============================================
+// TABLE TYPES: BLOCK CONNECTIONS
+// ============================================
+
 export interface BlockConnection {
-  id: string; // UUID
-  source_block_id: string; // UUID
-  target_block_id: string; // UUID
-  user_id: string; // UUID
+  id: string;
+  source_block_id: string;
+  target_block_id: string;
+  user_id: string;
   label: string | null;
   created_at: string;
 }
@@ -169,6 +309,21 @@ export interface Database {
         Insert: ProfileInsert;
         Update: ProfileUpdate;
       };
+      user_roles: {
+        Row: UserRole;
+        Insert: UserRoleInsert;
+        Update: never;
+      };
+      subscription_plans: {
+        Row: SubscriptionPlan;
+        Insert: SubscriptionPlanInsert;
+        Update: SubscriptionPlanUpdate;
+      };
+      user_subscriptions: {
+        Row: UserSubscription;
+        Insert: UserSubscriptionInsert;
+        Update: UserSubscriptionUpdate;
+      };
       api_keys: {
         Row: ApiKey;
         Insert: ApiKeyInsert;
@@ -187,13 +342,24 @@ export interface Database {
       block_connections: {
         Row: BlockConnection;
         Insert: BlockConnectionInsert;
-        Update: never; // Connections are not updatable
+        Update: never;
       };
     };
     Enums: {
       llm_provider: LLMProvider;
+      app_role: AppRole;
+      subscription_tier: SubscriptionTier;
+      subscription_status: SubscriptionStatus;
     };
     Functions: {
+      has_role: {
+        Args: { _user_id: string; _role: AppRole };
+        Returns: boolean;
+      };
+      get_user_role: {
+        Args: { _user_id: string };
+        Returns: AppRole;
+      };
       get_user_board_count: {
         Args: { p_user_id: string };
         Returns: number;
@@ -206,6 +372,10 @@ export interface Database {
         Args: { p_user_id: string; p_provider: LLMProvider };
         Returns: boolean;
       };
+      get_user_api_key_count: {
+        Args: { p_user_id: string };
+        Returns: number;
+      };
       get_block_incoming_connections: {
         Args: { p_block_id: string };
         Returns: {
@@ -216,6 +386,39 @@ export interface Database {
           source_model_id: string;
         }[];
       };
+      get_user_subscription: {
+        Args: { p_user_id: string };
+        Returns: {
+          subscription_id: string;
+          plan_id: string;
+          plan_name: string;
+          tier: SubscriptionTier;
+          status: SubscriptionStatus;
+          max_boards: number;
+          max_blocks_per_board: number;
+          max_messages_per_day: number;
+          max_api_keys: number;
+          max_seats: number;
+          messages_used_today: number;
+          current_period_end: string | null;
+        }[];
+      };
+      can_create_board: {
+        Args: { p_user_id: string };
+        Returns: boolean;
+      };
+      can_create_block: {
+        Args: { p_user_id: string; p_board_id: string };
+        Returns: boolean;
+      };
+      can_send_message: {
+        Args: { p_user_id: string };
+        Returns: boolean;
+      };
+      increment_message_count: {
+        Args: { p_user_id: string };
+        Returns: void;
+      };
     };
   };
 }
@@ -224,9 +427,23 @@ export interface Database {
 // HELPER TYPES
 // ============================================
 
-/**
- * Block with its incoming connections resolved
- */
+/** User subscription with plan details (from get_user_subscription RPC) */
+export interface UserSubscriptionWithPlan {
+  subscription_id: string;
+  plan_id: string;
+  plan_name: string;
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  max_boards: number;
+  max_blocks_per_board: number;
+  max_messages_per_day: number;
+  max_api_keys: number;
+  max_seats: number;
+  messages_used_today: number;
+  current_period_end: string | null;
+}
+
+/** Block with incoming connections */
 export interface BlockWithConnections extends Block {
   incoming_connections: {
     connection_id: string;
@@ -237,16 +454,12 @@ export interface BlockWithConnections extends Block {
   }[];
 }
 
-/**
- * Board with its blocks loaded
- */
+/** Board with blocks loaded */
 export interface BoardWithBlocks extends Board {
   blocks: Block[];
 }
 
-/**
- * API key display (safe for UI, no encrypted key)
- */
+/** API key display (safe for UI, no encrypted key) */
 export interface ApiKeyDisplay {
   id: string;
   provider: LLMProvider;
@@ -256,27 +469,69 @@ export interface ApiKeyDisplay {
   created_at: string;
 }
 
+/** Usage limits for UI display */
+export interface UsageLimits {
+  boards: { used: number; max: number; unlimited: boolean };
+  blocksPerBoard: { used: number; max: number; unlimited: boolean };
+  messagesPerDay: { used: number; max: number; unlimited: boolean };
+  apiKeys: { used: number; max: number; unlimited: boolean };
+  seats: { used: number; max: number; unlimited: boolean };
+}
+
 // ============================================
 // PROVIDER DISPLAY INFO
 // ============================================
 
-export const PROVIDER_INFO: Record<LLMProvider, { name: string; icon: string }> = {
-  openai: { name: 'OpenAI', icon: '🟢' },
-  anthropic: { name: 'Anthropic', icon: '🟠' },
-  google: { name: 'Google', icon: '🔵' },
-  xai: { name: 'xAI', icon: '⚫' },
-  deepseek: { name: 'DeepSeek', icon: '🟣' },
+export const PROVIDER_INFO: Record<LLMProvider, { name: string; icon: string; color: string }> = {
+  openai: { name: 'OpenAI', icon: '🟢', color: '#10a37f' },
+  anthropic: { name: 'Anthropic', icon: '🟠', color: '#d97706' },
+  google: { name: 'Google', icon: '🔵', color: '#4285f4' },
+  xai: { name: 'xAI', icon: '⚫', color: '#000000' },
+  deepseek: { name: 'DeepSeek', icon: '🟣', color: '#7c3aed' },
+};
+
+export const TIER_INFO: Record<SubscriptionTier, { name: string; color: string }> = {
+  free: { name: 'Free', color: '#6b7280' },
+  pro: { name: 'Pro', color: '#3b82f6' },
+  team: { name: 'Team', color: '#8b5cf6' },
+  enterprise: { name: 'Enterprise', color: '#f59e0b' },
 };
 
 // ============================================
 // VALIDATION HELPERS
 // ============================================
 
+export const LLM_PROVIDERS: LLMProvider[] = ['openai', 'anthropic', 'google', 'xai', 'deepseek'];
+
 export const isValidProvider = (value: string): value is LLMProvider => {
-  return ['openai', 'anthropic', 'google', 'xai', 'deepseek'].includes(value);
+  return LLM_PROVIDERS.includes(value as LLMProvider);
+};
+
+export const isValidTier = (value: string): value is SubscriptionTier => {
+  return ['free', 'pro', 'team', 'enterprise'].includes(value);
+};
+
+export const isValidRole = (value: string): value is AppRole => {
+  return ['user', 'admin', 'super_admin'].includes(value);
 };
 
 export const getKeyHint = (apiKey: string): string => {
   if (apiKey.length < 4) return '****';
   return `...${apiKey.slice(-4)}`;
+};
+
+/** Check if a limit is unlimited (-1 means unlimited) */
+export const isUnlimited = (limit: number): boolean => limit === -1;
+
+/** Format a limit for display */
+export const formatLimit = (used: number, max: number): string => {
+  if (max === -1) return `${used} / ∞`;
+  return `${used} / ${max}`;
+};
+
+/** Calculate usage percentage (returns 0 for unlimited) */
+export const getUsagePercentage = (used: number, max: number): number => {
+  if (max === -1) return 0;
+  if (max === 0) return 100;
+  return Math.min(100, Math.round((used / max) * 100));
 };

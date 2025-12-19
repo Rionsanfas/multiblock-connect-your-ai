@@ -1,7 +1,7 @@
 // ============================================
 // THINKBLOCKS DATABASE HELPERS
 // Type-safe Supabase query helpers
-// Ready to use after applying database-schema.sql
+// Version: 2.0.0
 // ============================================
 
 import { supabase } from '@/integrations/supabase/client';
@@ -19,11 +19,17 @@ import type {
   BlockConnection,
   LLMProvider,
   ApiKeyDisplay,
+  UserRole,
+  AppRole,
+  SubscriptionPlan,
+  UserSubscription,
+  UserSubscriptionWithPlan,
+  UsageLimits,
 } from '@/types/database.types';
-import { getKeyHint } from '@/types/database.types';
+import { getKeyHint, isUnlimited } from '@/types/database.types';
 
 // Type assertion helper for tables not yet in generated types
-// Remove these after running database migration and regenerating types
+// Remove this after running database migration and regenerating types
 const db = supabase as any;
 
 // ============================================
@@ -45,6 +51,17 @@ export const profilesDb = {
     return data;
   },
 
+  async getById(userId: string): Promise<Profile | null> {
+    const { data, error } = await db
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  },
+
   async update(updates: ProfileUpdate): Promise<Profile> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
@@ -58,6 +75,203 @@ export const profilesDb = {
 
     if (error) throw error;
     return data;
+  },
+};
+
+// ============================================
+// USER ROLES
+// ============================================
+
+export const userRolesDb = {
+  async getCurrentRole(): Promise<AppRole | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await db
+      .rpc('get_user_role', { _user_id: user.id });
+
+    if (error) return 'user';
+    return data ?? 'user';
+  },
+
+  async hasRole(role: AppRole): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data, error } = await db
+      .rpc('has_role', { _user_id: user.id, _role: role });
+
+    if (error) return false;
+    return data ?? false;
+  },
+
+  async isAdmin(): Promise<boolean> {
+    return await this.hasRole('admin') || await this.hasRole('super_admin');
+  },
+
+  async isSuperAdmin(): Promise<boolean> {
+    return await this.hasRole('super_admin');
+  },
+
+  async getUserRoles(userId: string): Promise<UserRole[]> {
+    const { data, error } = await db
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return data || [];
+  },
+};
+
+// ============================================
+// SUBSCRIPTION PLANS
+// ============================================
+
+export const plansDb = {
+  async getAll(): Promise<SubscriptionPlan[]> {
+    const { data, error } = await db
+      .from('subscription_plans')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async getById(planId: string): Promise<SubscriptionPlan | null> {
+    const { data, error } = await db
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', planId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  },
+
+  async getByTier(tier: string): Promise<SubscriptionPlan | null> {
+    const { data, error } = await db
+      .from('subscription_plans')
+      .select('*')
+      .eq('tier', tier)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  },
+};
+
+// ============================================
+// USER SUBSCRIPTIONS
+// ============================================
+
+export const subscriptionsDb = {
+  async getCurrent(): Promise<UserSubscriptionWithPlan | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await db
+      .rpc('get_user_subscription', { p_user_id: user.id });
+
+    if (error) throw error;
+    return data?.[0] ?? null;
+  },
+
+  async getRaw(): Promise<UserSubscription | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await db
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  },
+
+  async canCreateBoard(): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data, error } = await db
+      .rpc('can_create_board', { p_user_id: user.id });
+
+    if (error) return false;
+    return data ?? false;
+  },
+
+  async canCreateBlock(boardId: string): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data, error } = await db
+      .rpc('can_create_block', { p_user_id: user.id, p_board_id: boardId });
+
+    if (error) return false;
+    return data ?? false;
+  },
+
+  async canSendMessage(): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data, error } = await db
+      .rpc('can_send_message', { p_user_id: user.id });
+
+    if (error) return false;
+    return data ?? false;
+  },
+
+  async incrementMessageCount(): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await db.rpc('increment_message_count', { p_user_id: user.id });
+  },
+
+  async getUsageLimits(): Promise<UsageLimits | null> {
+    const subscription = await this.getCurrent();
+    if (!subscription) return null;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const [boardCount, apiKeyCount] = await Promise.all([
+      boardsDb.getCount(),
+      apiKeysDb.getCount(),
+    ]);
+
+    return {
+      boards: {
+        used: boardCount,
+        max: subscription.max_boards,
+        unlimited: isUnlimited(subscription.max_boards),
+      },
+      blocksPerBoard: {
+        used: 0, // Calculated per-board
+        max: subscription.max_blocks_per_board,
+        unlimited: isUnlimited(subscription.max_blocks_per_board),
+      },
+      messagesPerDay: {
+        used: subscription.messages_used_today,
+        max: subscription.max_messages_per_day,
+        unlimited: isUnlimited(subscription.max_messages_per_day),
+      },
+      apiKeys: {
+        used: apiKeyCount,
+        max: subscription.max_api_keys,
+        unlimited: isUnlimited(subscription.max_api_keys),
+      },
+      seats: {
+        used: 1, // TODO: Implement team seats
+        max: subscription.max_seats,
+        unlimited: isUnlimited(subscription.max_seats),
+      },
+    };
   },
 };
 
@@ -105,6 +319,17 @@ export const apiKeysDb = {
     return data ?? false;
   },
 
+  async getCount(): Promise<number> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 0;
+
+    const { data, error } = await db
+      .rpc('get_user_api_key_count', { p_user_id: user.id });
+
+    if (error) return 0;
+    return data ?? 0;
+  },
+
   async upsert(provider: LLMProvider, apiKey: string): Promise<ApiKey> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
@@ -139,6 +364,14 @@ export const apiKeysDb = {
     const { error } = await db
       .from('api_keys')
       .update({ is_valid: false })
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async markValid(id: string): Promise<void> {
+    const { error } = await db
+      .from('api_keys')
+      .update({ is_valid: true, last_validated_at: new Date().toISOString() })
       .eq('id', id);
     if (error) throw error;
   },
@@ -183,6 +416,12 @@ export const boardsDb = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Check limit
+    const canCreate = await subscriptionsDb.canCreateBoard();
+    if (!canCreate) {
+      throw new Error('Board limit reached. Please upgrade your plan.');
+    }
+
     const { data, error } = await db
       .from('boards')
       .insert({ ...board, user_id: user.id })
@@ -210,6 +449,14 @@ export const boardsDb = {
     if (error) throw error;
   },
 
+  async archive(id: string): Promise<Board> {
+    return this.update(id, { is_archived: true });
+  },
+
+  async unarchive(id: string): Promise<Board> {
+    return this.update(id, { is_archived: false });
+  },
+
   async getCount(): Promise<number> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return 0;
@@ -219,6 +466,14 @@ export const boardsDb = {
 
     if (error) return 0;
     return data ?? 0;
+  },
+
+  async updateCanvasPosition(id: string, zoom: number, x: number, y: number): Promise<void> {
+    const { error } = await db
+      .from('boards')
+      .update({ canvas_zoom: zoom, canvas_position_x: x, canvas_position_y: y })
+      .eq('id', id);
+    if (error) throw error;
   },
 };
 
@@ -253,6 +508,12 @@ export const blocksDb = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Check limit
+    const canCreate = await subscriptionsDb.canCreateBlock(block.board_id);
+    if (!canCreate) {
+      throw new Error('Block limit reached for this board. Please upgrade your plan.');
+    }
+
     const { data, error } = await db
       .from('blocks')
       .insert({ ...block, user_id: user.id })
@@ -284,6 +545,14 @@ export const blocksDb = {
     const { error } = await db
       .from('blocks')
       .update({ position_x: x, position_y: y })
+      .eq('id', id);
+    if (error) throw error;
+  },
+
+  async updateSize(id: string, width: number, height: number): Promise<void> {
+    const { error } = await db
+      .from('blocks')
+      .update({ width, height })
       .eq('id', id);
     if (error) throw error;
   },
@@ -331,7 +600,17 @@ export const connectionsDb = {
     return data || [];
   },
 
-  async create(sourceBlockId: string, targetBlockId: string): Promise<BlockConnection> {
+  async getOutgoing(blockId: string): Promise<BlockConnection[]> {
+    const { data, error } = await db
+      .from('block_connections')
+      .select('*')
+      .eq('source_block_id', blockId);
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async create(sourceBlockId: string, targetBlockId: string, label?: string): Promise<BlockConnection> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -341,6 +620,7 @@ export const connectionsDb = {
         source_block_id: sourceBlockId,
         target_block_id: targetBlockId,
         user_id: user.id,
+        label,
       })
       .select()
       .single();
@@ -374,4 +654,29 @@ export const connectionsDb = {
     if (error && error.code !== 'PGRST116') throw error;
     return !!data;
   },
+
+  async updateLabel(id: string, label: string | null): Promise<void> {
+    const { error } = await db
+      .from('block_connections')
+      .update({ label })
+      .eq('id', id);
+    if (error) throw error;
+  },
 };
+
+// ============================================
+// UTILITY EXPORTS
+// ============================================
+
+export const database = {
+  profiles: profilesDb,
+  roles: userRolesDb,
+  plans: plansDb,
+  subscriptions: subscriptionsDb,
+  apiKeys: apiKeysDb,
+  boards: boardsDb,
+  blocks: blocksDb,
+  connections: connectionsDb,
+};
+
+export default database;
