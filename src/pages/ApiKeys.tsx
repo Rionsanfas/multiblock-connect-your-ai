@@ -55,7 +55,7 @@ export default function ApiKeys() {
       key_masked: masked,
       key_hash: `mock-hash-${Date.now()}`, // Mock hash
       encryption_method: 'mock',
-      is_valid: testResult?.valid ?? false,
+      is_valid: testResult?.valid ?? true,
       is_default: isFirstForProvider, // First key for provider is default
       usage_count: 0,
     });

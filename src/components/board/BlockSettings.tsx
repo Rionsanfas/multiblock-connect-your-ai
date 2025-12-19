@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppStore } from "@/store/useAppStore";
-import { MODEL_PROVIDERS } from "@/types";
+import { MODEL_CONFIGS, PROVIDERS } from "@/types";
 
 interface BlockSettingsProps {
   blockId: string;
@@ -21,9 +21,12 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
 
   if (!block) return null;
 
-  const allModels = Object.entries(MODEL_PROVIDERS).flatMap(([provider, info]) =>
-    info.models.map((model) => ({ provider, model, name: info.name }))
-  );
+  const allModels = MODEL_CONFIGS.map((m) => ({
+    provider: m.provider,
+    model: m.id,
+    providerName: PROVIDERS[m.provider].name,
+    modelName: m.name,
+  }));
 
   const handleTitleSave = () => {
     if (title.trim()) {

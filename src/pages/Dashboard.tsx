@@ -82,19 +82,6 @@ export default function Dashboard() {
               usedMb={stats.storageUsedMb}
               limitMb={stats.storageLimitMb}
             />
-            
-            {/* Message Usage Card */}
-            <GlassCard className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Messages</span>
-              </div>
-              <div className="text-2xl font-bold">{totalUsage.message_count}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {formatBytes(totalUsage.total_bytes)} total
-              </div>
-            </GlassCard>
-            
             <div className="flex flex-col justify-center items-center h-full">
               <Button onClick={handleCreateBoard} className="gap-2 btn-glow-edge text-primary font-medium rounded-xl py-3 px-6 bg-transparent hover:bg-transparent">
                 <Plus className="h-4 w-4" />
