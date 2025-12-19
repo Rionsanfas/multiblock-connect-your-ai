@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical, Move, Quote } from "lucide-react";
+import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical, Move, Settings } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { BlockTransferDialog } from "./BlockTransferDialog";
 import { useAppStore } from "@/store/useAppStore";
+import { getModelConfig } from "@/types";
 import { api } from "@/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -53,14 +55,9 @@ export function BlockCard({
   const blockMessages = messages.filter((m) => m.block_id === block.id);
   const lastMessage = blockMessages[blockMessages.length - 1];
 
-  const getProviderFromModel = (model: string) => {
-    if (model.includes("gpt")) return "openai";
-    if (model.includes("claude")) return "anthropic";
-    if (model.includes("gemini")) return "google";
-    if (model.includes("pplx")) return "perplexity";
-    if (model.includes("grok")) return "xai";
-    return "openai";
-  };
+  // Use canonical model config to get provider
+  const modelConfig = getModelConfig(block.model_id);
+  const provider = modelConfig?.provider || "openai";
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest(".no-drag")) return;
@@ -203,31 +200,38 @@ export function BlockCard({
     setIsRunning(false);
   };
 
+  const handleDeleteBlock = () => {
+    deleteBlock(block.id);
+    toast.success("Block deleted");
+  };
+
   return (
-    <div
-      className={cn(
-        "block-card absolute select-none transition-shadow duration-150",
-        isDragging ? "cursor-grabbing z-50" : "cursor-move",
-        isResizing && "z-50",
-        isSelected ? "btn-soft-active" : "btn-soft"
-      )}
-      style={{
-        left: block.position.x,
-        top: block.position.y,
-        width: size.width,
-        padding: 0,
-        boxShadow: isDragging 
-          ? "0 20px 60px rgba(0,0,0,0.35), 0 0 24px hsl(var(--accent)/0.25)" 
-          : isSelected 
-            ? "0 8px 32px rgba(0,0,0,0.2), 0 0 16px hsl(var(--accent)/0.15)" 
-            : undefined,
-        willChange: isDragging ? "transform" : "auto",
-      }}
-      onMouseDown={handleMouseDown}
-      onClick={handleClick}
-      onMouseEnter={() => setIsHoveringResize(true)}
-      onMouseLeave={() => !isResizing && setIsHoveringResize(false)}
-    >
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          className={cn(
+            "block-card absolute select-none transition-shadow duration-150",
+            isDragging ? "cursor-grabbing z-50" : "cursor-move",
+            isResizing && "z-50",
+            isSelected ? "btn-soft-active" : "btn-soft"
+          )}
+          style={{
+            left: block.position.x,
+            top: block.position.y,
+            width: size.width,
+            padding: 0,
+            boxShadow: isDragging 
+              ? "0 20px 60px rgba(0,0,0,0.35), 0 0 24px hsl(var(--accent)/0.25)" 
+              : isSelected 
+                ? "0 8px 32px rgba(0,0,0,0.2), 0 0 16px hsl(var(--accent)/0.15)" 
+                : undefined,
+            willChange: isDragging ? "transform" : "auto",
+          }}
+          onMouseDown={handleMouseDown}
+          onClick={handleClick}
+          onMouseEnter={() => setIsHoveringResize(true)}
+          onMouseLeave={() => !isResizing && setIsHoveringResize(false)}
+        >
       {/* Header */}
       <div className="flex items-center gap-2 p-3 border-b border-border/15">
         <div className="p-1 rounded-lg bg-secondary/40">
@@ -280,7 +284,7 @@ export function BlockCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/15 bg-secondary/10 rounded-b-2xl">
-        <ProviderBadge provider={getProviderFromModel(block.model_id)} model={block.model_id} />
+        <ProviderBadge provider={provider} model={modelConfig?.name || block.model_id} />
         <button
           onClick={(e) => { e.stopPropagation(); handleRun(); }}
           disabled={isRunning}
@@ -321,6 +325,49 @@ export function BlockCard({
           onMouseDown={(e) => handleResizeStart(e, 'ne')}
         />
       )}
-    </div>
+
+      {/* Block Transfer Dialog */}
+      <BlockTransferDialog
+        open={showTransferDialog}
+        onOpenChange={setShowTransferDialog}
+        blockId={block.id}
+        currentBoardId={block.board_id}
+      />
+        </div>
+      </ContextMenuTrigger>
+      
+      {/* Right-click context menu */}
+      <ContextMenuContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+        <ContextMenuItem 
+          onClick={() => openBlockChat(block.id)}
+          className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm"
+        >
+          <MessageSquare className="h-4 w-4" />
+          Open Chat
+        </ContextMenuItem>
+        <ContextMenuItem 
+          onClick={() => onSelect()}
+          className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm"
+        >
+          <Settings className="h-4 w-4" />
+          Block Settings
+        </ContextMenuItem>
+        <ContextMenuItem 
+          onClick={() => duplicateBlock(block.id)}
+          className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm"
+        >
+          <Copy className="h-4 w-4" />
+          Duplicate
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem 
+          onClick={handleDeleteBlock}
+          className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm text-destructive focus:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete Block
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

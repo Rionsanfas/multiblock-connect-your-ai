@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
+import { Trash2 } from "lucide-react";
 
 interface ConnectionLineProps {
   from: { x: number; y: number };
@@ -9,7 +11,10 @@ interface ConnectionLineProps {
 }
 
 export function ConnectionLine({ from, to, connectionId, isDrawing }: ConnectionLineProps) {
-  const { deleteConnection } = useAppStore();
+  const { deleteConnection, selectConnection, selectedConnectionId } = useAppStore();
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const isSelected = connectionId === selectedConnectionId;
 
   // Calculate control points for a smooth curve
   const dx = to.x - from.x;
@@ -23,15 +28,37 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
   const glowId = connectionId ? `glow-${connectionId}` : 'glow-drawing';
   const shadowId = connectionId ? `shadow-${connectionId}` : 'shadow-drawing';
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (connectionId && !isDrawing) {
+      selectConnection(isSelected ? null : connectionId);
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (connectionId) {
+      deleteConnection(connectionId);
+    }
+  };
+
+  // Calculate midpoint for delete button
+  const midX = (from.x + to.x) / 2;
+  const midY = (from.y + to.y) / 2;
+
   return (
-    <g className={cn("group", !isDrawing && "cursor-pointer")}>
+    <g 
+      className={cn("group", !isDrawing && "cursor-pointer")}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Definitions for gradients and filters */}
       <defs>
         {/* Main gradient for the line */}
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="hsl(35, 60%, 55%)" />
-          <stop offset="50%" stopColor="hsl(40, 70%, 65%)" />
-          <stop offset="100%" stopColor="hsl(35, 60%, 55%)" />
+          <stop offset="0%" stopColor={isSelected ? "hsl(0, 70%, 55%)" : "hsl(35, 60%, 55%)"} />
+          <stop offset="50%" stopColor={isSelected ? "hsl(0, 80%, 65%)" : "hsl(40, 70%, 65%)"} />
+          <stop offset="100%" stopColor={isSelected ? "hsl(0, 70%, 55%)" : "hsl(35, 60%, 55%)"} />
         </linearGradient>
         
         {/* Glow filter for 3D effect */}
@@ -56,7 +83,21 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
           fill="none"
           stroke="transparent"
           strokeWidth="24"
-          onClick={() => connectionId && deleteConnection(connectionId)}
+          onClick={handleClick}
+          style={{ cursor: 'pointer' }}
+        />
+      )}
+
+      {/* Selection highlight ring */}
+      {isSelected && !isDrawing && (
+        <path
+          d={path}
+          fill="none"
+          stroke="hsl(0, 70%, 55%)"
+          strokeWidth="6"
+          strokeOpacity="0.4"
+          strokeLinecap="round"
+          className="animate-pulse"
         />
       )}
 
@@ -64,7 +105,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
       <path
         d={path}
         fill="none"
-        stroke={isDrawing ? "hsl(40, 70%, 50%)" : "hsl(35, 60%, 45%)"}
+        stroke={isSelected ? "hsl(0, 70%, 50%)" : isDrawing ? "hsl(40, 70%, 50%)" : "hsl(35, 60%, 45%)"}
         strokeWidth="8"
         strokeOpacity="0.15"
         strokeLinecap="round"
@@ -76,7 +117,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
       <path
         d={path}
         fill="none"
-        stroke={isDrawing ? "hsl(40, 70%, 55%)" : "hsl(35, 60%, 50%)"}
+        stroke={isSelected ? "hsl(0, 70%, 55%)" : isDrawing ? "hsl(40, 70%, 55%)" : "hsl(35, 60%, 50%)"}
         strokeWidth="5"
         strokeOpacity="0.3"
         strokeLinecap="round"
@@ -88,14 +129,11 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
         d={path}
         fill="none"
         stroke={`url(#${gradientId})`}
-        strokeWidth="3"
+        strokeWidth={isSelected ? "4" : "3"}
         strokeDasharray={isDrawing ? "8 4" : "none"}
         strokeLinecap="round"
         filter={`url(#${shadowId})`}
-        className={cn(
-          "transition-all duration-300",
-          !isDrawing && "group-hover:stroke-[hsl(var(--destructive))]"
-        )}
+        className="transition-all duration-300"
       />
 
       {/* Inner highlight - creates 3D tube effect */}
@@ -138,15 +176,58 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
           </circle>
         </>
       )}
+
+      {/* Delete button - appears when selected or hovered */}
+      {!isDrawing && (isSelected || isHovered) && (
+        <g 
+          onClick={handleDelete}
+          style={{ cursor: 'pointer' }}
+          className="transition-opacity"
+        >
+          {/* Button background */}
+          <circle
+            cx={midX}
+            cy={midY}
+            r="14"
+            fill="hsl(0, 70%, 50%)"
+            className="drop-shadow-lg"
+          />
+          <circle
+            cx={midX}
+            cy={midY}
+            r="12"
+            fill="hsl(0, 70%, 55%)"
+          />
+          {/* X icon */}
+          <line
+            x1={midX - 4}
+            y1={midY - 4}
+            x2={midX + 4}
+            y2={midY + 4}
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <line
+            x1={midX + 4}
+            y1={midY - 4}
+            x2={midX - 4}
+            y2={midY + 4}
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </g>
+      )}
       
       {/* End point - 3D orb */}
-      <g className={cn(!isDrawing && "group-hover:opacity-80 transition-opacity")}>
+      <g className={cn(!isDrawing && "transition-opacity")}>
         {/* Outer glow */}
         <circle
           cx={to.x}
           cy={to.y}
           r="12"
-          fill="hsl(35, 60%, 45%)"
+          fill={isSelected ? "hsl(0, 70%, 45%)" : "hsl(35, 60%, 45%)"}
           fillOpacity="0.2"
           filter={`url(#${glowId})`}
         />
@@ -157,14 +238,13 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
           r="8"
           fill={`url(#${gradientId})`}
           filter={`url(#${shadowId})`}
-          className={cn(!isDrawing && "group-hover:fill-[hsl(var(--destructive))]")}
         />
         {/* Inner highlight */}
         <circle
           cx={to.x - 2}
           cy={to.y - 2}
           r="3"
-          fill="hsl(40, 90%, 85%)"
+          fill={isSelected ? "hsl(0, 90%, 85%)" : "hsl(40, 90%, 85%)"}
           fillOpacity="0.7"
         />
       </g>
@@ -182,7 +262,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
           cx={from.x - 1}
           cy={from.y - 1}
           r="2"
-          fill="hsl(40, 90%, 85%)"
+          fill={isSelected ? "hsl(0, 90%, 85%)" : "hsl(40, 90%, 85%)"}
           fillOpacity="0.6"
         />
       </g>
