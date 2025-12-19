@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { MODEL_PROVIDERS, type Provider } from "@/types";
+import { PROVIDERS, type Provider } from "@/types";
 
 interface ProviderBadgeProps {
   provider: Provider | string;
@@ -9,7 +9,7 @@ interface ProviderBadgeProps {
 }
 
 export function ProviderBadge({ provider, model, size = "sm", className }: ProviderBadgeProps) {
-  const providerInfo = MODEL_PROVIDERS[provider as Provider];
+  const providerInfo = PROVIDERS[provider as Provider];
   const color = providerInfo?.color || "hsl(0 0% 60%)";
   const name = providerInfo?.name || provider;
 
