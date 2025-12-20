@@ -5,10 +5,12 @@ import { BlockCard } from "@/components/board/BlockCard";
 import { ConnectionLine } from "@/components/board/ConnectionLine";
 import { BlocksSidebar } from "@/components/board/BlocksSidebar";
 import { BlockChatModal } from "@/components/board/BlockChatModal";
+import { ConnectionContextMenu } from "@/components/board/ConnectionContextMenu";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { useCurrentUser, useUserBoard } from "@/hooks/useCurrentUser";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
@@ -26,9 +28,10 @@ export default function BoardCanvas() {
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
+  const [connectionContextMenu, setConnectionContextMenu] = useState<{ connectionId: string; x: number; y: number } | null>(null);
 
   // Use ownership-aware hooks
-  const { user } = useCurrentUser();
+  const { user, isAuthenticated } = useAuth();
   const board = useUserBoard(id);
   const boardBlocks = useBoardBlocks(id);
   const { createBlock } = useBlockActions(id || '');
@@ -82,7 +85,7 @@ export default function BoardCanvas() {
   }, [boardBlocks, zoom]);
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticated) {
       navigate("/auth");
       return;
     }
@@ -93,7 +96,7 @@ export default function BoardCanvas() {
       navigate("/dashboard");
     }
     return () => setCurrentBoard(null);
-  }, [board, id, navigate, setCurrentBoard, user]);
+  }, [board, id, navigate, setCurrentBoard, isAuthenticated]);
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -197,6 +200,11 @@ export default function BoardCanvas() {
     setConnectingFrom(null);
   };
 
+  const handleConnectionContextMenu = (connectionId: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    setConnectionContextMenu({ connectionId, x: e.clientX, y: e.clientY });
+  };
+
   const getBlockCenter = (blockId: string) => {
     const block = boardBlocks.find((b) => b.id === blockId);
     if (!block) return { x: 0, y: 0 };
@@ -244,12 +252,15 @@ export default function BoardCanvas() {
                     const from = getBlockCenter(conn.from_block);
                     const to = getBlockCenter(conn.to_block);
                     return (
-                      <ConnectionLine
-                        key={conn.id}
-                        from={from}
-                        to={to}
-                        connectionId={conn.id}
-                      />
+                      <g key={conn.id} style={{ pointerEvents: 'auto' }}>
+                        <ConnectionLine
+                          from={from}
+                          to={to}
+                          connectionId={conn.id}
+                          boardId={board.id}
+                          onContextMenu={handleConnectionContextMenu(conn.id)}
+                        />
+                      </g>
                     );
                   })}
                   {connectingFrom && (
@@ -290,6 +301,26 @@ export default function BoardCanvas() {
       </div>
 
       {isBlockChatOpen && chatBlockId && <BlockChatModal blockId={chatBlockId} />}
+      
+      {/* Connection Context Menu */}
+      {connectionContextMenu && (
+        <div 
+          className="fixed inset-0 z-50"
+          onClick={() => setConnectionContextMenu(null)}
+        >
+          <div
+            className="absolute"
+            style={{ left: connectionContextMenu.x, top: connectionContextMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ConnectionContextMenu 
+              connectionId={connectionContextMenu.connectionId}
+              boardId={board.id}
+              onClose={() => setConnectionContextMenu(null)}
+            />
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
-import { Trash2 } from "lucide-react";
 
 interface ConnectionLineProps {
   from: { x: number; y: number };
   to: { x: number; y: number };
   connectionId?: string;
   isDrawing?: boolean;
+  boardId?: string;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
-export function ConnectionLine({ from, to, connectionId, isDrawing }: ConnectionLineProps) {
+export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onContextMenu }: ConnectionLineProps) {
   const { deleteConnection, selectConnection, selectedConnectionId } = useAppStore();
   const [isHovered, setIsHovered] = useState(false);
   
@@ -46,11 +47,18 @@ export function ConnectionLine({ from, to, connectionId, isDrawing }: Connection
   const midX = (from.x + to.x) / 2;
   const midY = (from.y + to.y) / 2;
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onContextMenu?.(e);
+  };
+
   return (
     <g 
       className={cn("group", !isDrawing && "cursor-pointer")}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onContextMenu={handleContextMenu}
     >
       {/* Definitions for gradients and filters */}
       <defs>
