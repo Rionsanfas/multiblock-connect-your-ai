@@ -504,13 +504,18 @@ export const boardsDb = {
 
 export const blocksDb = {
   async getForBoard(boardId: string): Promise<Block[]> {
+    console.log('[blocksDb.getForBoard] Fetching blocks for board:', boardId);
     const { data, error } = await supabase
       .from('blocks')
       .select('*')
       .eq('board_id', boardId)
       .order('created_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('[blocksDb.getForBoard] Error:', error);
+      throw error;
+    }
+    console.log('[blocksDb.getForBoard] Fetched:', data?.length, 'blocks');
     return (data || []) as Block[];
   },
 
@@ -527,10 +532,22 @@ export const blocksDb = {
 
   async create(block: Omit<BlockInsert, 'user_id'>): Promise<Block> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) {
+      console.error('[blocksDb.create] No authenticated user');
+      throw new Error('Not authenticated');
+    }
+
+    console.log('[blocksDb.create] Creating block:', {
+      board_id: block.board_id,
+      user_id: user.id,
+      model_id: block.model_id,
+      provider: block.provider,
+      position: { x: block.position_x, y: block.position_y },
+    });
 
     const canCreate = await subscriptionsDb.canCreateBlock(block.board_id);
     if (!canCreate) {
+      console.log('[blocksDb.create] Block limit reached');
       throw new Error('Block limit reached for this board. Please upgrade your plan.');
     }
 
@@ -540,7 +557,16 @@ export const blocksDb = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[blocksDb.create] Insert error:', error);
+      throw error;
+    }
+    
+    console.log('[blocksDb.create] Block created:', {
+      id: data.id,
+      board_id: data.board_id,
+      user_id: data.user_id,
+    });
     return data as Block;
   },
 

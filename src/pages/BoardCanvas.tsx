@@ -121,20 +121,25 @@ export default function BoardCanvas() {
     }
   };
 
-  const handleCanvasDoubleClick = (e: React.MouseEvent) => {
+  const handleCanvasDoubleClick = async (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target === canvasRef.current || target.classList.contains('board-canvas-bg') || (target.closest('.canvas-inner') && !target.closest('.block-card'))) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
         const x = (e.clientX - rect.left - panOffset.x) / zoom;
         const y = (e.clientY - rect.top - panOffset.y) / zoom;
-        const newBlock = createBlock({
-          title: "New Block",
-          position: { x, y },
-          model_id: '', // Empty - requires model selection
-        });
-        if (newBlock) {
-          toast.success("Block created - select a model to start chatting");
+        try {
+          const newBlock = await createBlock({
+            title: "New Block",
+            position: { x, y },
+            model_id: '', // Empty - requires model selection
+          });
+          if (newBlock) {
+            toast.success("Block created - select a model to start chatting");
+          }
+        } catch (error) {
+          console.error('[BoardCanvas] Failed to create block:', error);
+          toast.error(error instanceof Error ? error.message : "Failed to create block");
         }
       }
     }
@@ -154,14 +159,19 @@ export default function BoardCanvas() {
     }
   };
 
-  const handleCreateBlockAtContext = () => {
-    const newBlock = createBlock({
-      title: "New Block",
-      position: contextMenuPos,
-      model_id: '', // Empty - requires model selection
-    });
-    if (newBlock) {
-      toast.success("Block created - select a model to start chatting");
+  const handleCreateBlockAtContext = async () => {
+    try {
+      const newBlock = await createBlock({
+        title: "New Block",
+        position: contextMenuPos,
+        model_id: '', // Empty - requires model selection
+      });
+      if (newBlock) {
+        toast.success("Block created - select a model to start chatting");
+      }
+    } catch (error) {
+      console.error('[BoardCanvas] Failed to create block:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to create block");
     }
   };
 
