@@ -59,11 +59,11 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const currentProvider = currentModel?.provider;
   const needsModelSelection = !block?.model_id || !currentModel;
   const hasKeyForCurrentProvider = currentProvider 
-    ? userApiKeys.some(k => k.provider === currentProvider)
+    ? userApiKeys.keys.some(k => k.provider === currentProvider)
     : false;
 
   const getProviderHasKey = (provider: Provider) => 
-    userApiKeys.some(k => k.provider === provider);
+    userApiKeys.keys.some(k => k.provider === provider);
 
   const handleModelSwitch = (newModelId: string) => {
     const newModel = getModelConfig(newModelId);

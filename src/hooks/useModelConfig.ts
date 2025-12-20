@@ -44,11 +44,8 @@ export function useModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
       openai: [],
       anthropic: [],
       google: [],
-      cohere: [],
-      mistral: [],
-      meta: [],
-      perplexity: [],
       xai: [],
+      deepseek: [],
     };
 
     MODEL_CONFIGS.forEach((model) => {

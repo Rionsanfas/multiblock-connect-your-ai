@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Key, Eye, EyeOff, Trash2, Check, X, Loader2, Shield, Star, ExternalLink } from "lucide-react";
+import { Plus, Key, Eye, EyeOff, Trash2, Check, X, Loader2, Shield, ExternalLink, AlertCircle } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -10,27 +10,73 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
-import { useAppStore } from "@/store/useAppStore";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import { toast } from "sonner";
-import { PROVIDERS, type Provider } from "@/types";
+import type { LLMProvider, ApiKeyDisplay } from "@/types/database.types";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+
+// Supported providers that match Supabase llm_provider enum
+const SUPPORTED_PROVIDERS: { id: LLMProvider; name: string; color: string; apiKeyUrl: string }[] = [
+  { id: 'openai', name: 'OpenAI', color: 'hsl(142 70% 45%)', apiKeyUrl: 'https://platform.openai.com/api-keys' },
+  { id: 'anthropic', name: 'Anthropic', color: 'hsl(24 90% 55%)', apiKeyUrl: 'https://console.anthropic.com/settings/keys' },
+  { id: 'google', name: 'Google', color: 'hsl(217 90% 60%)', apiKeyUrl: 'https://aistudio.google.com/apikey' },
+  { id: 'xai', name: 'xAI', color: 'hsl(0 0% 70%)', apiKeyUrl: 'https://console.x.ai' },
+  { id: 'deepseek', name: 'DeepSeek', color: 'hsl(200 80% 50%)', apiKeyUrl: 'https://platform.deepseek.com/api_keys' },
+];
 
 export default function ApiKeys() {
-  const { apiKeys, addApiKey, removeApiKey, updateApiKey, user } = useAppStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
 
   const [newKey, setNewKey] = useState({
-    provider: "" as Provider | "",
-    name: "",
+    provider: "" as LLMProvider | "",
     key: "",
   });
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ valid: boolean; error?: string } | null>(null);
 
-  // Filter keys for current user
-  const userKeys = apiKeys.filter((k) => k.user_id === user?.id);
+  // Fetch API keys from Supabase
+  const { data: userKeys = [], isLoading: keysLoading, error: keysError } = useQuery({
+    queryKey: ['api-keys'],
+    queryFn: () => api.keys.list(),
+    enabled: isAuthenticated,
+  });
+
+  // Mutation to add/update API key
+  const addKeyMutation = useMutation({
+    mutationFn: ({ provider, apiKey }: { provider: LLMProvider; apiKey: string }) => 
+      api.keys.upsert(provider, apiKey),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      toast.success("API key saved successfully");
+      setIsAddModalOpen(false);
+      setNewKey({ provider: "", key: "" });
+      setTestResult(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to save API key: ${error.message}`);
+    },
+  });
+
+  // Mutation to delete API key
+  const deleteKeyMutation = useMutation({
+    mutationFn: (id: string) => api.keys.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      toast.success("API key removed");
+      setDeleteId(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to remove API key: ${error.message}`);
+    },
+  });
 
   const handleTest = async () => {
     if (!newKey.provider || !newKey.key) return;
@@ -43,46 +89,13 @@ export default function ApiKeys() {
   };
 
   const handleAdd = () => {
-    if (!newKey.provider || !newKey.key || !user) return;
-    
-    const masked = newKey.key.slice(0, 5) + "..." + newKey.key.slice(-4);
-    const isFirstForProvider = !userKeys.some((k) => k.provider === newKey.provider);
-    
-    addApiKey({
-      user_id: user.id,
-      provider: newKey.provider as Provider,
-      name: newKey.name || `${PROVIDERS[newKey.provider as Provider].name} Key`,
-      key_value: newKey.key, // Store the actual key for API calls
-      key_masked: masked,
-      key_hash: `hash-${Date.now()}`,
-      encryption_method: 'mock',
-      is_valid: true, // Valid until proven otherwise at runtime
-      is_default: isFirstForProvider,
-      usage_count: 0,
-    });
-    
-    toast.success("API key added successfully");
-    setIsAddModalOpen(false);
-    setNewKey({ provider: "", name: "", key: "" });
-    setTestResult(null);
+    if (!newKey.provider || !newKey.key) return;
+    addKeyMutation.mutate({ provider: newKey.provider as LLMProvider, apiKey: newKey.key });
   };
 
   const handleDelete = () => {
     if (!deleteId) return;
-    removeApiKey(deleteId);
-    toast.success("API key removed");
-    setDeleteId(null);
-  };
-
-  const handleSetDefault = (keyId: string, provider: Provider) => {
-    // Unset current default for this provider
-    userKeys
-      .filter((k) => k.provider === provider && k.is_default)
-      .forEach((k) => updateApiKey(k.id, { is_default: false }));
-    
-    // Set new default
-    updateApiKey(keyId, { is_default: true });
-    toast.success("Default key updated");
+    deleteKeyMutation.mutate(deleteId);
   };
 
   const toggleShowKey = (id: string) => {
@@ -96,6 +109,31 @@ export default function ApiKeys() {
       year: 'numeric' 
     });
   };
+
+  const getProviderInfo = (providerId: LLMProvider) => {
+    return SUPPORTED_PROVIDERS.find((p) => p.id === providerId) || { 
+      id: providerId, 
+      name: providerId, 
+      color: 'hsl(0 0% 50%)', 
+      apiKeyUrl: '#' 
+    };
+  };
+
+  // Redirect if not authenticated
+  if (!authLoading && !isAuthenticated) {
+    navigate("/auth");
+    return null;
+  }
+
+  if (authLoading || keysLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -116,11 +154,23 @@ export default function ApiKeys() {
           <div className="flex items-center gap-3">
             <Shield className="h-5 w-5 text-primary" />
             <div className="text-sm">
-              <span className="font-medium">Your keys are encrypted</span>
-              <span className="text-muted-foreground ml-2">Keys are stored securely and never exposed after creation</span>
+              <span className="font-medium">Your keys are stored securely</span>
+              <span className="text-muted-foreground ml-2">Keys are encrypted in our database</span>
             </div>
           </div>
         </GlassCard>
+
+        {/* Error State */}
+        {keysError && (
+          <GlassCard variant="soft" className="p-4 rounded-xl mb-6 border-destructive/20">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              <div className="text-sm text-destructive">
+                Failed to load API keys. Please try again.
+              </div>
+            </div>
+          </GlassCard>
+        )}
 
         {userKeys.length === 0 ? (
           <EmptyState
@@ -136,8 +186,8 @@ export default function ApiKeys() {
           />
         ) : (
           <div className="space-y-4">
-            {userKeys.map((key) => {
-              const providerInfo = PROVIDERS[key.provider];
+            {userKeys.map((key: ApiKeyDisplay) => {
+              const providerInfo = getProviderInfo(key.provider);
               return (
                 <GlassCard key={key.id} variant="soft" className="p-5 rounded-2xl">
                   <div className="flex items-center justify-between">
@@ -150,55 +200,31 @@ export default function ApiKeys() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-lg text-white">{key.name}</h3>
-                          {key.is_default && (
-                            <Badge variant="secondary" className="text-xs gap-1">
-                              <Star className="h-3 w-3" />
-                              Default
-                            </Badge>
-                          )}
-                          {!key.is_valid && (
+                          <h3 className="font-semibold text-lg text-foreground">{providerInfo.name}</h3>
+                          {key.is_valid === false && (
                             <Badge variant="destructive" className="text-xs">Invalid</Badge>
                           )}
                         </div>
-                        <p className="text-sm text-white/60 capitalize">{providerInfo.name}</p>
-                        <div className="flex items-center gap-3 text-xs text-white/40 mt-1">
-                          <span className="font-mono">{showKeys[key.id] ? key.key_masked : "••••••••••••"}</span>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <span className="font-mono">{showKeys[key.id] ? key.key_hint : "••••••••••••"}</span>
                           <button 
                             onClick={() => toggleShowKey(key.id)}
-                            className="p-1 rounded hover:bg-white/10 transition-colors"
+                            className="p-1 rounded hover:bg-secondary/50 transition-colors"
                           >
                             {showKeys[key.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                           </button>
                           <span>•</span>
-                          <span>Used {key.usage_count} times</span>
-                          {key.last_used_at && (
-                            <>
-                              <span>•</span>
-                              <span>Last used {formatDate(key.last_used_at)}</span>
-                            </>
-                          )}
+                          <span>Added {formatDate(key.created_at)}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {!key.is_default && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSetDefault(key.id, key.provider)}
-                          className="text-xs"
-                        >
-                          Set Default
-                        </Button>
-                      )}
-                      <button
-                        onClick={() => setDeleteId(key.id)}
-                        className="p-2.5 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => setDeleteId(key.id)}
+                      disabled={deleteKeyMutation.isPending}
+                      className="p-2.5 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </GlassCard>
               );
@@ -218,48 +244,41 @@ export default function ApiKeys() {
               <Label className="text-sm font-medium">Provider</Label>
               <Select 
                 value={newKey.provider} 
-                onValueChange={(v) => setNewKey({ ...newKey, provider: v as Provider })}
+                onValueChange={(v) => setNewKey({ ...newKey, provider: v as LLMProvider })}
               >
                 <SelectTrigger className="select-trigger-shiny">
                   <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
                 <SelectContent className="select-content-shiny">
-                  {Object.entries(PROVIDERS).map(([key, value]) => (
+                  {SUPPORTED_PROVIDERS.map((provider) => (
                     <SelectItem 
-                      key={key} 
-                      value={key}
+                      key={provider.id} 
+                      value={provider.id}
                       className="select-item-shiny"
                     >
-                      {value.name}
+                      {provider.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            
             {/* Get API Key Link */}
             {newKey.provider && (
               <div className="flex items-center gap-2 p-3 rounded-xl bg-secondary/30 border border-border/20">
                 <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Don't have a key?</span>
                 <a
-                  href={PROVIDERS[newKey.provider as Provider].apiKeyUrl}
+                  href={getProviderInfo(newKey.provider as LLMProvider).apiKeyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-primary hover:underline"
                 >
-                  Get one from {PROVIDERS[newKey.provider as Provider].name}
+                  Get one from {getProviderInfo(newKey.provider as LLMProvider).name}
                 </a>
               </div>
             )}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Name (optional)</Label>
-              <Input
-                value={newKey.name}
-                onChange={(e) => setNewKey({ ...newKey, name: e.target.value })}
-                placeholder="e.g., Production Key, Personal Key"
-                className="bg-secondary/40 border-border/20 rounded-xl h-12"
-              />
-            </div>
+            
             <div className="space-y-2">
               <Label className="text-sm font-medium">API Key</Label>
               <Input
@@ -270,9 +289,10 @@ export default function ApiKeys() {
                 className="bg-secondary/40 border-border/20 rounded-xl h-12"
               />
               <p className="text-xs text-muted-foreground">
-                Your key will be encrypted and only the last 4 characters will be visible
+                Your key will be encrypted. Only the first/last characters will be visible.
               </p>
             </div>
+            
             {testResult && (
               <div className={`p-4 rounded-xl flex items-center gap-3 ${
                 testResult.valid 
@@ -296,10 +316,11 @@ export default function ApiKeys() {
             </Button>
             <Button 
               onClick={handleAdd} 
-              disabled={!newKey.provider || !newKey.key}
+              disabled={!newKey.provider || !newKey.key || addKeyMutation.isPending}
               className="rounded-xl btn-3d-shiny text-foreground font-medium"
             >
-              Add Key
+              {addKeyMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save Key
             </Button>
           </DialogFooter>
         </DialogContent>

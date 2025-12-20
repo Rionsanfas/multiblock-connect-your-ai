@@ -47,11 +47,8 @@ const PROVIDER_ENDPOINTS: Record<Provider, string> = {
   openai: 'https://api.openai.com/v1/chat/completions',
   anthropic: 'https://api.anthropic.com/v1/messages',
   google: 'https://generativelanguage.googleapis.com/v1beta/models',
-  cohere: 'https://api.cohere.ai/v1/chat',
-  mistral: 'https://api.mistral.ai/v1/chat/completions',
-  perplexity: 'https://api.perplexity.ai/chat/completions',
   xai: 'https://api.x.ai/v1/chat/completions',
-  meta: 'https://api.llama.meta.com/v1/chat/completions',
+  deepseek: 'https://api.deepseek.com/v1/chat/completions',
 };
 
 // Model ID mappings for each provider (internal ID -> API ID)

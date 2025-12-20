@@ -1,224 +1,328 @@
-// Mock API layer - REPLACE WITH REAL ENDPOINTS LATER
-// All endpoints return promises to simulate async behavior
+// API layer - Real Supabase integration
+// All endpoints return promises with proper error handling
 
+import { boardsDb, blocksDb, apiKeysDb, subscriptionsDb } from '@/lib/database';
+import type { Board, Block, Message } from '@/types';
+import type { LLMProvider } from '@/types/database.types';
 import { useAppStore } from '@/store/useAppStore';
-import type { Board, Block, Message, Connection } from '@/types';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Simulate rate limiting
+// Simulate rate limiting for AI calls
 let lastRunTime = 0;
 const RATE_LIMIT_MS = 2000;
 
 export const api = {
-  // Auth endpoints
-  auth: {
-    // POST /api/auth/magic-link
-    sendMagicLink: async (email: string): Promise<{ success: boolean }> => {
-      await delay(800);
-      console.log('[MOCK API] Magic link sent to:', email);
-      return { success: true };
-    },
-    
-    // GET /api/me
-    getMe: async () => {
-      await delay(300);
-      const { user } = useAppStore.getState();
-      return user;
-    },
-  },
-  
-  // Board endpoints
+  // Board endpoints - Real Supabase integration
   boards: {
     // GET /api/boards - Returns only boards owned by current user
     list: async (): Promise<Board[]> => {
-      await delay(400);
-      const { boards, user } = useAppStore.getState();
-      // Filter by user ownership - in production this is done by RLS
-      if (!user) return [];
-      return boards.filter((b) => b.user_id === user.id);
+      const boards = await boardsDb.getAll();
+      // Transform to legacy format
+      return boards.map((b) => ({
+        id: b.id,
+        title: b.name,
+        user_id: b.user_id,
+        metadata: { description: b.description || undefined },
+        created_at: b.created_at,
+        updated_at: b.updated_at,
+      }));
     },
     
     // GET /api/boards/:id - Only returns if owned by current user
     get: async (id: string): Promise<Board | null> => {
-      await delay(300);
-      const { boards, user } = useAppStore.getState();
-      if (!user) return null;
-      const board = boards.find((b) => b.id === id);
-      // Verify ownership
-      if (board && board.user_id !== user.id) return null;
-      return board || null;
+      const board = await boardsDb.getById(id);
+      if (!board) return null;
+      return {
+        id: board.id,
+        title: board.name,
+        user_id: board.user_id,
+        metadata: { description: board.description || undefined },
+        created_at: board.created_at,
+        updated_at: board.updated_at,
+      };
     },
     
-    // POST /api/boards
+    // POST /api/boards - Creates board in Supabase
     create: async (title: string): Promise<Board> => {
-      await delay(500);
-      const { createBoard } = useAppStore.getState();
-      return createBoard(title);
+      const board = await boardsDb.create({ name: title });
+      return {
+        id: board.id,
+        title: board.name,
+        user_id: board.user_id,
+        metadata: { description: board.description || undefined },
+        created_at: board.created_at,
+        updated_at: board.updated_at,
+      };
     },
     
     // PUT /api/boards/:id
     update: async (id: string, updates: Partial<Board>): Promise<void> => {
-      await delay(400);
-      const { updateBoard } = useAppStore.getState();
-      updateBoard(id, updates);
+      await boardsDb.update(id, { 
+        name: updates.title,
+        description: updates.metadata?.description,
+      });
     },
     
     // DELETE /api/boards/:id
     delete: async (id: string): Promise<void> => {
-      await delay(400);
-      const { deleteBoard } = useAppStore.getState();
-      deleteBoard(id);
+      await boardsDb.delete(id);
     },
     
     // POST /api/boards/:id/duplicate
     duplicate: async (id: string): Promise<Board> => {
-      await delay(600);
-      const { duplicateBoard } = useAppStore.getState();
-      return duplicateBoard(id);
+      const original = await boardsDb.getById(id);
+      if (!original) throw new Error('Board not found');
+      
+      const newBoard = await boardsDb.create({
+        name: `${original.name} (Copy)`,
+        description: original.description,
+      });
+      
+      // TODO: Duplicate blocks and connections
+      return {
+        id: newBoard.id,
+        title: newBoard.name,
+        user_id: newBoard.user_id,
+        metadata: { description: newBoard.description || undefined },
+        created_at: newBoard.created_at,
+        updated_at: newBoard.updated_at,
+      };
     },
     
     // GET /api/boards/:id/export
     export: async (id: string): Promise<object> => {
-      await delay(500);
-      const { boards, blocks, connections, messages } = useAppStore.getState();
-      const board = boards.find((b) => b.id === id);
-      const boardBlocks = blocks.filter((b) => b.board_id === id);
-      const blockIds = boardBlocks.map((b) => b.id);
-      const boardConnections = connections.filter(
-        (c) => blockIds.includes(c.from_block) || blockIds.includes(c.to_block)
-      );
-      const boardMessages = messages.filter((m) => blockIds.includes(m.block_id));
+      const board = await boardsDb.getById(id);
+      const blocks = await blocksDb.getForBoard(id);
       
       return {
         board,
-        blocks: boardBlocks,
-        connections: boardConnections,
-        messages: boardMessages,
+        blocks,
+        connections: [], // TODO: Fetch from Supabase
+        messages: [], // TODO: Fetch from Supabase
         exported_at: new Date().toISOString(),
       };
     },
   },
   
-  // Block endpoints
-  blocks: {
-    // GET /api/boards/:boardId/blocks - Returns blocks for a board with ownership check
-    list: async (boardId: string): Promise<Block[]> => {
-      await delay(300);
-      const { blocks, boards, user } = useAppStore.getState();
-      if (!user) return [];
-      
-      // Verify board ownership
-      const board = boards.find((b) => b.id === boardId);
-      if (!board || board.user_id !== user.id) return [];
-      
-      return blocks.filter((b) => b.board_id === boardId);
+  // API Keys endpoints - Real Supabase integration
+  keys: {
+    // GET /api/keys - List all API keys for current user
+    list: async () => {
+      return apiKeysDb.getAll();
     },
     
-    // GET /api/blocks/:id - Returns block with ownership check via board
+    // POST /api/keys - Add/update an API key
+    upsert: async (provider: LLMProvider, apiKey: string) => {
+      return apiKeysDb.upsert(provider, apiKey);
+    },
+    
+    // DELETE /api/keys/:id
+    delete: async (id: string) => {
+      return apiKeysDb.delete(id);
+    },
+    
+    // GET /api/keys/:provider - Get key for provider
+    getForProvider: async (provider: LLMProvider) => {
+      return apiKeysDb.getForProvider(provider);
+    },
+    
+    // POST /api/keys/test - Test if an API key is valid
+    test: async (
+      provider: string,
+      key: string
+    ): Promise<{ valid: boolean; error?: string }> => {
+      await delay(1500);
+      
+      // Basic format validation
+      if (provider === 'openai' && !key.startsWith('sk-')) {
+        return { valid: false, error: 'Invalid OpenAI key format' };
+      }
+      if (provider === 'anthropic' && !key.startsWith('sk-ant-')) {
+        return { valid: false, error: 'Invalid Anthropic key format' };
+      }
+      if (provider === 'google' && key.length < 20) {
+        return { valid: false, error: 'Invalid Google API key format' };
+      }
+      if (provider === 'xai' && !key.startsWith('xai-')) {
+        return { valid: false, error: 'Invalid xAI key format' };
+      }
+      if (provider === 'deepseek' && !key.startsWith('sk-')) {
+        return { valid: false, error: 'Invalid DeepSeek key format' };
+      }
+      
+      // For now, accept keys that pass format validation
+      return { valid: true };
+    },
+  },
+  
+  // Subscription/limits endpoints
+  limits: {
+    // GET /api/limits - Get current user's usage limits
+    get: async () => {
+      return subscriptionsDb.getUsageLimits();
+    },
+    
+    // GET /api/limits/can-create-board
+    canCreateBoard: async () => {
+      return subscriptionsDb.canCreateBoard();
+    },
+    
+    // GET /api/limits/can-create-block
+    canCreateBlock: async (boardId: string) => {
+      return subscriptionsDb.canCreateBlock(boardId);
+    },
+    
+    // GET /api/limits/can-send-message
+    canSendMessage: async () => {
+      return subscriptionsDb.canSendMessage();
+    },
+  },
+  
+  // Block endpoints - Real Supabase integration
+  blocks: {
+    // GET /api/boards/:boardId/blocks
+    list: async (boardId: string): Promise<Block[]> => {
+      const blocks = await blocksDb.getForBoard(boardId);
+      // Transform to legacy format
+      return blocks.map((b) => ({
+        id: b.id,
+        board_id: b.board_id,
+        title: b.title || 'Untitled Block',
+        type: 'chat' as const,
+        model_id: b.model_id,
+        system_prompt: b.system_prompt || '',
+        config: { temperature: 0.7, max_tokens: 2048 },
+        position: { x: b.position_x, y: b.position_y },
+        created_at: b.created_at,
+        updated_at: b.updated_at,
+      }));
+    },
+    
+    // GET /api/blocks/:id
     get: async (id: string): Promise<Block | null> => {
-      await delay(200);
-      const { blocks, boards, user } = useAppStore.getState();
-      if (!user) return null;
-      
-      const block = blocks.find((b) => b.id === id);
+      const block = await blocksDb.getById(id);
       if (!block) return null;
-      
-      // Verify ownership through board
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) return null;
-      
-      return block;
+      return {
+        id: block.id,
+        board_id: block.board_id,
+        title: block.title || 'Untitled Block',
+        type: 'chat' as const,
+        model_id: block.model_id,
+        system_prompt: block.system_prompt || '',
+        config: { temperature: 0.7, max_tokens: 2048 },
+        position: { x: block.position_x, y: block.position_y },
+        created_at: block.created_at,
+        updated_at: block.updated_at,
+      };
     },
     
     // POST /api/boards/:boardId/blocks
     create: async (boardId: string, data: Partial<Block>): Promise<Block> => {
-      await delay(400);
-      const { createBlock, boards, user } = useAppStore.getState();
-      if (!user) throw new Error('Not authenticated');
+      // Get provider from model_id
+      const { getProviderFromModel } = await import('@/config/models');
+      const provider = data.model_id ? getProviderFromModel(data.model_id) : undefined;
       
-      // Verify board ownership
-      const board = boards.find((b) => b.id === boardId);
-      if (!board || board.user_id !== user.id) {
-        throw new Error('Board not found or access denied');
+      if (!provider) {
+        throw new Error('Invalid model selected');
       }
       
-      return createBlock(boardId, data);
+      // Map frontend provider to Supabase enum
+      const providerMap: Record<string, LLMProvider> = {
+        openai: 'openai',
+        anthropic: 'anthropic', 
+        google: 'google',
+        xai: 'xai',
+        deepseek: 'deepseek',
+      };
+      
+      const supabaseProvider = providerMap[provider];
+      if (!supabaseProvider) {
+        throw new Error(`Provider ${provider} is not supported for blocks`);
+      }
+      
+      const block = await blocksDb.create({
+        board_id: boardId,
+        title: data.title || 'New Block',
+        model_id: data.model_id || '',
+        provider: supabaseProvider,
+        system_prompt: data.system_prompt || 'You are a helpful assistant.',
+        position_x: data.position?.x || 100,
+        position_y: data.position?.y || 100,
+        width: 400,
+        height: 300,
+      });
+      
+      return {
+        id: block.id,
+        board_id: block.board_id,
+        title: block.title || 'Untitled Block',
+        type: 'chat' as const,
+        model_id: block.model_id,
+        system_prompt: block.system_prompt || '',
+        config: { temperature: 0.7, max_tokens: 2048 },
+        position: { x: block.position_x, y: block.position_y },
+        created_at: block.created_at,
+        updated_at: block.updated_at,
+      };
     },
     
     // PUT /api/blocks/:id
     update: async (id: string, updates: Partial<Block>): Promise<void> => {
-      await delay(300);
-      const { updateBlock, blocks, boards, user } = useAppStore.getState();
-      if (!user) throw new Error('Not authenticated');
-      
-      const block = blocks.find((b) => b.id === id);
-      if (!block) throw new Error('Block not found');
-      
-      // Verify ownership through board
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) {
-        throw new Error('Access denied');
-      }
-      
-      updateBlock(id, updates);
+      await blocksDb.update(id, {
+        title: updates.title,
+        system_prompt: updates.system_prompt,
+        model_id: updates.model_id,
+        position_x: updates.position?.x,
+        position_y: updates.position?.y,
+      });
     },
     
     // PUT /api/blocks/:id/position
     updatePosition: async (id: string, position: { x: number; y: number }): Promise<void> => {
-      await delay(100); // Fast for drag operations
-      const { updateBlockPosition, blocks, boards, user } = useAppStore.getState();
-      if (!user) throw new Error('Not authenticated');
-      
-      const block = blocks.find((b) => b.id === id);
-      if (!block) throw new Error('Block not found');
-      
-      // Verify ownership through board
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) {
-        throw new Error('Access denied');
-      }
-      
-      updateBlockPosition(id, position);
+      await blocksDb.update(id, {
+        position_x: position.x,
+        position_y: position.y,
+      });
     },
     
     // DELETE /api/blocks/:id
     delete: async (id: string): Promise<void> => {
-      await delay(300);
-      const { deleteBlock, blocks, boards, user } = useAppStore.getState();
-      if (!user) throw new Error('Not authenticated');
-      
-      const block = blocks.find((b) => b.id === id);
-      if (!block) throw new Error('Block not found');
-      
-      // Verify ownership through board
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) {
-        throw new Error('Access denied');
-      }
-      
-      deleteBlock(id);
+      await blocksDb.delete(id);
     },
     
     // POST /api/blocks/:id/duplicate
     duplicate: async (id: string): Promise<Block> => {
-      await delay(400);
-      const { duplicateBlock, blocks, boards, user } = useAppStore.getState();
-      if (!user) throw new Error('Not authenticated');
+      const original = await blocksDb.getById(id);
+      if (!original) throw new Error('Block not found');
       
-      const block = blocks.find((b) => b.id === id);
-      if (!block) throw new Error('Block not found');
+      const block = await blocksDb.create({
+        board_id: original.board_id,
+        title: `${original.title} (Copy)`,
+        model_id: original.model_id,
+        provider: original.provider,
+        system_prompt: original.system_prompt,
+        position_x: original.position_x + 50,
+        position_y: original.position_y + 50,
+        width: original.width,
+        height: original.height,
+      });
       
-      // Verify ownership through board
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) {
-        throw new Error('Access denied');
-      }
-      
-      return duplicateBlock(id);
+      return {
+        id: block.id,
+        board_id: block.board_id,
+        title: block.title || 'Untitled Block',
+        type: 'chat' as const,
+        model_id: block.model_id,
+        system_prompt: block.system_prompt || '',
+        config: { temperature: 0.7, max_tokens: 2048 },
+        position: { x: block.position_x, y: block.position_y },
+        created_at: block.created_at,
+        updated_at: block.updated_at,
+      };
     },
     
-    // POST /api/blocks/run
+    // POST /api/blocks/run - Run AI inference (still mock for now)
     run: async (
       blockId: string,
       input: string,
@@ -231,20 +335,11 @@ export const api = {
       }
       lastRunTime = now;
       
-      const { blocks, boards, user, addMessage } = useAppStore.getState();
-      if (!user) {
-        return { success: false, error: 'Not authenticated' };
-      }
+      const { addMessage } = useAppStore.getState();
       
-      const block = blocks.find((b) => b.id === blockId);
+      const block = await blocksDb.getById(blockId);
       if (!block) {
         return { success: false, error: 'Block not found' };
-      }
-      
-      // Verify ownership through board
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) {
-        return { success: false, error: 'Access denied' };
       }
       
       // Add user message
@@ -293,20 +388,11 @@ export const api = {
     },
   },
   
-  // Message endpoints
+  // Message endpoints (still using local store for now)
   messages: {
-    // GET /api/blocks/:blockId/messages - Returns messages for a block with ownership check
+    // GET /api/blocks/:blockId/messages
     list: async (blockId: string): Promise<Message[]> => {
-      await delay(200);
-      const { blocks, boards, messages, user } = useAppStore.getState();
-      if (!user) return [];
-      
-      const block = blocks.find((b) => b.id === blockId);
-      if (!block) return [];
-      
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) return [];
-      
+      const { messages } = useAppStore.getState();
       return messages
         .filter((m) => m.block_id === blockId)
         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
@@ -314,16 +400,7 @@ export const api = {
     
     // POST /api/blocks/:blockId/messages
     create: async (blockId: string, content: string, role: 'user' | 'assistant' | 'system' = 'user'): Promise<Message | null> => {
-      await delay(200);
-      const { blocks, boards, addMessage, user } = useAppStore.getState();
-      if (!user) return null;
-      
-      const block = blocks.find((b) => b.id === blockId);
-      if (!block) return null;
-      
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) return null;
-      
+      const { addMessage } = useAppStore.getState();
       return addMessage({
         block_id: blockId,
         role,
@@ -333,136 +410,31 @@ export const api = {
     
     // DELETE /api/messages/:id
     delete: async (messageId: string): Promise<boolean> => {
-      await delay(200);
-      const { messages, blocks, boards, deleteMessage, user } = useAppStore.getState();
-      if (!user) return false;
-      
-      const message = messages.find((m) => m.id === messageId);
-      if (!message) return false;
-      
-      const block = blocks.find((b) => b.id === message.block_id);
-      if (!block) return false;
-      
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) return false;
-      
+      const { deleteMessage } = useAppStore.getState();
       deleteMessage(messageId);
       return true;
     },
     
     // DELETE /api/blocks/:blockId/messages - Clear all messages for a block
     clearBlock: async (blockId: string): Promise<boolean> => {
-      await delay(300);
-      const { blocks, boards, messages, deleteMessage, user } = useAppStore.getState();
-      if (!user) return false;
-      
-      const block = blocks.find((b) => b.id === blockId);
-      if (!block) return false;
-      
-      const board = boards.find((b) => b.id === block.board_id);
-      if (!board || board.user_id !== user.id) return false;
-      
+      const { messages, deleteMessage } = useAppStore.getState();
       const blockMessages = messages.filter((m) => m.block_id === blockId);
       blockMessages.forEach((m) => deleteMessage(m.id));
       return true;
     },
   },
   
-  // API Keys endpoints
-  keys: {
-    // POST /api/keys/test
-    test: async (
-      provider: string,
-      key: string
-    ): Promise<{ valid: boolean; error?: string }> => {
-      await delay(1500);
-      
-      // Mock validation - check format
-      if (provider === 'openai' && !key.startsWith('sk-')) {
-        return { valid: false, error: 'Invalid OpenAI key format' };
-      }
-      if (provider === 'anthropic' && !key.startsWith('sk-ant-')) {
-        return { valid: false, error: 'Invalid Anthropic key format' };
-      }
-      
-      // Random success/failure for demo
-      const success = Math.random() > 0.2;
-      if (!success) {
-        return { valid: false, error: 'API key authentication failed' };
-      }
-      
-      return { valid: true };
-    },
-  },
-  
-  // Import endpoints
-  import: {
-    // POST /api/import/parse
-    parse: async (
-      content: string,
-      format: 'json' | 'txt' | 'md'
-    ): Promise<{ conversations: Array<{ title: string; messages: Array<{ role: string; content: string }> }> }> => {
-      await delay(1000);
-      
-      // Mock parsing - return sample conversations
-      return {
-        conversations: [
-          {
-            title: 'Imported Conversation 1',
-            messages: [
-              { role: 'user', content: 'Hello, I need help with...' },
-              { role: 'assistant', content: 'Of course! I\'d be happy to help...' },
-            ],
-          },
-          {
-            title: 'Imported Conversation 2',
-            messages: [
-              { role: 'user', content: 'Can you explain...' },
-              { role: 'assistant', content: 'Certainly! Let me break this down...' },
-            ],
-          },
-        ],
-      };
-    },
-  },
-  
-  // Checkout endpoints
+  // Checkout endpoints (placeholder)
   checkout: {
-    // POST /api/checkout/create-session
-    createSession: async (
-      sku: string
-    ): Promise<{ session_id: string; checkout_url: string }> => {
-      await delay(800);
-      
+    createSession: async (sku: string): Promise<{ session_id: string; checkout_url: string }> => {
       const sessionId = `cs_${Math.random().toString(36).substring(2, 15)}`;
-      
       return {
         session_id: sessionId,
         checkout_url: `/checkout/success?session_id=${sessionId}&sku=${sku}`,
       };
     },
     
-    // POST /api/checkout/complete
-    complete: async (
-      sessionId: string,
-      sku: string
-    ): Promise<{ success: boolean; plan: object }> => {
-      await delay(1000);
-      
-      const { user, setUser, ltdOffers } = useAppStore.getState();
-      const offer = ltdOffers.find((o) => o.sku === sku);
-      
-      if (user && offer) {
-        // TODO: Replace with Supabase plan update
-        setUser({
-          ...user,
-          plan: 'pro-50', // Default to pro-50 for legacy LTD purchases
-          boards_limit: offer.limits.boards,
-          storage_limit_mb: 5120,
-          storage_used_mb: user.storage_used_mb || 0,
-        });
-      }
-      
+    complete: async (sessionId: string, sku: string): Promise<{ success: boolean; plan: object }> => {
       return {
         success: true,
         plan: {

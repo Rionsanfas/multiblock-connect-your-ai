@@ -40,9 +40,13 @@ export default function Dashboard() {
     // Enforce plan limits
     if (!enforceCreateBoard()) return;
     
-    const board = await api.boards.create("Untitled Board");
-    toast.success("Board created");
-    navigate(`/board/${board.id}`);
+    try {
+      const board = await api.boards.create("Untitled Board");
+      toast.success("Board created");
+      navigate(`/board/${board.id}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create board");
+    }
   };
 
   const handleDuplicate = async (id: string) => {
