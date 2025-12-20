@@ -3,6 +3,7 @@ import { X, Settings, Pencil, Check, Quote, Sparkles, ChevronDown, Brain, Zap, L
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
@@ -192,8 +193,8 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               {/* Model Switcher */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all group border border-border/20",
+                  <Button variant="ghost" className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all group border border-border/20 h-auto",
                     hasKeyForCurrentProvider ? "bg-secondary/50 hover:bg-secondary/70" : "bg-destructive/10 border-destructive/30"
                   )}>
                     {currentModel ? (
@@ -203,7 +204,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                     )}
                     {!hasKeyForCurrentProvider && <Lock className="h-3 w-3 text-destructive" />}
                     <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                  </button>
+                  </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
                   <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20">
@@ -265,7 +266,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
             <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="key-icon-3d p-2 rounded-lg"><Settings className="h-4 w-4" /></button>
+                  <Button variant="ghost" size="icon" className="key-icon-3d p-2 rounded-lg"><Settings className="h-4 w-4" /></Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl" side="bottom" align="end">
                   <div className="font-semibold text-sm">Block Settings</div>
@@ -290,9 +291,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                   </div>
                 </PopoverContent>
               </Popover>
-              <button className="key-icon-3d p-2 rounded-lg" onClick={() => closeBlockChat()}>
+              <Button variant="ghost" size="icon" className="key-icon-3d p-2 rounded-lg" onClick={() => closeBlockChat()}>
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </DialogHeader>
