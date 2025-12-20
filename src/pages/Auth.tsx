@@ -118,7 +118,7 @@ export default function Auth() {
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <Zap className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl">ThinkBlocks</span>
+            <span className="font-bold text-xl">MultiBlock</span>
           </Link>
           <h1 className="text-2xl font-bold mb-2">
             {mode === 'signup' ? 'Create your account' : 'Welcome back'}

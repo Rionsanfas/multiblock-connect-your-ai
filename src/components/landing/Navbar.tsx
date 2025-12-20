@@ -80,21 +80,12 @@ const Navbar = () => {
               Dashboard
             </Link>
           ) : (
-            <>
-              <Link
-                to="/auth"
-                className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-secondary/40"
-              >
-                Login
-              </Link>
-              <Link
-                to="/pricing"
-                className="px-4 py-2 text-sm font-medium rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1"
-              >
-                Get Started
-                <span className="text-xs">↗</span>
-              </Link>
-            </>
+            <Link
+              to="/auth"
+              className="px-4 py-2 text-sm font-medium rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Get Started
+            </Link>
           )}
         </div>
       </div>
@@ -158,22 +149,13 @@ const Navbar = () => {
                 Dashboard
               </Link>
             ) : (
-              <>
-                <Link
-                  to="/auth"
-                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-xl text-sm"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/pricing"
-                  className="bg-primary text-primary-foreground text-center py-3 px-4 rounded-xl text-sm font-medium mt-1"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Get Started
-                </Link>
-              </>
+              <Link
+                to="/auth"
+                className="bg-primary text-primary-foreground text-center py-3 px-4 rounded-xl text-sm font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                Get Started
+              </Link>
             )}
           </div>
         </div>
