@@ -1,93 +1,135 @@
 /**
  * useCurrentUser Hook
  * 
- * Single source of truth for accessing the current authenticated user.
- * All components should use this hook instead of directly accessing
- * the store or importing mock data.
+ * Compatibility layer that wraps useAuth for components
+ * that expect the legacy User type.
  * 
- * This abstraction allows easy swapping between mock and real auth.
+ * For new code, prefer using useAuth directly.
  */
 
-import { useAppStore } from '@/store/useAppStore';
-import type { User } from '@/types';
+import { useMemo } from 'react';
+import { useAuth } from './useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { subscriptionsDb, boardsDb } from '@/lib/database';
+import type { Board as SupabaseBoard } from '@/types/database.types';
+import type { Board as LegacyBoard } from '@/types';
+
+interface LegacyUser {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  plan: string;
+  boards_limit: number;
+  boards_used: number;
+  storage_limit_mb: number;
+  storage_used_mb: number;
+  seats?: number;
+  seats_used?: number;
+  created_at: string;
+}
 
 interface CurrentUserState {
-  user: User | null;
+  user: LegacyUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
 
 /**
- * Get the current user and authentication state
- * 
- * Usage:
- * ```tsx
- * const { user, isAuthenticated } = useCurrentUser();
- * 
- * if (!isAuthenticated) {
- *   return <Navigate to="/auth" />;
- * }
- * 
- * return <div>Welcome, {user.name}</div>;
- * ```
+ * Transform Supabase Board to legacy Board format
+ */
+function transformBoard(board: SupabaseBoard): LegacyBoard {
+  return {
+    id: board.id,
+    title: board.name, // Supabase uses 'name', legacy uses 'title'
+    user_id: board.user_id,
+    metadata: {
+      description: board.description || undefined,
+    },
+    created_at: board.created_at,
+    updated_at: board.updated_at,
+  };
+}
+
+/**
+ * Get the current user and authentication state (legacy compatibility)
  */
 export function useCurrentUser(): CurrentUserState {
-  const user = useAppStore((state) => state.user);
-  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const { user: authUser, profile, isAuthenticated, isLoading: authLoading } = useAuth();
   
+  const { data: subscription, isLoading: subLoading } = useQuery({
+    queryKey: ['user-subscription', authUser?.id],
+    queryFn: () => subscriptionsDb.getCurrent(),
+    enabled: !!authUser,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const { data: boardCount = 0, isLoading: boardsLoading } = useQuery({
+    queryKey: ['user-board-count', authUser?.id],
+    queryFn: () => boardsDb.getCount(),
+    enabled: !!authUser,
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+
+  const legacyUser = useMemo((): LegacyUser | null => {
+    if (!authUser || !profile) return null;
+    
+    return {
+      id: authUser.id,
+      email: authUser.email || profile.email,
+      name: profile.full_name || authUser.email?.split('@')[0] || 'User',
+      avatar: profile.avatar_url || undefined,
+      plan: subscription?.tier || 'free',
+      boards_limit: subscription?.max_boards || 3,
+      boards_used: boardCount,
+      storage_limit_mb: 100, // Default storage
+      storage_used_mb: 0,
+      seats: subscription?.max_seats || 1,
+      seats_used: 1,
+      created_at: profile.created_at,
+    };
+  }, [authUser, profile, subscription, boardCount]);
+
   return {
-    user,
+    user: legacyUser,
     isAuthenticated,
-    isLoading: false, // Will be true during real auth checks
+    isLoading: authLoading || (isAuthenticated && (subLoading || boardsLoading)),
   };
 }
 
 /**
  * Get boards owned by the current user
- * 
- * This ensures proper data isolation - users only see their own boards.
- * When real auth is added, this pattern ensures no data leaks.
+ * Returns legacy Board format for backward compatibility
  */
-export function useUserBoards() {
-  const { user } = useCurrentUser();
-  const boards = useAppStore((state) => state.boards);
+export function useUserBoards(): LegacyBoard[] {
+  const { user: authUser, isAuthenticated } = useAuth();
   
-  // Filter boards by current user
-  // If no user, return empty array (enforces auth requirement)
-  if (!user) {
-    return [];
-  }
-  
-  return boards.filter((board) => board.user_id === user.id);
+  const { data: boards = [] } = useQuery({
+    queryKey: ['user-boards', authUser?.id],
+    queryFn: () => boardsDb.getAll(),
+    enabled: isAuthenticated,
+    staleTime: 30 * 1000, // 30 seconds
+  });
+
+  // Transform to legacy format
+  return useMemo(() => boards.map(transformBoard), [boards]);
 }
 
 /**
  * Get usage stats for the current user
- * 
- * Calculates actual usage from data rather than stored values,
- * ensuring accuracy.
  */
 export function useUserStats() {
   const { user } = useCurrentUser();
-  const boards = useUserBoards();
-  const allBlocks = useAppStore((state) => state.blocks);
   
   if (!user) {
     return null;
   }
   
-  // Calculate actual boards used
-  const boardsUsed = boards.length;
-  
-  // Calculate total blocks across user's boards
-  const boardIds = new Set(boards.map((b) => b.id));
-  const totalBlocks = allBlocks.filter((block) => boardIds.has(block.board_id)).length;
-  
   return {
-    boardsUsed,
+    boardsUsed: user.boards_used,
     boardsLimit: user.boards_limit,
-    boardsRemaining: Math.max(0, user.boards_limit - boardsUsed),
-    totalBlocks,
+    boardsRemaining: Math.max(0, user.boards_limit - user.boards_used),
+    totalBlocks: 0, // Will be calculated per-board
     storageUsedMb: user.storage_used_mb,
     storageLimitMb: user.storage_limit_mb,
     plan: user.plan,
@@ -97,23 +139,24 @@ export function useUserStats() {
 }
 
 /**
- * Get a specific board, with ownership validation
- * Returns null if the board doesn't exist or doesn't belong to current user
+ * Get a specific board with ownership validation
+ * Returns legacy Board format for backward compatibility
  */
-export function useUserBoard(boardId: string | undefined) {
-  const { user } = useCurrentUser();
-  const boards = useAppStore((state) => state.boards);
+export function useUserBoard(boardId: string | undefined): LegacyBoard | null {
+  const { user: authUser, isAuthenticated } = useAuth();
   
-  if (!user || !boardId) {
-    return null;
-  }
-  
-  const board = boards.find((b) => b.id === boardId);
+  const { data: board } = useQuery({
+    queryKey: ['board', boardId],
+    queryFn: () => boardsDb.getById(boardId!),
+    enabled: isAuthenticated && !!boardId,
+    staleTime: 30 * 1000,
+  });
   
   // Verify ownership
-  if (board && board.user_id !== user.id) {
+  if (board && authUser && board.user_id !== authUser.id) {
     return null;
   }
   
-  return board || null;
+  // Transform to legacy format
+  return board ? transformBoard(board) : null;
 }
