@@ -139,24 +139,58 @@ export function useUserStats() {
 }
 
 /**
+ * Result type for useUserBoard hook
+ */
+interface UseUserBoardResult {
+  board: LegacyBoard | null;
+  isLoading: boolean;
+  error: Error | null;
+  isForbidden: boolean;
+}
+
+/**
  * Get a specific board with ownership validation
  * Returns legacy Board format for backward compatibility
+ * Memoized to prevent infinite render loops
  */
-export function useUserBoard(boardId: string | undefined): LegacyBoard | null {
-  const { user: authUser, isAuthenticated } = useAuth();
+export function useUserBoard(boardId: string | undefined): UseUserBoardResult {
+  const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth();
   
-  const { data: board } = useQuery({
+  const { data: board, isLoading: queryLoading, error } = useQuery({
     queryKey: ['board', boardId],
-    queryFn: () => boardsDb.getById(boardId!),
-    enabled: isAuthenticated && !!boardId,
+    queryFn: async () => {
+      console.log('[useUserBoard] Fetching board:', boardId);
+      const result = await boardsDb.getById(boardId!);
+      console.log('[useUserBoard] Fetch result:', { 
+        boardId, 
+        found: !!result, 
+        userId: result?.user_id 
+      });
+      return result;
+    },
+    enabled: !authLoading && isAuthenticated && !!authUser?.id && !!boardId,
     staleTime: 30 * 1000,
   });
   
-  // Verify ownership
-  if (board && authUser && board.user_id !== authUser.id) {
-    return null;
-  }
+  // Memoize the transformed board to ensure stable reference
+  const transformedBoard = useMemo((): LegacyBoard | null => {
+    if (!board) return null;
+    return transformBoard(board);
+  }, [board?.id, board?.name, board?.user_id, board?.description, board?.created_at, board?.updated_at]);
   
-  // Transform to legacy format
-  return board ? transformBoard(board) : null;
+  // Check ownership - memoized
+  const isForbidden = useMemo(() => {
+    if (!board || !authUser) return false;
+    return board.user_id !== authUser.id;
+  }, [board?.user_id, authUser?.id]);
+  
+  // Return null board if forbidden
+  const finalBoard = isForbidden ? null : transformedBoard;
+  
+  return {
+    board: finalBoard,
+    isLoading: authLoading || queryLoading,
+    error: error as Error | null,
+    isForbidden,
+  };
 }

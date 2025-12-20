@@ -1,63 +1,60 @@
 import { useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
-import { useCurrentUser } from './useCurrentUser';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePlanEnforcement } from './usePlanLimits';
+import { blocksDb } from '@/lib/database';
 import type { Block } from '@/types';
 
 /**
- * Hook to get all blocks for a specific board with ownership validation.
- * Ensures blocks are only accessible if the board belongs to the current user.
+ * Hook to get all blocks for a specific board from Supabase.
+ * Supabase is the single source of truth - no Zustand boards for ownership checks.
  */
 export function useBoardBlocks(boardId: string | undefined) {
-  const { user } = useCurrentUser();
-  const { blocks, boards } = useAppStore();
+  const { user, isLoading: authLoading } = useAuth();
 
+  const { data: supabaseBlocks = [] } = useQuery({
+    queryKey: ['board-blocks', boardId],
+    queryFn: async () => {
+      if (!boardId) return [];
+      console.log('[useBoardBlocks] Fetching blocks for board:', boardId);
+      const blocks = await blocksDb.getForBoard(boardId);
+      console.log('[useBoardBlocks] Fetched:', blocks.length, 'blocks');
+      return blocks;
+    },
+    enabled: !authLoading && !!user?.id && !!boardId,
+    staleTime: 30 * 1000,
+  });
+
+  // Transform to legacy format and sort
   const boardBlocks = useMemo(() => {
-    if (!boardId || !user) return [];
-    
-    // Verify board ownership before returning blocks
-    const board = boards.find((b) => b.id === boardId);
-    if (!board || board.user_id !== user.id) return [];
-    
-    return blocks
-      .filter((b) => b.board_id === boardId)
+    return supabaseBlocks
+      .map((b) => ({
+        id: b.id,
+        board_id: b.board_id,
+        title: b.title || 'Untitled Block',
+        type: 'chat' as const,
+        model_id: b.model_id,
+        system_prompt: b.system_prompt || '',
+        config: { temperature: 0.7, max_tokens: 2048 },
+        position: { x: b.position_x, y: b.position_y },
+        created_at: b.created_at,
+        updated_at: b.updated_at,
+      }))
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  }, [blocks, boards, boardId, user]);
+  }, [supabaseBlocks]);
 
   return boardBlocks;
 }
 
 /**
- * Hook to get a single block by ID with ownership validation.
- */
-export function useBlock(blockId: string | undefined) {
-  const { user } = useCurrentUser();
-  const { blocks, boards } = useAppStore();
-
-  const block = useMemo(() => {
-    if (!blockId || !user) return null;
-    
-    const foundBlock = blocks.find((b) => b.id === blockId);
-    if (!foundBlock) return null;
-    
-    // Verify ownership through board
-    const board = boards.find((b) => b.id === foundBlock.board_id);
-    if (!board || board.user_id !== user.id) return null;
-    
-    return foundBlock;
-  }, [blocks, boards, blockId, user]);
-
-  return block;
-}
-
-/**
  * Hook providing block operations with proper ownership validation and plan limits enforcement.
+ * Uses Supabase as the source of truth - no Zustand boards for ownership.
  */
 export function useBlockActions(boardId: string) {
-  const { user } = useCurrentUser();
+  const { user } = useAuth();
   const { enforceCreateBlock } = usePlanEnforcement();
   const { 
-    boards,
     createBlock: storeCreateBlock, 
     updateBlock: storeUpdateBlock, 
     deleteBlock: storeDeleteBlock,
@@ -66,12 +63,8 @@ export function useBlockActions(boardId: string) {
     blocks
   } = useAppStore();
 
-  // Verify board ownership
-  const canModify = useMemo(() => {
-    if (!user || !boardId) return false;
-    const board = boards.find((b) => b.id === boardId);
-    return board?.user_id === user.id;
-  }, [boards, boardId, user]);
+  // User must be authenticated to modify
+  const canModify = !!user?.id && !!boardId;
 
   const createBlock = useCallback((data: Partial<Block>) => {
     if (!canModify) {

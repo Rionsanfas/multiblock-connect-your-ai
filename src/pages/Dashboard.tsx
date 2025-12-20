@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/ui/search-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Spinner } from "@/components/ui/spinner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { useCurrentUser, useUserBoards, useUserStats } from "@/hooks/useCurrentUser";
 import { useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { usePlanEnforcement } from "@/hooks/usePlanLimits";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import { toast } from "sonner";
 import type { Board } from "@/types";
@@ -20,8 +23,10 @@ import { PlanUsageCard } from "@/components/dashboard/PlanUsageCard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { blocks, deleteBoard } = useAppStore();
-  const { user, isAuthenticated } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const { blocks } = useAppStore();
+  const { user: authUser, isLoading: authLoading, isAuthenticated } = useAuth();
+  const { user, isLoading: userLoading } = useCurrentUser();
   const userBoards = useUserBoards();
   const stats = useUserStats();
   const { enforceCreateBoard, canCreateBoard, boardsRemaining, isFree } = usePlanEnforcement();
@@ -29,6 +34,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const filteredBoards = useMemo(() => {
     return userBoards.filter((b) =>
@@ -37,40 +43,117 @@ export default function Dashboard() {
   }, [userBoards, search]);
 
   const handleCreateBoard = async () => {
+    // Auth gating - absolute requirement
+    if (!authUser?.id) {
+      console.error('[Dashboard] Cannot create board: No authenticated user');
+      toast.error('Please sign in to create a board');
+      return;
+    }
+
     // Enforce plan limits
     if (!enforceCreateBoard()) return;
     
+    setIsCreating(true);
+    
     try {
+      console.log('[Dashboard] Creating board...');
       const board = await api.boards.create("Untitled Board");
+      
+      // Verify returned board has valid data
+      if (!board?.id || !board?.user_id) {
+        console.error('[Dashboard] Board creation returned invalid data:', board);
+        throw new Error('Board creation failed: Invalid response');
+      }
+      
+      console.log('[Dashboard] Board created successfully:', { 
+        id: board.id, 
+        user_id: board.user_id,
+        title: board.title 
+      });
+      
+      // Invalidate boards query to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ['user-boards'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-board-count'] });
+      
       toast.success("Board created");
+      
+      // Navigate only after confirmed insert with valid ID
       navigate(`/board/${board.id}`);
     } catch (error) {
+      console.error('[Dashboard] Board creation failed:', error);
       toast.error(error instanceof Error ? error.message : "Failed to create board");
+    } finally {
+      setIsCreating(false);
     }
   };
 
   const handleDuplicate = async (id: string) => {
-    await api.boards.duplicate(id);
-    toast.success("Board duplicated");
+    if (!authUser?.id) return;
+    
+    try {
+      await api.boards.duplicate(id);
+      await queryClient.invalidateQueries({ queryKey: ['user-boards'] });
+      toast.success("Board duplicated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to duplicate board");
+    }
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    await api.boards.delete(deleteId);
-    toast.success("Board deleted");
-    setDeleteId(null);
+    if (!deleteId || !authUser?.id) return;
+    
+    try {
+      console.log('[Dashboard] Deleting board:', deleteId);
+      await api.boards.delete(deleteId);
+      await queryClient.invalidateQueries({ queryKey: ['user-boards'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-board-count'] });
+      console.log('[Dashboard] Board deleted successfully');
+      toast.success("Board deleted");
+    } catch (error) {
+      console.error('[Dashboard] Board deletion failed:', error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete board");
+    } finally {
+      setDeleteId(null);
+    }
   };
 
   const getBlockCount = (boardId: string) => blocks.filter((b) => b.board_id === boardId).length;
 
-  // Redirect if not authenticated - must be after all hooks
-  if (!isAuthenticated || !user) {
-    navigate("/auth");
-    return null;
+  // Auth loading state
+  if (authLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <Spinner className="h-8 w-8" />
+        </div>
+      </DashboardLayout>
+    );
   }
 
-  // Use stats from hook - ensures consistent data
-  if (!stats) return null;
+  // Not authenticated - redirect
+  if (!isAuthenticated || !authUser) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <p className="text-muted-foreground">Please sign in to continue.</p>
+            <Button onClick={() => navigate("/auth")}>Sign In</Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // User data loading
+  if (userLoading || !stats) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <Spinner className="h-8 w-8" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
