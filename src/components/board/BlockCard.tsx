@@ -208,7 +208,7 @@ export function BlockCard({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
+      <ContextMenuTrigger>
         <div
           className={cn(
             "block-card absolute select-none transition-shadow duration-150",
