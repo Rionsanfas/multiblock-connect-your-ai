@@ -1,40 +1,41 @@
 import { useMemo } from 'react';
-import { useAppStore } from '@/store/useAppStore';
-import type { ApiKey, Provider } from '@/types';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from './useAuth';
+import { apiKeysDb } from '@/lib/database';
+import type { LLMProvider, ApiKeyDisplay } from '@/types/database.types';
 
-// ============================================
-// API KEY HOOKS
-// ============================================
+// Supported providers that match Supabase llm_provider enum
+export const SUPPORTED_PROVIDERS: LLMProvider[] = ['openai', 'anthropic', 'google', 'xai', 'deepseek'];
 
 /**
- * Get all API keys for the current user
+ * Get all API keys for the current user from Supabase
  */
-export function useUserApiKeys(): ApiKey[] {
-  const user = useAppStore((s) => s.user);
-  const apiKeys = useAppStore((s) => s.apiKeys);
+export function useUserApiKeys(): { keys: ApiKeyDisplay[]; isLoading: boolean; error: Error | null } {
+  const { user, isAuthenticated } = useAuth();
   
-  return useMemo(() => {
-    if (!user) return [];
-    return apiKeys.filter((k) => k.user_id === user.id);
-  }, [user, apiKeys]);
+  const { data: keys = [], isLoading, error } = useQuery({
+    queryKey: ['api-keys', user?.id],
+    queryFn: () => apiKeysDb.getAll(),
+    enabled: isAuthenticated,
+    staleTime: 30 * 1000, // 30 seconds
+  });
+  
+  return { keys, isLoading, error: error as Error | null };
 }
 
 /**
  * Get API keys grouped by provider
  */
-export function useApiKeysByProvider(): Record<Provider, ApiKey[]> {
-  const keys = useUserApiKeys();
+export function useApiKeysByProvider(): Record<LLMProvider, ApiKeyDisplay[]> {
+  const { keys } = useUserApiKeys();
   
   return useMemo(() => {
-    const grouped: Record<Provider, ApiKey[]> = {
+    const grouped: Record<LLMProvider, ApiKeyDisplay[]> = {
       openai: [],
       anthropic: [],
       google: [],
-      cohere: [],
-      mistral: [],
-      meta: [],
-      perplexity: [],
       xai: [],
+      deepseek: [],
     };
     
     keys.forEach((key) => {
@@ -48,43 +49,25 @@ export function useApiKeysByProvider(): Record<Provider, ApiKey[]> {
 }
 
 /**
- * Get the default API key for a specific provider
- * Keys are considered valid by default - validation happens at runtime
- */
-export function useDefaultApiKey(provider: Provider): ApiKey | undefined {
-  const keys = useUserApiKeys();
-  
-  return useMemo(() => {
-    // First try to find a default key that's marked valid
-    const defaultValid = keys.find((k) => k.provider === provider && k.is_default && k.is_valid);
-    if (defaultValid) return defaultValid;
-    
-    // Then try any key for this provider (consider keys valid by default)
-    return keys.find((k) => k.provider === provider && k.is_default) || 
-           keys.find((k) => k.provider === provider);
-  }, [keys, provider]);
-}
-
-/**
  * Check if user has an API key for a provider
- * Keys are considered valid by default - actual validation happens at runtime when used
  */
-export function useHasValidKey(provider: Provider): boolean {
-  const keys = useUserApiKeys();
-  // Consider any key for the provider as valid - runtime validation will verify
-  return useMemo(() => keys.some((k) => k.provider === provider), [keys, provider]);
+export function useHasValidKey(provider: LLMProvider): boolean {
+  const { keys } = useUserApiKeys();
+  return useMemo(() => keys.some((k) => k.provider === provider && k.is_valid !== false), [keys, provider]);
 }
 
 /**
  * Get providers that have API keys configured
  */
-export function useConfiguredProviders(): Provider[] {
-  const keys = useUserApiKeys();
+export function useConfiguredProviders(): LLMProvider[] {
+  const { keys } = useUserApiKeys();
   
   return useMemo(() => {
-    const providers = new Set<Provider>();
+    const providers = new Set<LLMProvider>();
     keys.forEach((k) => {
-      providers.add(k.provider);
+      if (k.is_valid !== false) {
+        providers.add(k.provider);
+      }
     });
     return Array.from(providers);
   }, [keys]);
@@ -93,52 +76,31 @@ export function useConfiguredProviders(): Provider[] {
 /**
  * Get providers that are missing API keys
  */
-export function useMissingProviders(): Provider[] {
+export function useMissingProviders(): LLMProvider[] {
   const configuredProviders = useConfiguredProviders();
-  const allProviders: Provider[] = ['openai', 'anthropic', 'google', 'cohere', 'mistral', 'meta', 'perplexity', 'xai'];
   
   return useMemo(() => {
-    return allProviders.filter((p) => !configuredProviders.includes(p));
+    return SUPPORTED_PROVIDERS.filter((p) => !configuredProviders.includes(p));
   }, [configuredProviders]);
 }
 
 /**
- * API Key actions hook
- */
-export function useApiKeyActions() {
-  const addApiKey = useAppStore((s) => s.addApiKey);
-  const updateApiKey = useAppStore((s) => s.updateApiKey);
-  const removeApiKey = useAppStore((s) => s.removeApiKey);
-  
-  return { addApiKey, updateApiKey, removeApiKey };
-}
-
-/**
- * Get API key usage stats
+ * Get API key stats
  */
 export function useApiKeyStats() {
-  const keys = useUserApiKeys();
+  const { keys, isLoading } = useUserApiKeys();
   
   return useMemo(() => {
     const totalKeys = keys.length;
-    const validKeys = keys.filter((k) => k.is_valid).length;
-    const totalUsage = keys.reduce((sum, k) => sum + k.usage_count, 0);
+    const validKeys = keys.filter((k) => k.is_valid !== false).length;
     const providersConfigured = new Set(keys.map((k) => k.provider)).size;
     
     return {
+      isLoading,
       totalKeys,
       validKeys,
       invalidKeys: totalKeys - validKeys,
-      totalUsage,
       providersConfigured,
     };
-  }, [keys]);
-}
-
-/**
- * Get the API key ID to use for a given provider (for block references)
- */
-export function useApiKeyIdForProvider(provider: Provider): string | undefined {
-  const defaultKey = useDefaultApiKey(provider);
-  return defaultKey?.id;
+  }, [keys, isLoading]);
 }

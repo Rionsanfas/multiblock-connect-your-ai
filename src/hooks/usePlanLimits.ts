@@ -1,70 +1,108 @@
 import { useMemo } from 'react';
-import { useAppStore } from '@/store/useAppStore';
-import { useCurrentUser, useUserBoards } from './useCurrentUser';
-import { pricingPlans } from '@/mocks/seed';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from './useAuth';
+import { subscriptionsDb, boardsDb, apiKeysDb } from '@/lib/database';
 import { toast } from 'sonner';
 
-// Plan limits configuration
-const PLAN_LIMITS = {
-  free: { boards: 1, blocksPerBoard: 3 },
-  'pro-50': { boards: 50, blocksPerBoard: Infinity },
-  'pro-100': { boards: 100, blocksPerBoard: Infinity },
-  'team-50': { boards: 50, blocksPerBoard: Infinity },
-  'team-100': { boards: 100, blocksPerBoard: Infinity },
-} as const;
-
+/**
+ * Fetch real plan limits from Supabase subscription
+ */
 export function usePlanLimits() {
-  const { user } = useCurrentUser();
-  const boards = useUserBoards();
-  const blocks = useAppStore((s) => s.blocks);
+  const { user, isAuthenticated } = useAuth();
   
+  // Fetch subscription data
+  const { data: subscription, isLoading: subLoading } = useQuery({
+    queryKey: ['user-subscription', user?.id],
+    queryFn: () => subscriptionsDb.getCurrent(),
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch board count
+  const { data: boardCount = 0, isLoading: boardsLoading } = useQuery({
+    queryKey: ['user-board-count', user?.id],
+    queryFn: () => boardsDb.getCount(),
+    enabled: isAuthenticated,
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+
+  // Fetch API key count
+  const { data: apiKeyCount = 0, isLoading: keysLoading } = useQuery({
+    queryKey: ['user-apikey-count', user?.id],
+    queryFn: () => apiKeysDb.getCount(),
+    enabled: isAuthenticated,
+    staleTime: 1 * 60 * 1000,
+  });
+
+  const isLoading = subLoading || boardsLoading || keysLoading;
+
   return useMemo(() => {
-    const plan = user?.plan || 'free';
-    const limits = PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS] || PLAN_LIMITS.free;
-    const isFree = plan === 'free';
-    
-    // Get current plan details
-    const planDetails = pricingPlans.find((p) => p.id === plan) || pricingPlans[0];
+    // Default limits for free tier if no subscription found
+    const maxBoards = subscription?.max_boards ?? 3;
+    const maxBlocksPerBoard = subscription?.max_blocks_per_board ?? 10;
+    const maxApiKeys = subscription?.max_api_keys ?? 2;
+    const maxMessagesPerDay = subscription?.max_messages_per_day ?? 50;
+    const messagesUsedToday = subscription?.messages_used_today ?? 0;
+    const tier = subscription?.tier ?? 'free';
+    const planName = subscription?.plan_name ?? 'Free';
+
+    // -1 means unlimited
+    const isUnlimited = (val: number) => val === -1;
+    const isFree = tier === 'free';
     
     return {
-      plan,
+      // Loading state
+      isLoading,
+      
+      // Plan info
+      plan: tier,
+      planName,
       isFree,
-      planName: planDetails.name,
       
       // Board limits
-      boardsLimit: limits.boards,
-      boardsUsed: boards.length,
-      canCreateBoard: boards.length < limits.boards,
-      boardsRemaining: Math.max(0, limits.boards - boards.length),
+      boardsLimit: maxBoards,
+      boardsUsed: boardCount,
+      canCreateBoard: isUnlimited(maxBoards) || boardCount < maxBoards,
+      boardsRemaining: isUnlimited(maxBoards) ? Infinity : Math.max(0, maxBoards - boardCount),
+      boardsUnlimited: isUnlimited(maxBoards),
       
-      // Block limits (per board)
-      blocksPerBoard: limits.blocksPerBoard,
+      // Block limits (per board) - checked at creation time
+      blocksPerBoard: maxBlocksPerBoard,
+      blocksUnlimited: isUnlimited(maxBlocksPerBoard),
       
-      // Helper to check if can create block on a board
-      getBlocksOnBoard: (boardId: string) => blocks.filter((b) => b.board_id === boardId).length,
-      canCreateBlockOnBoard: (boardId: string) => {
-        const blocksOnBoard = blocks.filter((b) => b.board_id === boardId).length;
-        return blocksOnBoard < limits.blocksPerBoard;
-      },
-      getBlocksRemaining: (boardId: string) => {
-        const blocksOnBoard = blocks.filter((b) => b.board_id === boardId).length;
-        return Math.max(0, limits.blocksPerBoard - blocksOnBoard);
-      },
+      // API key limits
+      apiKeysLimit: maxApiKeys,
+      apiKeysUsed: apiKeyCount,
+      canAddApiKey: isUnlimited(maxApiKeys) || apiKeyCount < maxApiKeys,
+      apiKeysRemaining: isUnlimited(maxApiKeys) ? Infinity : Math.max(0, maxApiKeys - apiKeyCount),
+      apiKeysUnlimited: isUnlimited(maxApiKeys),
+      
+      // Message limits
+      messagesPerDay: maxMessagesPerDay,
+      messagesUsedToday,
+      canSendMessage: isUnlimited(maxMessagesPerDay) || messagesUsedToday < maxMessagesPerDay,
+      messagesRemaining: isUnlimited(maxMessagesPerDay) ? Infinity : Math.max(0, maxMessagesPerDay - messagesUsedToday),
+      messagesUnlimited: isUnlimited(maxMessagesPerDay),
     };
-  }, [user, boards, blocks]);
+  }, [subscription, boardCount, apiKeyCount, isLoading]);
 }
 
 /**
- * Enforcement hook - use this to guard actions
+ * Enforcement hook - use this to guard actions with proper user feedback
  */
 export function usePlanEnforcement() {
   const limits = usePlanLimits();
   
   const enforceCreateBoard = (): boolean => {
+    if (limits.isLoading) {
+      // Allow while loading - actual check happens server-side
+      return true;
+    }
+    
     if (!limits.canCreateBoard) {
       toast.error(`Board limit reached`, {
         description: limits.isFree 
-          ? `Free plan allows only ${limits.boardsLimit} board. Upgrade to create more.`
+          ? `Free plan allows ${limits.boardsLimit} boards. Upgrade for more.`
           : `Your ${limits.planName} plan allows ${limits.boardsLimit} boards.`,
         action: limits.isFree ? {
           label: "Upgrade",
@@ -77,12 +115,37 @@ export function usePlanEnforcement() {
   };
   
   const enforceCreateBlock = (boardId: string): boolean => {
-    if (!limits.canCreateBlockOnBoard(boardId)) {
-      const blocksOnBoard = limits.getBlocksOnBoard(boardId);
-      toast.error(`Block limit reached`, {
+    // Block limits are checked server-side via can_create_block RPC
+    // This is a client-side hint only
+    return true;
+  };
+  
+  const enforceAddApiKey = (): boolean => {
+    if (limits.isLoading) return true;
+    
+    if (!limits.canAddApiKey) {
+      toast.error(`API key limit reached`, {
         description: limits.isFree 
-          ? `Free plan allows only ${limits.blocksPerBoard} blocks per board. Upgrade to add more.`
-          : `You have ${blocksOnBoard} blocks on this board.`,
+          ? `Free plan allows ${limits.apiKeysLimit} API keys. Upgrade for more.`
+          : `Your ${limits.planName} plan allows ${limits.apiKeysLimit} API keys.`,
+        action: limits.isFree ? {
+          label: "Upgrade",
+          onClick: () => window.location.href = "/pricing"
+        } : undefined
+      });
+      return false;
+    }
+    return true;
+  };
+  
+  const enforceSendMessage = (): boolean => {
+    if (limits.isLoading) return true;
+    
+    if (!limits.canSendMessage) {
+      toast.error(`Daily message limit reached`, {
+        description: limits.isFree 
+          ? `Free plan allows ${limits.messagesPerDay} messages per day. Upgrade for more.`
+          : `Your ${limits.planName} plan allows ${limits.messagesPerDay} messages per day.`,
         action: limits.isFree ? {
           label: "Upgrade",
           onClick: () => window.location.href = "/pricing"
@@ -97,5 +160,7 @@ export function usePlanEnforcement() {
     ...limits,
     enforceCreateBoard,
     enforceCreateBlock,
+    enforceAddApiKey,
+    enforceSendMessage,
   };
 }
