@@ -30,12 +30,6 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Redirect if not authenticated
-  if (!isAuthenticated || !user) {
-    navigate("/auth");
-    return null;
-  }
-
   const filteredBoards = useMemo(() => {
     return userBoards.filter((b) =>
       b.title.toLowerCase().includes(search.toLowerCase())
@@ -64,6 +58,12 @@ export default function Dashboard() {
   };
 
   const getBlockCount = (boardId: string) => blocks.filter((b) => b.board_id === boardId).length;
+
+  // Redirect if not authenticated - must be after all hooks
+  if (!isAuthenticated || !user) {
+    navigate("/auth");
+    return null;
+  }
 
   // Use stats from hook - ensures consistent data
   if (!stats) return null;
