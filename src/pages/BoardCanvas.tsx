@@ -224,7 +224,7 @@ export default function BoardCanvas() {
         <BlocksSidebar boardId={board.id} onCenterView={handleCenterView} />
 
         <ContextMenu>
-          <ContextMenuTrigger asChild>
+          <ContextMenuTrigger>
             <div
               ref={canvasRef}
               className={cn(
