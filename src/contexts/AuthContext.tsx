@@ -5,7 +5,7 @@
  * No re-checking on route changes.
  */
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
@@ -27,9 +27,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  const { setUser: setStoreUser } = useAppStore();
+  const initRef = useRef(false);
+
+  const setStoreUser = useAppStore((s) => s.setUser);
 
   // Sync user to Zustand store for legacy compatibility
   const syncUserToStore = useCallback((supabaseUser: User | null) => {
@@ -51,59 +52,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setStoreUser]);
 
   useEffect(() => {
-    // Only initialize once
-    if (isInitialized) return;
+    if (initRef.current) return;
+    initRef.current = true;
 
     let mounted = true;
-    let subscription: { unsubscribe: () => void } | null = null;
 
-    const initialize = async () => {
-      try {
-        // Set up auth state listener FIRST
-        const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
-          (event, currentSession) => {
-            if (!mounted) return;
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      if (!mounted) return;
 
-            // Update state synchronously - no async operations here
-            setSession(currentSession);
-            setUser(currentSession?.user ?? null);
-            syncUserToStore(currentSession?.user ?? null);
+      // Update state synchronously - no async operations here
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      syncUserToStore(currentSession?.user ?? null);
+      setIsLoading(false);
+    });
 
-            // Only set loading false after initial hydration
-            if (isLoading) {
-              setIsLoading(false);
-            }
-          }
-        );
-
-        subscription = authSubscription;
-
-        // THEN check for existing session
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
-        
+    // THEN check for existing session
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: existingSession } }) => {
         if (!mounted) return;
 
         setSession(existingSession);
         setUser(existingSession?.user ?? null);
         syncUserToStore(existingSession?.user ?? null);
         setIsLoading(false);
-        setIsInitialized(true);
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error('Auth initialization error:', error);
-        if (mounted) {
-          setIsLoading(false);
-          setIsInitialized(true);
-        }
-      }
-    };
-
-    initialize();
+        if (mounted) setIsLoading(false);
+      });
 
     return () => {
       mounted = false;
-      subscription?.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, [isInitialized, isLoading, syncUserToStore]);
+  }, [syncUserToStore]);
 
   const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     try {
