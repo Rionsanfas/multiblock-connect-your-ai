@@ -55,7 +55,7 @@ function transformBoard(board: SupabaseBoard): LegacyBoard {
  * Get the current user and authentication state (legacy compatibility)
  */
 export function useCurrentUser(): CurrentUserState {
-  const { user: authUser, profile, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth();
   
   const { data: subscription, isLoading: subLoading } = useQuery({
     queryKey: ['user-subscription', authUser?.id],
@@ -72,13 +72,13 @@ export function useCurrentUser(): CurrentUserState {
   });
 
   const legacyUser = useMemo((): LegacyUser | null => {
-    if (!authUser || !profile) return null;
+    if (!authUser) return null;
     
     return {
       id: authUser.id,
-      email: authUser.email || profile.email,
-      name: profile.full_name || authUser.email?.split('@')[0] || 'User',
-      avatar: profile.avatar_url || undefined,
+      email: authUser.email || '',
+      name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+      avatar: authUser.user_metadata?.avatar_url || undefined,
       plan: subscription?.tier || 'free',
       boards_limit: subscription?.max_boards || 3,
       boards_used: boardCount,
@@ -86,9 +86,9 @@ export function useCurrentUser(): CurrentUserState {
       storage_used_mb: 0,
       seats: subscription?.max_seats || 1,
       seats_used: 1,
-      created_at: profile.created_at,
+      created_at: authUser.created_at || new Date().toISOString(),
     };
-  }, [authUser, profile, subscription, boardCount]);
+  }, [authUser, subscription, boardCount]);
 
   return {
     user: legacyUser,
