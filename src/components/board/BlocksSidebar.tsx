@@ -8,7 +8,7 @@ import { ModelSelector } from "./ModelSelector";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { MODEL_CONFIGS, type Provider } from "@/types";
 import { useNavigate } from "react-router-dom";
-
+import { Button } from "@/components/ui/button";
 interface BlocksSidebarProps {
   boardId: string;
   onCenterView?: () => void;
@@ -58,9 +58,9 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
       <aside className="absolute left-4 top-4 z-20 flex flex-col gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-3 rounded-xl btn-3d-shiny text-foreground">
+            <Button variant="ghost" size="icon" className="p-3 rounded-xl btn-3d-shiny text-foreground">
               <Plus className="h-5 w-5" />
-            </button>
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" side="right" className="w-48 bg-card/95 backdrop-blur-xl border-border/20 rounded-xl p-1">
             <DropdownMenuItem onClick={() => handleCreateWithModel("New Block")} className="rounded-lg text-sm">
@@ -81,12 +81,14 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
         
         <Tooltip>
           <TooltipTrigger asChild>
-            <button 
+            <Button 
+              variant="ghost"
+              size="icon"
               onClick={onCenterView}
               className="p-3 rounded-xl key-icon-3d text-foreground"
             >
               <Focus className="h-5 w-5" />
-            </button>
+            </Button>
           </TooltipTrigger>
           <TooltipContent side="right">
             <p>Center View</p>
