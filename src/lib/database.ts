@@ -1,7 +1,7 @@
 // ============================================
 // THINKBLOCKS DATABASE HELPERS
 // Type-safe Supabase query helpers
-// Version: 2.0.0
+// Version: 2.1.0 - Real Supabase integration
 // ============================================
 
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +9,6 @@ import type {
   Profile,
   ProfileUpdate,
   ApiKey,
-  ApiKeyUpdate,
   Board,
   BoardInsert,
   BoardUpdate,
@@ -17,9 +16,9 @@ import type {
   BlockInsert,
   BlockUpdate,
   BlockConnection,
+  BlockConnectionInsert,
   LLMProvider,
   ApiKeyDisplay,
-  UserRole,
   AppRole,
   SubscriptionPlan,
   UserSubscription,
@@ -27,10 +26,6 @@ import type {
   UsageLimits,
 } from '@/types/database.types';
 import { getKeyHint, isUnlimited } from '@/types/database.types';
-
-// Type assertion helper for tables not yet in generated types
-// Remove this after running database migration and regenerating types
-const db = supabase as any;
 
 // ============================================
 // PROFILES
@@ -41,32 +36,32 @@ export const profilesDb = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
-    return data;
+    return data as Profile | null;
   },
 
   async getById(userId: string): Promise<Profile | null> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data as Profile | null;
   },
 
   async update(updates: ProfileUpdate): Promise<Profile> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('profiles')
       .update(updates)
       .eq('id', user.id)
@@ -74,7 +69,7 @@ export const profilesDb = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as Profile;
   },
 };
 
@@ -87,22 +82,22 @@ export const userRolesDb = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('get_user_role', { _user_id: user.id });
 
     if (error) return 'user';
-    return data ?? 'user';
+    return (data as AppRole) ?? 'user';
   },
 
   async hasRole(role: AppRole): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('has_role', { _user_id: user.id, _role: role });
 
     if (error) return false;
-    return data ?? false;
+    return (data as boolean) ?? false;
   },
 
   async isAdmin(): Promise<boolean> {
@@ -112,16 +107,6 @@ export const userRolesDb = {
   async isSuperAdmin(): Promise<boolean> {
     return await this.hasRole('super_admin');
   },
-
-  async getUserRoles(userId: string): Promise<UserRole[]> {
-    const { data, error } = await db
-      .from('user_roles')
-      .select('*')
-      .eq('user_id', userId);
-
-    if (error) throw error;
-    return data || [];
-  },
 };
 
 // ============================================
@@ -130,36 +115,36 @@ export const userRolesDb = {
 
 export const plansDb = {
   async getAll(): Promise<SubscriptionPlan[]> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('subscription_plans')
       .select('*')
       .eq('is_active', true)
       .order('sort_order', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as SubscriptionPlan[];
   },
 
   async getById(planId: string): Promise<SubscriptionPlan | null> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('subscription_plans')
       .select('*')
       .eq('id', planId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data as SubscriptionPlan | null;
   },
 
-  async getByTier(tier: string): Promise<SubscriptionPlan | null> {
-    const { data, error } = await db
+  async getByTier(tier: 'free' | 'pro' | 'team' | 'enterprise'): Promise<SubscriptionPlan | null> {
+    const { data, error } = await supabase
       .from('subscription_plans')
       .select('*')
       .eq('tier', tier)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data as SubscriptionPlan | null;
   },
 };
 
@@ -172,65 +157,66 @@ export const subscriptionsDb = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('get_user_subscription', { p_user_id: user.id });
 
     if (error) throw error;
-    return data?.[0] ?? null;
+    const result = data as UserSubscriptionWithPlan[] | null;
+    return result?.[0] ?? null;
   },
 
   async getRaw(): Promise<UserSubscription | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('user_subscriptions')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data as UserSubscription | null;
   },
 
   async canCreateBoard(): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('can_create_board', { p_user_id: user.id });
 
-    if (error) return false;
-    return data ?? false;
+    if (error) return true; // Allow if no subscription yet
+    return (data as boolean) ?? true;
   },
 
   async canCreateBlock(boardId: string): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('can_create_block', { p_user_id: user.id, p_board_id: boardId });
 
-    if (error) return false;
-    return data ?? false;
+    if (error) return true;
+    return (data as boolean) ?? true;
   },
 
   async canSendMessage(): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('can_send_message', { p_user_id: user.id });
 
-    if (error) return false;
-    return data ?? false;
+    if (error) return true;
+    return (data as boolean) ?? true;
   },
 
   async incrementMessageCount(): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    await db.rpc('increment_message_count', { p_user_id: user.id });
+    await supabase.rpc('increment_message_count', { p_user_id: user.id });
   },
 
   async getUsageLimits(): Promise<UsageLimits | null> {
@@ -252,7 +238,7 @@ export const subscriptionsDb = {
         unlimited: isUnlimited(subscription.max_boards),
       },
       blocksPerBoard: {
-        used: 0, // Calculated per-board
+        used: 0,
         max: subscription.max_blocks_per_board,
         unlimited: isUnlimited(subscription.max_blocks_per_board),
       },
@@ -267,7 +253,7 @@ export const subscriptionsDb = {
         unlimited: isUnlimited(subscription.max_api_keys),
       },
       seats: {
-        used: 1, // TODO: Implement team seats
+        used: 1,
         max: subscription.max_seats,
         unlimited: isUnlimited(subscription.max_seats),
       },
@@ -284,50 +270,50 @@ export const apiKeysDb = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('api_keys')
       .select('id, provider, key_hint, is_valid, last_validated_at, created_at')
       .eq('user_id', user.id);
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as ApiKeyDisplay[];
   },
 
   async getForProvider(provider: LLMProvider): Promise<ApiKey | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('api_keys')
       .select('*')
       .eq('user_id', user.id)
       .eq('provider', provider)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data as ApiKey | null;
   },
 
   async hasValidKey(provider: LLMProvider): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('user_has_api_key', { p_user_id: user.id, p_provider: provider });
 
     if (error) return false;
-    return data ?? false;
+    return (data as boolean) ?? false;
   },
 
   async getCount(): Promise<number> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return 0;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('get_user_api_key_count', { p_user_id: user.id });
 
     if (error) return 0;
-    return data ?? 0;
+    return (data as number) ?? 0;
   },
 
   async upsert(provider: LLMProvider, apiKey: string): Promise<ApiKey> {
@@ -336,7 +322,7 @@ export const apiKeysDb = {
 
     const keyHint = getKeyHint(apiKey);
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('api_keys')
       .upsert({
         user_id: user.id,
@@ -352,16 +338,16 @@ export const apiKeysDb = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as ApiKey;
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await db.from('api_keys').delete().eq('id', id);
+    const { error } = await supabase.from('api_keys').delete().eq('id', id);
     if (error) throw error;
   },
 
   async markInvalid(id: string): Promise<void> {
-    const { error } = await db
+    const { error } = await supabase
       .from('api_keys')
       .update({ is_valid: false })
       .eq('id', id);
@@ -369,7 +355,7 @@ export const apiKeysDb = {
   },
 
   async markValid(id: string): Promise<void> {
-    const { error } = await db
+    const { error } = await supabase
       .from('api_keys')
       .update({ is_valid: true, last_validated_at: new Date().toISOString() })
       .eq('id', id);
@@ -386,7 +372,7 @@ export const boardsDb = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
-    let query = db
+    let query = supabase
       .from('boards')
       .select('*')
       .eq('user_id', user.id)
@@ -398,42 +384,41 @@ export const boardsDb = {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+    return (data || []) as Board[];
   },
 
   async getById(id: string): Promise<Board | null> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('boards')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data as Board | null;
   },
 
   async create(board: Omit<BoardInsert, 'user_id'>): Promise<Board> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Check limit
     const canCreate = await subscriptionsDb.canCreateBoard();
     if (!canCreate) {
       throw new Error('Board limit reached. Please upgrade your plan.');
     }
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('boards')
       .insert({ ...board, user_id: user.id })
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    return data as Board;
   },
 
   async update(id: string, updates: BoardUpdate): Promise<Board> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('boards')
       .update(updates)
       .eq('id', id)
@@ -441,11 +426,11 @@ export const boardsDb = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as Board;
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await db.from('boards').delete().eq('id', id);
+    const { error } = await supabase.from('boards').delete().eq('id', id);
     if (error) throw error;
   },
 
@@ -461,15 +446,15 @@ export const boardsDb = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return 0;
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('get_user_board_count', { p_user_id: user.id });
 
     if (error) return 0;
-    return data ?? 0;
+    return (data as number) ?? 0;
   },
 
   async updateCanvasPosition(id: string, zoom: number, x: number, y: number): Promise<void> {
-    const { error } = await db
+    const { error } = await supabase
       .from('boards')
       .update({ canvas_zoom: zoom, canvas_position_x: x, canvas_position_y: y })
       .eq('id', id);
@@ -483,49 +468,48 @@ export const boardsDb = {
 
 export const blocksDb = {
   async getForBoard(boardId: string): Promise<Block[]> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('blocks')
       .select('*')
       .eq('board_id', boardId)
       .order('created_at', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as Block[];
   },
 
   async getById(id: string): Promise<Block | null> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('blocks')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data as Block | null;
   },
 
   async create(block: Omit<BlockInsert, 'user_id'>): Promise<Block> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Check limit
     const canCreate = await subscriptionsDb.canCreateBlock(block.board_id);
     if (!canCreate) {
       throw new Error('Block limit reached for this board. Please upgrade your plan.');
     }
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('blocks')
       .insert({ ...block, user_id: user.id })
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    return data as Block;
   },
 
   async update(id: string, updates: BlockUpdate): Promise<Block> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('blocks')
       .update(updates)
       .eq('id', id)
@@ -533,36 +517,28 @@ export const blocksDb = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as Block;
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await db.from('blocks').delete().eq('id', id);
+    const { error } = await supabase.from('blocks').delete().eq('id', id);
     if (error) throw error;
   },
 
   async updatePosition(id: string, x: number, y: number): Promise<void> {
-    const { error } = await db
+    const { error } = await supabase
       .from('blocks')
       .update({ position_x: x, position_y: y })
       .eq('id', id);
     if (error) throw error;
   },
 
-  async updateSize(id: string, width: number, height: number): Promise<void> {
-    const { error } = await db
-      .from('blocks')
-      .update({ width, height })
-      .eq('id', id);
-    if (error) throw error;
-  },
-
   async getCount(boardId: string): Promise<number> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .rpc('get_board_block_count', { p_board_id: boardId });
 
     if (error) return 0;
-    return data ?? 0;
+    return (data as number) ?? 0;
   },
 };
 
@@ -572,111 +548,69 @@ export const blocksDb = {
 
 export const connectionsDb = {
   async getForBoard(boardId: string): Promise<BlockConnection[]> {
+    // Get all blocks for the board first
     const blocks = await blocksDb.getForBoard(boardId);
     const blockIds = blocks.map(b => b.id);
-
+    
     if (blockIds.length === 0) return [];
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('block_connections')
       .select('*')
       .or(`source_block_id.in.(${blockIds.join(',')}),target_block_id.in.(${blockIds.join(',')})`);
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as BlockConnection[];
   },
 
-  async getIncoming(blockId: string): Promise<{
-    connection_id: string;
-    source_block_id: string;
-    source_title: string;
-    source_provider: LLMProvider;
-    source_model_id: string;
-  }[]> {
-    const { data, error } = await db
-      .rpc('get_block_incoming_connections', { p_block_id: blockId });
+  async getIncoming(blockId: string): Promise<BlockConnection[]> {
+    const { data, error } = await supabase
+      .from('block_connections')
+      .select('*')
+      .eq('target_block_id', blockId);
 
-    if (error) return [];
-    return data || [];
+    if (error) throw error;
+    return (data || []) as BlockConnection[];
   },
 
   async getOutgoing(blockId: string): Promise<BlockConnection[]> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('block_connections')
       .select('*')
       .eq('source_block_id', blockId);
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as BlockConnection[];
   },
 
-  async create(sourceBlockId: string, targetBlockId: string, label?: string): Promise<BlockConnection> {
+  async create(connection: Omit<BlockConnectionInsert, 'user_id'>): Promise<BlockConnection> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('block_connections')
-      .insert({
-        source_block_id: sourceBlockId,
-        target_block_id: targetBlockId,
-        user_id: user.id,
-        label,
-      })
+      .insert({ ...connection, user_id: user.id })
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    return data as BlockConnection;
   },
 
   async delete(id: string): Promise<void> {
-    const { error } = await db.from('block_connections').delete().eq('id', id);
-    if (error) throw error;
-  },
-
-  async deleteBetween(sourceBlockId: string, targetBlockId: string): Promise<void> {
-    const { error } = await db
-      .from('block_connections')
-      .delete()
-      .eq('source_block_id', sourceBlockId)
-      .eq('target_block_id', targetBlockId);
+    const { error } = await supabase.from('block_connections').delete().eq('id', id);
     if (error) throw error;
   },
 
   async exists(sourceBlockId: string, targetBlockId: string): Promise<boolean> {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('block_connections')
       .select('id')
       .eq('source_block_id', sourceBlockId)
       .eq('target_block_id', targetBlockId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error;
-    return !!data;
-  },
-
-  async updateLabel(id: string, label: string | null): Promise<void> {
-    const { error } = await db
-      .from('block_connections')
-      .update({ label })
-      .eq('id', id);
-    if (error) throw error;
+    if (error) return false;
+    return data !== null;
   },
 };
-
-// ============================================
-// UTILITY EXPORTS
-// ============================================
-
-export const database = {
-  profiles: profilesDb,
-  roles: userRolesDb,
-  plans: plansDb,
-  subscriptions: subscriptionsDb,
-  apiKeys: apiKeysDb,
-  boards: boardsDb,
-  blocks: blocksDb,
-  connections: connectionsDb,
-};
-
-export default database;
