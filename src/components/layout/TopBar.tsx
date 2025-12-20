@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppStore } from "@/store/useAppStore";
@@ -140,12 +141,14 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
             {/* Instructions Popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="key-icon-3d p-2.5 rounded-xl"
                   title="Board Instructions"
                 >
                   <HelpCircle className="h-4 w-4" />
-                </button>
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-72 p-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="bottom" align="end">
                 <div className="space-y-2">
@@ -166,9 +169,9 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
             {/* Settings Popover - All Blocks with inline settings */}
             <Popover>
               <PopoverTrigger asChild>
-                <button className="key-icon-3d p-2.5 rounded-xl">
+                <Button variant="ghost" size="icon" className="key-icon-3d p-2.5 rounded-xl">
                   <Settings className="h-4 w-4" />
-                </button>
+                </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="bottom" align="end">
                 <div className="space-y-3">
@@ -179,15 +182,15 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                     <div className="space-y-3 max-h-80 overflow-auto">
                       {boardBlocks.map((block) => (
                         <Popover key={block.id}>
-                          <PopoverTrigger asChild>
+                          <PopoverTrigger>
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors cursor-pointer">
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate">{block.title}</p>
                                 <p className="text-xs text-muted-foreground truncate">{block.model_id}</p>
                               </div>
-                              <button className="key-icon-3d p-1.5 rounded-lg ml-2">
+                              <span className="key-icon-3d p-1.5 rounded-lg ml-2">
                                 <Settings className="h-3.5 w-3.5" />
-                              </button>
+                              </span>
                             </div>
                           </PopoverTrigger>
                           <PopoverContent className="w-72 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="left" align="start">
