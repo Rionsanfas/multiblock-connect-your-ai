@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
+import { Spinner } from "@/components/ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
@@ -17,6 +18,7 @@ import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
 import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useModelConfig";
 import { useBlockIncomingContext } from "@/hooks/useBlockConnections";
+import { useBlock } from "@/hooks/useBlockData";
 import { getModelConfig, PROVIDERS, type Provider } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -35,8 +37,27 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const { blocks, closeBlockChat, deleteMessage, updateBlock, addMessage } = useAppStore();
-  const block = blocks.find((b) => b.id === blockId);
+  // CRITICAL: Fetch block from Supabase, NOT from Zustand
+  const { data: supabaseBlock, isLoading: blockLoading, error: blockError } = useBlock(blockId);
+  
+  const { closeBlockChat, deleteMessage, addMessage } = useAppStore();
+  
+  // Transform Supabase block to UI format
+  const block = supabaseBlock ? {
+    id: supabaseBlock.id,
+    board_id: supabaseBlock.board_id,
+    title: supabaseBlock.title || 'Untitled Block',
+    type: 'chat' as const,
+    model_id: supabaseBlock.model_id,
+    system_prompt: supabaseBlock.system_prompt || '',
+    config: { temperature: 0.7, max_tokens: 2048 },
+    position: { x: supabaseBlock.position_x, y: supabaseBlock.position_y },
+    source_context: undefined,
+    created_at: supabaseBlock.created_at,
+    updated_at: supabaseBlock.updated_at,
+  } : null;
+
+  console.log('[BlockChatModal] blockId:', blockId, 'block loaded:', !!block, 'loading:', blockLoading);
   
   const userApiKeys = useUserApiKeys();
   const modelsByProvider = useModelsGroupedByProvider();
@@ -54,7 +75,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   useEffect(() => {
     if (block) setTitle(block.title);
-  }, [block]);
+  }, [block?.title]);
 
   const currentModel = block?.model_id ? getModelConfig(block.model_id) : null;
   const currentProvider = currentModel?.provider;
@@ -66,7 +87,16 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const getProviderHasKey = (provider: Provider) => 
     userApiKeys.keys.some(k => k.provider === provider);
 
-  const handleModelSwitch = (newModelId: string) => {
+  // Update block in Supabase via the blocksDb
+  const updateBlockInDb = useCallback(async (updates: { model_id?: string; title?: string }) => {
+    if (!blockId) return;
+    const { blocksDb } = await import('@/lib/database');
+    await blocksDb.update(blockId, updates);
+    // Invalidate the block query to refetch
+    const { useQueryClient } = await import('@tanstack/react-query');
+  }, [blockId]);
+
+  const handleModelSwitch = async (newModelId: string) => {
     const newModel = getModelConfig(newModelId);
     if (!newModel) return;
     
@@ -76,13 +106,23 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
       return;
     }
     
-    updateBlock(blockId, { model_id: newModelId });
-    toast.success(`Switched to ${newModel.name}`);
+    try {
+      const { blocksDb } = await import('@/lib/database');
+      await blocksDb.update(blockId, { model_id: newModelId });
+      toast.success(`Switched to ${newModel.name}`);
+    } catch (error) {
+      toast.error('Failed to switch model');
+    }
   };
 
-  const handleTitleSave = () => {
-    if (title.trim()) {
-      updateBlock(blockId, { title: title.trim() });
+  const handleTitleSave = async () => {
+    if (title.trim() && blockId) {
+      try {
+        const { blocksDb } = await import('@/lib/database');
+        await blocksDb.update(blockId, { title: title.trim() });
+      } catch (error) {
+        toast.error('Failed to save title');
+      }
     }
     setIsEditingTitle(false);
   };
@@ -179,7 +219,41 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   const handleGoToApiKeys = () => navigate("/api-keys");
 
-  if (!block) return null;
+  // Loading state
+  if (blockLoading) {
+    return (
+      <Dialog open onOpenChange={() => closeBlockChat()}>
+        <DialogContent className="max-w-2xl w-[90vw] h-[80vh] max-h-[700px] flex flex-col items-center justify-center rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl">
+          <Spinner className="h-8 w-8" />
+          <p className="text-muted-foreground mt-4">Loading block...</p>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Error state
+  if (blockError) {
+    return (
+      <Dialog open onOpenChange={() => closeBlockChat()}>
+        <DialogContent className="max-w-2xl w-[90vw] h-[80vh] max-h-[700px] flex flex-col items-center justify-center rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl">
+          <p className="text-destructive">Failed to load block</p>
+          <Button variant="outline" onClick={() => closeBlockChat()} className="mt-4">Close</Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Block not found
+  if (!block) {
+    return (
+      <Dialog open onOpenChange={() => closeBlockChat()}>
+        <DialogContent className="max-w-2xl w-[90vw] h-[80vh] max-h-[700px] flex flex-col items-center justify-center rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl">
+          <p className="text-muted-foreground">Block not found</p>
+          <Button variant="outline" onClick={() => closeBlockChat()} className="mt-4">Close</Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open onOpenChange={() => closeBlockChat()}>
