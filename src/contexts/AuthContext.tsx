@@ -61,6 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (!mounted) return;
 
+      console.log('[Auth] onAuthStateChange:', {
+        event,
+        userId: currentSession?.user?.id ?? null,
+        hasSession: !!currentSession,
+      });
+
       // Update state synchronously - no async operations here
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
@@ -69,10 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // THEN check for existing session
+    console.log('[Auth] Checking existing session...');
     supabase.auth
       .getSession()
       .then(({ data: { session: existingSession } }) => {
         if (!mounted) return;
+
+        console.log('[Auth] getSession resolved:', {
+          userId: existingSession?.user?.id ?? null,
+          hasSession: !!existingSession,
+        });
 
         setSession(existingSession);
         setUser(existingSession?.user ?? null);
@@ -80,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       })
       .catch((error) => {
-        console.error('Auth initialization error:', error);
+        console.error('[Auth] Initialization error:', error);
         if (mounted) setIsLoading(false);
       });
 

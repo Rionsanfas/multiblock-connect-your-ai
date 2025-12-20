@@ -7,13 +7,15 @@ import { BlocksSidebar } from "@/components/board/BlocksSidebar";
 import { BlockChatModal } from "@/components/board/BlockChatModal";
 import { ConnectionContextMenu } from "@/components/board/ConnectionContextMenu";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { Spinner } from "@/components/ui/spinner";
 import { useAppStore } from "@/store/useAppStore";
-import { useCurrentUser, useUserBoard } from "@/hooks/useCurrentUser";
+import { useUserBoard } from "@/hooks/useCurrentUser";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, AlertCircle, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const DEFAULT_BLOCK_WIDTH = 280;
 const DEFAULT_BLOCK_HEIGHT = 160;
@@ -30,11 +32,18 @@ export default function BoardCanvas() {
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [connectionContextMenu, setConnectionContextMenu] = useState<{ connectionId: string; x: number; y: number } | null>(null);
 
-  // Use ownership-aware hooks
-  const { user, isAuthenticated } = useAuth();
-  const board = useUserBoard(id);
-  const boardBlocks = useBoardBlocks(id);
-  const { createBlock } = useBlockActions(id || '');
+  // Auth gating - ABSOLUTE: no operations until auth resolved
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  
+  // Board fetch - only enabled when auth is resolved and user exists
+  const { board, isLoading: boardLoading, error: boardError, isForbidden } = useUserBoard(
+    // Only pass boardId when auth is fully resolved
+    !authLoading && isAuthenticated && user?.id ? id : undefined
+  );
+  
+  // Blocks - only fetch when we have a valid board
+  const boardBlocks = useBoardBlocks(board?.id);
+  const { createBlock } = useBlockActions(board?.id || '');
 
   const {
     connections,
@@ -61,8 +70,8 @@ export default function BoardCanvas() {
     // Calculate bounding box of all blocks
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     boardBlocks.forEach(block => {
-      const width = block.config?.width || DEFAULT_BLOCK_WIDTH;
-      const height = block.config?.height || DEFAULT_BLOCK_HEIGHT;
+      const width = DEFAULT_BLOCK_WIDTH;
+      const height = DEFAULT_BLOCK_HEIGHT;
       minX = Math.min(minX, block.position.x);
       minY = Math.min(minY, block.position.y);
       maxX = Math.max(maxX, block.position.x + width);
@@ -84,19 +93,21 @@ export default function BoardCanvas() {
     setPanOffset({ x: newPanX, y: newPanY });
   }, [boardBlocks, zoom]);
 
+  // Sync board to Zustand store only when board ID changes
+  const boardIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/auth");
-      return;
-    }
-    if (board) {
+    // Only update store when we have a valid board with a different ID
+    if (board && board.id !== boardIdRef.current) {
+      boardIdRef.current = board.id;
       setCurrentBoard(board);
-    } else if (id) {
-      // Board not found or access denied
-      navigate("/dashboard");
     }
-    return () => setCurrentBoard(null);
-  }, [board, id, navigate, setCurrentBoard, isAuthenticated]);
+    
+    // Cleanup on unmount
+    return () => {
+      boardIdRef.current = null;
+      setCurrentBoard(null);
+    };
+  }, [board?.id, setCurrentBoard]);
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -208,16 +219,110 @@ export default function BoardCanvas() {
   const getBlockCenter = (blockId: string) => {
     const block = boardBlocks.find((b) => b.id === blockId);
     if (!block) return { x: 0, y: 0 };
-    const width = block.config?.width || 280;
-    const height = block.config?.height || 160;
+    const width = DEFAULT_BLOCK_WIDTH;
+    const height = DEFAULT_BLOCK_HEIGHT;
     return {
       x: block.position.x + width / 2,
       y: block.position.y + height / 2,
     };
   };
 
-  if (!board) return null;
+  // === STATE HANDLING ===
 
+  // 1. Auth loading - show spinner
+  if (authLoading) {
+    return (
+      <DashboardLayout hideSidebar>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <Spinner className="h-8 w-8 mx-auto" />
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // 2. Not authenticated - redirect to auth
+  if (!isAuthenticated || !user) {
+    // Use effect for navigation to avoid render-phase side effects
+    return (
+      <DashboardLayout hideSidebar>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <Lock className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h2 className="text-xl font-semibold">Authentication Required</h2>
+            <p className="text-muted-foreground">Please sign in to access this board.</p>
+            <Button onClick={() => navigate("/auth")}>Sign In</Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // 3. Board loading - show spinner
+  if (boardLoading) {
+    return (
+      <DashboardLayout hideSidebar>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <Spinner className="h-8 w-8 mx-auto" />
+            <p className="text-muted-foreground">Loading board...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // 4. Forbidden (RLS) - show access denied
+  if (isForbidden) {
+    return (
+      <DashboardLayout hideSidebar>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <Lock className="h-12 w-12 mx-auto text-destructive" />
+            <h2 className="text-xl font-semibold">Access Denied</h2>
+            <p className="text-muted-foreground">You don't have permission to view this board.</p>
+            <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // 5. Error state
+  if (boardError) {
+    return (
+      <DashboardLayout hideSidebar>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <AlertCircle className="h-12 w-12 mx-auto text-destructive" />
+            <h2 className="text-xl font-semibold">Error Loading Board</h2>
+            <p className="text-muted-foreground">{boardError.message || 'An unexpected error occurred.'}</p>
+            <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // 6. Board not found
+  if (!board) {
+    return (
+      <DashboardLayout hideSidebar>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4">
+            <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
+            <h2 className="text-xl font-semibold">Board Not Found</h2>
+            <p className="text-muted-foreground">This board doesn't exist or has been deleted.</p>
+            <Button onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // 7. Board loaded - render canvas
   return (
     <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls hideSidebar>
       <div className="flex h-full relative">

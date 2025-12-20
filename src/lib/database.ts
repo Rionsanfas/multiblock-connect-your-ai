@@ -370,7 +370,10 @@ export const apiKeysDb = {
 export const boardsDb = {
   async getAll(includeArchived = false): Promise<Board[]> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
+    if (!user) {
+      console.log('[boardsDb.getAll] No authenticated user');
+      return [];
+    }
 
     let query = supabase
       .from('boards')
@@ -383,27 +386,46 @@ export const boardsDb = {
     }
 
     const { data, error } = await query;
-    if (error) throw error;
+    if (error) {
+      console.error('[boardsDb.getAll] Error:', error);
+      throw error;
+    }
+    console.log('[boardsDb.getAll] Fetched:', data?.length, 'boards');
     return (data || []) as Board[];
   },
 
   async getById(id: string): Promise<Board | null> {
+    console.log('[boardsDb.getById] Fetching board:', id);
     const { data, error } = await supabase
       .from('boards')
       .select('*')
       .eq('id', id)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[boardsDb.getById] Error:', error);
+      throw error;
+    }
+    console.log('[boardsDb.getById] Result:', { 
+      found: !!data, 
+      id: data?.id, 
+      user_id: data?.user_id 
+    });
     return data as Board | null;
   },
 
   async create(board: Omit<BoardInsert, 'user_id'>): Promise<Board> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) {
+      console.error('[boardsDb.create] No authenticated user');
+      throw new Error('Not authenticated');
+    }
+
+    console.log('[boardsDb.create] Creating board for user:', user.id);
 
     const canCreate = await subscriptionsDb.canCreateBoard();
     if (!canCreate) {
+      console.log('[boardsDb.create] Board limit reached');
       throw new Error('Board limit reached. Please upgrade your plan.');
     }
 
@@ -413,7 +435,16 @@ export const boardsDb = {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[boardsDb.create] Insert error:', error);
+      throw error;
+    }
+    
+    console.log('[boardsDb.create] Board created:', { 
+      id: data.id, 
+      user_id: data.user_id,
+      name: data.name 
+    });
     return data as Board;
   },
 
@@ -430,8 +461,13 @@ export const boardsDb = {
   },
 
   async delete(id: string): Promise<void> {
+    console.log('[boardsDb.delete] Deleting board:', id);
     const { error } = await supabase.from('boards').delete().eq('id', id);
-    if (error) throw error;
+    if (error) {
+      console.error('[boardsDb.delete] Error:', error);
+      throw error;
+    }
+    console.log('[boardsDb.delete] Board deleted successfully');
   },
 
   async archive(id: string): Promise<Board> {
