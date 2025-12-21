@@ -23,7 +23,29 @@ function encrypt(text: string, key: string): string {
   return btoa(String.fromCharCode(...encrypted));
 }
 
+// Check if a string is valid base64
+function isValidBase64(str: string): boolean {
+  if (!str || str.length === 0) return false;
+  // Base64 should only contain these characters
+  const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+  if (!base64Regex.test(str)) return false;
+  // Length should be multiple of 4 (with padding)
+  if (str.length % 4 !== 0) return false;
+  try {
+    atob(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function decrypt(encryptedBase64: string, key: string): string {
+  // If not valid base64, it's likely a legacy plaintext key - return as-is
+  if (!isValidBase64(encryptedBase64)) {
+    console.log("[decrypt] Detected legacy plaintext key, returning as-is");
+    return encryptedBase64;
+  }
+  
   const encrypted = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
   const keyBytes = new TextEncoder().encode(key);
   const decrypted = new Uint8Array(encrypted.length);
