@@ -1,7 +1,7 @@
 // ============================================
 // THINKBLOCKS DATABASE HELPERS
 // Type-safe Supabase query helpers
-// Version: 2.1.0 - Real Supabase integration
+// Version: 3.0.0 - Production-ready with messages
 // ============================================
 
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +17,9 @@ import type {
   BlockUpdate,
   BlockConnection,
   BlockConnectionInsert,
+  Message,
+  MessageInsert,
+  MessageUpdate,
   LLMProvider,
   ApiKeyDisplay,
   AppRole,
@@ -186,7 +189,7 @@ export const subscriptionsDb = {
     const { data, error } = await supabase
       .rpc('can_create_board', { p_user_id: user.id });
 
-    if (error) return true; // Allow if no subscription yet
+    if (error) return true;
     return (data as boolean) ?? true;
   },
 
@@ -460,14 +463,21 @@ export const boardsDb = {
     return data as Board;
   },
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<{ success: boolean; error?: string }> {
     console.log('[boardsDb.delete] Deleting board:', id);
-    const { error } = await supabase.from('boards').delete().eq('id', id);
+    const { error, count } = await supabase
+      .from('boards')
+      .delete()
+      .eq('id', id)
+      .select();
+    
     if (error) {
       console.error('[boardsDb.delete] Error:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
+    
     console.log('[boardsDb.delete] Board deleted successfully');
+    return { success: true };
   },
 
   async archive(id: string): Promise<Board> {
@@ -582,9 +592,63 @@ export const blocksDb = {
     return data as Block;
   },
 
-  async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('blocks').delete().eq('id', id);
-    if (error) throw error;
+  async delete(id: string): Promise<{ success: boolean; deletedId?: string; error?: string }> {
+    console.log('[blocksDb.delete] Starting delete for block:', id);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('[blocksDb.delete] No authenticated user');
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // First verify the block exists and belongs to the user
+    const { data: existingBlock, error: fetchError } = await supabase
+      .from('blocks')
+      .select('id, user_id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('[blocksDb.delete] Error fetching block:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
+
+    if (!existingBlock) {
+      console.error('[blocksDb.delete] Block not found:', id);
+      return { success: false, error: 'Block not found' };
+    }
+
+    if (existingBlock.user_id !== user.id) {
+      console.error('[blocksDb.delete] User does not own block:', { blockUserId: existingBlock.user_id, userId: user.id });
+      return { success: false, error: 'Access denied' };
+    }
+
+    // Perform the delete
+    const { error: deleteError } = await supabase
+      .from('blocks')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    if (deleteError) {
+      console.error('[blocksDb.delete] Delete error:', deleteError);
+      return { success: false, error: deleteError.message };
+    }
+
+    // Verify deletion by trying to fetch the block again
+    const { data: checkBlock } = await supabase
+      .from('blocks')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (checkBlock) {
+      console.error('[blocksDb.delete] Block still exists after delete!');
+      return { success: false, error: 'Delete failed - block still exists' };
+    }
+
+    console.log('[blocksDb.delete] Block successfully deleted:', id);
+    return { success: true, deletedId: id };
   },
 
   async updatePosition(id: string, x: number, y: number): Promise<void> {
@@ -605,12 +669,113 @@ export const blocksDb = {
 };
 
 // ============================================
+// MESSAGES (Supabase-backed)
+// ============================================
+
+export const messagesDb = {
+  async getForBlock(blockId: string): Promise<Message[]> {
+    console.log('[messagesDb.getForBlock] Fetching messages for block:', blockId);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.warn('[messagesDb.getForBlock] No authenticated user');
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('block_id', blockId)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[messagesDb.getForBlock] Error:', error);
+      throw error;
+    }
+    
+    console.log('[messagesDb.getForBlock] Fetched:', data?.length, 'messages');
+    return (data || []) as Message[];
+  },
+
+  async create(blockId: string, role: 'user' | 'assistant' | 'system', content: string, meta?: Record<string, unknown>): Promise<Message> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
+
+    console.log('[messagesDb.create] Creating message:', {
+      block_id: blockId,
+      role,
+      content_length: content.length,
+    });
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        block_id: blockId,
+        user_id: user.id,
+        role,
+        content,
+        meta: meta as unknown as Record<string, never>,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[messagesDb.create] Error:', error);
+      throw error;
+    }
+
+    console.log('[messagesDb.create] Message created:', data.id);
+    return data as Message;
+  },
+
+  async update(id: string, content: string, meta?: Record<string, unknown>): Promise<Message> {
+    const updates: Record<string, unknown> = { content };
+    if (meta) updates.meta = meta;
+
+    const { data, error } = await supabase
+      .from('messages')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as Message;
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  async deleteForBlock(blockId: string): Promise<void> {
+    console.log('[messagesDb.deleteForBlock] Deleting all messages for block:', blockId);
+    
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .eq('block_id', blockId);
+    
+    if (error) {
+      console.error('[messagesDb.deleteForBlock] Error:', error);
+      throw error;
+    }
+  },
+};
+
+// ============================================
 // BLOCK CONNECTIONS
 // ============================================
 
 export const connectionsDb = {
   async getForBoard(boardId: string): Promise<BlockConnection[]> {
-    // Get all blocks for the board first
     const blocks = await blocksDb.getForBoard(boardId);
     const blockIds = blocks.map(b => b.id);
     

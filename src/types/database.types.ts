@@ -1,7 +1,7 @@
 // ============================================
 // THINKBLOCKS DATABASE TYPES
 // TypeScript types matching Supabase schema
-// Version: 2.0.0
+// Version: 2.1.0 - Added Messages table
 // ============================================
 
 // ============================================
@@ -15,6 +15,8 @@ export type AppRole = 'user' | 'admin' | 'super_admin';
 export type SubscriptionTier = 'free' | 'pro' | 'team' | 'enterprise';
 
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'paused';
+
+export type MessageRole = 'user' | 'assistant' | 'system';
 
 // ============================================
 // TABLE TYPES: PROFILES
@@ -298,6 +300,35 @@ export interface BlockConnectionInsert {
 }
 
 // ============================================
+// TABLE TYPES: MESSAGES
+// ============================================
+
+export interface Message {
+  id: string;
+  user_id: string;
+  block_id: string;
+  role: MessageRole;
+  content: string;
+  meta: Record<string, unknown>;
+  size_bytes: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MessageInsert {
+  user_id?: string; // Set automatically by RLS context
+  block_id: string;
+  role: MessageRole;
+  content: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface MessageUpdate {
+  content?: string;
+  meta?: Record<string, unknown>;
+}
+
+// ============================================
 // DATABASE SCHEMA TYPE (for Supabase client)
 // ============================================
 
@@ -343,6 +374,11 @@ export interface Database {
         Row: BlockConnection;
         Insert: BlockConnectionInsert;
         Update: never;
+      };
+      messages: {
+        Row: Message;
+        Insert: MessageInsert;
+        Update: MessageUpdate;
       };
     };
     Enums: {
@@ -418,6 +454,10 @@ export interface Database {
       increment_message_count: {
         Args: { p_user_id: string };
         Returns: void;
+      };
+      user_owns_block: {
+        Args: { p_user_id: string; p_block_id: string };
+        Returns: boolean;
       };
     };
   };
@@ -498,40 +538,16 @@ export const TIER_INFO: Record<SubscriptionTier, { name: string; color: string }
 };
 
 // ============================================
-// VALIDATION HELPERS
+// UTILITY FUNCTIONS
 // ============================================
 
-export const LLM_PROVIDERS: LLMProvider[] = ['openai', 'anthropic', 'google', 'xai', 'deepseek'];
+/** Generate display hint for API key (first 4 + last 4 chars) */
+export function getKeyHint(key: string): string {
+  if (key.length <= 8) return key.slice(0, 4) + '...';
+  return key.slice(0, 4) + '...' + key.slice(-4);
+}
 
-export const isValidProvider = (value: string): value is LLMProvider => {
-  return LLM_PROVIDERS.includes(value as LLMProvider);
-};
-
-export const isValidTier = (value: string): value is SubscriptionTier => {
-  return ['free', 'pro', 'team', 'enterprise'].includes(value);
-};
-
-export const isValidRole = (value: string): value is AppRole => {
-  return ['user', 'admin', 'super_admin'].includes(value);
-};
-
-export const getKeyHint = (apiKey: string): string => {
-  if (apiKey.length < 4) return '****';
-  return `...${apiKey.slice(-4)}`;
-};
-
-/** Check if a limit is unlimited (-1 means unlimited) */
-export const isUnlimited = (limit: number): boolean => limit === -1;
-
-/** Format a limit for display */
-export const formatLimit = (used: number, max: number): string => {
-  if (max === -1) return `${used} / ∞`;
-  return `${used} / ${max}`;
-};
-
-/** Calculate usage percentage (returns 0 for unlimited) */
-export const getUsagePercentage = (used: number, max: number): number => {
-  if (max === -1) return 0;
-  if (max === 0) return 100;
-  return Math.min(100, Math.round((used / max) * 100));
-};
+/** Check if a limit value represents unlimited (-1) */
+export function isUnlimited(value: number): boolean {
+  return value === -1;
+}

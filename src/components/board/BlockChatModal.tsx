@@ -62,7 +62,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const userApiKeys = useUserApiKeys();
   const modelsByProvider = useModelsGroupedByProvider();
   const providers = useAvailableProviders();
-  const blockMessages = useBlockMessages(blockId);
+  const { messages: blockMessages, isLoading: messagesLoading } = useBlockMessages(blockId);
   const blockUsage = useBlockUsage(blockId);
   const incomingContext = useBlockIncomingContext(blockId);
   

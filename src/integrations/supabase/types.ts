@@ -226,6 +226,50 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          block_id: string
+          content: string
+          created_at: string
+          id: string
+          meta: Json | null
+          role: string
+          size_bytes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          block_id: string
+          content: string
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          role: string
+          size_bytes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          block_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          role?: string
+          size_bytes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -451,6 +495,10 @@ export type Database = {
           p_provider: Database["public"]["Enums"]["llm_provider"]
           p_user_id: string
         }
+        Returns: boolean
+      }
+      user_owns_block: {
+        Args: { p_block_id: string; p_user_id: string }
         Returns: boolean
       }
     }
