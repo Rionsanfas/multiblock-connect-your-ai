@@ -105,21 +105,25 @@ export const api = {
     },
   },
   
-  // API Keys endpoints - Real Supabase integration
+  // API Keys endpoints - Using secure encryption service
   keys: {
-    // GET /api/keys - List all API keys for current user
+    // GET /api/keys - List all API keys for current user (display only, no raw keys)
     list: async () => {
-      return apiKeysDb.getAll();
+      // Import dynamically to avoid circular deps
+      const { apiKeyService } = await import('@/services/apiKeyService');
+      return apiKeyService.list();
     },
     
-    // POST /api/keys - Add/update an API key
+    // POST /api/keys - Add/update an API key via encrypted edge function
     upsert: async (provider: LLMProvider, apiKey: string) => {
-      return apiKeysDb.upsert(provider, apiKey);
+      const { apiKeyService } = await import('@/services/apiKeyService');
+      return apiKeyService.upsert(provider, apiKey);
     },
     
-    // DELETE /api/keys/:id
+    // DELETE /api/keys/:id - Delete via encrypted edge function
     delete: async (id: string) => {
-      return apiKeysDb.delete(id);
+      const { apiKeyService } = await import('@/services/apiKeyService');
+      return apiKeyService.delete(id);
     },
     
     // GET /api/keys/:provider - Get key for provider
