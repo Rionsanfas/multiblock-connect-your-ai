@@ -1,60 +1,19 @@
 /**
- * Block Connections hooks - Ownership-aware access to connections
+ * Block Connections hooks - Supabase-backed connections
  * 
  * CRITICAL: Connections are DIRECTIONAL context inheritance.
  * If Block A → Block B: B receives A's full chat history as context. A does NOT receive B's.
+ * 
+ * All connections are stored in Supabase. Zustand is NOT used.
  */
 
 import { useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
+import { connectionsDb } from '@/lib/database';
 import { useAppStore } from '@/store/useAppStore';
-import { useCurrentUser } from './useCurrentUser';
-import type { Connection, BlockContext, ConnectionContextType, Message } from '@/types';
-
-/**
- * Get all connections for a specific board (via its blocks)
- */
-export function useBoardConnections(boardId: string | undefined) {
-  const { blocks, connections } = useAppStore();
-  const { user } = useCurrentUser();
-
-  return useMemo(() => {
-    if (!boardId || !user) return [];
-    
-    const boardBlockIds = blocks
-      .filter((b) => b.board_id === boardId)
-      .map((b) => b.id);
-    
-    return connections.filter(
-      (c) => boardBlockIds.includes(c.from_block) || boardBlockIds.includes(c.to_block)
-    );
-  }, [blocks, connections, boardId, user]);
-}
-
-/**
- * Get incoming connections TO a specific block (blocks that feed INTO this block)
- * These source blocks provide context to the target block.
- */
-export function useBlockIncomingConnections(blockId: string | undefined) {
-  const { connections } = useAppStore();
-
-  return useMemo(() => {
-    if (!blockId) return [];
-    return connections.filter((c) => c.to_block === blockId && c.enabled);
-  }, [connections, blockId]);
-}
-
-/**
- * Get outgoing connections FROM a specific block (blocks this block feeds INTO)
- * This block provides context to those target blocks.
- */
-export function useBlockOutgoingConnections(blockId: string | undefined) {
-  const { connections } = useAppStore();
-
-  return useMemo(() => {
-    if (!blockId) return [];
-    return connections.filter((c) => c.from_block === blockId && c.enabled);
-  }, [connections, blockId]);
-}
+import type { Message } from '@/types';
+import type { BlockConnection } from '@/types/database.types';
 
 /**
  * Context limit in characters to prevent token overflow
@@ -62,35 +21,151 @@ export function useBlockOutgoingConnections(blockId: string | undefined) {
 const MAX_CONTEXT_CHARS = 8000;
 const MAX_MESSAGES_PER_SOURCE = 20;
 
+export type ConnectionContextType = 'full' | 'summary';
+
+/**
+ * Transformed connection for UI use
+ */
+export interface Connection {
+  id: string;
+  from_block: string;
+  to_block: string;
+  label?: string | null;
+  enabled: boolean;
+  context_type: ConnectionContextType;
+  transform_template?: string;
+  created_at: string;
+}
+
+/**
+ * Transform Supabase BlockConnection to UI Connection
+ */
+function transformConnection(c: BlockConnection): Connection {
+  return {
+    id: c.id,
+    from_block: c.source_block_id,
+    to_block: c.target_block_id,
+    label: c.label,
+    enabled: true, // All Supabase connections are enabled
+    context_type: 'full', // Default to full context
+    created_at: c.created_at,
+  };
+}
+
+/**
+ * Get all connections for a specific board from Supabase
+ */
+export function useBoardConnections(boardId: string | undefined) {
+  const { user, isLoading: authLoading } = useAuth();
+
+  const { data: connections = [], isLoading } = useQuery({
+    queryKey: ['board-connections', boardId],
+    queryFn: async () => {
+      if (!boardId) return [];
+      console.log('[useBoardConnections] Fetching connections for board:', boardId);
+      const conns = await connectionsDb.getForBoard(boardId);
+      console.log('[useBoardConnections] Fetched:', conns.length, 'connections');
+      return conns.map(transformConnection);
+    },
+    enabled: !authLoading && !!user?.id && !!boardId,
+    staleTime: 10 * 1000,
+  });
+
+  return { connections, isLoading };
+}
+
+/**
+ * Get incoming connections TO a specific block (blocks that feed INTO this block)
+ * These source blocks provide context to the target block.
+ */
+export function useBlockIncomingConnections(blockId: string | undefined) {
+  const { user, isLoading: authLoading } = useAuth();
+
+  const { data: connections = [], isLoading } = useQuery({
+    queryKey: ['block-incoming-connections', blockId],
+    queryFn: async () => {
+      if (!blockId) return [];
+      console.log('[useBlockIncomingConnections] Fetching for block:', blockId);
+      const conns = await connectionsDb.getIncoming(blockId);
+      console.log('[useBlockIncomingConnections] Found:', conns.length, 'incoming connections');
+      return conns.map(transformConnection);
+    },
+    enabled: !authLoading && !!user?.id && !!blockId,
+    staleTime: 10 * 1000,
+  });
+
+  return { connections, isLoading };
+}
+
+/**
+ * Get outgoing connections FROM a specific block (blocks this block feeds INTO)
+ */
+export function useBlockOutgoingConnections(blockId: string | undefined) {
+  const { user, isLoading: authLoading } = useAuth();
+
+  const { data: connections = [], isLoading } = useQuery({
+    queryKey: ['block-outgoing-connections', blockId],
+    queryFn: async () => {
+      if (!blockId) return [];
+      const conns = await connectionsDb.getOutgoing(blockId);
+      return conns.map(transformConnection);
+    },
+    enabled: !authLoading && !!user?.id && !!blockId,
+    staleTime: 10 * 1000,
+  });
+
+  return { connections, isLoading };
+}
+
+/**
+ * Context from a connected block for prompt injection
+ */
+export interface BlockContext {
+  connection_id: string;
+  source_block_id: string;
+  source_block_title: string;
+  context_type: ConnectionContextType;
+  content: string;
+  created_at: string;
+}
+
 /**
  * Get the FULL incoming context for a block from all connected source blocks.
- * This includes the entire chat history from source blocks, not just the last message.
+ * This includes the entire chat history from source blocks.
  * 
  * Rule: If Block A → Block B, then B receives A's chat history as context.
  */
 export function useBlockIncomingContext(blockId: string | undefined): BlockContext[] {
-  const { blocks, messages, connections } = useAppStore();
+  const { connections } = useBlockIncomingConnections(blockId);
+  const { blocks, messages } = useAppStore();
 
   return useMemo(() => {
-    if (!blockId) return [];
+    if (!blockId || connections.length === 0) return [];
 
-    const incomingConnections = connections.filter(
-      (c) => c.to_block === blockId && c.enabled
-    );
+    console.log('[useBlockIncomingContext] Building context for block:', blockId);
+    console.log('[useBlockIncomingContext] Incoming connections:', connections.length);
 
     const contextList: BlockContext[] = [];
 
-    for (const conn of incomingConnections) {
+    for (const conn of connections) {
       const sourceBlock = blocks.find((b) => b.id === conn.from_block);
-      if (!sourceBlock) continue;
+      if (!sourceBlock) {
+        console.log('[useBlockIncomingContext] Source block not found:', conn.from_block);
+        continue;
+      }
 
-      // Get ALL messages from the source block (not just last assistant message)
+      // Get ALL messages from the source block
       const sourceMessages = messages
         .filter((m) => m.block_id === conn.from_block)
         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .slice(-MAX_MESSAGES_PER_SOURCE); // Limit to recent messages
+        .slice(-MAX_MESSAGES_PER_SOURCE);
 
-      if (sourceMessages.length === 0) continue;
+      if (sourceMessages.length === 0) {
+        console.log('[useBlockIncomingContext] No messages in source block:', sourceBlock.title);
+        continue;
+      }
+
+      console.log('[useBlockIncomingContext] Injecting', sourceMessages.length, 'messages from:', sourceBlock.title);
 
       // Build context content from source block's chat history
       let content = '';
@@ -137,15 +212,80 @@ export function useBlockIncomingContext(blockId: string | undefined): BlockConte
       }
     }
 
+    console.log('[useBlockIncomingContext] Total context sources:', contextList.length);
     return contextList;
-  }, [blocks, messages, connections, blockId]);
+  }, [blockId, connections, blocks, messages]);
 }
 
 /**
- * Check if a connection already exists between two blocks (in either direction)
+ * Connection actions with Supabase persistence
+ */
+export function useConnectionActions(boardId: string) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: async ({ from_block, to_block }: { from_block: string; to_block: string }) => {
+      // Prevent self-connections
+      if (from_block === to_block) {
+        throw new Error('Cannot create self-connection');
+      }
+
+      // Check if connection already exists
+      const exists = await connectionsDb.exists(from_block, to_block);
+      if (exists) {
+        throw new Error('Connection already exists');
+      }
+
+      console.log('[useConnectionActions] Creating connection:', from_block, '->', to_block);
+      return connectionsDb.create({
+        source_block_id: from_block,
+        target_block_id: to_block,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board-connections', boardId] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (connectionId: string) => {
+      console.log('[useConnectionActions] Deleting connection:', connectionId);
+      return connectionsDb.delete(connectionId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board-connections', boardId] });
+    },
+  });
+
+  const create = useCallback((
+    fromBlockId: string,
+    toBlockId: string,
+  ): void => {
+    if (!user) {
+      console.error('Connection creation denied: not authenticated');
+      return;
+    }
+    createMutation.mutate({ from_block: fromBlockId, to_block: toBlockId });
+  }, [user, createMutation]);
+
+  const remove = useCallback((connectionId: string): void => {
+    deleteMutation.mutate(connectionId);
+  }, [deleteMutation]);
+
+  return {
+    create,
+    remove,
+    isCreating: createMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+  };
+}
+
+/**
+ * Check if a connection already exists between two blocks
  */
 export function useConnectionExists(fromBlockId: string, toBlockId: string): boolean {
-  const { connections } = useAppStore();
+  const { connections } = useBoardConnections(undefined);
   
   return useMemo(() => {
     return connections.some(
@@ -155,131 +295,11 @@ export function useConnectionExists(fromBlockId: string, toBlockId: string): boo
 }
 
 /**
- * Check if a bidirectional connection exists
- */
-export function useBidirectionalConnectionExists(blockA: string, blockB: string): boolean {
-  const { connections } = useAppStore();
-  
-  return useMemo(() => {
-    const hasAtoB = connections.some(c => c.from_block === blockA && c.to_block === blockB);
-    const hasBtoA = connections.some(c => c.from_block === blockB && c.to_block === blockA);
-    return hasAtoB && hasBtoA;
-  }, [connections, blockA, blockB]);
-}
-
-/**
- * Connection actions with ownership validation
- */
-export function useConnectionActions(boardId: string) {
-  const { user } = useCurrentUser();
-
-  const validateBlockOwnership = useCallback((blockId: string): boolean => {
-    if (!user) return false;
-    const { blocks, boards } = useAppStore.getState();
-    const block = blocks.find((b) => b.id === blockId);
-    if (!block) return false;
-    const board = boards.find((b) => b.id === block.board_id);
-    return board?.user_id === user.id;
-  }, [user]);
-
-  const create = useCallback((
-    fromBlockId: string,
-    toBlockId: string,
-    contextType: ConnectionContextType = 'full',
-    transformTemplate?: string
-  ): Connection | null => {
-    if (!validateBlockOwnership(fromBlockId) || !validateBlockOwnership(toBlockId)) {
-      console.error('Connection creation denied: ownership validation failed');
-      return null;
-    }
-
-    // Prevent self-connections
-    if (fromBlockId === toBlockId) {
-      console.error('Cannot create self-connection');
-      return null;
-    }
-
-    // Check if connection already exists
-    const { connections, createConnection } = useAppStore.getState();
-    const exists = connections.some(
-      c => c.from_block === fromBlockId && c.to_block === toBlockId
-    );
-    
-    if (exists) {
-      console.error('Connection already exists');
-      return null;
-    }
-
-    return createConnection({
-      from_block: fromBlockId,
-      to_block: toBlockId,
-      context_type: contextType,
-      transform_template: transformTemplate,
-      enabled: true,
-    });
-  }, [validateBlockOwnership]);
-
-  const makeBidirectional = useCallback((connectionId: string): Connection | null => {
-    const { connections, createConnection } = useAppStore.getState();
-    const conn = connections.find(c => c.id === connectionId);
-    if (!conn) return null;
-
-    // Check if reverse already exists
-    const reverseExists = connections.some(
-      c => c.from_block === conn.to_block && c.to_block === conn.from_block
-    );
-    
-    if (reverseExists) {
-      console.log('Connection is already bidirectional');
-      return null;
-    }
-
-    // Create reverse connection
-    return createConnection({
-      from_block: conn.to_block,
-      to_block: conn.from_block,
-      context_type: conn.context_type,
-      transform_template: conn.transform_template,
-      enabled: true,
-    });
-  }, []);
-
-  const update = useCallback((
-    connectionId: string,
-    updates: Partial<Pick<Connection, 'context_type' | 'transform_template' | 'enabled'>>
-  ): void => {
-    const { updateConnection } = useAppStore.getState();
-    updateConnection(connectionId, updates);
-  }, []);
-
-  const remove = useCallback((connectionId: string): void => {
-    const { deleteConnection } = useAppStore.getState();
-    deleteConnection(connectionId);
-  }, []);
-
-  const toggle = useCallback((connectionId: string): void => {
-    const { connections, updateConnection } = useAppStore.getState();
-    const conn = connections.find((c) => c.id === connectionId);
-    if (conn) {
-      updateConnection(connectionId, { enabled: !conn.enabled });
-    }
-  }, []);
-
-  return {
-    create,
-    makeBidirectional,
-    update,
-    remove,
-    toggle,
-  };
-}
-
-/**
  * Get connection statistics for a block
  */
 export function useBlockConnectionStats(blockId: string | undefined) {
-  const incoming = useBlockIncomingConnections(blockId);
-  const outgoing = useBlockOutgoingConnections(blockId);
+  const { connections: incoming } = useBlockIncomingConnections(blockId);
+  const { connections: outgoing } = useBlockOutgoingConnections(blockId);
   const incomingContext = useBlockIncomingContext(blockId);
 
   return useMemo(() => ({

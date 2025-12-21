@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useAppStore } from "@/store/useAppStore";
 import { useUserBoard } from "@/hooks/useCurrentUser";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
+import { useBoardConnections, useConnectionActions } from "@/hooks/useBlockConnections";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -45,21 +46,18 @@ export default function BoardCanvas() {
   const boardBlocks = useBoardBlocks(board?.id);
   const { createBlock } = useBlockActions(board?.id || '');
 
+  // Connections from Supabase - NOT Zustand
+  const { connections: boardConnections } = useBoardConnections(board?.id);
+  const { create: createConnection } = useConnectionActions(board?.id || '');
+
   const {
-    connections,
     selectedBlockId,
     selectBlock,
     setCurrentBoard,
     zoom,
     isBlockChatOpen,
     chatBlockId,
-    createConnection,
   } = useAppStore();
-
-  // Filter connections for this board's blocks
-  const boardConnections = connections.filter((c) =>
-    boardBlocks.some((b) => b.id === c.from_block || b.id === c.to_block)
-  );
 
   const handleCenterView = useCallback(() => {
     if (boardBlocks.length === 0) {
@@ -206,16 +204,13 @@ export default function BoardCanvas() {
 
   const handleEndConnection = (toBlockId: string) => {
     if (connectingFrom && connectingFrom !== toBlockId) {
-      const exists = connections.some(
+      const exists = boardConnections.some(
         (c) => c.from_block === connectingFrom && c.to_block === toBlockId
       );
       if (!exists) {
-        createConnection({
-          from_block: connectingFrom,
-          to_block: toBlockId,
-          context_type: "full",
-          enabled: true,
-        });
+        // Use Supabase-backed connection creation
+        createConnection(connectingFrom, toBlockId);
+        toast.success("Connection created");
       }
     }
     setConnectingFrom(null);

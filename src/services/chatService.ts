@@ -1,5 +1,7 @@
 // Real Chat Service with Streaming Support
-import { useAppStore } from '@/store/useAppStore';
+// Uses encrypted API keys via edge function - NEVER exposes raw keys to frontend
+
+import { supabase } from '@/integrations/supabase/client';
 import { 
   getModelConfig, 
   getVisionModelForProvider,
@@ -25,7 +27,7 @@ export interface ChatAttachment {
   name: string;
   type: string;
   size: number;
-  content?: string; // Base64 or text content
+  content?: string;
   url?: string;
 }
 
@@ -77,19 +79,13 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'gemini-2.0-flash': 'gemini-2.0-flash',
     'gemini-1.5-pro': 'gemini-1.5-pro',
     'gemini-1.5-flash': 'gemini-1.5-flash',
-    // Perplexity
-    'sonar-pro': 'sonar-pro',
-    'pplx-70b-online': 'pplx-70b-online',
-    'pplx-7b-online': 'pplx-7b-online',
-    // Mistral
-    'mistral-large': 'mistral-large-latest',
-    'mistral-medium': 'mistral-medium-latest',
-    'mistral-small': 'mistral-small-latest',
-    'pixtral-12b': 'pixtral-12b-2409',
     // xAI
     'grok-3': 'grok-3',
     'grok-2': 'grok-2',
     'grok-vision': 'grok-vision-beta',
+    // DeepSeek
+    'deepseek-chat': 'deepseek-chat',
+    'deepseek-coder': 'deepseek-coder',
   };
   return mappings[modelId] || modelId;
 };
@@ -98,30 +94,28 @@ class ChatService {
   private abortController: AbortController | null = null;
 
   /**
-   * Get API key for a provider from the store
-   * Uses canonical provider ID for consistent lookup
+   * Get decrypted API key for a provider from edge function
+   * NEVER stores or exposes raw keys on frontend
    */
-  private getApiKey(provider: Provider): string | null {
-    const { apiKeys, user } = useAppStore.getState();
+  private async getDecryptedApiKey(provider: Provider): Promise<string | null> {
+    console.log('[ChatService] Requesting decrypted key for provider:', provider);
     
-    if (!user) {
-      console.warn('No user logged in');
+    const { data, error } = await supabase.functions.invoke('encrypt-api-key', {
+      body: { action: 'decrypt', provider },
+    });
+
+    if (error) {
+      console.error('[ChatService] Failed to get API key:', error);
       return null;
     }
-    
-    // Find API key matching provider AND user
-    const apiKeyRecord = apiKeys.find(
-      k => k.provider === provider && k.user_id === user.id
-    );
-    
-    if (!apiKeyRecord) {
-      console.warn(`No API key found for provider: ${provider}, user: ${user.id}`);
-      console.log('Available keys:', apiKeys.map(k => ({ provider: k.provider, user_id: k.user_id })));
+
+    if (!data?.api_key) {
+      console.warn('[ChatService] No API key found for provider:', provider);
       return null;
     }
-    
-    // Return the actual stored API key value
-    return apiKeyRecord.key_value || null;
+
+    console.log('[ChatService] Successfully retrieved decrypted key for:', provider);
+    return data.api_key;
   }
 
   /**
@@ -144,7 +138,6 @@ class ChatService {
 
   /**
    * Determine the appropriate model based on message content
-   * Auto-routes to vision/image-gen models as needed
    */
   resolveModel(
     selectedModelId: string,
@@ -169,7 +162,6 @@ class ChatService {
           reason: `Auto-routing to ${imageGenModel.name} for image generation`
         };
       }
-      // Provider doesn't support image generation
       return { 
         modelId: selectedModelId, 
         modelConfig: selectedModel,
@@ -189,7 +181,6 @@ class ChatService {
       }
     }
 
-    // Use selected model as-is
     return { modelId: selectedModelId, modelConfig: selectedModel };
   }
 
@@ -205,44 +196,36 @@ class ChatService {
   ): ChatMessage[] {
     const history: ChatMessage[] = [];
 
-    // Get model config for identity injection
     const modelConfig = getModelConfig(modelId);
     const modelName = modelConfig?.name || modelId;
     const providerName = modelConfig?.provider 
       ? modelConfig.provider.charAt(0).toUpperCase() + modelConfig.provider.slice(1)
       : 'AI';
 
-    // Build system prompt with model identity
     let systemContent = systemPrompt || 'You are a helpful assistant.';
     
-    // Inject model identity - this prevents the AI from lying about what it is
     systemContent = `You are ${modelName}, an AI model by ${providerName}. ` +
       `When asked about your identity, always truthfully state that you are ${modelName}.\n\n` +
       systemContent;
 
-    // Add source context from block creation
     if (sourceContext) {
       systemContent += `\n\nContext provided:\n"${sourceContext}"`;
     }
 
-    // Add context from connected blocks
     if (incomingBlockContext) {
       systemContent += `\n\nContext from connected blocks:\n${incomingBlockContext}`;
     }
 
     history.push({ role: 'system', content: systemContent });
 
-    // Add conversation messages
     for (const msg of messages) {
-      if (msg.role === 'system') continue; // Already handled
+      if (msg.role === 'system') continue;
       if (msg.role === 'context') {
-        // Add context as user message with clear framing
         history.push({
           role: 'user',
           content: `[Context from connected block]\n${msg.content}`,
         });
       } else {
-        // Auto-detect URLs in user messages and note them
         let content = msg.content;
         if (msg.role === 'user') {
           const urls = this.extractUrls(content);
@@ -260,14 +243,12 @@ class ChatService {
     return history;
   }
 
-  // Extract URLs from text
   private extractUrls(text: string): string[] {
     const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/gi;
     const matches = text.match(urlRegex);
     return matches || [];
   }
 
-  // Stop current generation
   stopGeneration(): void {
     if (this.abortController) {
       this.abortController.abort();
@@ -275,13 +256,12 @@ class ChatService {
     }
   }
 
-  // Check if generation is in progress
   isGenerating(): boolean {
     return this.abortController !== null;
   }
 
   /**
-   * Stream chat completion - REAL API CALLS ONLY
+   * Stream chat completion - REAL API CALLS with encrypted keys
    */
   async streamChat(
     modelId: string,
@@ -290,7 +270,6 @@ class ChatService {
     config?: { temperature?: number; maxTokens?: number },
     attachments?: ChatAttachment[]
   ): Promise<void> {
-    // Resolve the model (may auto-route for vision/image-gen)
     const hasImages = attachments?.some(a => a.type.startsWith('image/')) || false;
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     const messageContent = typeof lastUserMessage?.content === 'string' 
@@ -304,7 +283,7 @@ class ChatService {
     );
     
     if (reason) {
-      console.log('Model routing:', reason);
+      console.log('[ChatService] Model routing:', reason);
     }
 
     if (!modelConfig) {
@@ -313,10 +292,12 @@ class ChatService {
     }
 
     const provider = modelConfig.provider;
-    const apiKey = this.getApiKey(provider);
+    
+    // Get decrypted API key from edge function
+    const apiKey = await this.getDecryptedApiKey(provider);
 
     if (!apiKey) {
-      callbacks.onError(`No API key configured for ${provider}. Please add your API key in Settings > API Keys.`);
+      callbacks.onError(`No valid API key for ${provider}. Please add your API key in Settings > API Keys.`);
       return;
     }
 
@@ -326,7 +307,6 @@ class ChatService {
       return;
     }
 
-    // Create new abort controller
     this.abortController = new AbortController();
     const startTime = Date.now();
     let fullResponse = '';
@@ -355,7 +335,6 @@ class ChatService {
           }
         }
 
-        // Handle specific error codes with clear messages
         if (response.status === 401) {
           errorMessage = `Invalid API key for ${provider} - please check your credentials in Settings > API Keys`;
         } else if (response.status === 403) {
@@ -372,7 +351,6 @@ class ChatService {
         return;
       }
 
-      // Handle streaming response
       const reader = response.body?.getReader();
       if (!reader) {
         callbacks.onError('Failed to initialize response stream');
@@ -406,7 +384,7 @@ class ChatService {
                 callbacks.onChunk(content);
               }
             } catch {
-              // Skip invalid JSON lines - this is normal for SSE
+              // Skip invalid JSON lines
             }
           }
         }
@@ -414,7 +392,7 @@ class ChatService {
 
       const latency = Date.now() - startTime;
       const meta: MessageMeta = {
-        tokens: Math.floor(fullResponse.length / 4), // Rough estimate
+        tokens: Math.floor(fullResponse.length / 4),
         model: resolvedModelId,
         latency_ms: latency,
       };
@@ -424,14 +402,12 @@ class ChatService {
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          // User stopped generation - complete with partial response
           callbacks.onComplete(fullResponse, {
             model: resolvedModelId,
             latency_ms: Date.now() - startTime,
           });
           return;
         }
-        // Network or other errors
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
           callbacks.onError(`Network error connecting to ${provider} - check your internet connection`);
         } else {
@@ -496,7 +472,6 @@ class ChatService {
     }
   }
 
-  // Call provider-specific API
   private async callProviderAPI(
     provider: Provider,
     modelId: string,
@@ -514,7 +489,6 @@ class ChatService {
       case 'google':
         return this.callGoogleAPI(providerModelId, messages, apiKey, config, signal);
       default:
-        // OpenAI-compatible API (OpenAI, Mistral, Perplexity, xAI)
         return this.callOpenAICompatibleAPI(
           provider,
           providerModelId,
@@ -527,7 +501,6 @@ class ChatService {
     }
   }
 
-  // OpenAI-compatible API call
   private async callOpenAICompatibleAPI(
     provider: Provider,
     modelId: string,
@@ -538,8 +511,6 @@ class ChatService {
     attachments?: ChatAttachment[]
   ): Promise<Response> {
     const endpoint = PROVIDER_ENDPOINTS[provider];
-
-    // Convert messages with attachments to multimodal format if needed
     const formattedMessages = this.formatMessagesWithAttachments(messages, attachments, provider);
 
     return fetch(endpoint, {
@@ -559,7 +530,6 @@ class ChatService {
     });
   }
 
-  // Anthropic API call
   private async callAnthropicAPI(
     modelId: string,
     messages: ChatMessage[],
@@ -568,16 +538,13 @@ class ChatService {
     signal?: AbortSignal,
     attachments?: ChatAttachment[]
   ): Promise<Response> {
-    // Extract system message
     const systemMessage = messages.find(m => m.role === 'system');
     const nonSystemMessages = messages.filter(m => m.role !== 'system');
 
-    // Format messages with attachments for Anthropic
     const formattedMessages = nonSystemMessages.map(m => {
       if (m.role === 'user' && attachments?.length) {
         const content: any[] = [];
         
-        // Add images first
         attachments.filter(a => a.type.startsWith('image/')).forEach(att => {
           if (att.content) {
             content.push({
@@ -591,7 +558,6 @@ class ChatService {
           }
         });
         
-        // Add text
         content.push({ type: 'text', text: typeof m.content === 'string' ? m.content : '' });
         
         return { role: m.role, content };
@@ -623,7 +589,6 @@ class ChatService {
     });
   }
 
-  // Google Gemini API call
   private async callGoogleAPI(
     modelId: string,
     messages: ChatMessage[],
@@ -633,7 +598,6 @@ class ChatService {
   ): Promise<Response> {
     const endpoint = `${PROVIDER_ENDPOINTS.google}/${modelId}:streamGenerateContent?key=${apiKey}&alt=sse`;
 
-    // Convert to Gemini format
     const contents = messages
       .filter(m => m.role !== 'system')
       .map(m => ({
@@ -662,7 +626,6 @@ class ChatService {
     });
   }
 
-  // Format messages with attachments for OpenAI-compatible APIs
   private formatMessagesWithAttachments(
     messages: ChatMessage[],
     attachments: ChatAttachment[] | undefined,
@@ -676,7 +639,6 @@ class ChatService {
     }
 
     return messages.map((m, idx) => {
-      // Only add attachments to the last user message
       if (m.role === 'user' && idx === messages.length - 1) {
         const content: any[] = [
           { type: 'text', text: typeof m.content === 'string' ? m.content : '' }
@@ -703,7 +665,6 @@ class ChatService {
     });
   }
 
-  // Extract content from streaming response based on provider
   private extractContent(parsed: any, provider: Provider): string {
     switch (provider) {
       case 'anthropic':
@@ -714,7 +675,6 @@ class ChatService {
       case 'google':
         return parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
       default:
-        // OpenAI-compatible format
         return parsed.choices?.[0]?.delta?.content || '';
     }
   }
