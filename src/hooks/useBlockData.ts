@@ -4,15 +4,13 @@
  * CRITICAL: All block data comes from Supabase.
  * This hook provides:
  * 1. Block fetching by ID from Supabase
- * 2. Block syncing to Zustand for UI state
- * 3. Optimistic delete with rollback
+ * 2. Optimistic delete with proper verification
  */
 
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { blocksDb } from '@/lib/database';
-import { useAppStore } from '@/store/useAppStore';
 import { toast } from 'sonner';
 import type { Block } from '@/types/database.types';
 
@@ -37,21 +35,32 @@ export function useBlock(blockId: string | undefined) {
 }
 
 /**
- * Hook for optimistic block deletion
- * DELETE is optimistic - remove from UI immediately, rollback on error
+ * Hook for block deletion with proper Supabase verification
+ * DELETE only shows success AFTER Supabase confirms
  */
-export function useOptimisticBlockDelete(boardId: string) {
+export function useBlockDelete(boardId: string) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (blockId: string) => {
-      console.log('[useOptimisticBlockDelete] Deleting block:', blockId);
-      await blocksDb.delete(blockId);
-      console.log('[useOptimisticBlockDelete] Block deleted successfully');
+      console.log('[useBlockDelete] Starting delete for block:', blockId);
+      
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
+      const result = await blocksDb.delete(blockId);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Delete failed');
+      }
+      
+      console.log('[useBlockDelete] Block deleted successfully:', blockId);
+      return result.deletedId;
     },
     onMutate: async (blockId) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing refetches to prevent overwriting our optimistic update
       await queryClient.cancelQueries({ queryKey: ['board-blocks', boardId] });
 
       // Snapshot the previous value
@@ -64,20 +73,32 @@ export function useOptimisticBlockDelete(boardId: string) {
 
       // Remove from individual block cache
       queryClient.removeQueries({ queryKey: ['block', blockId] });
+      
+      // Also invalidate messages for this block
+      queryClient.removeQueries({ queryKey: ['block-messages', blockId] });
 
-      // Return a context with the snapshotted value
-      return { previousBlocks };
+      return { previousBlocks, blockId };
     },
-    onError: (err, blockId, context) => {
-      // Rollback on error
-      console.error('[useOptimisticBlockDelete] Error, rolling back:', err);
+    onError: (error, blockId, context) => {
+      // CRITICAL: Rollback on error
+      console.error('[useBlockDelete] Delete failed, rolling back:', error);
+      
       if (context?.previousBlocks) {
         queryClient.setQueryData(['board-blocks', boardId], context.previousBlocks);
       }
-      toast.error('Failed to delete block');
+      
+      toast.error('Failed to delete block', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    },
+    onSuccess: (deletedId) => {
+      // Only show success AFTER Supabase confirms
+      console.log('[useBlockDelete] Delete confirmed by Supabase:', deletedId);
+      toast.success('Block deleted');
     },
     onSettled: () => {
-      // Refetch to ensure consistency
+      // Always refetch to ensure consistency with database
+      console.log('[useBlockDelete] Refetching blocks to ensure consistency');
       queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
     },
   });
@@ -104,17 +125,4 @@ export function transformBlock(block: Block): import('@/types').Block {
     created_at: block.created_at,
     updated_at: block.updated_at,
   };
-}
-
-/**
- * Sync blocks from Supabase query to Zustand store
- * This is needed because some components (like BlockChatModal) still read from Zustand
- */
-export function useSyncBlocksToStore(boardId: string | undefined, supabaseBlocks: Block[]) {
-  const { updateBlock: storeUpdateBlock, blocks: storeBlocks } = useAppStore();
-
-  // Sync effect handled by parent component
-  return useMemo(() => {
-    return supabaseBlocks.map(transformBlock);
-  }, [supabaseBlocks]);
 }

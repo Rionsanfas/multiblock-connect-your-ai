@@ -1,7 +1,22 @@
-import { useMemo, useCallback } from 'react';
-import { useAppStore } from '@/store/useAppStore';
-import { useCurrentUser } from './useCurrentUser';
-import type { Message, BlockUsage, BoardUsage } from '@/types';
+/**
+ * Block Messages Hooks - Supabase-backed message management
+ * 
+ * CRITICAL: All message data comes from Supabase.
+ * NO local-only state for messages.
+ */
+
+import { useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
+import { messagesDb } from '@/lib/database';
+import { toast } from 'sonner';
+import type { Message } from '@/types/database.types';
+
+export interface BlockUsage {
+  block_id: string;
+  message_count: number;
+  total_bytes: number;
+}
 
 /**
  * Calculate byte size of a string (UTF-8)
@@ -11,222 +26,185 @@ export const calculateByteSize = (content: string): number => {
 };
 
 /**
- * Hook to get messages for a specific block with ownership validation
+ * Hook to get messages for a specific block from Supabase
+ * Supabase is the source of truth - not Zustand
  */
-export const useBlockMessages = (blockId: string | null) => {
-  const { user } = useCurrentUser();
-  const { blocks, messages, boards } = useAppStore();
+export function useBlockMessages(blockId: string | null) {
+  const { user, isLoading: authLoading } = useAuth();
 
-  return useMemo(() => {
-    if (!blockId || !user) return [];
+  const { data: messages = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['block-messages', blockId],
+    queryFn: async () => {
+      if (!blockId) return [];
+      console.log('[useBlockMessages] Fetching messages for block:', blockId);
+      const msgs = await messagesDb.getForBlock(blockId);
+      console.log('[useBlockMessages] Fetched:', msgs.length, 'messages');
+      return msgs;
+    },
+    enabled: !authLoading && !!user?.id && !!blockId,
+    staleTime: 5 * 1000, // 5 seconds
+  });
 
-    // Find the block
-    const block = blocks.find((b) => b.id === blockId);
-    if (!block) return [];
-
-    // Verify ownership through board
-    const board = boards.find((b) => b.id === block.board_id);
-    if (!board || board.user_id !== user.id) return [];
-
-    // Return messages for this block, sorted by creation time
-    return messages
-      .filter((m) => m.block_id === blockId)
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  }, [blockId, user, blocks, messages, boards]);
-};
+  return {
+    messages,
+    isLoading,
+    error,
+    refetch,
+  };
+}
 
 /**
  * Hook to get usage statistics for a specific block
  */
-export const useBlockUsage = (blockId: string | null): BlockUsage | null => {
-  const { user } = useCurrentUser();
-  const { blocks, messages, boards } = useAppStore();
+export function useBlockUsage(blockId: string | null): BlockUsage | null {
+  const { messages } = useBlockMessages(blockId);
 
   return useMemo(() => {
-    if (!blockId || !user) return null;
+    if (!blockId || !messages.length) return null;
 
-    // Find the block
-    const block = blocks.find((b) => b.id === blockId);
-    if (!block) return null;
-
-    // Verify ownership through board
-    const board = boards.find((b) => b.id === block.board_id);
-    if (!board || board.user_id !== user.id) return null;
-
-    // Calculate usage
-    const blockMessages = messages.filter((m) => m.block_id === blockId);
-    const totalBytes = blockMessages.reduce((sum, m) => sum + (m.size_bytes || 0), 0);
+    const totalBytes = messages.reduce((sum, m) => sum + (m.size_bytes || 0), 0);
 
     return {
       block_id: blockId,
-      message_count: blockMessages.length,
+      message_count: messages.length,
       total_bytes: totalBytes,
     };
-  }, [blockId, user, blocks, messages, boards]);
-};
+  }, [blockId, messages]);
+}
 
 /**
- * Hook to get aggregated usage statistics for a board
+ * Hook for message mutations with Supabase persistence
  */
-export const useBoardUsage = (boardId: string | null): BoardUsage | null => {
-  const { user } = useCurrentUser();
-  const { blocks, messages, boards } = useAppStore();
+export function useMessageActions(blockId: string) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  return useMemo(() => {
-    if (!boardId || !user) return null;
-
-    // Find and verify board ownership
-    const board = boards.find((b) => b.id === boardId);
-    if (!board || board.user_id !== user.id) return null;
-
-    // Get all blocks for this board
-    const boardBlocks = blocks.filter((b) => b.board_id === boardId);
-    const blockIds = new Set(boardBlocks.map((b) => b.id));
-
-    // Get all messages for these blocks
-    const boardMessages = messages.filter((m) => blockIds.has(m.block_id));
-    const totalBytes = boardMessages.reduce((sum, m) => sum + (m.size_bytes || 0), 0);
-
-    return {
-      board_id: boardId,
-      block_count: boardBlocks.length,
-      message_count: boardMessages.length,
-      total_bytes: totalBytes,
-    };
-  }, [boardId, user, blocks, messages, boards]);
-};
-
-/**
- * Hook for message actions with ownership validation
- */
-export const useMessageActions = () => {
-  const { user } = useCurrentUser();
-  const { blocks, boards, addMessage, updateMessage, deleteMessage } = useAppStore();
-
-  // Verify ownership before action
-  const verifyOwnership = useCallback(
-    (blockId: string): boolean => {
-      if (!user) return false;
+  // Send a new message
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ role, content, meta }: { 
+      role: 'user' | 'assistant' | 'system'; 
+      content: string; 
+      meta?: Record<string, unknown>;
+    }) => {
+      if (!user) throw new Error('Not authenticated');
+      console.log('[useMessageActions.send] Sending message:', { blockId, role, content_length: content.length });
       
-      const block = blocks.find((b) => b.id === blockId);
-      if (!block) return false;
-      
-      const board = boards.find((b) => b.id === block.board_id);
-      return board?.user_id === user.id;
+      const message = await messagesDb.create(blockId, role, content, meta);
+      console.log('[useMessageActions.send] Message persisted:', message.id);
+      return message;
     },
-    [user, blocks, boards]
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['block-messages', blockId] });
+    },
+    onError: (error) => {
+      console.error('[useMessageActions.send] Error:', error);
+      toast.error('Failed to send message');
+    },
+  });
+
+  // Update a message
+  const updateMessageMutation = useMutation({
+    mutationFn: async ({ messageId, content, meta }: { 
+      messageId: string; 
+      content: string;
+      meta?: Record<string, unknown>;
+    }) => {
+      console.log('[useMessageActions.update] Updating message:', messageId);
+      return messagesDb.update(messageId, content, meta);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['block-messages', blockId] });
+    },
+    onError: (error) => {
+      console.error('[useMessageActions.update] Error:', error);
+      toast.error('Failed to update message');
+    },
+  });
+
+  // Delete a message
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      console.log('[useMessageActions.delete] Deleting message:', messageId);
+      await messagesDb.delete(messageId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['block-messages', blockId] });
+    },
+    onError: (error) => {
+      console.error('[useMessageActions.delete] Error:', error);
+      toast.error('Failed to delete message');
+    },
+  });
+
+  // Clear all messages for block
+  const clearMessagesMutation = useMutation({
+    mutationFn: async () => {
+      console.log('[useMessageActions.clear] Clearing all messages for block:', blockId);
+      await messagesDb.deleteForBlock(blockId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['block-messages', blockId] });
+      toast.success('Messages cleared');
+    },
+    onError: (error) => {
+      console.error('[useMessageActions.clear] Error:', error);
+      toast.error('Failed to clear messages');
+    },
+  });
 
   const sendMessage = useCallback(
-    (blockId: string, content: string, role: 'user' | 'assistant' | 'system' = 'user'): Message | null => {
-      if (!verifyOwnership(blockId)) {
-        console.error('Cannot send message: Ownership verification failed');
-        return null;
-      }
-
-      return addMessage({
-        block_id: blockId,
-        role,
-        content,
-      });
+    async (role: 'user' | 'assistant' | 'system', content: string, meta?: Record<string, unknown>) => {
+      return sendMessageMutation.mutateAsync({ role, content, meta });
     },
-    [verifyOwnership, addMessage]
+    [sendMessageMutation]
   );
 
-  const editMessage = useCallback(
-    (messageId: string, content: string): boolean => {
-      // Get the message to find its block
-      const { messages, updateMessage: storeUpdateMessage } = useAppStore.getState();
-      const message = messages.find((m) => m.id === messageId);
-      if (!message) return false;
-
-      if (!verifyOwnership(message.block_id)) {
-        console.error('Cannot edit message: Ownership verification failed');
-        return false;
-      }
-
-      // Recalculate size_bytes
-      const sizeBytes = calculateByteSize(content);
-      storeUpdateMessage(messageId, { content, size_bytes: sizeBytes });
-      return true;
+  const updateMessage = useCallback(
+    async (messageId: string, content: string, meta?: Record<string, unknown>) => {
+      return updateMessageMutation.mutateAsync({ messageId, content, meta });
     },
-    [verifyOwnership]
+    [updateMessageMutation]
   );
 
-  const removeMessage = useCallback(
-    (messageId: string): boolean => {
-      // Get the message to find its block
-      const { messages, deleteMessage: storeDeleteMessage } = useAppStore.getState();
-      const message = messages.find((m) => m.id === messageId);
-      if (!message) return false;
-
-      if (!verifyOwnership(message.block_id)) {
-        console.error('Cannot delete message: Ownership verification failed');
-        return false;
-      }
-
-      storeDeleteMessage(messageId);
-      return true;
+  const deleteMessage = useCallback(
+    async (messageId: string) => {
+      return deleteMessageMutation.mutateAsync(messageId);
     },
-    [verifyOwnership]
+    [deleteMessageMutation]
   );
 
-  const clearBlockMessages = useCallback(
-    (blockId: string): boolean => {
-      if (!verifyOwnership(blockId)) {
-        console.error('Cannot clear messages: Ownership verification failed');
-        return false;
-      }
-
-      const { messages, deleteMessage: storeDeleteMessage } = useAppStore.getState();
-      const blockMessages = messages.filter((m) => m.block_id === blockId);
-      blockMessages.forEach((m) => storeDeleteMessage(m.id));
-      return true;
+  const clearMessages = useCallback(
+    async () => {
+      return clearMessagesMutation.mutateAsync();
     },
-    [verifyOwnership]
+    [clearMessagesMutation]
   );
 
   return {
     sendMessage,
-    editMessage,
-    removeMessage,
-    clearBlockMessages,
-    verifyOwnership,
+    updateMessage,
+    deleteMessage,
+    clearMessages,
+    isSending: sendMessageMutation.isPending,
+    isUpdating: updateMessageMutation.isPending,
+    isDeleting: deleteMessageMutation.isPending,
+    isClearing: clearMessagesMutation.isPending,
   };
-};
+}
 
 /**
- * Hook to get total usage across all user's boards
+ * Hook to get aggregated usage statistics for a board (stub for compatibility)
  */
-export const useTotalUsage = () => {
-  const { user } = useCurrentUser();
-  const { blocks, messages, boards } = useAppStore();
+export function useBoardUsage(boardId: string | null) {
+  return null; // TODO: Implement with Supabase aggregation
+}
 
-  return useMemo(() => {
-    if (!user) {
-      return { board_count: 0, block_count: 0, message_count: 0, total_bytes: 0 };
-    }
-
-    // Get user's boards
-    const userBoards = boards.filter((b) => b.user_id === user.id);
-    const boardIds = new Set(userBoards.map((b) => b.id));
-
-    // Get blocks for user's boards
-    const userBlocks = blocks.filter((b) => boardIds.has(b.board_id));
-    const blockIds = new Set(userBlocks.map((b) => b.id));
-
-    // Get messages for user's blocks
-    const userMessages = messages.filter((m) => blockIds.has(m.block_id));
-    const totalBytes = userMessages.reduce((sum, m) => sum + (m.size_bytes || 0), 0);
-
-    return {
-      board_count: userBoards.length,
-      block_count: userBlocks.length,
-      message_count: userMessages.length,
-      total_bytes: totalBytes,
-    };
-  }, [user, blocks, messages, boards]);
-};
+/**
+ * Hook to get total usage across all user's boards (stub for compatibility)
+ */
+export function useTotalUsage() {
+  return { board_count: 0, block_count: 0, message_count: 0, total_bytes: 0 };
+}
 
 /**
  * Format bytes to human-readable string
