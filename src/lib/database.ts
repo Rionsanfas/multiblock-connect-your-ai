@@ -623,17 +623,54 @@ export const blocksDb = {
       return { success: false, error: 'Access denied' };
     }
 
-    // Perform the delete
-    const { error: deleteError } = await supabase
+    // Delete dependent rows first (prevents FK constraint failures)
+    // 1) Messages in this block
+    const { error: msgDelError, data: deletedMsgs } = await supabase
+      .from('messages')
+      .delete()
+      .eq('block_id', id)
+      .eq('user_id', user.id)
+      .select('id');
+
+    if (msgDelError) {
+      console.error('[blocksDb.delete] Failed deleting messages:', msgDelError);
+      return { success: false, error: msgDelError.message };
+    }
+    console.log('[blocksDb.delete] Deleted messages:', deletedMsgs?.length ?? 0);
+
+    // 2) Connections referencing this block (either direction)
+    const { error: connDelError, data: deletedConnections } = await supabase
+      .from('block_connections')
+      .delete()
+      .eq('user_id', user.id)
+      .or(`source_block_id.eq.${id},target_block_id.eq.${id}`)
+      .select('id');
+
+    if (connDelError) {
+      console.error('[blocksDb.delete] Failed deleting connections:', connDelError);
+      return { success: false, error: connDelError.message };
+    }
+    console.log('[blocksDb.delete] Deleted connections:', deletedConnections?.length ?? 0);
+
+    // 3) Delete the block itself (return affected rows for verification)
+    const { error: deleteError, data: deletedBlocks } = await supabase
       .from('blocks')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .select('id');
 
     if (deleteError) {
       console.error('[blocksDb.delete] Delete error:', deleteError);
       return { success: false, error: deleteError.message };
     }
+
+    if (!deletedBlocks || deletedBlocks.length === 0) {
+      console.error('[blocksDb.delete] No rows deleted (RLS or not found)');
+      return { success: false, error: 'Delete failed - no rows deleted' };
+    }
+
+    console.log('[blocksDb.delete] Deleted block rows:', deletedBlocks.length);
 
     // Verify deletion by trying to fetch the block again
     const { data: checkBlock } = await supabase

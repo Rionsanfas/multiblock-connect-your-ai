@@ -513,11 +513,30 @@ class ChatService {
     const endpoint = PROVIDER_ENDPOINTS[provider];
     const formattedMessages = this.formatMessagesWithAttachments(messages, attachments, provider);
 
-    // GPT-5 models require max_completion_tokens instead of max_tokens
-    const isGPT5Model = modelId.startsWith('gpt-5') || modelId === 'gpt-5' || modelId === 'gpt-5-mini';
-    const tokenParam = isGPT5Model 
-      ? { max_completion_tokens: config?.maxTokens ?? 2048 }
-      : { max_tokens: config?.maxTokens ?? 2048 };
+    // OpenAI "new" models (GPT-5, GPT-4.1, o-series) do NOT support `temperature`
+    // and require `max_completion_tokens` instead of `max_tokens`.
+    const isOpenAIProvider = provider === 'openai';
+    const isOpenAINewerModel =
+      /^gpt-5(?!-image)/.test(modelId) ||
+      modelId.startsWith('gpt-4.1') ||
+      modelId.startsWith('o1') ||
+      modelId.startsWith('o3') ||
+      modelId.startsWith('o4');
+
+    const body: Record<string, unknown> = {
+      model: modelId,
+      messages: formattedMessages,
+      stream: true,
+    };
+
+    const maxTokens = config?.maxTokens ?? 2048;
+    if (isOpenAIProvider && isOpenAINewerModel) {
+      body.max_completion_tokens = maxTokens;
+      // Do not include temperature (OpenAI will reject it for these models)
+    } else {
+      body.max_tokens = maxTokens;
+      body.temperature = config?.temperature ?? 0.7;
+    }
 
     return fetch(endpoint, {
       method: 'POST',
@@ -525,13 +544,7 @@ class ChatService {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: modelId,
-        messages: formattedMessages,
-        stream: true,
-        temperature: config?.temperature ?? 0.7,
-        ...tokenParam,
-      }),
+      body: JSON.stringify(body),
       signal,
     });
   }
