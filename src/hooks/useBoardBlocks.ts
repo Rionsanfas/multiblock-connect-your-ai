@@ -161,40 +161,35 @@ export function useBlockActions(boardId: string) {
       throw new Error('Cannot delete block: Board access denied');
     }
 
-    console.log('[useBlockActions.deleteBlock] Starting delete for:', blockId);
+    console.log('[useBlockActions.deleteBlock] request', { boardId, blockId, userId: user?.id });
 
     // Get current cache data for rollback
     const previousBlocks = queryClient.getQueryData(['board-blocks', boardId]);
 
     // Optimistic update - remove from cache immediately
-    queryClient.setQueryData(['board-blocks', boardId], (old: any[] | undefined) => {
-      return old?.filter(b => b.id !== blockId) || [];
+    queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
+      const arr = Array.isArray(old) ? old : [];
+      return arr.filter((b: any) => b?.id !== blockId);
     });
 
     try {
-      // Perform actual delete
       const result = await blocksDb.delete(blockId);
-      
+
       if (!result.success) {
-        console.error('[useBlockActions.deleteBlock] Delete failed:', result.error);
-        // Rollback on failure
+        console.error('[useBlockActions.deleteBlock] failed', { boardId, blockId, error: result.error });
         queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
         toast.error(result.error || 'Failed to delete block');
         throw new Error(result.error || 'Delete failed');
       }
 
-      console.log('[useBlockActions.deleteBlock] Delete confirmed:', blockId);
-      
-      // Re-fetch to ensure consistency
-      await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
-      
+      console.log('[useBlockActions.deleteBlock] success', { boardId, blockId, deletedId: result.deletedId });
+      // IMPORTANT: no refetch here; optimistic cache is the UI source of truth.
     } catch (error) {
-      console.error('[useBlockActions.deleteBlock] Error:', error);
-      // Rollback on error
+      console.error('[useBlockActions.deleteBlock] error', { boardId, blockId, error });
       queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
       throw error;
     }
-  }, [boardId, canModify, queryClient]);
+  }, [boardId, canModify, queryClient, user?.id]);
 
   /**
    * Duplicate a block
