@@ -639,18 +639,31 @@ export const blocksDb = {
     console.log('[blocksDb.delete] Deleted messages:', deletedMsgs?.length ?? 0);
 
     // 2) Connections referencing this block (either direction)
-    const { error: connDelError, data: deletedConnections } = await supabase
+    // Delete source connections
+    const { error: srcConnDelError } = await supabase
       .from('block_connections')
       .delete()
       .eq('user_id', user.id)
-      .or(`source_block_id.eq.${id},target_block_id.eq.${id}`)
-      .select('id');
+      .eq('source_block_id', id);
 
-    if (connDelError) {
-      console.error('[blocksDb.delete] Failed deleting connections:', connDelError);
-      return { success: false, error: connDelError.message };
+    if (srcConnDelError) {
+      console.error('[blocksDb.delete] Failed deleting source connections:', srcConnDelError);
+      return { success: false, error: srcConnDelError.message };
     }
-    console.log('[blocksDb.delete] Deleted connections:', deletedConnections?.length ?? 0);
+
+    // Delete target connections
+    const { error: tgtConnDelError } = await supabase
+      .from('block_connections')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('target_block_id', id);
+
+    if (tgtConnDelError) {
+      console.error('[blocksDb.delete] Failed deleting target connections:', tgtConnDelError);
+      return { success: false, error: tgtConnDelError.message };
+    }
+    console.log('[blocksDb.delete] Deleted connections for block:', id);
+
 
     // 3) Delete the block itself (return affected rows for verification)
     const { error: deleteError, data: deletedBlocks } = await supabase
