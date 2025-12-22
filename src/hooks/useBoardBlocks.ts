@@ -224,20 +224,38 @@ export function useBlockActions(boardId: string) {
   }, [boardId, canModify, queryClient]);
 
   /**
-   * Update block position via Supabase (debounced in UI)
+   * Update block position - optimistic UI first, then persist to Supabase
+   * This is designed for drag operations where smooth UI is critical.
    */
-  const updateBlockPosition = useCallback(async (blockId: string, position: { x: number; y: number }) => {
-    if (!canModify) {
-      throw new Error('Cannot update position: Board access denied');
-    }
+  const updateBlockPosition = useCallback((blockId: string, position: { x: number; y: number }) => {
+    if (!canModify) return;
 
-    await blocksDb.update(blockId, {
-      position_x: position.x,
-      position_y: position.y,
+    // Optimistic update - update cache immediately for smooth drag
+    queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
+      const arr = Array.isArray(old) ? old : [];
+      return arr.map((b: any) => 
+        b?.id === blockId ? { ...b, position_x: position.x, position_y: position.y } : b
+      );
     });
+  }, [boardId, canModify, queryClient]);
 
-    // Invalidate cache
-    await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
+  /**
+   * Persist block position to Supabase - call this when drag ends
+   */
+  const persistBlockPosition = useCallback(async (blockId: string, position: { x: number; y: number }) => {
+    if (!canModify) return;
+
+    try {
+      await blocksDb.update(blockId, {
+        position_x: position.x,
+        position_y: position.y,
+      });
+      console.log('[useBlockActions.persistBlockPosition] Saved position:', blockId);
+    } catch (error) {
+      console.error('[useBlockActions.persistBlockPosition] Error:', error);
+      // Refetch to get correct position
+      queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
+    }
   }, [boardId, canModify, queryClient]);
 
   return {
@@ -247,6 +265,7 @@ export function useBlockActions(boardId: string) {
     deleteBlock,
     duplicateBlock,
     updateBlockPosition,
+    persistBlockPosition,
   };
 }
 

@@ -54,6 +54,7 @@ export function BlockCard({
   const { openBlockChat, messages, zoom } = useAppStore();
   const {
     updateBlockPosition,
+    persistBlockPosition,
     duplicateBlock,
     deleteBlock,
     updateBlock,
@@ -99,6 +100,12 @@ export function BlockCard({
   };
 
   const handleMouseUp = () => {
+    if (isDragging && hasDragged) {
+      // Persist final position to database
+      const finalX = block.position.x;
+      const finalY = block.position.y;
+      persistBlockPosition(block.id, { x: finalX, y: finalY });
+    }
     setIsDragging(false);
   };
 
