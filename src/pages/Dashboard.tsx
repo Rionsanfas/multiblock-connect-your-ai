@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/ui/search-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Spinner } from "@/components/ui/spinner";
+import { SkeletonCard, SkeletonGrid } from "@/components/ui/skeleton-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
 import { useCurrentUser, useUserBoards, useUserStats } from "@/hooks/useCurrentUser";
 import { useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { usePlanEnforcement } from "@/hooks/usePlanLimits";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQueryClient } from "@tanstack/react-query";
-import { api } from "@/api";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { boardsDb } from "@/lib/database";
 import { toast } from "sonner";
 import type { Board } from "@/types";
 import { StorageUsageCard } from "@/components/dashboard/StorageUsageCard";
@@ -57,7 +57,7 @@ export default function Dashboard() {
     
     try {
       console.log('[Dashboard] Creating board...');
-      const board = await api.boards.create("Untitled Board");
+      const board = await boardsDb.create({ name: "Untitled Board" });
       
       // Verify returned board has valid data
       if (!board?.id || !board?.user_id) {
@@ -68,7 +68,7 @@ export default function Dashboard() {
       console.log('[Dashboard] Board created successfully:', { 
         id: board.id, 
         user_id: board.user_id,
-        title: board.title 
+        name: board.name 
       });
       
       // Invalidate boards query to refresh the list
@@ -91,7 +91,12 @@ export default function Dashboard() {
     if (!authUser?.id) return;
     
     try {
-      await api.boards.duplicate(id);
+      // Get original board
+      const original = await boardsDb.getById(id);
+      if (!original) throw new Error('Board not found');
+      
+      // Create duplicate
+      await boardsDb.create({ name: `${original.name} (copy)` });
       await queryClient.invalidateQueries({ queryKey: ['user-boards'] });
       toast.success("Board duplicated");
     } catch (error) {
@@ -104,7 +109,12 @@ export default function Dashboard() {
     
     try {
       console.log('[Dashboard] Deleting board:', deleteId);
-      await api.boards.delete(deleteId);
+      const result = await boardsDb.delete(deleteId);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Delete failed');
+      }
+      
       await queryClient.invalidateQueries({ queryKey: ['user-boards'] });
       await queryClient.invalidateQueries({ queryKey: ['user-board-count'] });
       console.log('[Dashboard] Board deleted successfully');
@@ -119,12 +129,19 @@ export default function Dashboard() {
 
   const getBlockCount = (boardId: string) => blocks.filter((b) => b.board_id === boardId).length;
 
-  // Auth loading state
+  // Auth loading state - show skeleton
   if (authLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-full">
-          <Spinner className="h-8 w-8" />
+        <div className="flex h-full">
+          <div className="flex-1 p-6 overflow-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <SkeletonCard variant="usage" />
+              <SkeletonCard variant="usage" />
+              <SkeletonCard variant="usage" />
+            </div>
+            <SkeletonGrid count={6} variant="board" />
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -144,12 +161,19 @@ export default function Dashboard() {
     );
   }
 
-  // User data loading
+  // User data loading - show skeleton
   if (userLoading || !stats) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-full">
-          <Spinner className="h-8 w-8" />
+        <div className="flex h-full">
+          <div className="flex-1 p-6 overflow-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <SkeletonCard variant="usage" />
+              <SkeletonCard variant="usage" />
+              <SkeletonCard variant="usage" />
+            </div>
+            <SkeletonGrid count={6} variant="board" />
+          </div>
         </div>
       </DashboardLayout>
     );

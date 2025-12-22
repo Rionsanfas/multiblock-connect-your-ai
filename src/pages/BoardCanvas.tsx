@@ -7,7 +7,7 @@ import { BlocksSidebar } from "@/components/board/BlocksSidebar";
 import { BlockChatModal } from "@/components/board/BlockChatModal";
 import { ConnectionContextMenu } from "@/components/board/ConnectionContextMenu";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { Spinner } from "@/components/ui/spinner";
+import { SkeletonCard } from "@/components/ui/skeleton-card";
 import { useAppStore } from "@/store/useAppStore";
 import { useUserBoard } from "@/hooks/useCurrentUser";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
@@ -234,14 +234,22 @@ export default function BoardCanvas() {
 
   // === STATE HANDLING ===
 
-  // 1. Auth loading - show spinner
+  // 1. Auth loading - show skeleton
   if (authLoading) {
     return (
       <DashboardLayout hideSidebar>
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center space-y-4">
-            <Spinner className="h-8 w-8 mx-auto" />
-            <p className="text-muted-foreground">Loading...</p>
+        <div className="flex h-full">
+          <div className="w-64 border-r border-border/20 p-4 space-y-3">
+            <div className="h-8 w-32 rounded bg-muted/50 animate-pulse" />
+            <SkeletonCard variant="block" />
+            <SkeletonCard variant="block" />
+            <SkeletonCard variant="block" />
+          </div>
+          <div className="flex-1 p-8">
+            <div className="grid grid-cols-3 gap-6">
+              <SkeletonCard variant="block" className="h-40" />
+              <SkeletonCard variant="block" className="h-40" />
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -265,14 +273,22 @@ export default function BoardCanvas() {
     );
   }
 
-  // 3. Board loading - show spinner
+  // 3. Board loading - show skeleton
   if (boardLoading) {
     return (
       <DashboardLayout hideSidebar>
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center space-y-4">
-            <Spinner className="h-8 w-8 mx-auto" />
-            <p className="text-muted-foreground">Loading board...</p>
+        <div className="flex h-full">
+          <div className="w-64 border-r border-border/20 p-4 space-y-3">
+            <div className="h-8 w-32 rounded bg-muted/50 animate-pulse" />
+            <SkeletonCard variant="block" />
+            <SkeletonCard variant="block" />
+            <SkeletonCard variant="block" />
+          </div>
+          <div className="flex-1 p-8">
+            <div className="grid grid-cols-3 gap-6">
+              <SkeletonCard variant="block" className="h-40" />
+              <SkeletonCard variant="block" className="h-40" />
+            </div>
           </div>
         </div>
       </DashboardLayout>

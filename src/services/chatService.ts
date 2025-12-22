@@ -513,6 +513,12 @@ class ChatService {
     const endpoint = PROVIDER_ENDPOINTS[provider];
     const formattedMessages = this.formatMessagesWithAttachments(messages, attachments, provider);
 
+    // GPT-5 models require max_completion_tokens instead of max_tokens
+    const isGPT5Model = modelId.startsWith('gpt-5') || modelId === 'gpt-5' || modelId === 'gpt-5-mini';
+    const tokenParam = isGPT5Model 
+      ? { max_completion_tokens: config?.maxTokens ?? 2048 }
+      : { max_tokens: config?.maxTokens ?? 2048 };
+
     return fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -524,7 +530,7 @@ class ChatService {
         messages: formattedMessages,
         stream: true,
         temperature: config?.temperature ?? 0.7,
-        max_tokens: config?.maxTokens ?? 2048,
+        ...tokenParam,
       }),
       signal,
     });
