@@ -42,7 +42,9 @@ export function useBlockMessages(blockId: string | null) {
       return msgs;
     },
     enabled: !authLoading && !!user?.id && !!blockId,
-    staleTime: 5 * 1000, // 5 seconds
+    staleTime: 60 * 1000, // 60s - avoid mid-chat refetch flicker
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   return {
@@ -79,84 +81,132 @@ export function useMessageActions(blockId: string) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Send a new message
+  const key = ['block-messages', blockId] as const;
+
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ role, content, meta }: { 
-      role: 'user' | 'assistant' | 'system'; 
-      content: string; 
+    mutationFn: async ({
+      optimisticId,
+      role,
+      content,
+      meta,
+    }: {
+      optimisticId: string;
+      role: 'user' | 'assistant' | 'system';
+      content: string;
       meta?: Record<string, unknown>;
     }) => {
       if (!user) throw new Error('Not authenticated');
-      console.log('[useMessageActions.send] Sending message:', { blockId, role, content_length: content.length });
-      
+      console.log('[useMessageActions.send] request', { blockId, role, optimisticId, content_length: content.length });
       const message = await messagesDb.create(blockId, role, content, meta);
-      console.log('[useMessageActions.send] Message persisted:', message.id);
-      return message;
+      return { optimisticId, message };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['block-messages', blockId] });
+    onSuccess: ({ optimisticId, message }) => {
+      console.log('[useMessageActions.send] success', { optimisticId, persistedId: message.id });
+      queryClient.setQueryData(key, (old: unknown) => {
+        const arr = Array.isArray(old) ? (old as Message[]) : [];
+        const idx = arr.findIndex((m) => m.id === optimisticId);
+        if (idx === -1) return [...arr, message];
+        const next = [...arr];
+        next[idx] = message;
+        return next;
+      });
     },
-    onError: (error) => {
-      console.error('[useMessageActions.send] Error:', error);
+    onError: (error, variables) => {
+      console.error('[useMessageActions.send] error', error);
+      // Roll back optimistic message
+      queryClient.setQueryData(key, (old: unknown) => {
+        const arr = Array.isArray(old) ? (old as Message[]) : [];
+        return arr.filter((m) => m.id !== variables.optimisticId);
+      });
       toast.error('Failed to send message');
     },
   });
 
-  // Update a message
-  const updateMessageMutation = useMutation({
-    mutationFn: async ({ messageId, content, meta }: { 
-      messageId: string; 
-      content: string;
-      meta?: Record<string, unknown>;
-    }) => {
-      console.log('[useMessageActions.update] Updating message:', messageId);
-      return messagesDb.update(messageId, content, meta);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['block-messages', blockId] });
-    },
-    onError: (error) => {
-      console.error('[useMessageActions.update] Error:', error);
-      toast.error('Failed to update message');
-    },
-  });
-
-  // Delete a message
   const deleteMessageMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      console.log('[useMessageActions.delete] Deleting message:', messageId);
+      console.log('[useMessageActions.delete] request', { blockId, messageId });
       await messagesDb.delete(messageId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['block-messages', blockId] });
+      return messageId;
     },
     onError: (error) => {
-      console.error('[useMessageActions.delete] Error:', error);
+      console.error('[useMessageActions.delete] error', error);
       toast.error('Failed to delete message');
     },
   });
 
-  // Clear all messages for block
   const clearMessagesMutation = useMutation({
     mutationFn: async () => {
-      console.log('[useMessageActions.clear] Clearing all messages for block:', blockId);
+      console.log('[useMessageActions.clear] request', { blockId });
       await messagesDb.deleteForBlock(blockId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['block-messages', blockId] });
+      queryClient.setQueryData(key, []);
       toast.success('Messages cleared');
     },
     onError: (error) => {
-      console.error('[useMessageActions.clear] Error:', error);
+      console.error('[useMessageActions.clear] error', error);
       toast.error('Failed to clear messages');
+    },
+  });
+
+  const updateMessageMutation = useMutation({
+    mutationFn: async ({
+      messageId,
+      content,
+      meta,
+    }: {
+      messageId: string;
+      content: string;
+      meta?: Record<string, unknown>;
+    }) => {
+      console.log('[useMessageActions.update] request', { messageId });
+      return messagesDb.update(messageId, content, meta);
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData(key, (old: unknown) => {
+        const arr = Array.isArray(old) ? (old as Message[]) : [];
+        const idx = arr.findIndex((m) => m.id === updated.id);
+        if (idx === -1) return arr;
+        const next = [...arr];
+        next[idx] = updated;
+        return next;
+      });
+    },
+    onError: (error) => {
+      console.error('[useMessageActions.update] error', error);
+      toast.error('Failed to update message');
     },
   });
 
   const sendMessage = useCallback(
     async (role: 'user' | 'assistant' | 'system', content: string, meta?: Record<string, unknown>) => {
-      return sendMessageMutation.mutateAsync({ role, content, meta });
+      if (!user) throw new Error('Not authenticated');
+
+      const optimisticId = `optimistic_${crypto.randomUUID()}`;
+      const optimistic: Message = {
+        id: optimisticId,
+        block_id: blockId,
+        user_id: user.id,
+        role,
+        content,
+        meta: meta ?? {},
+        size_bytes: calculateByteSize(content),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Optimistic append (NEVER refetch mid-chat)
+      queryClient.setQueryData(key, (old: unknown) => {
+        const arr = Array.isArray(old) ? (old as Message[]) : [];
+        return [...arr, optimistic];
+      });
+
+      // Persist in background; replace optimistic by id when done
+      sendMessageMutation.mutate({ optimisticId, role, content, meta });
+
+      return optimistic;
     },
-    [sendMessageMutation]
+    [blockId, key, queryClient, sendMessageMutation, user]
   );
 
   const updateMessage = useCallback(
@@ -168,17 +218,27 @@ export function useMessageActions(blockId: string) {
 
   const deleteMessage = useCallback(
     async (messageId: string) => {
-      return deleteMessageMutation.mutateAsync(messageId);
+      // Optimistic remove
+      const prev = queryClient.getQueryData(key);
+      queryClient.setQueryData(key, (old: unknown) => {
+        const arr = Array.isArray(old) ? (old as Message[]) : [];
+        return arr.filter((m) => m.id !== messageId);
+      });
+
+      try {
+        await deleteMessageMutation.mutateAsync(messageId);
+      } catch (e) {
+        // Rollback
+        queryClient.setQueryData(key, prev);
+        throw e;
+      }
     },
-    [deleteMessageMutation]
+    [deleteMessageMutation, key, queryClient]
   );
 
-  const clearMessages = useCallback(
-    async () => {
-      return clearMessagesMutation.mutateAsync();
-    },
-    [clearMessagesMutation]
-  );
+  const clearMessages = useCallback(async () => {
+    return clearMessagesMutation.mutateAsync();
+  }, [clearMessagesMutation]);
 
   return {
     sendMessage,

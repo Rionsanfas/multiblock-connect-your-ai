@@ -36,7 +36,7 @@ interface BlockChatModalProps {
   blockId: string;
 }
 
-type MessageStatus = 'idle' | 'sending' | 'waiting_llm' | 'saving_response' | 'error';
+type MessageStatus = 'idle' | 'waiting_llm' | 'error';
 
 // Transform DB message to legacy Message format for ChatMessage component
 function toDisplayMessage(m: { id: string; block_id: string; role: string; content: string; meta?: unknown; size_bytes?: number | null; created_at: string }): LegacyMessage {
@@ -78,7 +78,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const userApiKeys = useUserApiKeys();
   const modelsByProvider = useModelsGroupedByProvider();
   const providers = useAvailableProviders();
-  const { messages: blockMessages, isLoading: messagesLoading, refetch: refetchMessages } = useBlockMessages(blockId);
+  const { messages: blockMessages, isLoading: messagesLoading } = useBlockMessages(blockId);
   const { sendMessage: persistMessage, deleteMessage: deletePersistedMessage } = useMessageActions(blockId);
   const blockUsage = useBlockUsage(blockId);
   const incomingContext = useBlockIncomingContext(blockId);
@@ -122,25 +122,25 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[]) => {
     if (!content.trim() || messageStatus !== 'idle' || !block) return;
-    
+
     if (!hasKeyForCurrentProvider) {
       toast.error("No API key configured", { action: { label: "Add Key", onClick: () => navigate("/api-keys") } });
       return;
     }
 
     setErrorMessage(null);
-    setMessageStatus('sending');
 
+    // 1) Append locally (optimistic) so UI is instant
     let userMessage;
     try {
       userMessage = await persistMessage('user', content);
-      await refetchMessages();
     } catch {
       setMessageStatus('error');
       setErrorMessage('Message failed to send.');
       return;
     }
 
+    // 2) Start the LLM request immediately (no refetch)
     setMessageStatus('waiting_llm');
     setStreamingContent("");
 
@@ -148,39 +148,39 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
       ? incomingContext.map(ctx => `[From "${ctx.source_block_title}"]:\n${ctx.content}`).join('\n\n')
       : undefined;
 
-    const allMessages = [...blockMessages, userMessage].map(m => toDisplayMessage(m));
-    const history = chatService.buildConversationHistory(allMessages, block.model_id, block.system_prompt, undefined, connectedContext);
+    const cacheMessages = (queryClient.getQueryData(['block-messages', blockId]) as any[] | undefined) ?? [];
+    const history = chatService.buildConversationHistory(
+      cacheMessages.map(m => toDisplayMessage(m)),
+      block.model_id,
+      block.system_prompt,
+      undefined,
+      connectedContext
+    );
 
     await chatService.streamChat(block.model_id, history, {
       onChunk: (chunk) => setStreamingContent(prev => prev + chunk),
-      onComplete: async (response, meta) => {
-        setMessageStatus('saving_response');
+      onComplete: (response, meta) => {
+        // 3) Convert streaming -> real assistant message instantly, then persist in background
+        persistMessage('assistant', response, meta as Record<string, unknown>);
         setStreamingContent("");
-        try {
-          await persistMessage('assistant', response, meta as Record<string, unknown>);
-          await refetchMessages();
-          setMessageStatus('idle');
-        } catch {
-          setMessageStatus('error');
-          setErrorMessage('Assistant response failed to save.');
-        }
+        setMessageStatus('idle');
       },
-      onError: (error) => {
+      onError: () => {
         setMessageStatus('error');
-        setErrorMessage(`Assistant failed: ${error}`);
+        setErrorMessage('Assistant failed. Please try again.');
         setStreamingContent("");
       },
     });
-  }, [block, blockMessages, hasKeyForCurrentProvider, messageStatus, persistMessage, navigate, incomingContext, refetchMessages]);
+  }, [block, blockId, hasKeyForCurrentProvider, incomingContext, messageStatus, navigate, persistMessage, queryClient]);
 
   const handleStop = useCallback(() => {
     chatService.stopGeneration();
     if (streamingContent) {
-      persistMessage('assistant', streamingContent + " [stopped]").then(() => refetchMessages());
+      persistMessage('assistant', streamingContent + " [stopped]");
     }
     setStreamingContent("");
     setMessageStatus('idle');
-  }, [streamingContent, persistMessage, refetchMessages]);
+  }, [persistMessage, streamingContent]);
 
   const handleRetry = useCallback(async (message: LegacyMessage) => {
     if (message.role !== 'assistant') return;
@@ -189,14 +189,12 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     const userMsg = blockMessages[idx - 1];
     if (userMsg.role !== 'user') return;
     await deletePersistedMessage(message.id);
-    await refetchMessages();
     handleSend(userMsg.content);
-  }, [blockMessages, deletePersistedMessage, handleSend, refetchMessages]);
+  }, [blockMessages, deletePersistedMessage, handleSend]);
 
   const handleDeleteMessage = useCallback(async (id: string) => {
     await deletePersistedMessage(id);
-    await refetchMessages();
-  }, [deletePersistedMessage, refetchMessages]);
+  }, [deletePersistedMessage]);
 
   const isRunning = messageStatus !== 'idle' && messageStatus !== 'error';
 
