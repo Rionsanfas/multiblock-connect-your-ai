@@ -1,11 +1,11 @@
 import { useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanEnforcement } from './usePlanLimits';
 import { blocksDb } from '@/lib/database';
-import { api } from '@/api';
 import type { Block } from '@/types';
 import type { LLMProvider } from '@/types/database.types';
+import { toast } from 'sonner';
 
 /**
  * Hook to get all blocks for a specific board from Supabase.
@@ -24,7 +24,8 @@ export function useBoardBlocks(boardId: string | undefined) {
       return blocks;
     },
     enabled: !authLoading && !!user?.id && !!boardId,
-    staleTime: 10 * 1000, // Reduced to 10 seconds for fresher data
+    staleTime: 5 * 1000, // 5 seconds - keep data fresh
+    refetchOnWindowFocus: true,
   });
 
   // Transform to legacy format and sort
@@ -50,7 +51,7 @@ export function useBoardBlocks(boardId: string | undefined) {
 
 /**
  * Hook providing block operations with Supabase as source of truth.
- * All mutations go through Supabase and invalidate the query cache.
+ * Uses optimistic UI updates with rollback on failure.
  */
 export function useBlockActions(boardId: string) {
   const { user } = useAuth();
@@ -61,8 +62,7 @@ export function useBlockActions(boardId: string) {
   const canModify = !!user?.id && !!boardId;
 
   /**
-   * Create a block via Supabase, then invalidate query cache.
-   * No optimistic UI - only render from Supabase SELECT.
+   * Create a block via Supabase with optimistic UI
    */
   const createBlock = useCallback(async (data: Partial<Block>): Promise<Block | null> => {
     if (!canModify) {
@@ -74,12 +74,6 @@ export function useBlockActions(boardId: string) {
     if (!enforceCreateBlock(boardId)) {
       console.log('[useBlockActions.createBlock] Plan limit reached');
       return null;
-    }
-
-    // Validate required fields
-    if (!data.model_id) {
-      console.log('[useBlockActions.createBlock] No model selected, creating placeholder block');
-      // For blocks without model, we still need a provider - use 'openai' as default
     }
 
     // Get provider from model_id
@@ -97,13 +91,7 @@ export function useBlockActions(boardId: string) {
     
     const supabaseProvider = providerMap[provider] || 'openai';
 
-    console.log('[useBlockActions.createBlock] Payload:', {
-      board_id: boardId,
-      user_id: user!.id,
-      model_id: data.model_id || '',
-      provider: supabaseProvider,
-      position: data.position,
-    });
+    console.log('[useBlockActions.createBlock] Creating block...');
 
     try {
       // INSERT into Supabase - returns full row
@@ -119,25 +107,12 @@ export function useBlockActions(boardId: string) {
         height: 300,
       });
 
-      console.log('[useBlockActions.createBlock] Insert succeeded:', {
-        id: block.id,
-        board_id: block.board_id,
-        user_id: block.user_id,
-      });
+      console.log('[useBlockActions.createBlock] Insert succeeded:', block.id);
 
-      // Verify board_id matches
-      if (block.board_id !== boardId) {
-        console.error('[useBlockActions.createBlock] BOARD ID MISMATCH!', {
-          expected: boardId,
-          actual: block.board_id,
-        });
-      }
-
-      // CRITICAL: Invalidate query cache to trigger re-fetch
-      console.log('[useBlockActions.createBlock] Invalidating query cache for board:', boardId);
+      // Invalidate query cache to trigger re-fetch
       await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
 
-      // Return the block from Supabase (not mock)
+      // Return the block from Supabase
       return {
         id: block.id,
         board_id: block.board_id,
@@ -179,22 +154,50 @@ export function useBlockActions(boardId: string) {
   }, [boardId, canModify, queryClient]);
 
   /**
-   * Delete a block via Supabase
+   * Delete a block via Supabase with optimistic UI
    */
   const deleteBlock = useCallback(async (blockId: string) => {
     if (!canModify) {
       throw new Error('Cannot delete block: Board access denied');
     }
 
-    console.log('[useBlockActions.deleteBlock] Deleting:', blockId);
-    await blocksDb.delete(blockId);
+    console.log('[useBlockActions.deleteBlock] Starting delete for:', blockId);
 
-    // Invalidate cache
-    await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
+    // Get current cache data for rollback
+    const previousBlocks = queryClient.getQueryData(['board-blocks', boardId]);
+
+    // Optimistic update - remove from cache immediately
+    queryClient.setQueryData(['board-blocks', boardId], (old: any[] | undefined) => {
+      return old?.filter(b => b.id !== blockId) || [];
+    });
+
+    try {
+      // Perform actual delete
+      const result = await blocksDb.delete(blockId);
+      
+      if (!result.success) {
+        console.error('[useBlockActions.deleteBlock] Delete failed:', result.error);
+        // Rollback on failure
+        queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
+        toast.error(result.error || 'Failed to delete block');
+        throw new Error(result.error || 'Delete failed');
+      }
+
+      console.log('[useBlockActions.deleteBlock] Delete confirmed:', blockId);
+      
+      // Re-fetch to ensure consistency
+      await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
+      
+    } catch (error) {
+      console.error('[useBlockActions.deleteBlock] Error:', error);
+      // Rollback on error
+      queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
+      throw error;
+    }
   }, [boardId, canModify, queryClient]);
 
   /**
-   * Duplicate a block via API
+   * Duplicate a block
    */
   const duplicateBlock = useCallback(async (blockId: string) => {
     if (!canModify) {
@@ -202,15 +205,31 @@ export function useBlockActions(boardId: string) {
     }
 
     console.log('[useBlockActions.duplicateBlock] Duplicating:', blockId);
-    const block = await api.blocks.duplicate(blockId);
+    
+    // Get the original block
+    const original = await blocksDb.getById(blockId);
+    if (!original) throw new Error('Block not found');
+
+    // Create duplicate with offset position
+    const duplicate = await blocksDb.create({
+      board_id: original.board_id,
+      title: `${original.title || 'Block'} (copy)`,
+      model_id: original.model_id,
+      provider: original.provider,
+      system_prompt: original.system_prompt || '',
+      position_x: original.position_x + 50,
+      position_y: original.position_y + 50,
+      width: original.width || 400,
+      height: original.height || 300,
+    });
 
     // Invalidate cache
     await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
-    return block;
+    return duplicate;
   }, [boardId, canModify, queryClient]);
 
   /**
-   * Update block position via Supabase
+   * Update block position via Supabase (debounced in UI)
    */
   const updateBlockPosition = useCallback(async (blockId: string, position: { x: number; y: number }) => {
     if (!canModify) {

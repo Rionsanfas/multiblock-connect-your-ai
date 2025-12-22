@@ -310,7 +310,12 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} />
               ))}
               {streamingContent && <ChatMessage message={{ id: 'streaming', block_id: blockId, role: 'assistant', content: streamingContent, size_bytes: 0, created_at: new Date().toISOString() }} isStreaming />}
-              {(messageStatus === 'sending' || messageStatus === 'saving_response') && <div className="flex items-center gap-2 text-muted-foreground text-sm"><Spinner className="h-4 w-4" /><span>{messageStatus === 'sending' ? 'Sending...' : 'Saving...'}</span></div>}
+              {messageStatus === 'waiting_llm' && !streamingContent && (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Spinner className="h-4 w-4" />
+                  <span>Thinking...</span>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </>
           )}
