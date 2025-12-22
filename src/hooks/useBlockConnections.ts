@@ -5,14 +5,14 @@
  * If Block A → Block B: B receives A's full chat history as context. A does NOT receive B's.
  * 
  * All connections are stored in Supabase. Zustand is NOT used.
+ * All context is fetched from Supabase messages.
  */
 
 import { useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { connectionsDb } from '@/lib/database';
-import { useAppStore } from '@/store/useAppStore';
-import type { Message } from '@/types';
+import { connectionsDb, blocksDb, messagesDb } from '@/lib/database';
+import type { Message, Block } from '@/types/database.types';
 import type { BlockConnection } from '@/types/database.types';
 
 /**
@@ -133,88 +133,105 @@ export interface BlockContext {
  * Get the FULL incoming context for a block from all connected source blocks.
  * This includes the entire chat history from source blocks.
  * 
+ * CRITICAL: Fetches from Supabase, NOT from Zustand.
+ * 
  * Rule: If Block A → Block B, then B receives A's chat history as context.
  */
 export function useBlockIncomingContext(blockId: string | undefined): BlockContext[] {
+  const { user, isLoading: authLoading } = useAuth();
   const { connections } = useBlockIncomingConnections(blockId);
-  const { blocks, messages } = useAppStore();
 
-  return useMemo(() => {
-    if (!blockId || connections.length === 0) return [];
+  // Fetch source blocks and their messages from Supabase
+  const { data: contextList = [] } = useQuery({
+    queryKey: ['block-incoming-context', blockId, connections.map(c => c.from_block).join(',')],
+    queryFn: async () => {
+      if (!blockId || connections.length === 0) return [];
 
-    console.log('[useBlockIncomingContext] Building context for block:', blockId);
-    console.log('[useBlockIncomingContext] Incoming connections:', connections.length);
+      console.log('[useBlockIncomingContext] Building context for block:', blockId);
+      console.log('[useBlockIncomingContext] Incoming connections:', connections.length);
 
-    const contextList: BlockContext[] = [];
+      const results: BlockContext[] = [];
 
-    for (const conn of connections) {
-      const sourceBlock = blocks.find((b) => b.id === conn.from_block);
-      if (!sourceBlock) {
-        console.log('[useBlockIncomingContext] Source block not found:', conn.from_block);
-        continue;
-      }
+      for (const conn of connections) {
+        try {
+          // Fetch the source block from Supabase
+          const sourceBlock = await blocksDb.getById(conn.from_block);
+          if (!sourceBlock) {
+            console.log('[useBlockIncomingContext] Source block not found:', conn.from_block);
+            continue;
+          }
 
-      // Get ALL messages from the source block
-      const sourceMessages = messages
-        .filter((m) => m.block_id === conn.from_block)
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .slice(-MAX_MESSAGES_PER_SOURCE);
+          // Fetch messages from the source block from Supabase
+          const sourceMessages = await messagesDb.getForBlock(conn.from_block);
+          
+          // Sort and limit messages
+          const sortedMessages = sourceMessages
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+            .slice(-MAX_MESSAGES_PER_SOURCE);
 
-      if (sourceMessages.length === 0) {
-        console.log('[useBlockIncomingContext] No messages in source block:', sourceBlock.title);
-        continue;
-      }
+          if (sortedMessages.length === 0) {
+            console.log('[useBlockIncomingContext] No messages in source block:', sourceBlock.title);
+            continue;
+          }
 
-      console.log('[useBlockIncomingContext] Injecting', sourceMessages.length, 'messages from:', sourceBlock.title);
+          console.log('[useBlockIncomingContext] Injecting', sortedMessages.length, 'messages from:', sourceBlock.title);
 
-      // Build context content from source block's chat history
-      let content = '';
-      
-      if (conn.context_type === 'summary') {
-        // For summary mode, only include the last assistant response
-        const lastAssistant = sourceMessages
-          .filter(m => m.role === 'assistant')
-          .pop();
-        
-        if (lastAssistant) {
-          content = lastAssistant.content.length > 500
-            ? lastAssistant.content.substring(0, 500) + '...'
-            : lastAssistant.content;
+          // Build context content from source block's chat history
+          let content = '';
+          
+          if (conn.context_type === 'summary') {
+            // For summary mode, only include the last assistant response
+            const lastAssistant = sortedMessages
+              .filter(m => m.role === 'assistant')
+              .pop();
+            
+            if (lastAssistant) {
+              content = lastAssistant.content.length > 500
+                ? lastAssistant.content.substring(0, 500) + '...'
+                : lastAssistant.content;
+            }
+          } else {
+            // For full mode, include entire conversation history
+            content = sortedMessages
+              .filter(m => m.role === 'user' || m.role === 'assistant')
+              .map(m => `[${m.role.toUpperCase()}]: ${m.content}`)
+              .join('\n\n');
+            
+            // Truncate if too long
+            if (content.length > MAX_CONTEXT_CHARS) {
+              content = content.substring(content.length - MAX_CONTEXT_CHARS);
+              content = '...[truncated]\n\n' + content;
+            }
+          }
+
+          // Apply transform template if present
+          if (conn.transform_template && content) {
+            content = conn.transform_template.replace('{{output}}', content);
+          }
+
+          if (content) {
+            results.push({
+              connection_id: conn.id,
+              source_block_id: conn.from_block,
+              source_block_title: sourceBlock.title || 'Untitled Block',
+              context_type: conn.context_type,
+              content,
+              created_at: sortedMessages[sortedMessages.length - 1]?.created_at || new Date().toISOString(),
+            });
+          }
+        } catch (error) {
+          console.error('[useBlockIncomingContext] Error fetching context from block:', conn.from_block, error);
         }
-      } else {
-        // For full mode, include entire conversation history
-        content = sourceMessages
-          .filter(m => m.role === 'user' || m.role === 'assistant')
-          .map(m => `[${m.role.toUpperCase()}]: ${m.content}`)
-          .join('\n\n');
-        
-        // Truncate if too long
-        if (content.length > MAX_CONTEXT_CHARS) {
-          content = content.substring(content.length - MAX_CONTEXT_CHARS);
-          content = '...[truncated]\n\n' + content;
-        }
       }
 
-      // Apply transform template if present
-      if (conn.transform_template && content) {
-        content = conn.transform_template.replace('{{output}}', content);
-      }
+      console.log('[useBlockIncomingContext] Total context sources:', results.length);
+      return results;
+    },
+    enabled: !authLoading && !!user?.id && !!blockId && connections.length > 0,
+    staleTime: 5 * 1000, // Refresh context frequently
+  });
 
-      if (content) {
-        contextList.push({
-          connection_id: conn.id,
-          source_block_id: conn.from_block,
-          source_block_title: sourceBlock.title,
-          context_type: conn.context_type,
-          content,
-          created_at: sourceMessages[sourceMessages.length - 1]?.created_at || new Date().toISOString(),
-        });
-      }
-    }
-
-    console.log('[useBlockIncomingContext] Total context sources:', contextList.length);
-    return contextList;
-  }, [blockId, connections, blocks, messages]);
+  return contextList;
 }
 
 /**
@@ -243,18 +260,23 @@ export function useConnectionActions(boardId: string) {
         target_block_id: to_block,
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, { to_block }) => {
       queryClient.invalidateQueries({ queryKey: ['board-connections', boardId] });
+      queryClient.invalidateQueries({ queryKey: ['block-incoming-connections', to_block] });
+      queryClient.invalidateQueries({ queryKey: ['block-incoming-context', to_block] });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (connectionId: string) => {
+    mutationFn: async ({ connectionId, targetBlockId }: { connectionId: string; targetBlockId: string }) => {
       console.log('[useConnectionActions] Deleting connection:', connectionId);
-      return connectionsDb.delete(connectionId);
+      await connectionsDb.delete(connectionId);
+      return targetBlockId;
     },
-    onSuccess: () => {
+    onSuccess: (targetBlockId) => {
       queryClient.invalidateQueries({ queryKey: ['board-connections', boardId] });
+      queryClient.invalidateQueries({ queryKey: ['block-incoming-connections', targetBlockId] });
+      queryClient.invalidateQueries({ queryKey: ['block-incoming-context', targetBlockId] });
     },
   });
 
@@ -269,8 +291,8 @@ export function useConnectionActions(boardId: string) {
     createMutation.mutate({ from_block: fromBlockId, to_block: toBlockId });
   }, [user, createMutation]);
 
-  const remove = useCallback((connectionId: string): void => {
-    deleteMutation.mutate(connectionId);
+  const remove = useCallback((connectionId: string, targetBlockId?: string): void => {
+    deleteMutation.mutate({ connectionId, targetBlockId: targetBlockId || '' });
   }, [deleteMutation]);
 
   return {
@@ -285,13 +307,18 @@ export function useConnectionActions(boardId: string) {
  * Check if a connection already exists between two blocks
  */
 export function useConnectionExists(fromBlockId: string, toBlockId: string): boolean {
-  const { connections } = useBoardConnections(undefined);
+  const { user, isLoading: authLoading } = useAuth();
   
-  return useMemo(() => {
-    return connections.some(
-      (c) => c.from_block === fromBlockId && c.to_block === toBlockId
-    );
-  }, [connections, fromBlockId, toBlockId]);
+  const { data: exists = false } = useQuery({
+    queryKey: ['connection-exists', fromBlockId, toBlockId],
+    queryFn: async () => {
+      return connectionsDb.exists(fromBlockId, toBlockId);
+    },
+    enabled: !authLoading && !!user?.id && !!fromBlockId && !!toBlockId,
+    staleTime: 10 * 1000,
+  });
+  
+  return exists;
 }
 
 /**
