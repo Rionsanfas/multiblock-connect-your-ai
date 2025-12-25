@@ -299,60 +299,138 @@ export type Database = {
       }
       subscription_plans: {
         Row: {
+          billing_period: Database["public"]["Enums"]["billing_period"]
+          checkout_url: string | null
           created_at: string
           description: string | null
+          extra_boards: number
           features: Json | null
           id: string
           is_active: boolean | null
+          is_lifetime: boolean
           max_api_keys: number
           max_blocks_per_board: number
           max_boards: number
           max_messages_per_day: number
           max_seats: number
           name: string
+          plan_type: string
+          price_lifetime: number
           price_monthly: number
           price_yearly: number
           sort_order: number | null
-          tier: Database["public"]["Enums"]["subscription_tier"]
+          storage_mb: number
+          tier: Database["public"]["Enums"]["subscription_tier"] | null
           updated_at: string
         }
         Insert: {
+          billing_period?: Database["public"]["Enums"]["billing_period"]
+          checkout_url?: string | null
           created_at?: string
           description?: string | null
+          extra_boards?: number
           features?: Json | null
           id?: string
           is_active?: boolean | null
+          is_lifetime?: boolean
           max_api_keys?: number
           max_blocks_per_board?: number
           max_boards?: number
           max_messages_per_day?: number
           max_seats?: number
           name: string
+          plan_type?: string
+          price_lifetime?: number
           price_monthly?: number
           price_yearly?: number
           sort_order?: number | null
-          tier: Database["public"]["Enums"]["subscription_tier"]
+          storage_mb?: number
+          tier?: Database["public"]["Enums"]["subscription_tier"] | null
           updated_at?: string
         }
         Update: {
+          billing_period?: Database["public"]["Enums"]["billing_period"]
+          checkout_url?: string | null
           created_at?: string
           description?: string | null
+          extra_boards?: number
           features?: Json | null
           id?: string
           is_active?: boolean | null
+          is_lifetime?: boolean
           max_api_keys?: number
           max_blocks_per_board?: number
           max_boards?: number
           max_messages_per_day?: number
           max_seats?: number
           name?: string
+          plan_type?: string
+          price_lifetime?: number
           price_monthly?: number
           price_yearly?: number
           sort_order?: number | null
-          tier?: Database["public"]["Enums"]["subscription_tier"]
+          storage_mb?: number
+          tier?: Database["public"]["Enums"]["subscription_tier"] | null
           updated_at?: string
         }
         Relationships: []
+      }
+      user_addons: {
+        Row: {
+          addon_plan_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          polar_order_id: string | null
+          quantity: number
+          snapshot_extra_boards: number | null
+          snapshot_storage_mb: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addon_plan_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          polar_order_id?: string | null
+          quantity?: number
+          snapshot_extra_boards?: number | null
+          snapshot_storage_mb?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addon_plan_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          polar_order_id?: string | null
+          quantity?: number
+          snapshot_extra_boards?: number | null
+          snapshot_storage_mb?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_addons_addon_plan_id_fkey"
+            columns: ["addon_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_addons_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -381,11 +459,20 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          grace_expires_at: string | null
+          grace_started_at: string | null
+          grace_status: Database["public"]["Enums"]["grace_status"]
           id: string
           messages_reset_at: string | null
           messages_used_today: number | null
           plan_id: string
           seats_used: number | null
+          snapshot_max_api_keys: number | null
+          snapshot_max_blocks_per_board: number | null
+          snapshot_max_boards: number | null
+          snapshot_max_messages_per_day: number | null
+          snapshot_max_seats: number | null
+          snapshot_storage_mb: number | null
           status: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -397,11 +484,20 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          grace_expires_at?: string | null
+          grace_started_at?: string | null
+          grace_status?: Database["public"]["Enums"]["grace_status"]
           id?: string
           messages_reset_at?: string | null
           messages_used_today?: number | null
           plan_id: string
           seats_used?: number | null
+          snapshot_max_api_keys?: number | null
+          snapshot_max_blocks_per_board?: number | null
+          snapshot_max_boards?: number | null
+          snapshot_max_messages_per_day?: number | null
+          snapshot_max_seats?: number | null
+          snapshot_storage_mb?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -413,11 +509,20 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          grace_expires_at?: string | null
+          grace_started_at?: string | null
+          grace_status?: Database["public"]["Enums"]["grace_status"]
           id?: string
           messages_reset_at?: string | null
           messages_used_today?: number | null
           plan_id?: string
           seats_used?: number | null
+          snapshot_max_api_keys?: number | null
+          snapshot_max_blocks_per_board?: number | null
+          snapshot_max_boards?: number | null
+          snapshot_max_messages_per_day?: number | null
+          snapshot_max_seats?: number | null
+          snapshot_storage_mb?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -458,6 +563,21 @@ export type Database = {
       get_board_block_count: { Args: { p_board_id: string }; Returns: number }
       get_user_api_key_count: { Args: { p_user_id: string }; Returns: number }
       get_user_board_count: { Args: { p_user_id: string }; Returns: number }
+      get_user_effective_limits: {
+        Args: { p_user_id: string }
+        Returns: {
+          addon_extra_boards: number
+          addon_extra_storage_mb: number
+          grace_expires_at: string
+          grace_status: Database["public"]["Enums"]["grace_status"]
+          max_api_keys: number
+          max_blocks_per_board: number
+          max_boards: number
+          max_messages_per_day: number
+          max_seats: number
+          storage_mb: number
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -466,6 +586,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: {
           current_period_end: string
+          grace_status: Database["public"]["Enums"]["grace_status"]
           max_api_keys: number
           max_blocks_per_board: number
           max_boards: number
@@ -475,6 +596,7 @@ export type Database = {
           plan_id: string
           plan_name: string
           status: Database["public"]["Enums"]["subscription_status"]
+          storage_mb: number
           subscription_id: string
           tier: Database["public"]["Enums"]["subscription_tier"]
         }[]
@@ -487,6 +609,10 @@ export type Database = {
         Returns: boolean
       }
       increment_message_count: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      update_user_grace_status: {
         Args: { p_user_id: string }
         Returns: undefined
       }
@@ -504,6 +630,13 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "admin" | "super_admin"
+      billing_period: "monthly" | "yearly" | "lifetime" | "one_time"
+      grace_status:
+        | "none"
+        | "exceeded_boards"
+        | "exceeded_storage"
+        | "exceeded_both"
+        | "expired"
       llm_provider: "openai" | "anthropic" | "google" | "xai" | "deepseek"
       subscription_status:
         | "active"
@@ -511,7 +644,7 @@ export type Database = {
         | "past_due"
         | "trialing"
         | "paused"
-      subscription_tier: "free" | "pro" | "team" | "enterprise"
+      subscription_tier: "free" | "pro" | "team" | "enterprise" | "starter"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -640,6 +773,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "admin", "super_admin"],
+      billing_period: ["monthly", "yearly", "lifetime", "one_time"],
+      grace_status: [
+        "none",
+        "exceeded_boards",
+        "exceeded_storage",
+        "exceeded_both",
+        "expired",
+      ],
       llm_provider: ["openai", "anthropic", "google", "xai", "deepseek"],
       subscription_status: [
         "active",
@@ -648,7 +789,7 @@ export const Constants = {
         "trialing",
         "paused",
       ],
-      subscription_tier: ["free", "pro", "team", "enterprise"],
+      subscription_tier: ["free", "pro", "team", "enterprise", "starter"],
     },
   },
 } as const
