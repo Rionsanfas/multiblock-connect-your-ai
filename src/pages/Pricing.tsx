@@ -1,12 +1,8 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Check, Zap, Info, Plus, HardDrive, Users, LayoutGrid } from "lucide-react";
+import { Zap, Info, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAppStore } from "@/store/useAppStore";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { toast } from "sonner";
-import { pricingPlans, boardAddons } from "@/mocks/seed";
 import {
   Tooltip,
   TooltipContent,
@@ -14,46 +10,40 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PRICING_PLANS, formatStorage, formatPlanPrice } from "@/config/plans";
+import { PricingCard } from "@/components/pricing/PricingCard";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
-// Helper to format storage
-const formatStorage = (mb: number): string => {
-  if (mb >= 1024) {
-    return `${(mb / 1024).toFixed(mb % 1024 === 0 ? 0 : 1)} GB`;
-  }
-  return `${mb} MB`;
-};
-
-// Helper to format price
-const formatPrice = (cents: number): string => {
-  return `$${(cents / 100).toFixed(0)}`;
-};
+// Board add-ons (keeping for future use)
+const boardAddons = [
+  { id: 'addon-5', name: '5 Extra Boards', boards: 5, storage_mb: 500, price_cents: 500 },
+  { id: 'addon-20', name: '20 Extra Boards', boards: 20, storage_mb: 2048, price_cents: 1500 },
+  { id: 'addon-50', name: '50 Extra Boards', boards: 50, storage_mb: 5120, price_cents: 3000 },
+  { id: 'addon-100', name: '100 Extra Boards', boards: 100, storage_mb: 10240, price_cents: 5000 },
+];
 
 export default function Pricing() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAppStore();
-  const [selectedTab, setSelectedTab] = useState<"individual" | "team">("individual");
+  const { isAuthenticated } = useAuth();
 
-  const handleSelectPlan = (planId: string) => {
-    if (!isAuthenticated) {
-      navigate("/auth");
-      return;
-    }
-    // TODO: Replace with Supabase checkout integration
-    toast.success("Redirecting to checkout...");
-    navigate(`/checkout?plan=${planId}`);
-  };
+  // Filter plans by category
+  const individualPlans = PRICING_PLANS.filter(p => 
+    p.is_active && (p.tier === 'free' || p.tier === 'starter' || p.tier === 'pro')
+  );
+  const teamPlans = PRICING_PLANS.filter(p => 
+    p.is_active && (p.tier === 'team' || p.tier === 'enterprise')
+  );
 
   const handleSelectAddon = (addonId: string) => {
     if (!isAuthenticated) {
       navigate("/auth");
       return;
     }
-    // TODO: Replace with Supabase addon purchase
-    toast.success("Adding to your plan...");
+    toast.info("Add-ons coming soon", {
+      description: "Board add-ons will be available in a future update.",
+    });
   };
-
-  const individualPlans = pricingPlans.filter(p => p.tier === 'free' || p.tier === 'pro');
-  const teamPlans = pricingPlans.filter(p => p.tier === 'team');
 
   return (
     <TooltipProvider>
@@ -72,12 +62,12 @@ export default function Pricing() {
                 Choose Your Plan
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Start free, upgrade when you need more boards and storage. All plans include yearly billing.
+                Start free, upgrade when you need more. All paid plans are billed yearly.
               </p>
             </div>
 
             {/* Plan Type Tabs */}
-            <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as "individual" | "team")} className="mb-12">
+            <Tabs defaultValue="individual" className="mb-12">
               <TabsList className="tabs-3d grid w-full max-w-md mx-auto grid-cols-2">
                 <TabsTrigger value="individual">Individual</TabsTrigger>
                 <TabsTrigger value="team">Teams</TabsTrigger>
@@ -85,166 +75,18 @@ export default function Pricing() {
 
               {/* Individual Plans */}
               <TabsContent value="individual" className="mt-8">
-                <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
+                <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
                   {individualPlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''}`}
-                    >
-                      <div className="premium-card-gradient" />
-                      <div className="premium-card-content p-6 relative">
-                        {plan.badge && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs rounded-full z-10 badge-3d-shiny">
-                            {plan.badge}
-                          </div>
-                        )}
-
-                        <h3 className={`text-2xl font-bold mb-3 ${plan.highlight ? 'text-gold-shine' : 'text-foreground'}`}>
-                          {plan.name}
-                        </h3>
-                        
-                        <div className="mb-6">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-5xl font-bold">{formatPrice(plan.price_cents)}</span>
-                            {plan.price_cents > 0 && (
-                              <span className="text-muted-foreground">/year</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Key Stats */}
-                        <div className="space-y-3 mb-6 p-4 rounded-xl bg-muted/20 border border-border/30">
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="icon-3d-box">
-                              <LayoutGrid className="h-4 w-4 text-accent" />
-                            </div>
-                            <span>{plan.boards} board{plan.boards > 1 ? 's' : ''}</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="icon-3d-box">
-                              <Plus className="h-4 w-4 text-accent" />
-                            </div>
-                            <span>{plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="icon-3d-box">
-                              <HardDrive className="h-4 w-4 text-accent" />
-                            </div>
-                            <span>{formatStorage(plan.storage_mb)} storage</span>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-3 w-3 text-muted-foreground" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="max-w-xs">Storage covers messages, blocks, and uploaded files</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </div>
-
-                        {/* Features */}
-                        <ul className="space-y-2 mb-6">
-                          {plan.features.slice(3).map((feature) => (
-                            <li key={feature} className="flex items-start gap-2 text-sm">
-                              <Check className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-
-                        <button
-                          onClick={() => handleSelectPlan(plan.id)}
-                          className={`w-full ${plan.highlight ? 'btn-pricing-shiny' : 'btn-outline rounded-full'}`}
-                        >
-                          {plan.price_cents === 0 ? "Get Started Free" : "Subscribe Now"}
-                        </button>
-                      </div>
-                    </div>
+                    <PricingCard key={plan.id} plan={plan} />
                   ))}
                 </div>
               </TabsContent>
 
               {/* Team Plans */}
               <TabsContent value="team" className="mt-8">
-                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
+                <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
                   {teamPlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''}`}
-                    >
-                      <div className="premium-card-gradient" />
-                      <div className="premium-card-content p-6 relative">
-                        {plan.badge && (
-                          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs rounded-full z-10 badge-3d-shiny">
-                            {plan.badge}
-                          </div>
-                        )}
-
-                        <h3 className={`text-2xl font-bold mb-3 ${plan.highlight ? 'text-gold-shine' : 'text-foreground'}`}>
-                          {plan.name}
-                        </h3>
-                        
-                        <div className="mb-6">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-5xl font-bold">{formatPrice(plan.price_cents)}</span>
-                            <span className="text-muted-foreground">/year</span>
-                          </div>
-                        </div>
-
-                        {/* Key Stats */}
-                        <div className="space-y-3 mb-6 p-4 rounded-xl bg-muted/20 border border-border/30">
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="icon-3d-box">
-                              <LayoutGrid className="h-4 w-4 text-accent" />
-                            </div>
-                            <span>{plan.boards} boards</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="icon-3d-box">
-                              <Plus className="h-4 w-4 text-accent" />
-                            </div>
-                            <span>Unlimited blocks/board</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="icon-3d-box">
-                              <Users className="h-4 w-4 text-accent" />
-                            </div>
-                            <span>{plan.seats} team seats</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="icon-3d-box">
-                              <HardDrive className="h-4 w-4 text-accent" />
-                            </div>
-                            <span>{formatStorage(plan.storage_mb)} storage</span>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-3 w-3 text-muted-foreground" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="max-w-xs">Storage covers messages, blocks, and uploaded files</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </div>
-
-                        {/* Features */}
-                        <ul className="space-y-2 mb-6">
-                          {plan.features.slice(4).map((feature) => (
-                            <li key={feature} className="flex items-start gap-2 text-sm">
-                              <Check className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-
-                        <button
-                          onClick={() => handleSelectPlan(plan.id)}
-                          className="w-full btn-pricing-shiny"
-                        >
-                          Subscribe Now
-                        </button>
-                      </div>
-                    </div>
+                    <PricingCard key={plan.id} plan={plan} showSeats />
                   ))}
                 </div>
               </TabsContent>
@@ -277,7 +119,7 @@ export default function Pricing() {
                       </div>
 
                       <div className="text-2xl font-bold mb-3">
-                        {formatPrice(addon.price_cents)}
+                        ${addon.price_cents / 100}
                       </div>
 
                       <Button
@@ -314,6 +156,19 @@ export default function Pricing() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* FAQ or Enterprise CTA */}
+            <div className="mt-16 text-center">
+              <p className="text-muted-foreground mb-4">
+                Need a custom solution for your organization?
+              </p>
+              <a 
+                href="mailto:sales@multiblock.ai?subject=Enterprise%20Plan%20Inquiry"
+                className="text-accent hover:text-accent/80 font-medium transition-colors"
+              >
+                Contact our sales team →
+              </a>
             </div>
           </div>
         </main>
