@@ -311,6 +311,10 @@ export type Database = {
           max_api_keys: number
           max_blocks_per_board: number
           max_boards: number
+          max_file_size_mb: number
+          max_files_per_day: number
+          max_images_per_day: number
+          max_message_size_bytes: number
           max_messages_per_day: number
           max_seats: number
           name: string
@@ -336,6 +340,10 @@ export type Database = {
           max_api_keys?: number
           max_blocks_per_board?: number
           max_boards?: number
+          max_file_size_mb?: number
+          max_files_per_day?: number
+          max_images_per_day?: number
+          max_message_size_bytes?: number
           max_messages_per_day?: number
           max_seats?: number
           name: string
@@ -361,6 +369,10 @@ export type Database = {
           max_api_keys?: number
           max_blocks_per_board?: number
           max_boards?: number
+          max_file_size_mb?: number
+          max_files_per_day?: number
+          max_images_per_day?: number
+          max_message_size_bytes?: number
           max_messages_per_day?: number
           max_seats?: number
           name?: string
@@ -374,6 +386,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      uploads: {
+        Row: {
+          block_id: string | null
+          board_id: string | null
+          created_at: string
+          file_name: string
+          file_size_bytes: number
+          file_type: string
+          id: string
+          mime_type: string | null
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          block_id?: string | null
+          board_id?: string | null
+          created_at?: string
+          file_name: string
+          file_size_bytes: number
+          file_type: string
+          id?: string
+          mime_type?: string | null
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          block_id?: string | null
+          board_id?: string | null
+          created_at?: string
+          file_name?: string
+          file_size_bytes?: number
+          file_type?: string
+          id?: string
+          mime_type?: string | null
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uploads_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uploads_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_addons: {
         Row: {
@@ -453,16 +519,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_storage_usage: {
+        Row: {
+          created_at: string
+          files_bytes: number
+          images_bytes: number
+          last_calculated_at: string
+          messages_bytes: number
+          total_bytes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          files_bytes?: number
+          images_bytes?: number
+          last_calculated_at?: string
+          messages_bytes?: number
+          total_bytes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          files_bytes?: number
+          images_bytes?: number
+          last_calculated_at?: string
+          messages_bytes?: number
+          total_bytes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          files_used_today: number
           grace_expires_at: string | null
           grace_started_at: string | null
           grace_status: Database["public"]["Enums"]["grace_status"]
           id: string
+          images_used_today: number
           messages_reset_at: string | null
           messages_used_today: number | null
           plan_id: string
@@ -470,6 +571,10 @@ export type Database = {
           snapshot_max_api_keys: number | null
           snapshot_max_blocks_per_board: number | null
           snapshot_max_boards: number | null
+          snapshot_max_file_size_mb: number | null
+          snapshot_max_files_per_day: number | null
+          snapshot_max_images_per_day: number | null
+          snapshot_max_message_size_bytes: number | null
           snapshot_max_messages_per_day: number | null
           snapshot_max_seats: number | null
           snapshot_storage_mb: number | null
@@ -477,6 +582,7 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
+          uploads_reset_at: string | null
           user_id: string
         }
         Insert: {
@@ -484,10 +590,12 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          files_used_today?: number
           grace_expires_at?: string | null
           grace_started_at?: string | null
           grace_status?: Database["public"]["Enums"]["grace_status"]
           id?: string
+          images_used_today?: number
           messages_reset_at?: string | null
           messages_used_today?: number | null
           plan_id: string
@@ -495,6 +603,10 @@ export type Database = {
           snapshot_max_api_keys?: number | null
           snapshot_max_blocks_per_board?: number | null
           snapshot_max_boards?: number | null
+          snapshot_max_file_size_mb?: number | null
+          snapshot_max_files_per_day?: number | null
+          snapshot_max_images_per_day?: number | null
+          snapshot_max_message_size_bytes?: number | null
           snapshot_max_messages_per_day?: number | null
           snapshot_max_seats?: number | null
           snapshot_storage_mb?: number | null
@@ -502,6 +614,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
+          uploads_reset_at?: string | null
           user_id: string
         }
         Update: {
@@ -509,10 +622,12 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          files_used_today?: number
           grace_expires_at?: string | null
           grace_started_at?: string | null
           grace_status?: Database["public"]["Enums"]["grace_status"]
           id?: string
+          images_used_today?: number
           messages_reset_at?: string | null
           messages_used_today?: number | null
           plan_id?: string
@@ -520,6 +635,10 @@ export type Database = {
           snapshot_max_api_keys?: number | null
           snapshot_max_blocks_per_board?: number | null
           snapshot_max_boards?: number | null
+          snapshot_max_file_size_mb?: number | null
+          snapshot_max_files_per_day?: number | null
+          snapshot_max_images_per_day?: number | null
+          snapshot_max_message_size_bytes?: number | null
           snapshot_max_messages_per_day?: number | null
           snapshot_max_seats?: number | null
           snapshot_storage_mb?: number | null
@@ -527,6 +646,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
+          uploads_reset_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -544,12 +664,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      atomic_increment_daily_counter: {
+        Args: { p_counter_type: string; p_user_id: string }
+        Returns: boolean
+      }
+      atomic_storage_increment: {
+        Args: {
+          p_files_delta?: number
+          p_images_delta?: number
+          p_messages_delta?: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      can_add_api_key: { Args: { p_user_id: string }; Returns: boolean }
       can_create_block: {
         Args: { p_board_id: string; p_user_id: string }
         Returns: boolean
       }
       can_create_board: { Args: { p_user_id: string }; Returns: boolean }
-      can_send_message: { Args: { p_user_id: string }; Returns: boolean }
+      can_send_message: {
+        Args: { p_message_size_bytes?: number; p_user_id: string }
+        Returns: boolean
+      }
+      can_upload_file: {
+        Args: { p_file_size_bytes?: number; p_user_id: string }
+        Returns: boolean
+      }
+      can_upload_image: {
+        Args: { p_file_size_bytes?: number; p_user_id: string }
+        Returns: boolean
+      }
       get_block_incoming_connections: {
         Args: { p_block_id: string }
         Returns: {
@@ -561,6 +706,43 @@ export type Database = {
         }[]
       }
       get_board_block_count: { Args: { p_board_id: string }; Returns: number }
+      get_enforcement_status: {
+        Args: { p_user_id: string }
+        Returns: {
+          api_keys_used: number
+          blocks_used: number
+          boards_remaining: number
+          boards_used: number
+          can_add_api_key: boolean
+          can_create_board: boolean
+          can_send_message: boolean
+          can_upload_file: boolean
+          can_upload_image: boolean
+          files_remaining: number
+          files_used_today: number
+          grace_expires_at: string
+          grace_status: Database["public"]["Enums"]["grace_status"]
+          images_remaining: number
+          images_used_today: number
+          is_in_grace_period: boolean
+          max_api_keys: number
+          max_blocks_per_board: number
+          max_boards: number
+          max_file_size_mb: number
+          max_files_per_day: number
+          max_images_per_day: number
+          max_message_size_bytes: number
+          max_messages_per_day: number
+          messages_remaining: number
+          messages_used_today: number
+          plan_name: string
+          storage_mb: number
+          storage_remaining_mb: number
+          storage_used_bytes: number
+          storage_used_mb: number
+          tier: Database["public"]["Enums"]["subscription_tier"]
+        }[]
+      }
       get_user_api_key_count: { Args: { p_user_id: string }; Returns: number }
       get_user_board_count: { Args: { p_user_id: string }; Returns: number }
       get_user_effective_limits: {
@@ -573,6 +755,10 @@ export type Database = {
           max_api_keys: number
           max_blocks_per_board: number
           max_boards: number
+          max_file_size_mb: number
+          max_files_per_day: number
+          max_images_per_day: number
+          max_message_size_bytes: number
           max_messages_per_day: number
           max_seats: number
           storage_mb: number
@@ -601,6 +787,19 @@ export type Database = {
           tier: Database["public"]["Enums"]["subscription_tier"]
         }[]
       }
+      get_user_usage_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          api_keys_used: number
+          blocks_used: number
+          boards_used: number
+          files_used_today: number
+          images_used_today: number
+          messages_used_today: number
+          storage_used_bytes: number
+          storage_used_mb: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -612,6 +811,12 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      is_in_grace: { Args: { p_user_id: string }; Returns: boolean }
+      recalculate_user_storage: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      reset_daily_usage: { Args: never; Returns: undefined }
       update_user_grace_status: {
         Args: { p_user_id: string }
         Returns: undefined
