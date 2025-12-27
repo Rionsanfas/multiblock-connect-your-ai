@@ -9,6 +9,7 @@ import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { messagesDb } from '@/lib/database';
+import { devLog, devError } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { Message } from '@/types/database.types';
 
@@ -36,9 +37,9 @@ export function useBlockMessages(blockId: string | null) {
     queryKey: ['block-messages', blockId],
     queryFn: async () => {
       if (!blockId) return [];
-      console.log('[useBlockMessages] Fetching messages for block:', blockId);
+      devLog('[useBlockMessages] Fetching messages for block:', blockId);
       const msgs = await messagesDb.getForBlock(blockId);
-      console.log('[useBlockMessages] Fetched:', msgs.length, 'messages');
+      devLog('[useBlockMessages] Fetched:', msgs.length, 'messages');
       return msgs;
     },
     enabled: !authLoading && !!user?.id && !!blockId,
@@ -96,12 +97,12 @@ export function useMessageActions(blockId: string) {
       meta?: Record<string, unknown>;
     }) => {
       if (!user) throw new Error('Not authenticated');
-      console.log('[useMessageActions.send] request', { blockId, role, optimisticId, content_length: content.length });
+      devLog('[useMessageActions.send] request', { blockId, role, optimisticId });
       const message = await messagesDb.create(blockId, role, content, meta);
       return { optimisticId, message };
     },
     onSuccess: ({ optimisticId, message }) => {
-      console.log('[useMessageActions.send] success', { optimisticId, persistedId: message.id });
+      devLog('[useMessageActions.send] success', { optimisticId, persistedId: message.id });
       queryClient.setQueryData(key, (old: unknown) => {
         const arr = Array.isArray(old) ? (old as Message[]) : [];
         const idx = arr.findIndex((m) => m.id === optimisticId);
@@ -112,7 +113,7 @@ export function useMessageActions(blockId: string) {
       });
     },
     onError: (error, variables) => {
-      console.error('[useMessageActions.send] error', error);
+      devError('[useMessageActions.send] error', error);
       // Roll back optimistic message
       queryClient.setQueryData(key, (old: unknown) => {
         const arr = Array.isArray(old) ? (old as Message[]) : [];
@@ -124,19 +125,19 @@ export function useMessageActions(blockId: string) {
 
   const deleteMessageMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      console.log('[useMessageActions.delete] request', { blockId, messageId });
+      devLog('[useMessageActions.delete] request', { blockId, messageId });
       await messagesDb.delete(messageId);
       return messageId;
     },
     onError: (error) => {
-      console.error('[useMessageActions.delete] error', error);
+      devError('[useMessageActions.delete] error', error);
       toast.error('Failed to delete message');
     },
   });
 
   const clearMessagesMutation = useMutation({
     mutationFn: async () => {
-      console.log('[useMessageActions.clear] request', { blockId });
+      devLog('[useMessageActions.clear] request', { blockId });
       await messagesDb.deleteForBlock(blockId);
     },
     onSuccess: () => {
@@ -144,7 +145,7 @@ export function useMessageActions(blockId: string) {
       toast.success('Messages cleared');
     },
     onError: (error) => {
-      console.error('[useMessageActions.clear] error', error);
+      devError('[useMessageActions.clear] error', error);
       toast.error('Failed to clear messages');
     },
   });
@@ -159,7 +160,7 @@ export function useMessageActions(blockId: string) {
       content: string;
       meta?: Record<string, unknown>;
     }) => {
-      console.log('[useMessageActions.update] request', { messageId });
+      devLog('[useMessageActions.update] request', { messageId });
       return messagesDb.update(messageId, content, meta);
     },
     onSuccess: (updated) => {
@@ -173,7 +174,7 @@ export function useMessageActions(blockId: string) {
       });
     },
     onError: (error) => {
-      console.error('[useMessageActions.update] error', error);
+      devError('[useMessageActions.update] error', error);
       toast.error('Failed to update message');
     },
   });

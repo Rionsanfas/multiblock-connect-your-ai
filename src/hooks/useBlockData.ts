@@ -11,6 +11,7 @@ import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { blocksDb } from '@/lib/database';
+import { devLog, devError } from '@/lib/logger';
 import { toast } from 'sonner';
 import type { Block } from '@/types/database.types';
 
@@ -24,9 +25,9 @@ export function useBlock(blockId: string | undefined) {
     queryKey: ['block', blockId],
     queryFn: async () => {
       if (!blockId) return null;
-      console.log('[useBlock] Fetching block:', blockId);
+      devLog('[useBlock] Fetching block:', blockId);
       const block = await blocksDb.getById(blockId);
-      console.log('[useBlock] Fetched block:', block?.id, 'user_id:', block?.user_id);
+      devLog('[useBlock] Fetched block:', block?.id);
       return block;
     },
     enabled: !authLoading && !!user?.id && !!blockId,
@@ -44,7 +45,7 @@ export function useBlockDelete(boardId: string) {
 
   return useMutation({
     mutationFn: async (blockId: string) => {
-      console.log('[useBlockDelete] Starting delete for block:', blockId);
+      devLog('[useBlockDelete] Starting delete for block:', blockId);
       
       if (!user) {
         throw new Error('Not authenticated');
@@ -56,7 +57,7 @@ export function useBlockDelete(boardId: string) {
         throw new Error(result.error || 'Delete failed');
       }
       
-      console.log('[useBlockDelete] Block deleted successfully:', blockId);
+      devLog('[useBlockDelete] Block deleted successfully:', blockId);
       return result.deletedId;
     },
     onMutate: async (blockId) => {
@@ -81,7 +82,7 @@ export function useBlockDelete(boardId: string) {
     },
     onError: (error, blockId, context) => {
       // CRITICAL: Rollback on error
-      console.error('[useBlockDelete] Delete failed, rolling back:', error);
+      devError('[useBlockDelete] Delete failed, rolling back:', error);
       
       if (context?.previousBlocks) {
         queryClient.setQueryData(['board-blocks', boardId], context.previousBlocks);
@@ -93,12 +94,12 @@ export function useBlockDelete(boardId: string) {
     },
     onSuccess: (deletedId) => {
       // Only show success AFTER Supabase confirms
-      console.log('[useBlockDelete] Delete confirmed by Supabase:', deletedId);
+      devLog('[useBlockDelete] Delete confirmed by Supabase:', deletedId);
       toast.success('Block deleted');
     },
     onSettled: () => {
       // Always refetch to ensure consistency with database
-      console.log('[useBlockDelete] Refetching blocks to ensure consistency');
+      devLog('[useBlockDelete] Refetching blocks to ensure consistency');
       queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
     },
   });

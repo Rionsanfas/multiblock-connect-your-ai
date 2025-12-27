@@ -5,6 +5,7 @@
 // ============================================
 
 import { supabase } from '@/integrations/supabase/client';
+import { devLog, devError, devWarn } from '@/lib/logger';
 import type {
   Profile,
   ProfileUpdate,
@@ -374,7 +375,7 @@ export const boardsDb = {
   async getAll(includeArchived = false): Promise<Board[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.log('[boardsDb.getAll] No authenticated user');
+      devLog('[boardsDb.getAll] No authenticated user');
       return [];
     }
 
@@ -390,15 +391,15 @@ export const boardsDb = {
 
     const { data, error } = await query;
     if (error) {
-      console.error('[boardsDb.getAll] Error:', error);
+      devError('[boardsDb.getAll] Error:', error);
       throw error;
     }
-    console.log('[boardsDb.getAll] Fetched:', data?.length, 'boards');
+    devLog('[boardsDb.getAll] Fetched:', data?.length, 'boards');
     return (data || []) as Board[];
   },
 
   async getById(id: string): Promise<Board | null> {
-    console.log('[boardsDb.getById] Fetching board:', id);
+    devLog('[boardsDb.getById] Fetching board:', id);
     const { data, error } = await supabase
       .from('boards')
       .select('*')
@@ -406,29 +407,25 @@ export const boardsDb = {
       .maybeSingle();
 
     if (error) {
-      console.error('[boardsDb.getById] Error:', error);
+      devError('[boardsDb.getById] Error:', error);
       throw error;
     }
-    console.log('[boardsDb.getById] Result:', { 
-      found: !!data, 
-      id: data?.id, 
-      user_id: data?.user_id 
-    });
+    devLog('[boardsDb.getById] Result:', { found: !!data });
     return data as Board | null;
   },
 
   async create(board: Omit<BoardInsert, 'user_id'>): Promise<Board> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('[boardsDb.create] No authenticated user');
+      devError('[boardsDb.create] No authenticated user');
       throw new Error('Not authenticated');
     }
 
-    console.log('[boardsDb.create] Creating board for user:', user.id);
+    devLog('[boardsDb.create] Creating board');
 
     const canCreate = await subscriptionsDb.canCreateBoard();
     if (!canCreate) {
-      console.log('[boardsDb.create] Board limit reached');
+      devLog('[boardsDb.create] Board limit reached');
       throw new Error('Board limit reached. Please upgrade your plan.');
     }
 
@@ -439,15 +436,11 @@ export const boardsDb = {
       .single();
 
     if (error) {
-      console.error('[boardsDb.create] Insert error:', error);
+      devError('[boardsDb.create] Insert error:', error);
       throw error;
     }
     
-    console.log('[boardsDb.create] Board created:', { 
-      id: data.id, 
-      user_id: data.user_id,
-      name: data.name 
-    });
+    devLog('[boardsDb.create] Board created:', data.id);
     return data as Board;
   },
 
@@ -464,7 +457,7 @@ export const boardsDb = {
   },
 
   async delete(id: string): Promise<{ success: boolean; error?: string }> {
-    console.log('[boardsDb.delete] Deleting board:', id);
+    devLog('[boardsDb.delete] Deleting board:', id);
     const { error, count } = await supabase
       .from('boards')
       .delete()
@@ -472,11 +465,11 @@ export const boardsDb = {
       .select();
     
     if (error) {
-      console.error('[boardsDb.delete] Error:', error);
+      devError('[boardsDb.delete] Error:', error);
       return { success: false, error: error.message };
     }
     
-    console.log('[boardsDb.delete] Board deleted successfully');
+    devLog('[boardsDb.delete] Board deleted successfully');
     return { success: true };
   },
 
@@ -514,7 +507,7 @@ export const boardsDb = {
 
 export const blocksDb = {
   async getForBoard(boardId: string): Promise<Block[]> {
-    console.log('[blocksDb.getForBoard] Fetching blocks for board:', boardId);
+    devLog('[blocksDb.getForBoard] Fetching blocks for board:', boardId);
     const { data, error } = await supabase
       .from('blocks')
       .select('*')
@@ -522,10 +515,10 @@ export const blocksDb = {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('[blocksDb.getForBoard] Error:', error);
+      devError('[blocksDb.getForBoard] Error:', error);
       throw error;
     }
-    console.log('[blocksDb.getForBoard] Fetched:', data?.length, 'blocks');
+    devLog('[blocksDb.getForBoard] Fetched:', data?.length, 'blocks');
     return (data || []) as Block[];
   },
 
@@ -543,21 +536,15 @@ export const blocksDb = {
   async create(block: Omit<BlockInsert, 'user_id'>): Promise<Block> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('[blocksDb.create] No authenticated user');
+      devError('[blocksDb.create] No authenticated user');
       throw new Error('Not authenticated');
     }
 
-    console.log('[blocksDb.create] Creating block:', {
-      board_id: block.board_id,
-      user_id: user.id,
-      model_id: block.model_id,
-      provider: block.provider,
-      position: { x: block.position_x, y: block.position_y },
-    });
+    devLog('[blocksDb.create] Creating block');
 
     const canCreate = await subscriptionsDb.canCreateBlock(block.board_id);
     if (!canCreate) {
-      console.log('[blocksDb.create] Block limit reached');
+      devLog('[blocksDb.create] Block limit reached');
       throw new Error('Block limit reached for this board. Please upgrade your plan.');
     }
 
@@ -568,15 +555,11 @@ export const blocksDb = {
       .single();
 
     if (error) {
-      console.error('[blocksDb.create] Insert error:', error);
+      devError('[blocksDb.create] Insert error:', error);
       throw error;
     }
     
-    console.log('[blocksDb.create] Block created:', {
-      id: data.id,
-      board_id: data.board_id,
-      user_id: data.user_id,
-    });
+    devLog('[blocksDb.create] Block created:', data.id);
     return data as Block;
   },
 
@@ -593,11 +576,11 @@ export const blocksDb = {
   },
 
   async delete(id: string): Promise<{ success: boolean; deletedId?: string; error?: string }> {
-    console.log('[blocksDb.delete] Starting delete for block:', id);
+    devLog('[blocksDb.delete] Starting delete for block:', id);
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('[blocksDb.delete] No authenticated user');
+      devError('[blocksDb.delete] No authenticated user');
       return { success: false, error: 'Not authenticated' };
     }
 
@@ -609,17 +592,17 @@ export const blocksDb = {
       .maybeSingle();
 
     if (fetchError) {
-      console.error('[blocksDb.delete] Error fetching block:', fetchError);
+      devError('[blocksDb.delete] Error fetching block:', fetchError);
       return { success: false, error: fetchError.message };
     }
 
     if (!existingBlock) {
-      console.error('[blocksDb.delete] Block not found:', id);
+      devError('[blocksDb.delete] Block not found:', id);
       return { success: false, error: 'Block not found' };
     }
 
     if (existingBlock.user_id !== user.id) {
-      console.error('[blocksDb.delete] User does not own block:', { blockUserId: existingBlock.user_id, userId: user.id });
+      devError('[blocksDb.delete] User does not own block');
       return { success: false, error: 'Access denied' };
     }
 
@@ -633,10 +616,10 @@ export const blocksDb = {
       .select('id');
 
     if (msgDelError) {
-      console.error('[blocksDb.delete] Failed deleting messages:', msgDelError);
+      devError('[blocksDb.delete] Failed deleting messages:', msgDelError);
       return { success: false, error: msgDelError.message };
     }
-    console.log('[blocksDb.delete] Deleted messages:', deletedMsgs?.length ?? 0);
+    devLog('[blocksDb.delete] Deleted messages:', deletedMsgs?.length ?? 0);
 
     // 2) Connections referencing this block (either direction)
     // Delete source connections
@@ -647,7 +630,7 @@ export const blocksDb = {
       .eq('source_block_id', id);
 
     if (srcConnDelError) {
-      console.error('[blocksDb.delete] Failed deleting source connections:', srcConnDelError);
+      devError('[blocksDb.delete] Failed deleting source connections:', srcConnDelError);
       return { success: false, error: srcConnDelError.message };
     }
 
@@ -659,10 +642,10 @@ export const blocksDb = {
       .eq('target_block_id', id);
 
     if (tgtConnDelError) {
-      console.error('[blocksDb.delete] Failed deleting target connections:', tgtConnDelError);
+      devError('[blocksDb.delete] Failed deleting target connections:', tgtConnDelError);
       return { success: false, error: tgtConnDelError.message };
     }
-    console.log('[blocksDb.delete] Deleted connections for block:', id);
+    devLog('[blocksDb.delete] Deleted connections for block:', id);
 
 
     // 3) Delete the block itself (return affected rows for verification)
@@ -674,16 +657,16 @@ export const blocksDb = {
       .select('id');
 
     if (deleteError) {
-      console.error('[blocksDb.delete] Delete error:', deleteError);
+      devError('[blocksDb.delete] Delete error:', deleteError);
       return { success: false, error: deleteError.message };
     }
 
     if (!deletedBlocks || deletedBlocks.length === 0) {
-      console.error('[blocksDb.delete] No rows deleted (RLS or not found)');
+      devError('[blocksDb.delete] No rows deleted (RLS or not found)');
       return { success: false, error: 'Delete failed - no rows deleted' };
     }
 
-    console.log('[blocksDb.delete] Deleted block rows:', deletedBlocks.length);
+    devLog('[blocksDb.delete] Deleted block rows:', deletedBlocks.length);
 
     // Verify deletion by trying to fetch the block again
     const { data: checkBlock } = await supabase
@@ -693,11 +676,11 @@ export const blocksDb = {
       .maybeSingle();
 
     if (checkBlock) {
-      console.error('[blocksDb.delete] Block still exists after delete!');
+      devError('[blocksDb.delete] Block still exists after delete!');
       return { success: false, error: 'Delete failed - block still exists' };
     }
 
-    console.log('[blocksDb.delete] Block successfully deleted:', id);
+    devLog('[blocksDb.delete] Block successfully deleted:', id);
     return { success: true, deletedId: id };
   },
 
@@ -724,11 +707,11 @@ export const blocksDb = {
 
 export const messagesDb = {
   async getForBlock(blockId: string): Promise<Message[]> {
-    console.log('[messagesDb.getForBlock] Fetching messages for block:', blockId);
+    devLog('[messagesDb.getForBlock] Fetching messages for block:', blockId);
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.warn('[messagesDb.getForBlock] No authenticated user');
+      devWarn('[messagesDb.getForBlock] No authenticated user');
       return [];
     }
 
@@ -740,11 +723,11 @@ export const messagesDb = {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.error('[messagesDb.getForBlock] Error:', error);
+      devError('[messagesDb.getForBlock] Error:', error);
       throw error;
     }
     
-    console.log('[messagesDb.getForBlock] Fetched:', data?.length, 'messages');
+    devLog('[messagesDb.getForBlock] Fetched:', data?.length, 'messages');
     return (data || []) as Message[];
   },
 
@@ -754,11 +737,7 @@ export const messagesDb = {
       throw new Error('Not authenticated');
     }
 
-    console.log('[messagesDb.create] Creating message:', {
-      block_id: blockId,
-      role,
-      content_length: content.length,
-    });
+    devLog('[messagesDb.create] Creating message');
 
     const { data, error } = await supabase
       .from('messages')
@@ -773,11 +752,11 @@ export const messagesDb = {
       .single();
 
     if (error) {
-      console.error('[messagesDb.create] Error:', error);
+      devError('[messagesDb.create] Error:', error);
       throw error;
     }
 
-    console.log('[messagesDb.create] Message created:', data.id);
+    devLog('[messagesDb.create] Message created:', data.id);
     return data as Message;
   },
 
@@ -806,7 +785,7 @@ export const messagesDb = {
   },
 
   async deleteForBlock(blockId: string): Promise<void> {
-    console.log('[messagesDb.deleteForBlock] Deleting all messages for block:', blockId);
+    devLog('[messagesDb.deleteForBlock] Deleting all messages for block:', blockId);
     
     const { error } = await supabase
       .from('messages')
@@ -814,7 +793,7 @@ export const messagesDb = {
       .eq('block_id', blockId);
     
     if (error) {
-      console.error('[messagesDb.deleteForBlock] Error:', error);
+      devError('[messagesDb.deleteForBlock] Error:', error);
       throw error;
     }
   },
