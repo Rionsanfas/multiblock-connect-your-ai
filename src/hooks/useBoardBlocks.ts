@@ -3,6 +3,7 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanEnforcement } from './usePlanLimits';
 import { blocksDb } from '@/lib/database';
+import { devLog, devError } from '@/lib/logger';
 import type { Block } from '@/types';
 import type { LLMProvider } from '@/types/database.types';
 import { toast } from 'sonner';
@@ -18,9 +19,9 @@ export function useBoardBlocks(boardId: string | undefined) {
     queryKey: ['board-blocks', boardId],
     queryFn: async () => {
       if (!boardId) return [];
-      console.log('[useBoardBlocks] Fetching blocks for board:', boardId);
+      devLog('[useBoardBlocks] Fetching blocks for board:', boardId);
       const blocks = await blocksDb.getForBoard(boardId);
-      console.log('[useBoardBlocks] Fetched:', blocks.length, 'blocks');
+      devLog('[useBoardBlocks] Fetched:', blocks.length, 'blocks');
       return blocks;
     },
     enabled: !authLoading && !!user?.id && !!boardId,
@@ -66,13 +67,13 @@ export function useBlockActions(boardId: string) {
    */
   const createBlock = useCallback(async (data: Partial<Block>): Promise<Block | null> => {
     if (!canModify) {
-      console.error('[useBlockActions.createBlock] Cannot create: no user or boardId');
+      devError('[useBlockActions.createBlock] Cannot create: no user or boardId');
       throw new Error('Cannot create block: Board access denied');
     }
     
     // Enforce plan limits
     if (!enforceCreateBlock(boardId)) {
-      console.log('[useBlockActions.createBlock] Plan limit reached');
+      devLog('[useBlockActions.createBlock] Plan limit reached');
       return null;
     }
 
@@ -91,7 +92,7 @@ export function useBlockActions(boardId: string) {
     
     const supabaseProvider = providerMap[provider] || 'openai';
 
-    console.log('[useBlockActions.createBlock] Creating block...');
+    devLog('[useBlockActions.createBlock] Creating block...');
 
     try {
       // INSERT into Supabase - returns full row
@@ -107,7 +108,7 @@ export function useBlockActions(boardId: string) {
         height: 300,
       });
 
-      console.log('[useBlockActions.createBlock] Insert succeeded:', block.id);
+      devLog('[useBlockActions.createBlock] Insert succeeded:', block.id);
 
       // Invalidate query cache to trigger re-fetch
       await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
@@ -126,7 +127,7 @@ export function useBlockActions(boardId: string) {
         updated_at: block.updated_at,
       };
     } catch (error) {
-      console.error('[useBlockActions.createBlock] Failed:', error);
+      devError('[useBlockActions.createBlock] Failed:', error);
       throw error;
     }
   }, [boardId, canModify, user, enforceCreateBlock, queryClient]);
@@ -139,7 +140,7 @@ export function useBlockActions(boardId: string) {
       throw new Error('Cannot update block: Board access denied');
     }
 
-    console.log('[useBlockActions.updateBlock] Updating:', blockId, updates);
+    devLog('[useBlockActions.updateBlock] Updating:', blockId);
 
     await blocksDb.update(blockId, {
       title: updates.title,
@@ -161,7 +162,7 @@ export function useBlockActions(boardId: string) {
       throw new Error('Cannot delete block: Board access denied');
     }
 
-    console.log('[useBlockActions.deleteBlock] request', { boardId, blockId, userId: user?.id });
+    devLog('[useBlockActions.deleteBlock] request', { boardId, blockId });
 
     // Get current cache data for rollback
     const previousBlocks = queryClient.getQueryData(['board-blocks', boardId]);
@@ -176,16 +177,16 @@ export function useBlockActions(boardId: string) {
       const result = await blocksDb.delete(blockId);
 
       if (!result.success) {
-        console.error('[useBlockActions.deleteBlock] failed', { boardId, blockId, error: result.error });
+        devError('[useBlockActions.deleteBlock] failed', { boardId, blockId, error: result.error });
         queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
         toast.error(result.error || 'Failed to delete block');
         throw new Error(result.error || 'Delete failed');
       }
 
-      console.log('[useBlockActions.deleteBlock] success', { boardId, blockId, deletedId: result.deletedId });
+      devLog('[useBlockActions.deleteBlock] success', { boardId, blockId, deletedId: result.deletedId });
       // IMPORTANT: no refetch here; optimistic cache is the UI source of truth.
     } catch (error) {
-      console.error('[useBlockActions.deleteBlock] error', { boardId, blockId, error });
+      devError('[useBlockActions.deleteBlock] error', { boardId, blockId });
       queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
       throw error;
     }
@@ -199,7 +200,7 @@ export function useBlockActions(boardId: string) {
       throw new Error('Cannot duplicate block: Board access denied');
     }
 
-    console.log('[useBlockActions.duplicateBlock] Duplicating:', blockId);
+    devLog('[useBlockActions.duplicateBlock] Duplicating:', blockId);
     
     // Get the original block
     const original = await blocksDb.getById(blockId);
@@ -250,9 +251,9 @@ export function useBlockActions(boardId: string) {
         position_x: position.x,
         position_y: position.y,
       });
-      console.log('[useBlockActions.persistBlockPosition] Saved position:', blockId);
+      devLog('[useBlockActions.persistBlockPosition] Saved position:', blockId);
     } catch (error) {
-      console.error('[useBlockActions.persistBlockPosition] Error:', error);
+      devError('[useBlockActions.persistBlockPosition] Error:', error);
       // Refetch to get correct position
       queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
     }
