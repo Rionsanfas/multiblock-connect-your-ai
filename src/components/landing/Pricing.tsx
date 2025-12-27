@@ -1,25 +1,15 @@
 import { Check, Info, HardDrive, Users, LayoutGrid, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { pricingPlans } from "@/mocks/seed";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
-
-// Helper to format storage
-const formatStorage = (mb: number): string => {
-  if (mb >= 1024) {
-    return `${(mb / 1024).toFixed(mb % 1024 === 0 ? 0 : 1)} GB`;
-  }
-  return `${mb} MB`;
-};
-
-// Helper to format price
-const formatPrice = (cents: number): string => {
-  return `$${(cents / 100).toFixed(0)}`;
-};
+import { PRICING_PLANS, formatStorage, formatPlanPrice } from "@/config/plans";
+import { PricingButton } from "@/components/pricing/PricingButton";
 
 const Pricing = () => {
-  // Show individual plans on landing page
-  const displayPlans = pricingPlans.filter((p) => p.tier === "free" || p.tier === "pro");
+  // Show only free and pro on landing page
+  const displayPlans = PRICING_PLANS.filter((p) => 
+    p.is_active && (p.tier === "free" || p.tier === "pro")
+  );
 
   return (
     <TooltipProvider>
@@ -56,10 +46,7 @@ const Pricing = () => {
             </p>
           </AnimatedSection>
 
-          {/* 
-            Pricing Cards - responsive grid with auto-fit.
-            Max-width centers cards on large screens.
-          */}
+          {/* Pricing Cards */}
           <div
             className="grid max-w-5xl mx-auto align-start"
             style={{
@@ -71,7 +58,7 @@ const Pricing = () => {
               <AnimatedElement key={plan.id} delay={index * 150}>
                 <div className={`premium-card-wrapper ${plan.highlight ? "scale-105" : ""} h-full`}>
                   <div className="premium-card-gradient" />
-                  <div className="premium-card-content h-full" style={{ padding: "clamp(20px, 3vw, 32px)" }}>
+                  <div className="premium-card-content h-full flex flex-col" style={{ padding: "clamp(20px, 3vw, 32px)" }}>
                     {plan.badge && (
                       <div
                         className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full z-10 badge-3d-shiny"
@@ -99,7 +86,7 @@ const Pricing = () => {
                           className="font-bold text-foreground"
                           style={{ fontSize: "clamp(2rem, 1.75rem + 1.5vw, 3rem)" }}
                         >
-                          {formatPrice(plan.price_cents)}
+                          {plan.price_cents === 0 ? 'Free' : `$${plan.price_cents / 100}`}
                         </span>
                         {plan.price_cents > 0 && (
                           <span
@@ -183,7 +170,7 @@ const Pricing = () => {
                       )}
                     </div>
 
-                    <ul style={{ marginBottom: "clamp(20px, 3vw, 32px)" }}>
+                    <ul className="flex-1" style={{ marginBottom: "clamp(20px, 3vw, 32px)" }}>
                       {plan.features.slice(3).map((feature) => (
                         <li
                           key={feature}
@@ -202,17 +189,7 @@ const Pricing = () => {
                       ))}
                     </ul>
 
-                    <Link
-                      to="/pricing"
-                      className={`block text-center w-full rounded-full font-medium transition-all duration-300 ${
-                        plan.highlight
-                          ? "btn-pricing-shiny"
-                          : "border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5"
-                      }`}
-                      style={{ padding: "12px 24px" }}
-                    >
-                      {plan.price_cents === 0 ? "Get Started" : "View Plans"}
-                    </Link>
+                    <PricingButton plan={plan} />
                   </div>
                 </div>
               </AnimatedElement>
@@ -228,14 +205,14 @@ const Pricing = () => {
                 marginBottom: "12px",
               }}
             >
-              Need team features?
+              Need team features or more power?
             </p>
             <Link
               to="/pricing"
               className="text-accent hover:text-accent/80 font-medium transition-colors min-h-[44px] inline-flex items-center"
               style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)" }}
             >
-              View Team Plans →
+              View All Plans →
             </Link>
           </AnimatedSection>
         </div>

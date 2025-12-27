@@ -2,3 +2,6 @@ project_id = "dpeljwqtkjjkriobkhtj"
 
 [functions.encrypt-api-key]
 verify_jwt = true
+
+[functions.polar-webhook]
+verify_jwt = false
