@@ -6,30 +6,61 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Get encryption key from environment - this should be set as a secret
+// Get encryption key from environment - must be a 32-byte key for AES-256
 const ENCRYPTION_KEY = Deno.env.get("API_KEY_ENCRYPTION_SECRET") || "default-dev-key-32-chars-long!!";
 
-// Simple XOR-based encryption (for production, use proper AES-256)
-function encrypt(text: string, key: string): string {
-  const textBytes = new TextEncoder().encode(text);
-  const keyBytes = new TextEncoder().encode(key);
-  const encrypted = new Uint8Array(textBytes.length);
+// Convert a string key to a CryptoKey for AES-256-GCM
+async function getAESKey(keyString: string): Promise<CryptoKey> {
+  // Ensure the key is exactly 32 bytes for AES-256
+  const encoder = new TextEncoder();
+  let keyBytes = encoder.encode(keyString);
   
-  for (let i = 0; i < textBytes.length; i++) {
-    encrypted[i] = textBytes[i] ^ keyBytes[i % keyBytes.length];
+  // Pad or truncate to 32 bytes
+  if (keyBytes.length < 32) {
+    const padded = new Uint8Array(32);
+    padded.set(keyBytes);
+    keyBytes = padded;
+  } else if (keyBytes.length > 32) {
+    keyBytes = keyBytes.slice(0, 32);
   }
   
-  // Convert to base64 for storage
-  return btoa(String.fromCharCode(...encrypted));
+  return await crypto.subtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+// AES-256-GCM encryption with random IV
+async function encrypt(text: string, keyString: string): Promise<string> {
+  const key = await getAESKey(keyString);
+  const encoder = new TextEncoder();
+  const textBytes = encoder.encode(text);
+  
+  // Generate a random 12-byte IV (recommended for AES-GCM)
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv },
+    key,
+    textBytes
+  );
+  
+  // Combine IV + ciphertext and encode as base64
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), iv.length);
+  
+  return btoa(String.fromCharCode(...combined));
 }
 
 // Check if a string is valid base64
 function isValidBase64(str: string): boolean {
   if (!str || str.length === 0) return false;
-  // Base64 should only contain these characters
   const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
   if (!base64Regex.test(str)) return false;
-  // Length should be multiple of 4 (with padding)
   if (str.length % 4 !== 0) return false;
   try {
     atob(str);
@@ -39,15 +70,10 @@ function isValidBase64(str: string): boolean {
   }
 }
 
-function decrypt(encryptedBase64: string, key: string): string {
-  // If not valid base64, it's likely a legacy plaintext key - return as-is
-  if (!isValidBase64(encryptedBase64)) {
-    console.log("[decrypt] Detected legacy plaintext key, returning as-is");
-    return encryptedBase64;
-  }
-  
+// Legacy XOR decryption for backward compatibility with existing keys
+function decryptLegacyXOR(encryptedBase64: string, keyString: string): string {
   const encrypted = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
-  const keyBytes = new TextEncoder().encode(key);
+  const keyBytes = new TextEncoder().encode(keyString);
   const decrypted = new Uint8Array(encrypted.length);
   
   for (let i = 0; i < encrypted.length; i++) {
@@ -55,6 +81,48 @@ function decrypt(encryptedBase64: string, key: string): string {
   }
   
   return new TextDecoder().decode(decrypted);
+}
+
+// AES-256-GCM decryption with automatic legacy fallback
+async function decrypt(encryptedBase64: string, keyString: string): Promise<string> {
+  // If not valid base64, it's likely a legacy plaintext key - return as-is
+  if (!isValidBase64(encryptedBase64)) {
+    console.log("[decrypt] Detected legacy plaintext key, returning as-is");
+    return encryptedBase64;
+  }
+  
+  try {
+    const combined = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
+    
+    // Check if it's long enough to be AES-GCM encrypted (at least 12 bytes IV + 16 bytes auth tag)
+    if (combined.length < 28) {
+      console.log("[decrypt] Data too short for AES-GCM, trying legacy XOR");
+      return decryptLegacyXOR(encryptedBase64, keyString);
+    }
+    
+    // Extract IV (first 12 bytes) and ciphertext (rest)
+    const iv = combined.slice(0, 12);
+    const ciphertext = combined.slice(12);
+    
+    const key = await getAESKey(keyString);
+    
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      ciphertext
+    );
+    
+    return new TextDecoder().decode(decrypted);
+  } catch (aesError) {
+    // If AES-GCM fails, try legacy XOR decryption for backward compatibility
+    console.log("[decrypt] AES-GCM decryption failed, trying legacy XOR:", aesError);
+    try {
+      return decryptLegacyXOR(encryptedBase64, keyString);
+    } catch (xorError) {
+      console.error("[decrypt] Both AES-GCM and legacy XOR decryption failed");
+      throw new Error("Failed to decrypt API key");
+    }
+  }
 }
 
 // Generate a hint from the key (first 4 + last 4 chars)
@@ -106,7 +174,7 @@ serve(async (req) => {
         });
       }
 
-      const encryptedKey = encrypt(api_key, ENCRYPTION_KEY);
+      const encryptedKey = await encrypt(api_key, ENCRYPTION_KEY);
       const keyHint = getKeyHint(api_key);
 
       // Upsert the encrypted key
@@ -133,7 +201,7 @@ serve(async (req) => {
         });
       }
 
-      console.log(`[encrypt-api-key] Stored encrypted key for provider: ${provider}, user: ${user.id}`);
+      console.log(`[encrypt-api-key] Stored AES-256-GCM encrypted key for provider: ${provider}, user: ${user.id}`);
 
       return new Response(JSON.stringify({ success: true, data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -163,7 +231,7 @@ serve(async (req) => {
         });
       }
 
-      const decryptedKey = decrypt(data.api_key_encrypted, ENCRYPTION_KEY);
+      const decryptedKey = await decrypt(data.api_key_encrypted, ENCRYPTION_KEY);
 
       return new Response(JSON.stringify({ api_key: decryptedKey }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -204,7 +272,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("encrypt-api-key error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
