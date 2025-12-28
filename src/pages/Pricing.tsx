@@ -1,49 +1,37 @@
-import { Zap, Info, HardDrive } from "lucide-react";
+import { Zap, Info, HardDrive, Infinity, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { toast } from "sonner";
 import {
-  Tooltip,
-  TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PRICING_PLANS, formatStorage, formatPlanPrice } from "@/config/plans";
+import { 
+  getFreePlan,
+  getIndividualAnnualPlans, 
+  getTeamAnnualPlans, 
+  getIndividualLifetimePlans,
+  getTeamLifetimePlans,
+  getActiveAddons,
+  formatStorage 
+} from "@/config/plans";
 import { PricingCard } from "@/components/pricing/PricingCard";
+import { AddonCard } from "@/components/pricing/AddonCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-
-// Board add-ons (keeping for future use)
-const boardAddons = [
-  { id: 'addon-5', name: '5 Extra Boards', boards: 5, storage_mb: 500, price_cents: 500 },
-  { id: 'addon-20', name: '20 Extra Boards', boards: 20, storage_mb: 2048, price_cents: 1500 },
-  { id: 'addon-50', name: '50 Extra Boards', boards: 50, storage_mb: 5120, price_cents: 3000 },
-  { id: 'addon-100', name: '100 Extra Boards', boards: 100, storage_mb: 10240, price_cents: 5000 },
-];
 
 export default function Pricing() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  // Filter plans by category
-  const individualPlans = PRICING_PLANS.filter(p => 
-    p.is_active && (p.tier === 'free' || p.tier === 'starter' || p.tier === 'pro')
-  );
-  const teamPlans = PRICING_PLANS.filter(p => 
-    p.is_active && (p.tier === 'team' || p.tier === 'enterprise')
-  );
-
-  const handleSelectAddon = (addonId: string) => {
-    if (!isAuthenticated) {
-      navigate("/auth");
-      return;
-    }
-    toast.info("Add-ons coming soon", {
-      description: "Board add-ons will be available in a future update.",
-    });
-  };
+  // Get plans by category
+  const freePlan = getFreePlan();
+  const individualAnnualPlans = getIndividualAnnualPlans();
+  const teamAnnualPlans = getTeamAnnualPlans();
+  const individualLifetimePlans = getIndividualLifetimePlans();
+  const teamLifetimePlans = getTeamLifetimePlans();
+  const addons = getActiveAddons();
 
   return (
     <TooltipProvider>
@@ -62,76 +50,98 @@ export default function Pricing() {
                 Choose Your Plan
               </h1>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Start free, upgrade when you need more. All paid plans are billed yearly.
+                Start free, upgrade when you need more. Annual plans and lifetime deals available.
               </p>
             </div>
 
-            {/* Plan Type Tabs */}
+            {/* Plan Category Tabs */}
             <Tabs defaultValue="individual" className="mb-12">
-              <TabsList className="tabs-3d grid w-full max-w-md mx-auto grid-cols-2">
-                <TabsTrigger value="individual">Individual</TabsTrigger>
-                <TabsTrigger value="team">Teams</TabsTrigger>
+              <TabsList className="tabs-3d grid w-full max-w-2xl mx-auto grid-cols-3">
+                <TabsTrigger value="individual" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Individual
+                </TabsTrigger>
+                <TabsTrigger value="team" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Teams
+                </TabsTrigger>
+                <TabsTrigger value="lifetime" className="flex items-center gap-2">
+                  <Infinity className="h-4 w-4" />
+                  Lifetime
+                </TabsTrigger>
               </TabsList>
 
-              {/* Individual Plans */}
+              {/* Individual Annual Plans */}
               <TabsContent value="individual" className="mt-8">
+                <div className="text-center mb-6">
+                  <p className="text-muted-foreground">Annual plans for individual users</p>
+                </div>
                 <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
-                  {individualPlans.map((plan) => (
+                  <PricingCard plan={freePlan} />
+                  {individualAnnualPlans.map((plan) => (
                     <PricingCard key={plan.id} plan={plan} />
                   ))}
                 </div>
               </TabsContent>
 
-              {/* Team Plans */}
+              {/* Team Annual Plans */}
               <TabsContent value="team" className="mt-8">
+                <div className="text-center mb-6">
+                  <p className="text-muted-foreground">Annual plans for teams</p>
+                </div>
                 <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
-                  {teamPlans.map((plan) => (
+                  {teamAnnualPlans.map((plan) => (
                     <PricingCard key={plan.id} plan={plan} showSeats />
                   ))}
                 </div>
               </TabsContent>
+
+              {/* Lifetime Deals */}
+              <TabsContent value="lifetime" className="mt-8">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-4">
+                    <Infinity className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-medium text-accent">One-time payment, lifetime access</span>
+                  </div>
+                  <p className="text-muted-foreground">Pay once, use forever</p>
+                </div>
+
+                {/* Individual Lifetime */}
+                <div className="mb-12">
+                  <h3 className="text-xl font-semibold text-center mb-6">Individual Lifetime Deals</h3>
+                  <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+                    {individualLifetimePlans.map((plan) => (
+                      <PricingCard key={plan.id} plan={plan} />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Team Lifetime */}
+                <div>
+                  <h3 className="text-xl font-semibold text-center mb-6">Team Lifetime Deals</h3>
+                  <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+                    {teamLifetimePlans.map((plan) => (
+                      <PricingCard key={plan.id} plan={plan} showSeats />
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
 
-            {/* Board Add-ons Section */}
+            {/* Add-ons Section */}
             <div className="mt-20">
               <div className="text-center mb-10">
                 <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                  Need More Boards?
+                  Storage & Board Add-Ons
                 </h2>
                 <p className="text-muted-foreground max-w-xl mx-auto">
-                  Expand your workspace with board add-ons. Each add-on includes extra storage.
+                  Expand your workspace with stackable add-ons. Each add-on increases both storage and boards.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                {boardAddons.map((addon) => (
-                  <div key={addon.id} className="premium-card-wrapper">
-                    <div className="premium-card-gradient" />
-                    <div className="premium-card-content p-5 text-center">
-                      <div className="text-3xl font-bold text-accent mb-1">
-                        +{addon.boards}
-                      </div>
-                      <div className="text-sm text-muted-foreground mb-3">boards</div>
-                      
-                      <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-4">
-                        <HardDrive className="h-3 w-3" />
-                        +{formatStorage(addon.storage_mb)}
-                      </div>
-
-                      <div className="text-2xl font-bold mb-3">
-                        ${addon.price_cents / 100}
-                      </div>
-
-                      <Button
-                        variant="pill-outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleSelectAddon(addon.id)}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-5xl mx-auto">
+                {addons.map((addon) => (
+                  <AddonCard key={addon.id} addon={addon} />
                 ))}
               </div>
             </div>
@@ -158,7 +168,7 @@ export default function Pricing() {
               </div>
             </div>
 
-            {/* FAQ or Enterprise CTA */}
+            {/* Enterprise CTA */}
             <div className="mt-16 text-center">
               <p className="text-muted-foreground mb-4">
                 Need a custom solution for your organization?
