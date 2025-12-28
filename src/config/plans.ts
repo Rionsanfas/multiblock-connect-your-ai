@@ -2,7 +2,7 @@
  * Pricing Plans Configuration
  * 
  * Plan tiers: free, starter, pro, team, enterprise
- * Checkout URLs from env vars (VITE_ prefix for Vite)
+ * Checkout URLs are configured directly in this file
  */
 
 import type { PlanCapabilities } from '@/types';
@@ -31,8 +31,8 @@ export interface PlanConfig {
   badge?: string;
   sort_order: number;
   is_active: boolean;
-  // Checkout
-  checkout_url_key?: string; // env var key for checkout URL
+  // Checkout - direct URL (set your Polar checkout URLs here)
+  checkout_url?: string;
 }
 
 // Capabilities by tier
@@ -102,6 +102,18 @@ const ENTERPRISE_CAPABILITIES: PlanCapabilities = {
 };
 
 /**
+ * ============================================
+ * POLAR CHECKOUT URLs
+ * Replace these with your actual Polar checkout URLs
+ * ============================================
+ */
+const CHECKOUT_URLS = {
+  starter: '', // e.g., 'https://buy.polar.sh/...'
+  pro: '',     // e.g., 'https://buy.polar.sh/...'
+  team: '',    // e.g., 'https://buy.polar.sh/...'
+};
+
+/**
  * All available pricing plans
  */
 export const PRICING_PLANS: PlanConfig[] = [
@@ -157,7 +169,7 @@ export const PRICING_PLANS: PlanConfig[] = [
     badge: 'Great Start',
     sort_order: 1,
     is_active: true,
-    checkout_url_key: 'VITE_POLAR_STARTER_CHECKOUT_URL',
+    checkout_url: CHECKOUT_URLS.starter,
   },
   {
     id: 'pro',
@@ -188,7 +200,7 @@ export const PRICING_PLANS: PlanConfig[] = [
     badge: 'Most Popular',
     sort_order: 2,
     is_active: true,
-    checkout_url_key: 'VITE_POLAR_PRO_CHECKOUT_URL',
+    checkout_url: CHECKOUT_URLS.pro,
   },
   {
     id: 'team',
@@ -220,7 +232,7 @@ export const PRICING_PLANS: PlanConfig[] = [
     badge: 'For Teams',
     sort_order: 3,
     is_active: true,
-    checkout_url_key: 'VITE_POLAR_TEAM_CHECKOUT_URL',
+    checkout_url: CHECKOUT_URLS.team,
   },
   {
     id: 'enterprise',
@@ -266,14 +278,10 @@ export function getPlansByTier(tier: PlanTier): PlanConfig[] {
 }
 
 /**
- * Get checkout URL for a plan from environment
+ * Get checkout URL for a plan
  */
 export function getPlanCheckoutUrl(plan: PlanConfig): string | null {
-  if (!plan.checkout_url_key) return null;
-  
-  // Access Vite env vars
-  const url = import.meta.env[plan.checkout_url_key];
-  return url || null;
+  return plan.checkout_url || null;
 }
 
 /**
