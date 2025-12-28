@@ -70,15 +70,15 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
       
       return {
         text: 'Upgrade',
-        disabled: false,
+        disabled: !checkoutUrl,
         action: () => {
           if (checkoutUrl) {
             // Redirect to Polar checkout
             window.location.href = checkoutUrl;
           } else {
-            // No checkout URL configured
-            toast.error('Checkout not available', {
-              description: 'This plan is not available for purchase yet. Please contact support.',
+            // No checkout URL configured - show toast
+            toast.info('Coming soon', {
+              description: 'This plan will be available for purchase soon. Stay tuned!',
             });
           }
         },
