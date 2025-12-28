@@ -2,7 +2,7 @@
  * PricingCard - Reusable pricing card component
  */
 
-import { Check, Info, HardDrive, Users, LayoutGrid, Plus, MessageSquare } from 'lucide-react';
+import { Check, Info, HardDrive, Users, LayoutGrid, Plus, MessageSquare, Infinity } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PlanConfig, formatPlanPrice, formatStorage, formatLimit } from '@/config/plans';
 import { PricingButton } from './PricingButton';
@@ -13,6 +13,9 @@ interface PricingCardProps {
 }
 
 export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
+  const isLifetime = plan.billing_period === 'lifetime';
+  const isEnterprise = plan.tier === 'enterprise';
+
   return (
     <div className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''} h-full`}>
       <div className="premium-card-gradient" />
@@ -34,12 +37,20 @@ export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
           </p>
           <div className="flex items-baseline gap-1">
             <span className="text-4xl font-bold">
-              {plan.tier === 'enterprise' ? 'Custom' : plan.price_cents === 0 ? 'Free' : `$${plan.price_cents / 100}`}
+              {isEnterprise ? 'Custom' : plan.price_cents === 0 ? 'Free' : `$${(plan.price_cents / 100).toFixed(2)}`}
             </span>
-            {plan.price_cents > 0 && plan.tier !== 'enterprise' && (
-              <span className="text-muted-foreground">/year</span>
+            {plan.price_cents > 0 && !isEnterprise && (
+              <span className="text-muted-foreground">
+                {isLifetime ? ' one-time' : '/year'}
+              </span>
             )}
           </div>
+          {isLifetime && (
+            <div className="flex items-center gap-1 mt-2 text-xs text-accent">
+              <Infinity className="h-3 w-3" />
+              <span>Lifetime access</span>
+            </div>
+          )}
         </div>
 
         {/* Key Stats */}
@@ -49,7 +60,7 @@ export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
             <div className="icon-3d-box">
               <LayoutGrid className="h-4 w-4 text-accent" />
             </div>
-            <span>{formatLimit(plan.boards)} board{plan.boards !== 1 ? 's' : ''}</span>
+            <span>{formatLimit(plan.boards)} board{plan.boards !== 1 && plan.boards !== -1 ? 's' : ''}</span>
           </div>
           
           {/* Blocks */}
@@ -78,28 +89,20 @@ export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
             </Tooltip>
           </div>
           
-          {/* Messages */}
-          <div className="flex items-center gap-3 text-sm">
-            <div className="icon-3d-box">
-              <MessageSquare className="h-4 w-4 text-accent" />
-            </div>
-            <span>{plan.messages_per_day === -1 ? 'Unlimited' : plan.messages_per_day} messages/day</span>
-          </div>
-          
-          {/* Seats (for team plans) */}
+          {/* Seats (for team plans or when specified) */}
           {(showSeats || plan.seats > 1) && (
             <div className="flex items-center gap-3 text-sm">
               <div className="icon-3d-box">
                 <Users className="h-4 w-4 text-accent" />
               </div>
-              <span>{formatLimit(plan.seats)} team seat{plan.seats !== 1 ? 's' : ''}</span>
+              <span>{formatLimit(plan.seats)} team seat{plan.seats !== 1 && plan.seats !== -1 ? 's' : ''}</span>
             </div>
           )}
         </div>
 
         {/* Features */}
         <ul className="space-y-2 mb-6 flex-1">
-          {plan.features.slice(4).map((feature) => (
+          {plan.features.slice(0, 6).map((feature) => (
             <li key={feature} className="flex items-start gap-2 text-sm">
               <Check className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
               <span>{feature}</span>
