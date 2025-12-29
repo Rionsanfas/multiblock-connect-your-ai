@@ -3,14 +3,18 @@
  * 
  * Uses Polar's embed checkout (data-polar-checkout) to open checkout in modal
  * On successful checkout, redirects to /dashboard
+ * 
+ * CRITICAL: Appends user_id and plan_key to checkout URL metadata
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PolarCheckoutButtonProps {
   checkoutUrl: string;
+  planKey: string;
+  isAddon?: boolean;
   children: React.ReactNode;
   className?: string;
   disabled?: boolean;
@@ -45,6 +49,8 @@ function injectPolarScript() {
 
 export function PolarCheckoutButton({
   checkoutUrl,
+  planKey,
+  isAddon = false,
   children,
   className = '',
   disabled = false,
@@ -52,10 +58,34 @@ export function PolarCheckoutButton({
 }: PolarCheckoutButtonProps) {
   const navigate = useNavigate();
   const linkRef = useRef<HTMLAnchorElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     injectPolarScript();
   }, []);
+
+  // Build checkout URL with metadata for the webhook
+  const checkoutUrlWithMetadata = useMemo(() => {
+    if (!user?.id || !checkoutUrl) return checkoutUrl;
+    
+    try {
+      const url = new URL(checkoutUrl);
+      // Add metadata as query params - Polar will pass these to webhook
+      url.searchParams.set('metadata[user_id]', user.id);
+      url.searchParams.set('metadata[plan_key]', planKey);
+      if (isAddon) {
+        url.searchParams.set('metadata[is_addon]', 'true');
+      }
+      // Also set customer email for pre-fill
+      if (user.email) {
+        url.searchParams.set('customer_email', user.email);
+      }
+      return url.toString();
+    } catch {
+      // If URL parsing fails, just return original
+      return checkoutUrl;
+    }
+  }, [checkoutUrl, user?.id, user?.email, planKey, isAddon]);
 
   // Listen for successful checkout via message events
   useEffect(() => {
@@ -83,7 +113,7 @@ export function PolarCheckoutButton({
     }
   }, [navigate]);
 
-  if (disabled) {
+  if (disabled || !user) {
     return (
       <button className={className} disabled>
         {children}
@@ -94,7 +124,7 @@ export function PolarCheckoutButton({
   return (
     <a
       ref={linkRef}
-      href={checkoutUrl}
+      href={checkoutUrlWithMetadata}
       data-polar-checkout
       data-polar-checkout-theme="dark"
       className={className}

@@ -24,13 +24,13 @@ const PLAN_ENTITLEMENTS: Record<string, {
   'ltd-pro-team': { boards_limit: 200, storage_gb: 9, seats: 15, blocks_unlimited: true, is_lifetime: true },
 };
 
-// Addon entitlement mappings
+// Addon entitlement mappings (matched to frontend config)
 const ADDON_ENTITLEMENTS: Record<string, { extra_boards: number; extra_storage_gb: number }> = {
-  'addon-boards-10': { extra_boards: 10, extra_storage_gb: 1 },
-  'addon-boards-20': { extra_boards: 20, extra_storage_gb: 2 },
-  'addon-boards-50': { extra_boards: 50, extra_storage_gb: 4 },
-  'addon-boards-60': { extra_boards: 60, extra_storage_gb: 5 },
-  'addon-boards-120': { extra_boards: 120, extra_storage_gb: 10 },
+  'addon-1gb': { extra_boards: 10, extra_storage_gb: 1 },
+  'addon-2gb': { extra_boards: 20, extra_storage_gb: 2 },
+  'addon-4gb': { extra_boards: 50, extra_storage_gb: 4 },
+  'addon-5gb': { extra_boards: 60, extra_storage_gb: 5 },
+  'addon-10gb': { extra_boards: 120, extra_storage_gb: 10 },
 };
 
 /**
