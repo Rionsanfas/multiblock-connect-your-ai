@@ -1,6 +1,6 @@
 /**
  * AddonCard - Card for displaying stackable add-ons
- * Uses Polar embed checkout
+ * Uses server-side Polar checkout with embed modal
  */
 
 import { LayoutGrid } from 'lucide-react';
@@ -41,10 +41,9 @@ export function AddonCard({ addon }: AddonCardProps) {
           ${(addon.price_cents / 100).toFixed(2)}
         </div>
 
-        {/* Button - use Polar embed if authenticated */}
+        {/* Button - use server-side Polar checkout if authenticated */}
         {isAuthenticated ? (
           <PolarCheckoutButton
-            checkoutUrl={addon.checkout_url}
             planKey={addon.id}
             isAddon={true}
             className={buttonClass}
