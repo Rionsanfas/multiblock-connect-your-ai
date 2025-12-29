@@ -6,9 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Plan configuration - maps plan_key to Polar product IDs
+/**
+ * Plan configuration - maps plan_key to entitlements
+ * The checkout_link_id is the polar_cl_* ID from your Polar dashboard
+ */
 const PLAN_CONFIG: Record<string, { 
-  productId: string; 
+  checkoutLinkId: string; 
   name: string;
   boards: number;
   storageGb: number;
@@ -17,7 +20,7 @@ const PLAN_CONFIG: Record<string, {
 }> = {
   // Individual Annual Plans
   'starter-individual-annual': {
-    productId: '08f5e07b-9f61-431f-835d-a0864edaa613', // Replace with actual Polar product ID
+    checkoutLinkId: 'polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v',
     name: 'Starter Individual (Annual)',
     boards: 50,
     storageGb: 2,
@@ -25,7 +28,7 @@ const PLAN_CONFIG: Record<string, {
     isLifetime: false,
   },
   'pro-individual-annual': {
-    productId: 'pro-individual-annual-product-id',
+    checkoutLinkId: 'polar_cl_0ANxHBAcEKSneKreosoVddmOPsNRvBMDaHKgv1QrrU9',
     name: 'Pro Individual (Annual)',
     boards: 100,
     storageGb: 4,
@@ -34,7 +37,7 @@ const PLAN_CONFIG: Record<string, {
   },
   // Team Annual Plans
   'starter-team-annual': {
-    productId: 'starter-team-annual-product-id',
+    checkoutLinkId: 'polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy',
     name: 'Starter Team (Annual)',
     boards: 50,
     storageGb: 5,
@@ -42,7 +45,7 @@ const PLAN_CONFIG: Record<string, {
     isLifetime: false,
   },
   'pro-team-annual': {
-    productId: 'pro-team-annual-product-id',
+    checkoutLinkId: 'polar_cl_kEOB6DUJjs7JONbOH91zrlACAQDEub2L9px0f3s4BuS',
     name: 'Pro Team (Annual)',
     boards: 100,
     storageGb: 6,
@@ -51,7 +54,7 @@ const PLAN_CONFIG: Record<string, {
   },
   // Individual Lifetime Deals
   'ltd-starter-individual': {
-    productId: 'ltd-starter-individual-product-id',
+    checkoutLinkId: 'polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw',
     name: 'Lifetime Starter Individual',
     boards: 50,
     storageGb: 6,
@@ -59,7 +62,7 @@ const PLAN_CONFIG: Record<string, {
     isLifetime: true,
   },
   'ltd-pro-individual': {
-    productId: 'ltd-pro-individual-product-id',
+    checkoutLinkId: 'polar_cl_j6g5GaxCZ3MqM7FVpqt6vbsqk8zUUuLyUOIgR03k0oU',
     name: 'Lifetime Pro Individual',
     boards: 150,
     storageGb: 7,
@@ -68,7 +71,7 @@ const PLAN_CONFIG: Record<string, {
   },
   // Team Lifetime Deals
   'ltd-starter-team': {
-    productId: 'ltd-starter-team-product-id',
+    checkoutLinkId: 'polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc',
     name: 'Lifetime Starter Team',
     boards: 150,
     storageGb: 8,
@@ -76,7 +79,7 @@ const PLAN_CONFIG: Record<string, {
     isLifetime: true,
   },
   'ltd-pro-team': {
-    productId: 'ltd-pro-team-product-id',
+    checkoutLinkId: 'polar_cl_pQBNRD7r0QBz4pp47hOhg21aTfj5MLn9ffRnL0dxbnR',
     name: 'Lifetime Pro Team',
     boards: 200,
     storageGb: 9,
@@ -87,28 +90,40 @@ const PLAN_CONFIG: Record<string, {
 
 // Addon configuration
 const ADDON_CONFIG: Record<string, {
-  productId: string;
+  checkoutLinkId: string;
   name: string;
   extraBoards: number;
   extraStorageGb: number;
 }> = {
-  'addon-boards-10': {
-    productId: 'addon-boards-10-product-id',
-    name: '+10 Boards Pack',
+  'addon-1gb': {
+    checkoutLinkId: 'polar_cl_OBo7BCQ6ZYvqCFhc59DMFZJqfSg2ORRsow1RI3e8hEM',
+    name: '+1 GB Add-On',
     extraBoards: 10,
     extraStorageGb: 1,
   },
-  'addon-boards-20': {
-    productId: 'addon-boards-20-product-id',
-    name: '+20 Boards Pack',
+  'addon-2gb': {
+    checkoutLinkId: 'polar_cl_3jJPkH6afjDo1zVJUsauoPKlIclTotWyV9ssE006a3k',
+    name: '+2 GB Add-On',
     extraBoards: 20,
     extraStorageGb: 2,
   },
-  'addon-boards-50': {
-    productId: 'addon-boards-50-product-id',
-    name: '+50 Boards Pack',
+  'addon-4gb': {
+    checkoutLinkId: 'polar_cl_1Oj5sYbfwJyVjmzPXnnjnlr9YS2TVCQd7OsyG1IzSMj',
+    name: '+4 GB Add-On',
     extraBoards: 50,
     extraStorageGb: 4,
+  },
+  'addon-5gb': {
+    checkoutLinkId: 'polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT',
+    name: '+5 GB Add-On',
+    extraBoards: 60,
+    extraStorageGb: 5,
+  },
+  'addon-10gb': {
+    checkoutLinkId: 'polar_cl_JCkbiUFVssy28q7auRRSmERW2XUwIhqt2JnrY2yCy9b',
+    name: '+10 GB Add-On',
+    extraBoards: 120,
+    extraStorageGb: 10,
   },
 };
 
@@ -172,29 +187,27 @@ serve(async (req) => {
       );
     }
 
-    console.log('Creating checkout for user:', user.id, 'plan:', plan_key);
+    console.log('Creating checkout for user:', user.id, 'plan:', plan_key, 'checkoutLinkId:', config.checkoutLinkId);
 
-    // Build success URL
-    const origin = req.headers.get('origin') || 'https://multiblock.app';
-    const successUrl = `${origin}/dashboard?checkout=success`;
-
-    // Create Polar checkout session
-    const checkoutResponse = await fetch('https://api.polar.sh/v1/checkouts/custom/', {
+    // CRITICAL: Create checkout session from checkout link with metadata
+    // This ensures user_id and plan_key are attached server-side
+    const checkoutResponse = await fetch('https://api.polar.sh/v1/checkouts/', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${POLAR_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        product_id: config.productId,
-        success_url: successUrl,
+        checkout_link_id: config.checkoutLinkId,
         customer_email: user.email,
+        // CRITICAL: Metadata is attached server-side - this is what webhook receives
         metadata: {
           user_id: user.id,
-          user_email: user.email,
+          user_email: user.email || '',
           plan_key: plan_key,
-          is_addon: is_addon.toString(),
+          is_addon: is_addon ? 'true' : 'false',
         },
+        // No success_url - embed handles redirect
       }),
     });
 
@@ -202,18 +215,19 @@ serve(async (req) => {
       const errorText = await checkoutResponse.text();
       console.error('Polar API error:', checkoutResponse.status, errorText);
       return new Response(
-        JSON.stringify({ error: 'Failed to create checkout session' }),
+        JSON.stringify({ error: 'Failed to create checkout session', details: errorText }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const checkoutData = await checkoutResponse.json();
-    console.log('Checkout session created:', checkoutData.id);
+    console.log('Checkout session created:', checkoutData.id, 'url:', checkoutData.url);
 
     return new Response(
       JSON.stringify({ 
         checkout_url: checkoutData.url,
         checkout_id: checkoutData.id,
+        client_secret: checkoutData.client_secret,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

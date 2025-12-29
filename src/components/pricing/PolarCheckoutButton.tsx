@@ -1,139 +1,62 @@
 /**
- * PolarCheckoutButton - Polar Embed Checkout Button
+ * PolarCheckoutButton - Server-side checkout with Polar Embed
  * 
- * Uses Polar's embed checkout (data-polar-checkout) to open checkout in modal
- * On successful checkout, redirects to /dashboard
- * 
- * CRITICAL: Appends user_id and plan_key to checkout URL metadata
+ * Calls edge function to create checkout session with metadata attached server-side
+ * Opens Polar embed modal for payment
+ * On success: closes modal, refetches data, redirects to /dashboard
  */
 
-import { useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePolarCheckout } from '@/hooks/usePolarCheckout';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface PolarCheckoutButtonProps {
-  checkoutUrl: string;
   planKey: string;
   isAddon?: boolean;
   children: React.ReactNode;
   className?: string;
   disabled?: boolean;
-  onCheckoutOpen?: () => void;
-}
-
-// Inject Polar embed script once
-let polarScriptInjected = false;
-
-function injectPolarScript() {
-  if (polarScriptInjected || typeof window === 'undefined') return;
-  
-  const existingScript = document.querySelector('script[src*="polar.sh/embed"]');
-  if (existingScript) {
-    polarScriptInjected = true;
-    return;
-  }
-  
-  const script = document.createElement('script');
-  script.src = 'https://cdn.polar.sh/embed/polar.js';
-  script.async = true;
-  script.onload = () => {
-    polarScriptInjected = true;
-    // Initialize Polar if available
-    if ((window as any).Polar) {
-      (window as any).Polar.init();
-    }
-  };
-  document.head.appendChild(script);
-  polarScriptInjected = true;
+  variant?: 'default' | 'outline' | 'ghost' | 'link' | 'destructive' | 'secondary';
 }
 
 export function PolarCheckoutButton({
-  checkoutUrl,
   planKey,
   isAddon = false,
   children,
   className = '',
   disabled = false,
-  onCheckoutOpen,
+  variant = 'default',
 }: PolarCheckoutButtonProps) {
-  const navigate = useNavigate();
-  const linkRef = useRef<HTMLAnchorElement>(null);
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { openCheckout, isLoading } = usePolarCheckout();
 
-  useEffect(() => {
-    injectPolarScript();
-  }, []);
-
-  // Build checkout URL with metadata for the webhook
-  const checkoutUrlWithMetadata = useMemo(() => {
-    if (!user?.id || !checkoutUrl) return checkoutUrl;
-    
-    try {
-      const url = new URL(checkoutUrl);
-      // Add metadata as query params - Polar will pass these to webhook
-      url.searchParams.set('metadata[user_id]', user.id);
-      url.searchParams.set('metadata[plan_key]', planKey);
-      if (isAddon) {
-        url.searchParams.set('metadata[is_addon]', 'true');
-      }
-      // Also set customer email for pre-fill
-      if (user.email) {
-        url.searchParams.set('customer_email', user.email);
-      }
-      return url.toString();
-    } catch {
-      // If URL parsing fails, just return original
-      return checkoutUrl;
+  const handleClick = () => {
+    if (!isAuthenticated || !user) {
+      // Redirect to auth if not logged in
+      window.location.href = '/auth?redirect=/pricing';
+      return;
     }
-  }, [checkoutUrl, user?.id, user?.email, planKey, isAddon]);
+    openCheckout(planKey, isAddon);
+  };
 
-  // Listen for successful checkout via message events
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // Polar sends messages when checkout completes
-      if (event.origin.includes('polar.sh')) {
-        if (event.data?.type === 'polar:checkout:success' || 
-            event.data?.event === 'checkout.completed' ||
-            event.data?.status === 'success') {
-          // Redirect to dashboard on success
-          navigate('/dashboard?checkout=success');
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [navigate]);
-
-  // Also check URL params on mount for redirect-based success
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('checkout') === 'success') {
-      navigate('/dashboard?checkout=success');
-    }
-  }, [navigate]);
-
-  if (disabled || !user) {
-    return (
-      <button className={className} disabled>
-        {children}
-      </button>
-    );
-  }
+  const isDisabled = disabled || isLoading;
 
   return (
-    <a
-      ref={linkRef}
-      href={checkoutUrlWithMetadata}
-      data-polar-checkout
-      data-polar-checkout-theme="dark"
+    <Button
+      variant={variant}
       className={className}
-      onClick={(e) => {
-        onCheckoutOpen?.();
-        // Let Polar handle the click for embed modal
-      }}
+      disabled={isDisabled}
+      onClick={handleClick}
     >
-      {children}
-    </a>
+      {isLoading ? (
+        <>
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          Processing...
+        </>
+      ) : (
+        children
+      )}
+    </Button>
   );
 }

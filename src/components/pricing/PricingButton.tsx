@@ -1,10 +1,10 @@
 /**
  * PricingButton - Smart button for pricing cards
  * 
- * Uses Polar embed checkout (data-polar-checkout) for all paid plans
+ * Uses server-side Polar checkout (via edge function) with embed modal
  * - Not logged in → "Get Started" → /auth
  * - Current plan → "Current Plan" (disabled)
- * - Has checkout URL → Polar embed checkout
+ * - Has checkout → Opens Polar embed modal
  * - Enterprise → "Contact Sales" → mailto
  */
 
@@ -101,7 +101,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     );
   }
   
-  // No checkout URL - coming soon
+  // No checkout URL means no product configured in Polar
   if (!plan.checkout_url) {
     return (
       <button className={`${getButtonClass(true)} ${className}`} disabled>
@@ -110,12 +110,11 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     );
   }
   
-  // Upgrade or Downgrade - use Polar embed checkout
+  // Upgrade or Downgrade - use server-side Polar checkout
   const buttonText = comparison < 0 ? 'Upgrade' : 'Switch Plan';
   
   return (
     <PolarCheckoutButton
-      checkoutUrl={plan.checkout_url}
       planKey={plan.id}
       className={`${getButtonClass()} ${className}`}
     >
