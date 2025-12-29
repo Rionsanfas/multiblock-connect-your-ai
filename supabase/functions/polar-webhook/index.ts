@@ -103,7 +103,7 @@ async function handleSubscription(
   const now = new Date().toISOString();
   const period = entitlements.is_lifetime ? 'lifetime' : 'annual';
 
-  // Upsert subscription
+  // Upsert into NEW subscriptions table
   const { error: subError } = await supabase
     .from('subscriptions')
     .upsert({
@@ -125,7 +125,7 @@ async function handleSubscription(
     return false;
   }
 
-  // Upsert entitlements
+  // Upsert into NEW entitlements table
   const { error: entError } = await supabase
     .from('subscription_entitlements')
     .upsert({
@@ -141,6 +141,27 @@ async function handleSubscription(
   if (entError) {
     console.error('Failed to upsert entitlements:', entError);
     return false;
+  }
+
+  // ALSO update OLD user_subscriptions table for backward compatibility
+  const storageMb = entitlements.storage_gb * 1024;
+  const blocksLimit = entitlements.blocks_unlimited ? 999999 : 10;
+  
+  const { error: legacyError } = await supabase
+    .from('user_subscriptions')
+    .update({
+      snapshot_max_boards: entitlements.boards_limit,
+      snapshot_max_blocks_per_board: blocksLimit,
+      snapshot_storage_mb: storageMb,
+      snapshot_max_seats: entitlements.seats,
+      status: status === 'active' ? 'active' : 'canceled',
+      updated_at: now,
+    })
+    .eq('user_id', userId);
+
+  if (legacyError) {
+    console.warn('Failed to update legacy user_subscriptions:', legacyError);
+    // Don't fail the whole operation for legacy table
   }
 
   console.log('Subscription and entitlements updated for user:', userId, 'plan:', planKey);
