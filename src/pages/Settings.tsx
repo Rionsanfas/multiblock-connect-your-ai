@@ -9,12 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentUser, useUserStats } from "@/hooks/useCurrentUser";
 import { toast } from "sonner";
-import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera } from "lucide-react";
+import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { pricingPlans, boardAddons } from "@/mocks/seed";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { BillingSection } from "@/components/billing/BillingSection";
 
 export default function Settings() {
   const { user } = useCurrentUser();
@@ -66,11 +67,15 @@ export default function Settings() {
           <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
         </div>
 
-        <Tabs defaultValue="plan" className="space-y-6">
+        <Tabs defaultValue="billing" className="space-y-6">
           <TabsList className="tabs-3d flex-wrap h-auto gap-1 p-1">
+            <TabsTrigger value="billing" className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              Billing
+            </TabsTrigger>
             <TabsTrigger value="plan" className="gap-2">
               <Crown className="h-4 w-4" />
-              Plan
+              Plan & Usage
             </TabsTrigger>
             <TabsTrigger value="profile" className="gap-2">
               <User className="h-4 w-4" />
@@ -85,6 +90,11 @@ export default function Settings() {
               Privacy
             </TabsTrigger>
           </TabsList>
+
+          {/* Billing Tab */}
+          <TabsContent value="billing">
+            <BillingSection />
+          </TabsContent>
 
           {/* Plan & Usage Tab */}
           <TabsContent value="plan">
