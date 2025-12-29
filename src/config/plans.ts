@@ -1,7 +1,7 @@
 /**
  * Pricing Plans Configuration
  * 
- * EXACT plan data as specified - do not modify without explicit instruction
+ * EXACT plan data with correct Polar embed checkout URLs
  * Categories: Individual Annual, Team Annual, Lifetime Deals, Add-ons
  */
 
@@ -34,7 +34,7 @@ export interface PlanConfig {
   badge?: string;
   sort_order: number;
   is_active: boolean;
-  // Checkout
+  // Polar checkout URL for embed
   checkout_url?: string;
   // Polar product ID for webhook mapping
   polar_product_id?: string;
@@ -153,7 +153,7 @@ const INDIVIDUAL_STARTER_ANNUAL: PlanConfig = {
     'Unlimited blocks',
     '2 GB storage',
     '1 seat',
-    '1 year access',
+    '1-year access',
     'All AI models',
     'Export to JSON',
     'Email support',
@@ -184,7 +184,7 @@ const INDIVIDUAL_PRO_ANNUAL: PlanConfig = {
     'Unlimited blocks',
     '4 GB storage',
     '1 seat',
-    '1 year access',
+    '1-year access',
     'All AI models',
     'Priority support',
     'Export to JSON & PDF',
@@ -222,8 +222,8 @@ const TEAM_STARTER_ANNUAL: PlanConfig = {
     '50 boards',
     'Unlimited blocks',
     '5 GB storage',
-    '10 team seats',
-    '1 year access',
+    'Up to 10 seats',
+    '1-year access',
     'All AI models',
     'Team collaboration',
     'Email support',
@@ -232,7 +232,7 @@ const TEAM_STARTER_ANNUAL: PlanConfig = {
   badge: 'Team Start',
   sort_order: 1,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_9GX9gMPijwUbH8fPAiJWLgzNO7rZv0j8OqmeN3x2ohZ',
+  checkout_url: 'https://buy.polar.sh/polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy',
 };
 
 const TEAM_PRO_ANNUAL: PlanConfig = {
@@ -253,8 +253,8 @@ const TEAM_PRO_ANNUAL: PlanConfig = {
     '100 boards',
     'Unlimited blocks',
     '6 GB storage',
-    '20 team seats',
-    '1 year access',
+    'Up to 20 seats',
+    '1-year access',
     'All AI models',
     'Priority support',
     'Admin dashboard',
@@ -266,7 +266,7 @@ const TEAM_PRO_ANNUAL: PlanConfig = {
   badge: 'Best Value',
   sort_order: 2,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy',
+  checkout_url: 'https://buy.polar.sh/polar_cl_kEOB6DUJjs7JONbOH91zrlACAQDEub2L9px0f3s4BuS',
 };
 
 /**
@@ -302,7 +302,7 @@ const LTD_STARTER_INDIVIDUAL: PlanConfig = {
   badge: 'Lifetime',
   sort_order: 1,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_kEOB6DUJjs7JONbOH91zrlACAQDEub2L9px0f3s4BuS',
+  checkout_url: 'https://buy.polar.sh/polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw',
 };
 
 const LTD_PRO_INDIVIDUAL: PlanConfig = {
@@ -336,7 +336,7 @@ const LTD_PRO_INDIVIDUAL: PlanConfig = {
   badge: 'Best LTD',
   sort_order: 2,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw',
+  checkout_url: 'https://buy.polar.sh/polar_cl_j6g5GaxCZ3MqM7FVpqt6vbsqk8zUUuLyUOIgR03k0oU',
 };
 
 /**
@@ -362,7 +362,7 @@ const LTD_STARTER_TEAM: PlanConfig = {
     '150 boards',
     'Unlimited blocks',
     '8 GB storage',
-    '10 team seats',
+    'Up to 10 seats',
     'Lifetime access',
     'All AI models',
     'Team collaboration',
@@ -372,7 +372,7 @@ const LTD_STARTER_TEAM: PlanConfig = {
   badge: 'Team LTD',
   sort_order: 3,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_j6g5GaxCZ3MqM7FVpqt6vbsqk8zUUuLyUOIgR03k0oU',
+  checkout_url: 'https://buy.polar.sh/polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc',
 };
 
 const LTD_PRO_TEAM: PlanConfig = {
@@ -393,7 +393,7 @@ const LTD_PRO_TEAM: PlanConfig = {
     '200 boards',
     'Unlimited blocks',
     '9 GB storage',
-    '15 team seats',
+    'Up to 15 seats',
     'Lifetime access',
     'All AI models',
     'Priority support',
@@ -406,7 +406,7 @@ const LTD_PRO_TEAM: PlanConfig = {
   badge: 'Ultimate',
   sort_order: 4,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc',
+  checkout_url: 'https://buy.polar.sh/polar_cl_pQBNRD7r0QBz4pp47hOhg21aTfj5MLn9ffRnL0dxbnR',
 };
 
 /**
@@ -445,7 +445,7 @@ const ENTERPRISE_PLAN: PlanConfig = {
 
 /**
  * ============================================
- * ADD-ONS (STACKABLE)
+ * ADD-ONS (STACKABLE) - Correct URLs
  * ============================================
  */
 export const ADDONS: AddonConfig[] = [
@@ -456,7 +456,7 @@ export const ADDONS: AddonConfig[] = [
     price_cents: 1499, // $14.99
     extra_boards: 10,
     extra_storage_mb: 1024, // 1 GB
-    checkout_url: 'https://buy.polar.sh/polar_cl_pQBNRD7r0QBz4pp47hOhg21aTfj5MLn9ffRnL0dxbnR',
+    checkout_url: 'https://buy.polar.sh/polar_cl_OBo7BCQ6ZYvqCFhc59DMFZJqfSg2ORRsow1RI3e8hEM',
     is_active: true,
   },
   {
@@ -466,7 +466,7 @@ export const ADDONS: AddonConfig[] = [
     price_cents: 1999, // $19.99
     extra_boards: 20,
     extra_storage_mb: 2048, // 2 GB
-    checkout_url: 'https://buy.polar.sh/polar_cl_OBo7BCQ6ZYvqCFhc59DMFZJqfSg2ORRsow1RI3e8hEM',
+    checkout_url: 'https://buy.polar.sh/polar_cl_3jJPkH6afjDo1zVJUsauoPKlIclTotWyV9ssE006a3k',
     is_active: true,
   },
   {
@@ -476,7 +476,7 @@ export const ADDONS: AddonConfig[] = [
     price_cents: 2999, // $29.99
     extra_boards: 50,
     extra_storage_mb: 4096, // 4 GB
-    checkout_url: 'https://buy.polar.sh/polar_cl_3jJPkH6afjDo1zVJUsauoPKlIclTotWyV9ssE006a3k',
+    checkout_url: 'https://buy.polar.sh/polar_cl_1Oj5sYbfwJyVjmzPXnnjnlr9YS2TVCQd7OsyG1IzSMj',
     is_active: true,
   },
   {
@@ -486,7 +486,7 @@ export const ADDONS: AddonConfig[] = [
     price_cents: 3499, // $34.99
     extra_boards: 60,
     extra_storage_mb: 5120, // 5 GB
-    checkout_url: 'https://buy.polar.sh/polar_cl_1Oj5sYbfwJyVjmzPXnnjnlr9YS2TVCQd7OsyG1IzSMj',
+    checkout_url: 'https://buy.polar.sh/polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT',
     is_active: true,
   },
   {
@@ -496,7 +496,7 @@ export const ADDONS: AddonConfig[] = [
     price_cents: 5999, // $59.99
     extra_boards: 120,
     extra_storage_mb: 10240, // 10 GB
-    checkout_url: 'https://buy.polar.sh/polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT',
+    checkout_url: 'https://buy.polar.sh/polar_cl_JCkbiUFVssy28q7auRRSmERW2XUwIhqt2JnrY2yCy9b',
     is_active: true,
   },
 ];

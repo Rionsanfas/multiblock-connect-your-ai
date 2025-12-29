@@ -1,13 +1,13 @@
 /**
  * AddonCard - Card for displaying stackable add-ons
+ * Uses Polar embed checkout
  */
 
-import { HardDrive, LayoutGrid } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { LayoutGrid } from 'lucide-react';
 import { AddonConfig, formatStorage } from '@/config/plans';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { PolarCheckoutButton } from './PolarCheckoutButton';
 
 interface AddonCardProps {
   addon: AddonConfig;
@@ -17,20 +17,8 @@ export function AddonCard({ addon }: AddonCardProps) {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  const handleClick = () => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-      return;
-    }
-
-    if (addon.checkout_url) {
-      window.location.href = addon.checkout_url;
-    } else {
-      toast.info('Coming soon', {
-        description: 'This add-on will be available soon.',
-      });
-    }
-  };
+  // Button styles
+  const buttonClass = 'w-full rounded-full font-medium transition-all duration-300 py-2 px-4 text-sm text-center inline-block cursor-pointer border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5';
 
   return (
     <div className="premium-card-wrapper">
@@ -53,14 +41,22 @@ export function AddonCard({ addon }: AddonCardProps) {
           ${(addon.price_cents / 100).toFixed(2)}
         </div>
 
-        <Button
-          variant="pill-outline"
-          size="sm"
-          className="w-full"
-          onClick={handleClick}
-        >
-          Add
-        </Button>
+        {/* Button - use Polar embed if authenticated */}
+        {isAuthenticated ? (
+          <PolarCheckoutButton
+            checkoutUrl={addon.checkout_url}
+            className={buttonClass}
+          >
+            Add
+          </PolarCheckoutButton>
+        ) : (
+          <button
+            onClick={() => navigate('/auth')}
+            className={buttonClass}
+          >
+            Add
+          </button>
+        )}
       </div>
     </div>
   );
