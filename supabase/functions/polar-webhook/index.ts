@@ -108,6 +108,7 @@ async function updateUserBillingAtomic(
 ): Promise<boolean> {
   const now = new Date().toISOString();
   const normalizedStatus = status === 'cancelled' ? 'canceled' : status;
+  const entitlements = PLAN_ENTITLEMENTS[planKey];
   
   console.log('ATOMIC UPDATE for user:', userId, {
     polarCustomerId,
@@ -115,9 +116,11 @@ async function updateUserBillingAtomic(
     status: normalizedStatus,
     isLifetime,
     currentPeriodEnd,
+    entitlements,
   });
 
   // 1. Upsert user_billing (CRITICAL for customer portal + frontend display)
+  // Now includes boards, blocks, storage_gb, seats columns
   const { error: billingError } = await supabase
     .from('user_billing')
     .upsert({
@@ -127,6 +130,10 @@ async function updateUserBillingAtomic(
       subscription_status: normalizedStatus,
       is_lifetime: isLifetime,
       current_period_end: currentPeriodEnd,
+      boards: entitlements?.boards_limit ?? 3,
+      blocks: entitlements?.blocks_unlimited ? -1 : 10,
+      storage_gb: entitlements?.storage_gb ?? 1,
+      seats: entitlements?.seats ?? 1,
       updated_at: now,
     }, { onConflict: 'user_id' });
 
@@ -134,7 +141,7 @@ async function updateUserBillingAtomic(
     console.error('Failed to upsert user_billing:', billingError);
     return false;
   }
-  console.log('✓ user_billing updated');
+  console.log('✓ user_billing updated with entitlements');
 
   // 2. Upsert subscriptions table
   const { error: subError } = await supabase
@@ -160,7 +167,6 @@ async function updateUserBillingAtomic(
   console.log('✓ subscriptions updated');
 
   // 3. Upsert subscription_entitlements
-  const entitlements = PLAN_ENTITLEMENTS[planKey];
   if (entitlements) {
     const { error: entError } = await supabase
       .from('subscription_entitlements')
@@ -207,13 +213,14 @@ async function updateUserBillingAtomic(
 }
 
 /**
- * Handle addon purchase
+ * Handle addon purchase - also atomically updates user_billing
  */
 async function handleAddonPurchase(
   supabase: any,
   userId: string,
   addonKey: string,
-  polarOrderId: string | null
+  polarOrderId: string | null,
+  polarCustomerId: string | null
 ): Promise<boolean> {
   const entitlements = ADDON_ENTITLEMENTS[addonKey];
   if (!entitlements) {
@@ -223,6 +230,7 @@ async function handleAddonPurchase(
 
   const now = new Date().toISOString();
 
+  // 1. Insert addon record
   const { error } = await supabase
     .from('subscription_addons')
     .insert({
@@ -241,6 +249,55 @@ async function handleAddonPurchase(
   }
 
   console.log('✓ Addon added:', addonKey, 'for user:', userId);
+
+  // 2. Atomically increment user_billing boards and storage
+  // First get current values
+  const { data: currentBilling } = await supabase
+    .from('user_billing')
+    .select('boards, storage_gb, polar_customer_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (currentBilling) {
+    const { error: updateError } = await supabase
+      .from('user_billing')
+      .update({
+        boards: (currentBilling.boards || 0) + entitlements.extra_boards,
+        storage_gb: (currentBilling.storage_gb || 0) + entitlements.extra_storage_gb,
+        polar_customer_id: polarCustomerId || currentBilling.polar_customer_id,
+        updated_at: now,
+      })
+      .eq('user_id', userId);
+
+    if (updateError) {
+      console.error('Failed to update user_billing for addon:', updateError);
+      return false;
+    }
+    console.log('✓ user_billing updated with addon entitlements');
+  } else {
+    // No billing record exists, create one with addon values
+    const { error: insertError } = await supabase
+      .from('user_billing')
+      .upsert({
+        user_id: userId,
+        polar_customer_id: polarCustomerId,
+        active_plan: 'free',
+        subscription_status: 'active',
+        boards: 3 + entitlements.extra_boards,
+        storage_gb: 1 + entitlements.extra_storage_gb,
+        blocks: 10,
+        seats: 1,
+        is_lifetime: false,
+        updated_at: now,
+      }, { onConflict: 'user_id' });
+
+    if (insertError) {
+      console.error('Failed to create user_billing for addon:', insertError);
+      return false;
+    }
+    console.log('✓ user_billing created with addon entitlements');
+  }
+
   return true;
 }
 
@@ -295,16 +352,16 @@ serve(async (req) => {
         console.log('Processing checkout.completed:', { userId, planKey, isAddon });
 
         if (isAddon) {
-          success = await handleAddonPurchase(supabase, userId, planKey, event.data?.id);
+          success = await handleAddonPurchase(supabase, userId, planKey, event.data?.id, event.data?.customer?.id || event.data?.customer_id || null);
         } else {
-          const entitlements = PLAN_ENTITLEMENTS[planKey];
+          const planEntitlements = PLAN_ENTITLEMENTS[planKey];
           success = await updateUserBillingAtomic(
             supabase,
             userId,
             event.data?.customer?.id || event.data?.customer_id || null,
             planKey,
             'active',
-            entitlements?.is_lifetime ?? false,
+            planEntitlements?.is_lifetime ?? false,
             event.data?.subscription?.current_period_end || null,
             event.data?.subscription?.id || event.data?.subscription_id || null
           );
@@ -423,16 +480,16 @@ serve(async (req) => {
         console.log('Processing order.paid:', { userId, planKey, isAddon });
 
         if (isAddon) {
-          success = await handleAddonPurchase(supabase, userId, planKey, event.data?.id);
+          success = await handleAddonPurchase(supabase, userId, planKey, event.data?.id, event.data?.customer?.id || null);
         } else {
-          const entitlements = PLAN_ENTITLEMENTS[planKey];
+          const orderEntitlements = PLAN_ENTITLEMENTS[planKey];
           success = await updateUserBillingAtomic(
             supabase,
             userId,
             event.data?.customer?.id || null,
             planKey,
             'active',
-            entitlements?.is_lifetime ?? false,
+            orderEntitlements?.is_lifetime ?? false,
             null, // One-time purchases don't have period end
             null
           );
