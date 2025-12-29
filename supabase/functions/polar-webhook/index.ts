@@ -83,6 +83,73 @@ function getUserIdFromMetadata(metadata: Record<string, unknown> | undefined): s
 }
 
 /**
+ * Update user_billing table with polar_customer_id (CRITICAL for customer portal)
+ */
+async function updateUserBilling(
+  supabase: any,
+  userId: string,
+  polarCustomerId: string | null,
+  planKey: string,
+  status: string,
+  isLifetime: boolean,
+  endsAt: string | null
+): Promise<void> {
+  if (!polarCustomerId) {
+    console.warn('No polar_customer_id to save for user:', userId);
+    return;
+  }
+
+  const now = new Date().toISOString();
+
+  // Check if user already has a polar_customer_id - do NOT overwrite
+  const { data: existing } = await supabase
+    .from('user_billing')
+    .select('polar_customer_id')
+    .eq('user_id', userId)
+    .single();
+
+  if (existing?.polar_customer_id) {
+    // Only update other fields, keep existing polar_customer_id
+    const { error } = await supabase
+      .from('user_billing')
+      .update({
+        active_plan: planKey,
+        subscription_status: status,
+        is_lifetime: isLifetime,
+        current_period_end: endsAt,
+        updated_at: now,
+      })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Failed to update user_billing:', error);
+    } else {
+      console.log('Updated user_billing for user:', userId);
+    }
+  } else {
+    // Insert or upsert with new polar_customer_id
+    const { error } = await supabase
+      .from('user_billing')
+      .upsert({
+        user_id: userId,
+        polar_customer_id: polarCustomerId,
+        active_plan: planKey,
+        subscription_status: status,
+        is_lifetime: isLifetime,
+        current_period_end: endsAt,
+        created_at: now,
+        updated_at: now,
+      }, { onConflict: 'user_id' });
+
+    if (error) {
+      console.error('Failed to upsert user_billing:', error);
+    } else {
+      console.log('Created user_billing with polar_customer_id for user:', userId);
+    }
+  }
+}
+
+/**
  * Handle subscription creation/update
  */
 async function handleSubscription(
@@ -102,6 +169,17 @@ async function handleSubscription(
 
   const now = new Date().toISOString();
   const period = entitlements.is_lifetime ? 'lifetime' : 'annual';
+
+  // CRITICAL: Save polar_customer_id to user_billing for customer portal
+  await updateUserBilling(
+    supabase,
+    userId,
+    polarCustomerId,
+    planKey,
+    status,
+    entitlements.is_lifetime,
+    endsAt
+  );
 
   // Upsert into NEW subscriptions table
   const { error: subError } = await supabase
@@ -334,11 +412,23 @@ serve(async (req) => {
           );
         }
 
+        const now = new Date().toISOString();
+
+        // Update subscriptions table
         const { error } = await supabase
           .from('subscriptions')
           .update({
             status: 'cancelled',
-            updated_at: new Date().toISOString(),
+            updated_at: now,
+          })
+          .eq('user_id', userId);
+
+        // ALSO update user_billing for customer portal
+        await supabase
+          .from('user_billing')
+          .update({
+            subscription_status: 'cancelled',
+            updated_at: now,
           })
           .eq('user_id', userId);
 

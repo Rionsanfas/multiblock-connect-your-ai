@@ -636,6 +636,39 @@ export type Database = {
           },
         ]
       }
+      user_billing: {
+        Row: {
+          active_plan: string | null
+          created_at: string | null
+          current_period_end: string | null
+          is_lifetime: boolean | null
+          polar_customer_id: string | null
+          subscription_status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active_plan?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          is_lifetime?: boolean | null
+          polar_customer_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active_plan?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          is_lifetime?: boolean | null
+          polar_customer_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
