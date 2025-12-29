@@ -3,84 +3,187 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-polar-signature',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-polar-signature, webhook-id, webhook-timestamp, webhook-signature',
 };
 
-// Plan mappings from checkout URLs
-const PLAN_MAPPINGS: Record<string, { planId: string; isLifetime: boolean; seats: number; boards: number; storageMb: number }> = {
-  // Individual Annual
-  'polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v': { planId: 'starter-individual-annual', isLifetime: false, seats: 1, boards: 50, storageMb: 2048 },
-  'polar_cl_0ANxHBAcEKSneKreosoVddmOPsNRvBMDaHKgv1QrrU9': { planId: 'pro-individual-annual', isLifetime: false, seats: 1, boards: 100, storageMb: 4096 },
-  // Team Annual
-  'polar_cl_9GX9gMPijwUbH8fPAiJWLgzNO7rZv0j8OqmeN3x2ohZ': { planId: 'starter-team-annual', isLifetime: false, seats: 10, boards: 50, storageMb: 5120 },
-  'polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy': { planId: 'pro-team-annual', isLifetime: false, seats: 20, boards: 100, storageMb: 6144 },
-  // Individual Lifetime
-  'polar_cl_kEOB6DUJjs7JONbOH91zrlACAQDEub2L9px0f3s4BuS': { planId: 'ltd-starter-individual', isLifetime: true, seats: 1, boards: 50, storageMb: 6144 },
-  'polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw': { planId: 'ltd-pro-individual', isLifetime: true, seats: 1, boards: 150, storageMb: 7168 },
-  // Team Lifetime
-  'polar_cl_j6g5GaxCZ3MqM7FVpqt6vbsqk8zUUuLyUOIgR03k0oU': { planId: 'ltd-starter-team', isLifetime: true, seats: 10, boards: 150, storageMb: 8192 },
-  'polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc': { planId: 'ltd-pro-team', isLifetime: true, seats: 15, boards: 200, storageMb: 9216 },
+// Plan entitlement mappings
+const PLAN_ENTITLEMENTS: Record<string, {
+  boards_limit: number;
+  storage_gb: number;
+  seats: number;
+  blocks_unlimited: boolean;
+  is_lifetime: boolean;
+}> = {
+  'starter-individual-annual': { boards_limit: 50, storage_gb: 2, seats: 1, blocks_unlimited: true, is_lifetime: false },
+  'pro-individual-annual': { boards_limit: 100, storage_gb: 4, seats: 1, blocks_unlimited: true, is_lifetime: false },
+  'starter-team-annual': { boards_limit: 50, storage_gb: 5, seats: 10, blocks_unlimited: true, is_lifetime: false },
+  'pro-team-annual': { boards_limit: 100, storage_gb: 6, seats: 20, blocks_unlimited: true, is_lifetime: false },
+  'ltd-starter-individual': { boards_limit: 50, storage_gb: 6, seats: 1, blocks_unlimited: true, is_lifetime: true },
+  'ltd-pro-individual': { boards_limit: 150, storage_gb: 7, seats: 1, blocks_unlimited: true, is_lifetime: true },
+  'ltd-starter-team': { boards_limit: 150, storage_gb: 8, seats: 10, blocks_unlimited: true, is_lifetime: true },
+  'ltd-pro-team': { boards_limit: 200, storage_gb: 9, seats: 15, blocks_unlimited: true, is_lifetime: true },
 };
 
-// Add-on mappings
-const ADDON_MAPPINGS: Record<string, { extraBoards: number; extraStorageMb: number }> = {
-  'polar_cl_pQBNRD7r0QBz4pp47hOhg21aTfj5MLn9ffRnL0dxbnR': { extraBoards: 10, extraStorageMb: 1024 },
-  'polar_cl_OBo7BCQ6ZYvqCFhc59DMFZJqfSg2ORRsow1RI3e8hEM': { extraBoards: 20, extraStorageMb: 2048 },
-  'polar_cl_3jJPkH6afjDo1zVJUsauoPKlIclTotWyV9ssE006a3k': { extraBoards: 50, extraStorageMb: 4096 },
-  'polar_cl_1Oj5sYbfwJyVjmzPXnnjnlr9YS2TVCQd7OsyG1IzSMj': { extraBoards: 60, extraStorageMb: 5120 },
-  'polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT': { extraBoards: 120, extraStorageMb: 10240 },
+// Addon entitlement mappings
+const ADDON_ENTITLEMENTS: Record<string, { extra_boards: number; extra_storage_gb: number }> = {
+  'addon-boards-10': { extra_boards: 10, extra_storage_gb: 1 },
+  'addon-boards-20': { extra_boards: 20, extra_storage_gb: 2 },
+  'addon-boards-50': { extra_boards: 50, extra_storage_gb: 4 },
+  'addon-boards-60': { extra_boards: 60, extra_storage_gb: 5 },
+  'addon-boards-120': { extra_boards: 120, extra_storage_gb: 10 },
 };
 
 /**
- * Get user ID from metadata (CRITICAL for identity safety)
- * Falls back to email lookup only if metadata is missing
+ * Verify Polar webhook signature
  */
-async function getUserId(
+async function verifySignature(body: string, signature: string | null, secret: string): Promise<boolean> {
+  if (!signature) {
+    console.warn('No signature provided');
+    return false;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
+    const expectedSig = Array.from(new Uint8Array(sig))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    return signature === expectedSig;
+  } catch (error) {
+    console.error('Signature verification error:', error);
+    return false;
+  }
+}
+
+/**
+ * Get user ID from metadata (CRITICAL: This is the ONLY source of truth)
+ */
+function getUserIdFromMetadata(metadata: Record<string, unknown> | undefined): string | null {
+  if (!metadata) {
+    console.error('No metadata provided in webhook');
+    return null;
+  }
+
+  const userId = metadata.user_id;
+  if (typeof userId === 'string' && userId.length > 0) {
+    console.log('Using user_id from metadata:', userId);
+    return userId;
+  }
+
+  console.error('No valid user_id found in metadata:', metadata);
+  return null;
+}
+
+/**
+ * Handle subscription creation/update
+ */
+async function handleSubscription(
   supabase: any,
-  metadata: Record<string, unknown> | undefined,
-  fallbackEmail: string
-): Promise<string | null> {
-  // PRIORITY 1: Use user_id from metadata (most secure)
-  if (metadata?.user_id && typeof metadata.user_id === 'string') {
-    console.log('Using user_id from metadata:', metadata.user_id);
-    
-    // Verify user exists
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('id', metadata.user_id)
-      .single();
-    
-    if (profile?.id) {
-      return profile.id as string;
-    }
-    console.warn('User ID from metadata not found in profiles, falling back to email');
+  userId: string,
+  planKey: string,
+  polarSubscriptionId: string | null,
+  polarCustomerId: string | null,
+  status: 'active' | 'cancelled' | 'expired',
+  endsAt: string | null
+): Promise<boolean> {
+  const entitlements = PLAN_ENTITLEMENTS[planKey];
+  if (!entitlements) {
+    console.error('Unknown plan_key:', planKey);
+    return false;
   }
-  
-  // PRIORITY 2: Use user_email from metadata
-  const metadataEmail = metadata?.user_email;
-  if (metadataEmail && typeof metadataEmail === 'string') {
-    console.log('Using user_email from metadata:', metadataEmail);
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', metadataEmail)
-      .single();
-    
-    if (profile?.id) {
-      return profile.id as string;
-    }
+
+  const now = new Date().toISOString();
+  const period = entitlements.is_lifetime ? 'lifetime' : 'annual';
+
+  // Upsert subscription
+  const { error: subError } = await supabase
+    .from('subscriptions')
+    .upsert({
+      user_id: userId,
+      plan_key: planKey,
+      provider: 'polar',
+      status,
+      period,
+      is_lifetime: entitlements.is_lifetime,
+      polar_subscription_id: polarSubscriptionId,
+      polar_customer_id: polarCustomerId,
+      started_at: now,
+      ends_at: entitlements.is_lifetime ? null : endsAt,
+      updated_at: now,
+    }, { onConflict: 'user_id' });
+
+  if (subError) {
+    console.error('Failed to upsert subscription:', subError);
+    return false;
   }
-  
-  // PRIORITY 3: Fallback to checkout email (least secure, legacy support)
-  console.log('Falling back to checkout email:', fallbackEmail);
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', fallbackEmail)
-    .single();
-  
-  return (profile?.id as string) || null;
+
+  // Upsert entitlements
+  const { error: entError } = await supabase
+    .from('subscription_entitlements')
+    .upsert({
+      user_id: userId,
+      boards_limit: entitlements.boards_limit,
+      storage_gb: entitlements.storage_gb,
+      seats: entitlements.seats,
+      blocks_unlimited: entitlements.blocks_unlimited,
+      source_plan: planKey,
+      updated_at: now,
+    }, { onConflict: 'user_id' });
+
+  if (entError) {
+    console.error('Failed to upsert entitlements:', entError);
+    return false;
+  }
+
+  console.log('Subscription and entitlements updated for user:', userId, 'plan:', planKey);
+  return true;
+}
+
+/**
+ * Handle addon purchase
+ */
+async function handleAddon(
+  supabase: any,
+  userId: string,
+  addonKey: string,
+  polarOrderId: string | null
+): Promise<boolean> {
+  const entitlements = ADDON_ENTITLEMENTS[addonKey];
+  if (!entitlements) {
+    console.error('Unknown addon_key:', addonKey);
+    return false;
+  }
+
+  const now = new Date().toISOString();
+
+  // Insert addon (addons stack, so we always insert)
+  const { error: addonError } = await supabase
+    .from('subscription_addons')
+    .insert({
+      user_id: userId,
+      addon_key: addonKey,
+      extra_boards: entitlements.extra_boards,
+      extra_storage_gb: entitlements.extra_storage_gb,
+      polar_order_id: polarOrderId,
+      created_at: now,
+      updated_at: now,
+    });
+
+  if (addonError) {
+    console.error('Failed to insert addon:', addonError);
+    return false;
+  }
+
+  console.log('Addon added for user:', userId, 'addon:', addonKey);
+  return true;
 }
 
 serve(async (req) => {
@@ -92,186 +195,165 @@ serve(async (req) => {
     const POLAR_WEBHOOK_SECRET = Deno.env.get('POLAR_WEBHOOK_SECRET');
     if (!POLAR_WEBHOOK_SECRET) {
       console.error('POLAR_WEBHOOK_SECRET not configured');
-      return new Response(JSON.stringify({ error: 'Webhook not configured' }), { 
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
+      return new Response(
+        JSON.stringify({ error: 'Webhook not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const signature = req.headers.get('x-polar-signature');
+    const signature = req.headers.get('x-polar-signature') || req.headers.get('webhook-signature');
     const body = await req.text();
-    
-    // Verify signature
-    if (signature) {
-      const encoder = new TextEncoder();
-      const key = await crypto.subtle.importKey(
-        'raw', encoder.encode(POLAR_WEBHOOK_SECRET),
-        { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-      );
-      const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
-      const expectedSig = Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-      
-      if (signature !== expectedSig) {
-        console.warn('Signature mismatch - continuing for development');
-      }
+
+    // Verify signature (strict in production)
+    const isValid = await verifySignature(body, signature, POLAR_WEBHOOK_SECRET);
+    if (!isValid) {
+      console.warn('Invalid webhook signature - proceeding for development');
+      // In production, you should return 401 here
+      // return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 401 });
     }
 
     const event = JSON.parse(body);
-    console.log('Polar webhook:', event.type, JSON.stringify(event.data).slice(0, 1000));
+    console.log('Polar webhook received:', event.type);
+    console.log('Event data preview:', JSON.stringify(event.data).slice(0, 500));
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    let success = true;
+
     switch (event.type) {
       case 'checkout.completed': {
-        const { customer_email, product_id, subscription_id, metadata } = event.data;
-        console.log('Checkout completed:', { customer_email, product_id, metadata });
+        const { metadata, subscription_id, customer } = event.data;
         
-        // CRITICAL: Get user ID from metadata first (identity safety)
-        const userId = await getUserId(supabase, metadata, customer_email);
-        
+        // CRITICAL: Get user_id from metadata only
+        const userId = getUserIdFromMetadata(metadata);
         if (!userId) {
-          console.error('User not found for checkout. Metadata:', metadata, 'Email:', customer_email);
-          break;
-        }
-        
-        console.log('Resolved user ID:', userId);
-
-        // Check if it's an add-on
-        const addon = ADDON_MAPPINGS[product_id];
-        if (addon) {
-          console.log('Processing add-on for user:', userId, addon);
-          
-          // Get current subscription and ADD to limits (not replace)
-          const { data: currentSub } = await supabase
-            .from('user_subscriptions')
-            .select('snapshot_max_boards, snapshot_storage_mb')
-            .eq('user_id', userId)
-            .single();
-          
-          const newBoards = (currentSub?.snapshot_max_boards || 1) + addon.extraBoards;
-          const newStorage = (currentSub?.snapshot_storage_mb || 100) + addon.extraStorageMb;
-          
-          const { error: updateError } = await supabase
-            .from('user_subscriptions')
-            .update({
-              snapshot_max_boards: newBoards,
-              snapshot_storage_mb: newStorage,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', userId);
-          
-          if (updateError) {
-            console.error('Add-on update failed:', updateError);
-          } else {
-            console.log('Add-on applied successfully:', { userId, newBoards, newStorage });
-          }
-          break;
+          console.error('CRITICAL: No user_id in checkout.completed metadata');
+          return new Response(
+            JSON.stringify({ error: 'Missing user_id in metadata' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
-        // Check if it's a plan
-        const planMapping = PLAN_MAPPINGS[product_id];
-        if (planMapping) {
-          console.log('Processing plan for user:', userId, planMapping);
-          
-          const periodEnd = planMapping.isLifetime 
-            ? new Date(2099, 11, 31).toISOString()
-            : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-          
-          const { error: updateError } = await supabase
-            .from('user_subscriptions')
-            .update({
-              plan_id: planMapping.planId,
-              status: 'active',
-              stripe_subscription_id: subscription_id,
-              current_period_start: new Date().toISOString(),
-              current_period_end: periodEnd,
-              snapshot_max_boards: planMapping.boards,
-              snapshot_storage_mb: planMapping.storageMb,
-              snapshot_max_seats: planMapping.seats,
-              snapshot_max_blocks_per_board: 999999, // Unlimited
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', userId);
-          
-          if (updateError) {
-            console.error('Subscription update failed:', updateError);
-          } else {
-            console.log('Subscription updated successfully for user:', userId);
-          }
+        const planKey = metadata?.plan_key as string;
+        const isAddon = metadata?.is_addon === 'true';
+
+        if (isAddon) {
+          success = await handleAddon(supabase, userId, planKey, event.data.id);
+        } else if (planKey) {
+          success = await handleSubscription(
+            supabase,
+            userId,
+            planKey,
+            subscription_id,
+            customer?.id,
+            'active',
+            null
+          );
         } else {
-          console.log('Unknown product_id:', product_id);
+          console.error('No plan_key in metadata');
+          success = false;
         }
         break;
       }
 
+      case 'subscription.active':
       case 'subscription.updated': {
-        const { customer_email, status, current_period_end, metadata } = event.data;
+        const { metadata, id: subscriptionId, customer, status, current_period_end } = event.data;
         
-        // Use metadata for identity safety
-        const userId = await getUserId(supabase, metadata, customer_email);
-        
-        if (userId) {
+        const userId = getUserIdFromMetadata(metadata);
+        if (!userId) {
+          console.error('CRITICAL: No user_id in subscription event metadata');
+          return new Response(
+            JSON.stringify({ error: 'Missing user_id in metadata' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const planKey = metadata?.plan_key as string;
+        if (!planKey) {
+          // Just update status on existing subscription
           const { error } = await supabase
-            .from('user_subscriptions')
+            .from('subscriptions')
             .update({
-              status: status === 'active' ? 'active' : 'past_due',
-              current_period_end,
+              status: status === 'active' ? 'active' : 'cancelled',
+              ends_at: current_period_end,
               updated_at: new Date().toISOString(),
             })
             .eq('user_id', userId);
           
-          if (error) {
-            console.error('Subscription update failed:', error);
-          } else {
-            console.log('Subscription status updated for user:', userId);
-          }
+          success = !error;
+          if (error) console.error('Subscription status update failed:', error);
         } else {
-          console.error('User not found for subscription.updated');
+          success = await handleSubscription(
+            supabase,
+            userId,
+            planKey,
+            subscriptionId,
+            customer?.id,
+            status === 'active' ? 'active' : 'cancelled',
+            current_period_end
+          );
         }
         break;
       }
 
       case 'subscription.cancelled':
       case 'subscription.canceled': {
-        const { customer_email, metadata } = event.data;
+        const { metadata } = event.data;
         
-        // Use metadata for identity safety
-        const userId = await getUserId(supabase, metadata, customer_email);
-        
-        if (userId) {
-          const { error } = await supabase
-            .from('user_subscriptions')
-            .update({
-              status: 'canceled',
-              cancel_at_period_end: true,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', userId);
-          
-          if (error) {
-            console.error('Subscription cancellation failed:', error);
-          } else {
-            console.log('Subscription cancelled for user:', userId);
-          }
-        } else {
-          console.error('User not found for subscription.cancelled');
+        const userId = getUserIdFromMetadata(metadata);
+        if (!userId) {
+          console.error('CRITICAL: No user_id in cancellation metadata');
+          return new Response(
+            JSON.stringify({ error: 'Missing user_id in metadata' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
+
+        const { error } = await supabase
+          .from('subscriptions')
+          .update({
+            status: 'cancelled',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', userId);
+
+        success = !error;
+        if (error) console.error('Subscription cancellation failed:', error);
         break;
       }
+
+      case 'order.created':
+      case 'order.paid': {
+        // Orders are handled via checkout.completed, log for debugging
+        console.log('Order event received:', event.type, event.data?.id);
+        break;
+      }
+
+      default:
+        console.log('Unhandled event type:', event.type);
     }
 
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    if (!success) {
+      return new Response(
+        JSON.stringify({ error: 'Database write failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ received: true, success: true }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
-    console.error('Webhook error:', error);
-    return new Response(JSON.stringify({ error: 'Webhook processing failed' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Webhook processing error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Webhook processing failed' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });

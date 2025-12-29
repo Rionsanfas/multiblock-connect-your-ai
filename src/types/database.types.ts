@@ -115,7 +115,7 @@ export interface SubscriptionPlanUpdate {
 }
 
 // ============================================
-// TABLE TYPES: USER SUBSCRIPTIONS
+// TABLE TYPES: USER SUBSCRIPTIONS (Legacy - kept for compatibility)
 // ============================================
 
 export interface UserSubscription {
@@ -123,8 +123,6 @@ export interface UserSubscription {
   user_id: string;
   plan_id: string;
   status: SubscriptionStatus;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
@@ -139,8 +137,6 @@ export interface UserSubscriptionInsert {
   user_id: string;
   plan_id: string;
   status?: SubscriptionStatus;
-  stripe_customer_id?: string | null;
-  stripe_subscription_id?: string | null;
   current_period_start?: string | null;
   current_period_end?: string | null;
   cancel_at_period_end?: boolean;
@@ -151,14 +147,66 @@ export interface UserSubscriptionInsert {
 export interface UserSubscriptionUpdate {
   plan_id?: string;
   status?: SubscriptionStatus;
-  stripe_customer_id?: string | null;
-  stripe_subscription_id?: string | null;
   current_period_start?: string | null;
   current_period_end?: string | null;
   cancel_at_period_end?: boolean;
   seats_used?: number;
   messages_used_today?: number;
   messages_reset_at?: string;
+}
+
+// ============================================
+// TABLE TYPES: NEW BILLING SYSTEM (Polar)
+// ============================================
+
+export interface Subscription {
+  id: string;
+  user_id: string;
+  plan_key: string;
+  provider: string;
+  status: 'active' | 'cancelled' | 'expired';
+  period: 'annual' | 'lifetime' | 'monthly';
+  is_lifetime: boolean;
+  polar_subscription_id: string | null;
+  polar_customer_id: string | null;
+  started_at: string;
+  ends_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionEntitlements {
+  user_id: string;
+  boards_limit: number;
+  storage_gb: number;
+  seats: number;
+  blocks_unlimited: boolean;
+  source_plan: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionAddon {
+  id: string;
+  user_id: string;
+  addon_key: string;
+  extra_boards: number;
+  extra_storage_gb: number;
+  polar_order_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserEntitlements {
+  boards_limit: number;
+  storage_gb: number;
+  seats: number;
+  blocks_unlimited: boolean;
+  source_plan: string;
+  extra_boards: number;
+  extra_storage_gb: number;
+  total_boards: number;
+  total_storage_gb: number;
 }
 
 // ============================================

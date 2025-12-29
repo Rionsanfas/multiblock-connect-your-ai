@@ -16,6 +16,7 @@ import { usePlanEnforcement } from "@/hooks/usePlanLimits";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import { boardsDb } from "@/lib/database";
 import { toast } from "sonner";
 import type { Board } from "@/types";
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const stats = useUserStats();
   const { enforceCreateBoard, canCreateBoard, boardsRemaining, isFree } = usePlanEnforcement();
   const { refreshSubscription } = useUserSubscription();
+  const { refreshEntitlements } = useEntitlements();
   
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -43,8 +45,15 @@ export default function Dashboard() {
   useEffect(() => {
     const checkoutStatus = searchParams.get('checkout');
     if (checkoutStatus === 'success') {
-      // Refetch subscription data to get updated plan
+      // Refetch subscription and entitlements data
       refreshSubscription();
+      refreshEntitlements();
+      
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries({ queryKey: ['user-entitlements'] });
+      queryClient.invalidateQueries({ queryKey: ['user-subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['user-boards'] });
+      queryClient.invalidateQueries({ queryKey: ['user-board-count'] });
       
       // Show success toast
       toast.success('Plan activated!', {
@@ -55,7 +64,7 @@ export default function Dashboard() {
       searchParams.delete('checkout');
       setSearchParams(searchParams, { replace: true });
     }
-  }, [searchParams, setSearchParams, refreshSubscription]);
+  }, [searchParams, setSearchParams, refreshSubscription, refreshEntitlements, queryClient]);
 
   const filteredBoards = useMemo(() => {
     return userBoards.filter((b) =>

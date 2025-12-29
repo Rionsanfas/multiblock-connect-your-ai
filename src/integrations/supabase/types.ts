@@ -297,6 +297,88 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_addons: {
+        Row: {
+          addon_key: string
+          created_at: string
+          extra_boards: number
+          extra_storage_gb: number
+          id: string
+          polar_order_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addon_key: string
+          created_at?: string
+          extra_boards?: number
+          extra_storage_gb?: number
+          id?: string
+          polar_order_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addon_key?: string
+          created_at?: string
+          extra_boards?: number
+          extra_storage_gb?: number
+          id?: string
+          polar_order_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_addons_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_entitlements: {
+        Row: {
+          blocks_unlimited: boolean
+          boards_limit: number
+          created_at: string
+          seats: number
+          source_plan: string
+          storage_gb: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocks_unlimited?: boolean
+          boards_limit?: number
+          created_at?: string
+          seats?: number
+          source_plan?: string
+          storage_gb?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocks_unlimited?: boolean
+          boards_limit?: number
+          created_at?: string
+          seats?: number
+          source_plan?: string
+          storage_gb?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_entitlements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           billing_period: Database["public"]["Enums"]["billing_period"]
@@ -386,6 +468,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          id: string
+          is_lifetime: boolean
+          period: string
+          plan_key: string
+          polar_customer_id: string | null
+          polar_subscription_id: string | null
+          provider: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_lifetime?: boolean
+          period?: string
+          plan_key: string
+          polar_customer_id?: string | null
+          polar_subscription_id?: string | null
+          provider?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          is_lifetime?: boolean
+          period?: string
+          plan_key?: string
+          polar_customer_id?: string | null
+          polar_subscription_id?: string | null
+          provider?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       uploads: {
         Row: {
@@ -579,8 +717,6 @@ export type Database = {
           snapshot_max_seats: number | null
           snapshot_storage_mb: number | null
           status: Database["public"]["Enums"]["subscription_status"]
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           updated_at: string
           uploads_reset_at: string | null
           user_id: string
@@ -611,8 +747,6 @@ export type Database = {
           snapshot_max_seats?: number | null
           snapshot_storage_mb?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           updated_at?: string
           uploads_reset_at?: string | null
           user_id: string
@@ -643,8 +777,6 @@ export type Database = {
           snapshot_max_seats?: number | null
           snapshot_storage_mb?: number | null
           status?: Database["public"]["Enums"]["subscription_status"]
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           updated_at?: string
           uploads_reset_at?: string | null
           user_id?: string
@@ -762,6 +894,20 @@ export type Database = {
           max_messages_per_day: number
           max_seats: number
           storage_mb: number
+        }[]
+      }
+      get_user_entitlements: {
+        Args: { p_user_id: string }
+        Returns: {
+          blocks_unlimited: boolean
+          boards_limit: number
+          extra_boards: number
+          extra_storage_gb: number
+          seats: number
+          source_plan: string
+          storage_gb: number
+          total_boards: number
+          total_storage_gb: number
         }[]
       }
       get_user_role: {
