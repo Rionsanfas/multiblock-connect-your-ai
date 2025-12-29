@@ -4,7 +4,7 @@
  * Handles all plan button states:
  * - Not logged in → "Get Started" → /auth
  * - Current plan → "Current Plan" (disabled)
- * - Can upgrade → "Upgrade" → Polar checkout URL
+ * - Can upgrade → "Upgrade" → Polar checkout URL (with metadata)
  * - Can downgrade → "Downgrade" (disabled or contact)
  * - Enterprise → "Contact Sales" → mailto
  */
@@ -22,9 +22,32 @@ interface PricingButtonProps {
   variant?: 'primary' | 'secondary';
 }
 
+/**
+ * Build Polar checkout URL with metadata for identity safety
+ * Attaches user_id and user_email as query params for webhook processing
+ */
+function buildCheckoutUrl(baseUrl: string, userId?: string, userEmail?: string): string {
+  const url = new URL(baseUrl);
+  
+  // Add success redirect URL
+  url.searchParams.set('success_url', `${window.location.origin}/dashboard?checkout=success`);
+  
+  // Add metadata for identity safety (CRITICAL)
+  if (userId) {
+    url.searchParams.set('metadata[user_id]', userId);
+  }
+  if (userEmail) {
+    url.searchParams.set('metadata[user_email]', userEmail);
+    // Prefill email for UX (user can still edit)
+    url.searchParams.set('customer_email', userEmail);
+  }
+  
+  return url.toString();
+}
+
 export function PricingButton({ plan, className = '', variant = 'secondary' }: PricingButtonProps) {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { plan: currentTierRaw, isLoading } = usePlanLimits();
   
   // Map the current tier string to our PlanTier type
@@ -66,17 +89,17 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     
     // Upgrade
     if (comparison < 0) {
-      const checkoutUrl = getPlanCheckoutUrl(plan);
+      const baseCheckoutUrl = getPlanCheckoutUrl(plan);
       
       return {
         text: 'Upgrade',
-        disabled: !checkoutUrl,
+        disabled: !baseCheckoutUrl,
         action: () => {
-          if (checkoutUrl) {
-            // Redirect to Polar checkout
+          if (baseCheckoutUrl) {
+            // Build checkout URL with metadata for identity safety
+            const checkoutUrl = buildCheckoutUrl(baseCheckoutUrl, user?.id, user?.email);
             window.location.href = checkoutUrl;
           } else {
-            // No checkout URL configured - show toast
             toast.info('Coming soon', {
               description: 'This plan will be available for purchase soon. Stay tuned!',
             });
@@ -88,7 +111,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     // Downgrade
     return {
       text: 'Downgrade',
-      disabled: true, // Downgrade via billing portal
+      disabled: true,
       action: () => {
         toast.info('Manage your subscription', {
           description: 'To downgrade, please contact support or manage your subscription in the billing portal.',

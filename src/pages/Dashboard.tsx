@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -14,7 +14,8 @@ import { useCurrentUser, useUserBoards, useUserStats } from "@/hooks/useCurrentU
 import { useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { usePlanEnforcement } from "@/hooks/usePlanLimits";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { boardsDb } from "@/lib/database";
 import { toast } from "sonner";
 import type { Board } from "@/types";
@@ -23,6 +24,7 @@ import { PlanUsageCard } from "@/components/dashboard/PlanUsageCard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { blocks } = useAppStore();
   const { user: authUser, isLoading: authLoading, isAuthenticated } = useAuth();
@@ -30,11 +32,30 @@ export default function Dashboard() {
   const userBoards = useUserBoards();
   const stats = useUserStats();
   const { enforceCreateBoard, canCreateBoard, boardsRemaining, isFree } = usePlanEnforcement();
+  const { refreshSubscription } = useUserSubscription();
   
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+
+  // Handle checkout success redirect from Polar
+  useEffect(() => {
+    const checkoutStatus = searchParams.get('checkout');
+    if (checkoutStatus === 'success') {
+      // Refetch subscription data to get updated plan
+      refreshSubscription();
+      
+      // Show success toast
+      toast.success('Plan activated!', {
+        description: 'Your subscription has been updated successfully.',
+      });
+      
+      // Remove the query param from URL (clean up)
+      searchParams.delete('checkout');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, refreshSubscription]);
 
   const filteredBoards = useMemo(() => {
     return userBoards.filter((b) =>
