@@ -31,6 +31,58 @@ const ADDON_MAPPINGS: Record<string, { extraBoards: number; extraStorageMb: numb
   'polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT': { extraBoards: 120, extraStorageMb: 10240 },
 };
 
+/**
+ * Get user ID from metadata (CRITICAL for identity safety)
+ * Falls back to email lookup only if metadata is missing
+ */
+async function getUserId(
+  supabase: any,
+  metadata: Record<string, unknown> | undefined,
+  fallbackEmail: string
+): Promise<string | null> {
+  // PRIORITY 1: Use user_id from metadata (most secure)
+  if (metadata?.user_id && typeof metadata.user_id === 'string') {
+    console.log('Using user_id from metadata:', metadata.user_id);
+    
+    // Verify user exists
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', metadata.user_id)
+      .single();
+    
+    if (profile?.id) {
+      return profile.id as string;
+    }
+    console.warn('User ID from metadata not found in profiles, falling back to email');
+  }
+  
+  // PRIORITY 2: Use user_email from metadata
+  const metadataEmail = metadata?.user_email;
+  if (metadataEmail && typeof metadataEmail === 'string') {
+    console.log('Using user_email from metadata:', metadataEmail);
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', metadataEmail)
+      .single();
+    
+    if (profile?.id) {
+      return profile.id as string;
+    }
+  }
+  
+  // PRIORITY 3: Fallback to checkout email (least secure, legacy support)
+  console.log('Falling back to checkout email:', fallbackEmail);
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('email', fallbackEmail)
+    .single();
+  
+  return (profile?.id as string) || null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -64,7 +116,7 @@ serve(async (req) => {
     }
 
     const event = JSON.parse(body);
-    console.log('Polar webhook:', event.type, JSON.stringify(event.data).slice(0, 500));
+    console.log('Polar webhook:', event.type, JSON.stringify(event.data).slice(0, 1000));
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -73,56 +125,61 @@ serve(async (req) => {
 
     switch (event.type) {
       case 'checkout.completed': {
-        const { customer_email, product_id, subscription_id } = event.data;
-        console.log('Checkout completed:', { customer_email, product_id });
+        const { customer_email, product_id, subscription_id, metadata } = event.data;
+        console.log('Checkout completed:', { customer_email, product_id, metadata });
         
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', customer_email)
-          .single();
+        // CRITICAL: Get user ID from metadata first (identity safety)
+        const userId = await getUserId(supabase, metadata, customer_email);
         
-        if (!profile) {
-          console.error('User not found:', customer_email);
+        if (!userId) {
+          console.error('User not found for checkout. Metadata:', metadata, 'Email:', customer_email);
           break;
         }
+        
+        console.log('Resolved user ID:', userId);
 
         // Check if it's an add-on
         const addon = ADDON_MAPPINGS[product_id];
         if (addon) {
-          console.log('Processing add-on:', addon);
-          // Get current subscription and add to limits
+          console.log('Processing add-on for user:', userId, addon);
+          
+          // Get current subscription and ADD to limits (not replace)
           const { data: currentSub } = await supabase
             .from('user_subscriptions')
             .select('snapshot_max_boards, snapshot_storage_mb')
-            .eq('user_id', profile.id)
+            .eq('user_id', userId)
             .single();
           
           const newBoards = (currentSub?.snapshot_max_boards || 1) + addon.extraBoards;
           const newStorage = (currentSub?.snapshot_storage_mb || 100) + addon.extraStorageMb;
           
-          await supabase
+          const { error: updateError } = await supabase
             .from('user_subscriptions')
             .update({
               snapshot_max_boards: newBoards,
               snapshot_storage_mb: newStorage,
               updated_at: new Date().toISOString(),
             })
-            .eq('user_id', profile.id);
+            .eq('user_id', userId);
           
-          console.log('Add-on applied:', { newBoards, newStorage });
+          if (updateError) {
+            console.error('Add-on update failed:', updateError);
+          } else {
+            console.log('Add-on applied successfully:', { userId, newBoards, newStorage });
+          }
           break;
         }
 
         // Check if it's a plan
         const planMapping = PLAN_MAPPINGS[product_id];
         if (planMapping) {
-          console.log('Processing plan:', planMapping);
+          console.log('Processing plan for user:', userId, planMapping);
+          
           const periodEnd = planMapping.isLifetime 
             ? new Date(2099, 11, 31).toISOString()
             : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
           
-          await supabase
+          const { error: updateError } = await supabase
             .from('user_subscriptions')
             .update({
               plan_id: planMapping.planId,
@@ -136,9 +193,13 @@ serve(async (req) => {
               snapshot_max_blocks_per_board: 999999, // Unlimited
               updated_at: new Date().toISOString(),
             })
-            .eq('user_id', profile.id);
+            .eq('user_id', userId);
           
-          console.log('Subscription updated for user:', profile.id);
+          if (updateError) {
+            console.error('Subscription update failed:', updateError);
+          } else {
+            console.log('Subscription updated successfully for user:', userId);
+          }
         } else {
           console.log('Unknown product_id:', product_id);
         }
@@ -146,44 +207,56 @@ serve(async (req) => {
       }
 
       case 'subscription.updated': {
-        const { customer_email, status, current_period_end } = event.data;
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', customer_email)
-          .single();
+        const { customer_email, status, current_period_end, metadata } = event.data;
         
-        if (profile) {
-          await supabase
+        // Use metadata for identity safety
+        const userId = await getUserId(supabase, metadata, customer_email);
+        
+        if (userId) {
+          const { error } = await supabase
             .from('user_subscriptions')
             .update({
               status: status === 'active' ? 'active' : 'past_due',
               current_period_end,
               updated_at: new Date().toISOString(),
             })
-            .eq('user_id', profile.id);
+            .eq('user_id', userId);
+          
+          if (error) {
+            console.error('Subscription update failed:', error);
+          } else {
+            console.log('Subscription status updated for user:', userId);
+          }
+        } else {
+          console.error('User not found for subscription.updated');
         }
         break;
       }
 
       case 'subscription.cancelled':
       case 'subscription.canceled': {
-        const { customer_email } = event.data;
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', customer_email)
-          .single();
+        const { customer_email, metadata } = event.data;
         
-        if (profile) {
-          await supabase
+        // Use metadata for identity safety
+        const userId = await getUserId(supabase, metadata, customer_email);
+        
+        if (userId) {
+          const { error } = await supabase
             .from('user_subscriptions')
             .update({
               status: 'canceled',
               cancel_at_period_end: true,
               updated_at: new Date().toISOString(),
             })
-            .eq('user_id', profile.id);
+            .eq('user_id', userId);
+          
+          if (error) {
+            console.error('Subscription cancellation failed:', error);
+          } else {
+            console.log('Subscription cancelled for user:', userId);
+          }
+        } else {
+          console.error('User not found for subscription.cancelled');
         }
         break;
       }
