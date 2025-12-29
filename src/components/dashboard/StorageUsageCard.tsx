@@ -1,4 +1,4 @@
-import { HardDrive, Info } from "lucide-react";
+import { HardDrive, Info, Infinity } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import {
   Tooltip,
@@ -6,10 +6,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useBilling } from "@/hooks/useBilling";
 
 interface StorageUsageCardProps {
   usedMb: number;
-  limitMb: number;
+  limitMb?: number;
 }
 
 // Helper to format storage
@@ -18,13 +19,20 @@ const formatStorage = (mb: number): string => {
     const gb = mb / 1024;
     return `${gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1)} GB`;
   }
-  return `${mb} MB`;
+  return `${mb.toFixed(1)} MB`;
 };
 
-export function StorageUsageCard({ usedMb, limitMb }: StorageUsageCardProps) {
-  const percentage = Math.min((usedMb / limitMb) * 100, 100);
-  const isNearLimit = percentage >= 80;
-  const isAtLimit = percentage >= 95;
+export function StorageUsageCard({ usedMb, limitMb: propLimitMb }: StorageUsageCardProps) {
+  const { data: billing } = useBilling();
+  
+  // Use billing data if available (storage_gb converted to MB)
+  const storageGb = billing?.storage_gb ?? 1;
+  const limitMb = storageGb === -1 ? -1 : (storageGb * 1024) || propLimitMb || 1024;
+  
+  const isUnlimited = limitMb === -1;
+  const percentage = isUnlimited ? 0 : Math.min((usedMb / limitMb) * 100, 100);
+  const isNearLimit = !isUnlimited && percentage >= 80;
+  const isAtLimit = !isUnlimited && percentage >= 95;
 
   return (
     <TooltipProvider>
@@ -50,14 +58,25 @@ export function StorageUsageCard({ usedMb, limitMb }: StorageUsageCardProps) {
           </Tooltip>
         </div>
 
-        <Progress 
-          value={percentage} 
-          className={`h-2 mb-3 ${isAtLimit ? '[&>div]:bg-destructive' : isNearLimit ? '[&>div]:bg-warning' : ''}`}
-        />
+        {!isUnlimited && (
+          <Progress 
+            value={percentage} 
+            className={`h-2 mb-3 ${isAtLimit ? '[&>div]:bg-destructive' : isNearLimit ? '[&>div]:bg-warning' : ''}`}
+          />
+        )}
 
         <div className="flex justify-between text-xs">
           <span className="text-muted-foreground">{formatStorage(usedMb)} used</span>
-          <span className="font-semibold tabular-nums">{formatStorage(limitMb)} total</span>
+          <span className="font-semibold tabular-nums">
+            {isUnlimited ? (
+              <span className="flex items-center gap-1">
+                <Infinity className="h-3 w-3" />
+                Unlimited
+              </span>
+            ) : (
+              `${formatStorage(limitMb)} total`
+            )}
+          </span>
         </div>
 
         {isNearLimit && !isAtLimit && (

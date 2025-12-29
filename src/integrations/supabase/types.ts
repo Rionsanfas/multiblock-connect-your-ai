@@ -639,30 +639,42 @@ export type Database = {
       user_billing: {
         Row: {
           active_plan: string | null
+          blocks: number | null
+          boards: number | null
           created_at: string | null
           current_period_end: string | null
           is_lifetime: boolean | null
           polar_customer_id: string | null
+          seats: number | null
+          storage_gb: number | null
           subscription_status: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           active_plan?: string | null
+          blocks?: number | null
+          boards?: number | null
           created_at?: string | null
           current_period_end?: string | null
           is_lifetime?: boolean | null
           polar_customer_id?: string | null
+          seats?: number | null
+          storage_gb?: number | null
           subscription_status?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           active_plan?: string | null
+          blocks?: number | null
+          boards?: number | null
           created_at?: string | null
           current_period_end?: string | null
           is_lifetime?: boolean | null
           polar_customer_id?: string | null
+          seats?: number | null
+          storage_gb?: number | null
           subscription_status?: string | null
           updated_at?: string | null
           user_id?: string

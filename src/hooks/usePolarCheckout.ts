@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 
 interface CheckoutResult {
   checkout_url: string;
-  checkout_id: string;
-  client_secret?: string;
+  plan_key: string;
+  is_addon: boolean;
 }
 
 interface UsePolarCheckoutOptions {
@@ -151,7 +151,7 @@ export function usePolarCheckout(options: UsePolarCheckoutOptions = {}) {
         throw new Error('No checkout URL returned');
       }
 
-      console.log('[usePolarCheckout] Checkout created:', data.checkout_id);
+      console.log('[usePolarCheckout] Checkout created for plan:', data.plan_key);
 
       // Ensure Polar script is loaded
       await loadPolarScript();
