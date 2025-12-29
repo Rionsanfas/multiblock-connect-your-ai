@@ -4,17 +4,19 @@
  * Handles all plan button states:
  * - Not logged in → "Get Started" → /auth
  * - Current plan → "Current Plan" (disabled)
- * - Can upgrade → "Upgrade" → Polar checkout URL (with metadata)
+ * - Can upgrade → "Upgrade" → Create Polar checkout session
  * - Can downgrade → "Downgrade" (disabled or contact)
  * - Enterprise → "Contact Sales" → mailto
  */
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
-import { PlanConfig, getPlanCheckoutUrl, comparePlanTiers, PlanTier } from '@/config/plans';
+import { PlanConfig, comparePlanTiers, PlanTier } from '@/config/plans';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PricingButtonProps {
   plan: PlanConfig;
@@ -23,35 +25,70 @@ interface PricingButtonProps {
 }
 
 /**
- * Build Polar checkout URL with metadata for identity safety
- * Attaches user_id and user_email as query params for webhook processing
+ * Create a Polar checkout session via edge function
  */
-function buildCheckoutUrl(baseUrl: string, userId?: string, userEmail?: string): string {
-  const url = new URL(baseUrl);
-  
-  // Add success redirect URL
-  url.searchParams.set('success_url', `${window.location.origin}/dashboard?checkout=success`);
-  
-  // Add metadata for identity safety (CRITICAL)
-  if (userId) {
-    url.searchParams.set('metadata[user_id]', userId);
+async function createCheckoutSession(planKey: string, isAddon: boolean = false): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('create-polar-checkout', {
+      body: { plan_key: planKey, is_addon: isAddon },
+    });
+
+    if (error) {
+      console.error('Checkout error:', error);
+      throw new Error(error.message || 'Failed to create checkout');
+    }
+
+    return data?.checkout_url || null;
+  } catch (err) {
+    console.error('Checkout session creation failed:', err);
+    return null;
   }
-  if (userEmail) {
-    url.searchParams.set('metadata[user_email]', userEmail);
-    // Prefill email for UX (user can still edit)
-    url.searchParams.set('customer_email', userEmail);
-  }
-  
-  return url.toString();
 }
 
 export function PricingButton({ plan, className = '', variant = 'secondary' }: PricingButtonProps) {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { plan: currentTierRaw, isLoading } = usePlanLimits();
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Map the current tier string to our PlanTier type
   const currentTier: PlanTier = (currentTierRaw as PlanTier) || 'free';
+  
+  // Handle checkout flow
+  const handleCheckout = async () => {
+    if (!user) {
+      toast.error('Please sign in first');
+      navigate('/auth');
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      // Map plan tier to plan_key for the checkout endpoint
+      const planKey = getPlanKey(plan);
+      
+      if (!planKey) {
+        toast.info('Coming soon', {
+          description: 'This plan will be available for purchase soon.',
+        });
+        return;
+      }
+
+      const checkoutUrl = await createCheckoutSession(planKey, false);
+      
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        toast.error('Failed to create checkout session');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Failed to start checkout');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
   
   // Determine button state
   const getButtonState = () => {
@@ -89,22 +126,10 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     
     // Upgrade
     if (comparison < 0) {
-      const baseCheckoutUrl = getPlanCheckoutUrl(plan);
-      
       return {
         text: 'Upgrade',
-        disabled: !baseCheckoutUrl,
-        action: () => {
-          if (baseCheckoutUrl) {
-            // Build checkout URL with metadata for identity safety
-            const checkoutUrl = buildCheckoutUrl(baseCheckoutUrl, user?.id, user?.email);
-            window.location.href = checkoutUrl;
-          } else {
-            toast.info('Coming soon', {
-              description: 'This plan will be available for purchase soon. Stay tuned!',
-            });
-          }
-        },
+        disabled: false,
+        action: handleCheckout,
       };
     }
     
@@ -126,7 +151,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   const getButtonClass = () => {
     const base = 'w-full rounded-full font-medium transition-all duration-300 py-3 px-6 text-center';
     
-    if (disabled) {
+    if (disabled || isProcessing) {
       return `${base} bg-muted text-muted-foreground cursor-not-allowed opacity-60`;
     }
     
@@ -137,7 +162,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     return `${base} border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5`;
   };
   
-  if (isLoading && isAuthenticated) {
+  if ((isLoading || isProcessing) && isAuthenticated) {
     return (
       <button className={`${getButtonClass()} ${className}`} disabled>
         <Loader2 className="h-4 w-4 animate-spin mx-auto" />
@@ -148,10 +173,26 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   return (
     <button
       onClick={action}
-      disabled={disabled}
+      disabled={disabled || isProcessing}
       className={`${getButtonClass()} ${className}`}
     >
-      {text}
+      {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : text}
     </button>
   );
+}
+
+/**
+ * Map PlanConfig to plan_key for checkout endpoint
+ */
+function getPlanKey(plan: PlanConfig): string | null {
+  // Map tier + variant to plan_key
+  const tierMapping: Record<string, string> = {
+    'starter': 'starter-individual-annual',
+    'pro': 'pro-individual-annual',
+    'team': 'starter-team-annual',
+    'enterprise': null as unknown as string,
+    'free': null as unknown as string,
+  };
+  
+  return tierMapping[plan.tier] || null;
 }
