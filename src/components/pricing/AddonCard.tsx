@@ -45,6 +45,8 @@ export function AddonCard({ addon }: AddonCardProps) {
         {isAuthenticated ? (
           <PolarCheckoutButton
             checkoutUrl={addon.checkout_url}
+            planKey={addon.id}
+            isAddon={true}
             className={buttonClass}
           >
             Add

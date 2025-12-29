@@ -116,6 +116,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   return (
     <PolarCheckoutButton
       checkoutUrl={plan.checkout_url}
+      planKey={plan.id}
       className={`${getButtonClass()} ${className}`}
     >
       {buttonText}
