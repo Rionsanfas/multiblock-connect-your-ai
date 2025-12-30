@@ -185,9 +185,11 @@ serve(async (req) => {
     const checkoutUrl = new URL(config.checkoutUrl);
 
     // ✅ Mandatory linkage: Pass user_id in ALL possible locations Polar might use
-    // customer_external_id: Polar's preferred field - gets stored on customer object
+    // customer_external_id: Polar field (shows up as customer_external_id on checkout objects)
     checkoutUrl.searchParams.set('customer_external_id', user.id);
-    // external_reference_id: Legacy field, still check in webhook
+    // external_customer_id: Polar field (shows up as external_customer_id on checkout objects)
+    checkoutUrl.searchParams.set('external_customer_id', user.id);
+    // external_reference_id: Legacy field (sometimes null in payload, but keep it)
     checkoutUrl.searchParams.set('external_reference_id', user.id);
 
     // Keep metadata too (useful for plan_key / addon detection + fallback user_id)

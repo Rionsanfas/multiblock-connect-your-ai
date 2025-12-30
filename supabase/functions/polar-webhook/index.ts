@@ -43,37 +43,47 @@ const ADDON_ENTITLEMENTS: Record<string, { extra_boards: number; extra_storage_g
  * NON-NEGOTIABLE: no email matching.
  */
 function extractExternalReferenceUserId(data: any): string | null {
-  // Priority 1: external_reference_id (direct field)
+  // Priority 1: external_reference_id (what we WANT Polar to send)
   if (typeof data?.external_reference_id === "string" && data.external_reference_id.length > 0) {
     console.log("[polar-webhook] Found external_reference_id:", data.external_reference_id);
     return data.external_reference_id;
   }
 
-  // Priority 2: customer.external_id (Polar's standard location for linked customers)
+  // Polar is currently sending these instead (confirmed by logs: data_keys includes them)
+  // Priority 2: external_customer_id
+  if (typeof data?.external_customer_id === "string" && data.external_customer_id.length > 0) {
+    console.log("[polar-webhook] Found external_customer_id:", data.external_customer_id);
+    return data.external_customer_id;
+  }
+
+  // Priority 3: customer_external_id
+  if (typeof data?.customer_external_id === "string" && data.customer_external_id.length > 0) {
+    console.log("[polar-webhook] Found customer_external_id:", data.customer_external_id);
+    return data.customer_external_id;
+  }
+
+  // Other possible locations (depends on Polar event)
   if (typeof data?.customer?.external_id === "string" && data.customer.external_id.length > 0) {
     console.log("[polar-webhook] Found customer.external_id:", data.customer.external_id);
     return data.customer.external_id;
   }
 
-  // Priority 3: checkout.customer.external_id (nested checkout object)
   if (typeof data?.checkout?.customer?.external_id === "string" && data.checkout.customer.external_id.length > 0) {
     console.log("[polar-webhook] Found checkout.customer.external_id:", data.checkout.customer.external_id);
     return data.checkout.customer.external_id;
   }
 
-  // Priority 4: subscription.customer.external_id
   if (typeof data?.subscription?.customer?.external_id === "string" && data.subscription.customer.external_id.length > 0) {
     console.log("[polar-webhook] Found subscription.customer.external_id:", data.subscription.customer.external_id);
     return data.subscription.customer.external_id;
   }
 
-  // Priority 5: metadata.user_id (fallback from checkout metadata)
+  // Fallbacks from our checkout metadata (still not email-based)
   if (typeof data?.metadata?.user_id === "string" && data.metadata.user_id.length > 0) {
     console.log("[polar-webhook] Found metadata.user_id:", data.metadata.user_id);
     return data.metadata.user_id;
   }
 
-  // Priority 6: checkout.metadata.user_id
   if (typeof data?.checkout?.metadata?.user_id === "string" && data.checkout.metadata.user_id.length > 0) {
     console.log("[polar-webhook] Found checkout.metadata.user_id:", data.checkout.metadata.user_id);
     return data.checkout.metadata.user_id;
@@ -81,7 +91,9 @@ function extractExternalReferenceUserId(data: any): string | null {
 
   console.error("[polar-webhook] Missing user_id — cannot map user. Searched:", {
     external_reference_id: data?.external_reference_id ?? null,
-    customer_external_id: data?.customer?.external_id ?? null,
+    external_customer_id: data?.external_customer_id ?? null,
+    customer_external_id: data?.customer_external_id ?? null,
+    customer_external_id_nested: data?.customer?.external_id ?? null,
     checkout_customer_external_id: data?.checkout?.customer?.external_id ?? null,
     subscription_customer_external_id: data?.subscription?.customer?.external_id ?? null,
     metadata_user_id: data?.metadata?.user_id ?? null,
@@ -401,6 +413,8 @@ serve(async (req) => {
     type: event?.type ?? null,
     event_id: event?.data?.id ?? null,
     external_reference_id: event?.data?.external_reference_id ?? null,
+    external_customer_id: event?.data?.external_customer_id ?? null,
+    customer_external_id: event?.data?.customer_external_id ?? null,
     customer_id: event?.data?.customer?.id ?? null,
     customer_id_fallback_field: event?.data?.customer_id ?? null,
   });
@@ -410,6 +424,8 @@ serve(async (req) => {
       event?.data?.subscription?.current_period_end ?? event?.data?.current_period_end ?? null,
     product_id: event?.data?.product?.id ?? event?.data?.product_id ?? null,
     price_id: event?.data?.price?.id ?? event?.data?.price_id ?? null,
+    plan_key: extractPlanKey(event?.data),
+    metadata_user_id: event?.data?.metadata?.user_id ?? null,
   });
   console.log('========================================');
 
