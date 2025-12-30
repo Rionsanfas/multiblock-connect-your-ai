@@ -183,16 +183,19 @@ serve(async (req) => {
     // Build checkout URL with metadata as query parameters
     // Polar preserves these in the checkout and passes them to webhooks
     const checkoutUrl = new URL(config.checkoutUrl);
-    
-    // Add metadata as query params - Polar supports metadata[key]=value format
+
+    // ✅ Mandatory linkage: external_reference_id must be the Supabase user id
+    checkoutUrl.searchParams.set('external_reference_id', user.id);
+
+    // Keep metadata too (useful for plan_key / addon detection)
     checkoutUrl.searchParams.set('metadata[user_id]', user.id);
     checkoutUrl.searchParams.set('metadata[user_email]', user.email || '');
     checkoutUrl.searchParams.set('metadata[plan_key]', plan_key);
     checkoutUrl.searchParams.set('metadata[is_addon]', is_addon ? 'true' : 'false');
-    
+
     // Pre-fill customer email
     checkoutUrl.searchParams.set('customer_email', user.email || '');
-    
+
     // Enable embed mode for modal display
     checkoutUrl.searchParams.set('embed', 'true');
 
