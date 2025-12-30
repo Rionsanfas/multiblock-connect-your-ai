@@ -5,14 +5,30 @@ import { useEffect, useCallback } from "react";
 
 export interface BillingInfo {
   polar_customer_id: string | null;
+  polar_subscription_id: string | null;
+  product_id: string | null;
   active_plan: string;
+  plan_category: 'individual' | 'team';
+  billing_type: 'annual' | 'lifetime';
   subscription_status: string;
   current_period_end: string | null;
+  access_expires_at: string | null;
   is_lifetime: boolean;
   boards: number;
   blocks: number;
   storage_gb: number;
   seats: number;
+  applied_addons: AddonEntry[];
+  // Computed totals (base + addons)
+  total_boards: number;
+  total_storage_gb: number;
+}
+
+interface AddonEntry {
+  addon_id: string;
+  extra_boards: number;
+  extra_storage_gb: number;
+  purchased_at: string;
 }
 
 export function useBilling() {
@@ -28,7 +44,7 @@ export function useBilling() {
         .from('user_billing')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         // PGRST116 = no rows returned, which is fine for new users
@@ -39,23 +55,50 @@ export function useBilling() {
         throw error;
       }
 
+      if (!data) return null;
+
+      // Parse applied addons safely
+      let appliedAddons: AddonEntry[] = [];
+      if (Array.isArray(data.applied_addons)) {
+        appliedAddons = (data.applied_addons as unknown as AddonEntry[]).filter(
+          (a): a is AddonEntry => 
+            typeof a === 'object' && a !== null && 'addon_id' in a
+        );
+      }
+
+      // Calculate addon bonuses
+      const addonBoards = appliedAddons.reduce((sum, a) => sum + (a.extra_boards || 0), 0);
+      const addonStorage = appliedAddons.reduce((sum, a) => sum + (a.extra_storage_gb || 0), 0);
+
+      const baseBoards = data.boards ?? 1;
+      const baseStorage = data.storage_gb ?? 1;
+
       return {
         polar_customer_id: data.polar_customer_id,
+        polar_subscription_id: data.polar_subscription_id,
+        product_id: data.product_id,
         active_plan: data.active_plan ?? 'free',
+        plan_category: (data.plan_category as 'individual' | 'team') ?? 'individual',
+        billing_type: (data.billing_type as 'annual' | 'lifetime') ?? 'annual',
         subscription_status: data.subscription_status ?? 'inactive',
         current_period_end: data.current_period_end,
+        access_expires_at: data.access_expires_at,
         is_lifetime: data.is_lifetime ?? false,
-        boards: data.boards ?? 3,
-        blocks: data.blocks ?? 10,
-        storage_gb: data.storage_gb ?? 1,
+        boards: baseBoards,
+        blocks: data.blocks ?? -1,
+        storage_gb: baseStorage,
         seats: data.seats ?? 1,
+        applied_addons: appliedAddons,
+        // Totals with addons stacked
+        total_boards: baseBoards === -1 ? -1 : baseBoards + addonBoards,
+        total_storage_gb: baseStorage === -1 ? -1 : baseStorage + addonStorage,
       };
     },
     enabled: !!user,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: 30000,
   });
 
-  // Set up real-time subscription for billing updates
+  // Real-time subscription for billing updates
   useEffect(() => {
     if (!user) return;
 
@@ -71,7 +114,6 @@ export function useBilling() {
         },
         (payload) => {
           console.log('Billing update received:', payload);
-          // Invalidate and refetch billing data
           queryClient.invalidateQueries({ queryKey: ['billing', user.id] });
         }
       )
@@ -88,8 +130,44 @@ export function useBilling() {
     }
   }, [user, queryClient]);
 
+  // Helper: check if subscription is active
+  const isActive = query.data?.subscription_status === 'active';
+  
+  // Helper: check if access has expired (for annual plans)
+  const isExpired = (() => {
+    if (!query.data) return false;
+    if (query.data.is_lifetime) return false;
+    if (!query.data.access_expires_at) return false;
+    return new Date(query.data.access_expires_at) < new Date();
+  })();
+
+  // Helper: get plan display name
+  const planDisplayName = (() => {
+    const plan = query.data?.active_plan ?? 'free';
+    const category = query.data?.plan_category ?? 'individual';
+    const isLifetime = query.data?.is_lifetime ?? false;
+    
+    const planNames: Record<string, string> = {
+      'free': 'Free',
+      'starter-individual-annual': 'Starter (Individual)',
+      'pro-individual-annual': 'Pro (Individual)',
+      'starter-team-annual': 'Starter (Team)',
+      'pro-team-annual': 'Pro (Team)',
+      'ltd-starter-individual': 'LTD Starter',
+      'ltd-pro-individual': 'LTD Pro',
+      'ltd-starter-team': 'LTD Starter (Team)',
+      'ltd-pro-team': 'LTD Pro (Team)',
+    };
+    
+    return planNames[plan] || plan;
+  })();
+
   return {
     ...query,
+    billing: query.data,
+    isActive,
+    isExpired,
+    planDisplayName,
     refetchBilling,
   };
 }
@@ -121,7 +199,6 @@ export function useCustomerPortal() {
       throw new Error('No portal URL returned');
     }
 
-    // Redirect to Polar customer portal
     window.location.href = data.customerPortalUrl;
   };
 
