@@ -443,7 +443,10 @@ export type Database = {
       }
       user_billing: {
         Row: {
+          access_expires_at: string | null
           active_plan: string | null
+          applied_addons: Json | null
+          billing_type: string | null
           blocks: number | null
           boards: number | null
           created_at: string | null
@@ -451,6 +454,7 @@ export type Database = {
           is_lifetime: boolean | null
           last_event_id: string | null
           last_event_type: string | null
+          plan_category: string | null
           polar_customer_id: string | null
           polar_subscription_id: string | null
           product_id: string | null
@@ -462,7 +466,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          access_expires_at?: string | null
           active_plan?: string | null
+          applied_addons?: Json | null
+          billing_type?: string | null
           blocks?: number | null
           boards?: number | null
           created_at?: string | null
@@ -470,6 +477,7 @@ export type Database = {
           is_lifetime?: boolean | null
           last_event_id?: string | null
           last_event_type?: string | null
+          plan_category?: string | null
           polar_customer_id?: string | null
           polar_subscription_id?: string | null
           product_id?: string | null
@@ -481,7 +489,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          access_expires_at?: string | null
           active_plan?: string | null
+          applied_addons?: Json | null
+          billing_type?: string | null
           blocks?: number | null
           boards?: number | null
           created_at?: string | null
@@ -489,6 +500,7 @@ export type Database = {
           is_lifetime?: boolean | null
           last_event_id?: string | null
           last_event_type?: string | null
+          plan_category?: string | null
           polar_customer_id?: string | null
           polar_subscription_id?: string | null
           product_id?: string | null

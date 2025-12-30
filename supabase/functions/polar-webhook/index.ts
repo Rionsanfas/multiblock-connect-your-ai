@@ -7,31 +7,223 @@ const corsHeaders = {
 };
 
 /**
- * Plan mapping: Polar product_id -> plan_key + limits
- * You need to update these product_ids from your Polar dashboard!
+ * CANONICAL PLAN MAPPING
+ * Maps Polar checkout URLs/product names to our internal plan IDs
+ * 
+ * Plan ID format:
+ * - 00000000-0000-0000-0000-000000000010 = Starter (Individual) Annual
+ * - 00000000-0000-0000-0000-000000000011 = Pro (Individual) Annual
+ * - 00000000-0000-0000-0000-000000000020 = Starter (Team) Annual
+ * - 00000000-0000-0000-0000-000000000021 = Pro (Team) Annual
+ * - 00000000-0000-0000-0000-000000000030 = LTD Starter (Individual)
+ * - 00000000-0000-0000-0000-000000000031 = LTD Pro (Individual)
+ * - 00000000-0000-0000-0000-000000000040 = LTD Starter (Team)
+ * - 00000000-0000-0000-0000-000000000041 = LTD Pro (Team)
+ * 
+ * Add-ons (100-104) - stackable
  */
-const PRODUCT_MAP: Record<string, {
+
+interface PlanConfig {
+  plan_id: string;
   plan_key: string;
+  plan_category: 'individual' | 'team';
+  billing_type: 'annual' | 'lifetime';
   boards: number;
   blocks: number;
   storage_gb: number;
   seats: number;
   is_lifetime: boolean;
-}> = {
+  is_addon: boolean;
+}
+
+// Map by checkout URL path (the unique identifier in Polar checkout links)
+const CHECKOUT_TO_PLAN: Record<string, PlanConfig> = {
   // Individual Annual
-  '532c322f-5088-4e0a-bd5c-f08824f82a8a': { // Pro Individual (from logs)
+  'polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v': {
+    plan_id: '00000000-0000-0000-0000-000000000010',
+    plan_key: 'starter-individual-annual',
+    plan_category: 'individual',
+    billing_type: 'annual',
+    boards: 50,
+    blocks: -1,
+    storage_gb: 2,
+    seats: 1,
+    is_lifetime: false,
+    is_addon: false,
+  },
+  'polar_cl_0ANxHBAcEKSneKreosoVddmOPsNRvBMDaHKgv1QrrU9': {
+    plan_id: '00000000-0000-0000-0000-000000000011',
     plan_key: 'pro-individual-annual',
+    plan_category: 'individual',
+    billing_type: 'annual',
     boards: 100,
     blocks: -1,
     storage_gb: 4,
     seats: 1,
     is_lifetime: false,
+    is_addon: false,
   },
-  // Add more product mappings here as needed
+  // Team Annual
+  'polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy': {
+    plan_id: '00000000-0000-0000-0000-000000000020',
+    plan_key: 'starter-team-annual',
+    plan_category: 'team',
+    billing_type: 'annual',
+    boards: 50,
+    blocks: -1,
+    storage_gb: 5,
+    seats: 10,
+    is_lifetime: false,
+    is_addon: false,
+  },
+  'polar_cl_kEOB6DUJjs7JONbOH91zrlACAQDEub2L9px0f3s4BuS': {
+    plan_id: '00000000-0000-0000-0000-000000000021',
+    plan_key: 'pro-team-annual',
+    plan_category: 'team',
+    billing_type: 'annual',
+    boards: 100,
+    blocks: -1,
+    storage_gb: 6,
+    seats: 20,
+    is_lifetime: false,
+    is_addon: false,
+  },
+  // Lifetime Individual
+  'polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw': {
+    plan_id: '00000000-0000-0000-0000-000000000030',
+    plan_key: 'ltd-starter-individual',
+    plan_category: 'individual',
+    billing_type: 'lifetime',
+    boards: 50,
+    blocks: -1,
+    storage_gb: 6,
+    seats: 1,
+    is_lifetime: true,
+    is_addon: false,
+  },
+  'polar_cl_j6g5GaxCZ3MqM7FVpqt6vbsqk8zUUuLyUOIgR03k0oU': {
+    plan_id: '00000000-0000-0000-0000-000000000031',
+    plan_key: 'ltd-pro-individual',
+    plan_category: 'individual',
+    billing_type: 'lifetime',
+    boards: 150,
+    blocks: -1,
+    storage_gb: 7,
+    seats: 1,
+    is_lifetime: true,
+    is_addon: false,
+  },
+  // Lifetime Team
+  'polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc': {
+    plan_id: '00000000-0000-0000-0000-000000000040',
+    plan_key: 'ltd-starter-team',
+    plan_category: 'team',
+    billing_type: 'lifetime',
+    boards: 150,
+    blocks: -1,
+    storage_gb: 8,
+    seats: 10,
+    is_lifetime: true,
+    is_addon: false,
+  },
+  'polar_cl_pQBNRD7r0QBz4pp47hOhg21aTfj5MLn9ffRnL0dxbnR': {
+    plan_id: '00000000-0000-0000-0000-000000000041',
+    plan_key: 'ltd-pro-team',
+    plan_category: 'team',
+    billing_type: 'lifetime',
+    boards: 200,
+    blocks: -1,
+    storage_gb: 9,
+    seats: 15,
+    is_lifetime: true,
+    is_addon: false,
+  },
 };
 
+// Add-on mapping (stackable)
+interface AddonConfig {
+  addon_id: string;
+  extra_boards: number;
+  extra_storage_gb: number;
+}
+
+const CHECKOUT_TO_ADDON: Record<string, AddonConfig> = {
+  'polar_cl_OBo7BCQ6ZYvqCFhc59DMFZJqfSg2ORRsow1RI3e8hEM': { addon_id: '00000000-0000-0000-0000-000000000100', extra_boards: 10, extra_storage_gb: 1 },
+  'polar_cl_3jJPkH6afjDo1zVJUsauoPKlIclTotWyV9ssE006a3k': { addon_id: '00000000-0000-0000-0000-000000000101', extra_boards: 20, extra_storage_gb: 2 },
+  'polar_cl_1Oj5sYbfwJyVjmzPXnnjnlr9YS2TVCQd7OsyG1IzSMj': { addon_id: '00000000-0000-0000-0000-000000000102', extra_boards: 50, extra_storage_gb: 4 },
+  'polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT': { addon_id: '00000000-0000-0000-0000-000000000103', extra_boards: 60, extra_storage_gb: 5 },
+  'polar_cl_JCkbiUFVssy28q7auRRSmERW2XUwIhqt2JnrY2yCy9b': { addon_id: '00000000-0000-0000-0000-000000000104', extra_boards: 120, extra_storage_gb: 10 },
+};
+
+/**
+ * Extract checkout key from various Polar data structures
+ */
+function extractCheckoutKey(data: any): string | null {
+  // Try checkout URL
+  const checkoutUrl = data?.checkout_url || data?.metadata?.checkout_url || data?.product?.checkout_url;
+  if (checkoutUrl) {
+    const match = checkoutUrl.match(/polar_cl_[A-Za-z0-9]+/);
+    if (match) return match[0];
+  }
+  
+  // Try product name matching
+  const productName = data?.product?.name?.toLowerCase() || '';
+  if (productName.includes('starter') && productName.includes('individual') && !productName.includes('ltd')) {
+    return 'polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v';
+  }
+  if (productName.includes('pro') && productName.includes('individual') && !productName.includes('ltd')) {
+    return 'polar_cl_0ANxHBAcEKSneKreosoVddmOPsNRvBMDaHKgv1QrrU9';
+  }
+  
+  return null;
+}
+
+/**
+ * Verify Polar webhook signature using Web Crypto API
+ */
+async function verifySignature(payload: string, signature: string | null, webhookId: string | null, timestamp: string | null): Promise<boolean> {
+  const secret = Deno.env.get('POLAR_WEBHOOK_SECRET');
+  if (!secret) {
+    console.warn('[polar-webhook] No POLAR_WEBHOOK_SECRET configured, skipping signature verification');
+    return true;
+  }
+  
+  if (!signature || !webhookId || !timestamp) {
+    console.warn('[polar-webhook] Missing signature headers');
+    return false;
+  }
+  
+  try {
+    const signedContent = `${webhookId}.${timestamp}.${payload}`;
+    const encoder = new TextEncoder();
+    
+    // Decode base64 secret
+    const secretKey = secret.replace('whsec_', '');
+    const secretBytes = Uint8Array.from(atob(secretKey), c => c.charCodeAt(0));
+    
+    // Import key for HMAC
+    const key = await crypto.subtle.importKey(
+      'raw',
+      secretBytes,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    // Sign the content
+    const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(signedContent));
+    const expectedSig = btoa(String.fromCharCode(...new Uint8Array(signatureBuffer)));
+    
+    // Signature format: v1,<signature>
+    const signatures = signature.split(' ').map(s => s.split(',')[1]);
+    return signatures.some(s => s === expectedSig);
+  } catch (e) {
+    console.error('[polar-webhook] Signature verification error:', e);
+    return false;
+  }
+}
+
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -40,25 +232,34 @@ serve(async (req) => {
   console.log("[polar-webhook] INCOMING REQUEST");
   console.log("========================================");
 
-  // Get raw body
   let rawBody = "";
   let body: any = null;
   
   try {
     rawBody = await req.text();
-    console.log("[polar-webhook] RAW BODY:", rawBody);
+    console.log("[polar-webhook] RAW BODY:", rawBody.substring(0, 500));
     
     if (rawBody) {
       body = JSON.parse(rawBody);
     }
   } catch (e: unknown) {
-    console.log("[polar-webhook] BODY PARSE ERROR:", e instanceof Error ? e.message : String(e));
-    // Always return 200 to prevent Polar retries
+    console.error("[polar-webhook] BODY PARSE ERROR:", e instanceof Error ? e.message : String(e));
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   if (!body) {
-    console.log("[polar-webhook] No body, returning 200");
+    console.log("[polar-webhook] No body");
+    return new Response("ok", { status: 200, headers: corsHeaders });
+  }
+
+  // Verify signature (optional based on config)
+  const webhookId = req.headers.get('webhook-id');
+  const webhookTimestamp = req.headers.get('webhook-timestamp');
+  const webhookSignature = req.headers.get('webhook-signature');
+  
+  if (!await verifySignature(rawBody, webhookSignature, webhookId, webhookTimestamp)) {
+    console.error("[polar-webhook] Invalid signature");
+    // Still return 200 to prevent retries, but don't process
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
@@ -66,121 +267,187 @@ serve(async (req) => {
   const data = body.data;
 
   console.log("[polar-webhook] EVENT TYPE:", eventType);
-  console.log("[polar-webhook] DATA:", JSON.stringify(data, null, 2));
+  console.log("[polar-webhook] DATA KEYS:", Object.keys(data || {}));
 
-  // Only process order/subscription events
-  const processableEvents = [
-    'order.created',
-    'order.updated',
+  // Supported events per spec
+  const supportedEvents = [
+    'checkout.completed',
     'subscription.created',
-    'subscription.updated',
+    'subscription.updated', 
     'subscription.active',
     'subscription.canceled',
-    'subscription.revoked',
-    'checkout.created',
-    'checkout.updated',
+    'subscription.cancelled', // Handle both spellings
+    'order.created',
+    'order.paid',
   ];
 
-  if (!processableEvents.includes(eventType)) {
-    console.log("[polar-webhook] Skipping event type:", eventType);
+  if (!supportedEvents.some(e => eventType?.includes(e.split('.')[0]))) {
+    console.log("[polar-webhook] Skipping unsupported event:", eventType);
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
-  // Initialize Supabase with service role
+  // Initialize Supabase
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
 
-  // Extract customer email - try multiple locations
+  // Extract customer email
   const customerEmail = 
     data?.customer?.email || 
     data?.email || 
     data?.user?.email ||
     data?.metadata?.user_email ||
+    data?.checkout?.customer?.email ||
     null;
 
   console.log("[polar-webhook] Customer email:", customerEmail);
 
   if (!customerEmail) {
-    console.log("[polar-webhook] No customer email found, cannot link to user");
+    console.error("[polar-webhook] No customer email found");
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
-  // Find user by email in profiles table
+  // Find user by email
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id, email')
     .eq('email', customerEmail)
-    .single();
+    .maybeSingle();
 
   if (profileError || !profile) {
-    console.log("[polar-webhook] Could not find profile for email:", customerEmail, profileError);
+    console.error("[polar-webhook] Could not find profile for:", customerEmail, profileError);
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
   const userId = profile.id;
   console.log("[polar-webhook] Found user:", userId);
 
-  // Extract subscription/order data
-  const polarCustomerId = data?.customer_id || data?.customer?.id || null;
-  const polarSubscriptionId = data?.subscription_id || data?.id || null;
-  const productId = data?.product_id || data?.product?.id || null;
-  const productPriceId = data?.product_price_id || null;
-  const productName = data?.product?.name || 'Unknown';
-  const subscriptionStatus = data?.status || 'active';
-  const isPaid = data?.paid === true || data?.status === 'paid' || data?.status === 'active';
+  // Extract checkout key
+  const checkoutKey = extractCheckoutKey(data);
+  console.log("[polar-webhook] Checkout key:", checkoutKey);
+
+  // Check if this is an add-on purchase
+  const addonConfig = checkoutKey ? CHECKOUT_TO_ADDON[checkoutKey] : null;
+  if (addonConfig) {
+    console.log("[polar-webhook] Processing ADD-ON:", addonConfig);
+    
+    // Get current billing
+    const { data: currentBilling } = await supabase
+      .from('user_billing')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    // Stack the add-on on top of existing entitlements
+    const currentAddons = (currentBilling?.applied_addons || []) as any[];
+    const newAddon = {
+      addon_id: addonConfig.addon_id,
+      extra_boards: addonConfig.extra_boards,
+      extra_storage_gb: addonConfig.extra_storage_gb,
+      purchased_at: new Date().toISOString(),
+    };
+    currentAddons.push(newAddon);
+
+    // Calculate total addon bonuses
+    const totalExtraBoards = currentAddons.reduce((sum, a) => sum + (a.extra_boards || 0), 0);
+    const totalExtraStorage = currentAddons.reduce((sum, a) => sum + (a.extra_storage_gb || 0), 0);
+
+    const { error: addonError } = await supabase
+      .from('user_billing')
+      .upsert({
+        user_id: userId,
+        boards: (currentBilling?.boards || 1) + addonConfig.extra_boards,
+        storage_gb: (currentBilling?.storage_gb || 1) + addonConfig.extra_storage_gb,
+        applied_addons: currentAddons,
+        last_event_type: eventType,
+        last_event_id: data?.id || null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+    if (addonError) {
+      console.error("[polar-webhook] Add-on upsert error:", addonError);
+    } else {
+      console.log("[polar-webhook] Add-on applied successfully");
+    }
+
+    return new Response("ok", { status: 200, headers: corsHeaders });
+  }
+
+  // Get plan config
+  const planConfig = checkoutKey ? CHECKOUT_TO_PLAN[checkoutKey] : null;
   
-  // Get period end from subscription if available
-  let currentPeriodEnd = null;
-  if (data?.current_period_end) {
-    currentPeriodEnd = data.current_period_end;
-  } else if (data?.subscription?.current_period_end) {
-    currentPeriodEnd = data.subscription.current_period_end;
+  if (!planConfig) {
+    console.warn("[polar-webhook] Unknown checkout key:", checkoutKey);
+    // Try to extract from product name as fallback
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
-  // Determine plan limits from product mapping or defaults
-  const productConfig = productId ? PRODUCT_MAP[productId] : null;
-  const planKey = productConfig?.plan_key || data?.metadata?.plan_key || productName.toLowerCase().replace(/\s+/g, '-');
-  const boards = productConfig?.boards ?? 100;
-  const blocks = productConfig?.blocks ?? -1;
-  const storageGb = productConfig?.storage_gb ?? 4;
-  const seats = productConfig?.seats ?? data?.seats ?? 1;
-  const isLifetime = productConfig?.is_lifetime ?? false;
+  console.log("[polar-webhook] Plan config:", planConfig);
 
-  console.log("[polar-webhook] Plan config:", { planKey, boards, blocks, storageGb, seats, isLifetime });
+  // Handle cancellation events
+  if (eventType?.includes('cancel')) {
+    console.log("[polar-webhook] Processing cancellation");
+    
+    const { error: cancelError } = await supabase
+      .from('user_billing')
+      .update({
+        subscription_status: 'canceled',
+        last_event_type: eventType,
+        last_event_id: data?.id || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId);
 
-  // Determine subscription status for our system
-  let status = 'active';
-  if (eventType.includes('canceled') || eventType.includes('revoked')) {
-    status = 'canceled';
-  } else if (subscriptionStatus === 'past_due') {
-    status = 'past_due';
-  } else if (isPaid) {
-    status = 'active';
+    if (cancelError) {
+      console.error("[polar-webhook] Cancel update error:", cancelError);
+    } else {
+      console.log("[polar-webhook] Subscription cancelled for user:", userId);
+    }
+
+    return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
-  // Upsert to user_billing
+  // Calculate access_expires_at
+  let accessExpiresAt: string | null = null;
+  if (!planConfig.is_lifetime) {
+    // Annual plans expire in 1 year
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    accessExpiresAt = expiresAt.toISOString();
+    
+    // Or use Polar's period end if available
+    if (data?.current_period_end) {
+      accessExpiresAt = data.current_period_end;
+    } else if (data?.subscription?.current_period_end) {
+      accessExpiresAt = data.subscription.current_period_end;
+    }
+  }
+
+  // Upsert billing data
   const billingData = {
     user_id: userId,
-    polar_customer_id: polarCustomerId,
-    polar_subscription_id: polarSubscriptionId,
-    product_id: productId,
-    product_price_id: productPriceId,
-    active_plan: planKey,
-    subscription_status: status,
-    is_lifetime: isLifetime,
-    boards: boards,
-    blocks: blocks,
-    storage_gb: storageGb,
-    seats: seats,
-    current_period_end: currentPeriodEnd,
+    polar_customer_id: data?.customer_id || data?.customer?.id || null,
+    polar_subscription_id: data?.subscription_id || data?.id || null,
+    product_id: data?.product_id || data?.product?.id || null,
+    product_price_id: data?.product_price_id || null,
+    active_plan: planConfig.plan_key,
+    plan_category: planConfig.plan_category,
+    billing_type: planConfig.billing_type,
+    subscription_status: 'active',
+    is_lifetime: planConfig.is_lifetime,
+    boards: planConfig.boards,
+    blocks: planConfig.blocks,
+    storage_gb: planConfig.storage_gb,
+    seats: planConfig.seats,
+    access_expires_at: accessExpiresAt,
+    current_period_end: accessExpiresAt,
     last_event_type: eventType,
     last_event_id: data?.id || null,
     updated_at: new Date().toISOString(),
   };
 
-  console.log("[polar-webhook] Upserting billing data:", billingData);
+  console.log("[polar-webhook] Upserting billing:", JSON.stringify(billingData, null, 2));
 
   const { data: upsertResult, error: upsertError } = await supabase
     .from('user_billing')
@@ -189,13 +456,10 @@ serve(async (req) => {
 
   if (upsertError) {
     console.error("[polar-webhook] Upsert error:", upsertError);
-    // Still return 200 to prevent Polar retries
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
 
-  console.log("[polar-webhook] Upsert success:", upsertResult);
-  console.log("========================================");
-  console.log("[polar-webhook] DONE - User billing updated for:", userId);
+  console.log("[polar-webhook] SUCCESS - Billing updated:", upsertResult);
   console.log("========================================");
 
   return new Response("ok", { 

@@ -12,7 +12,7 @@ export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek'
 
 export type AppRole = 'user' | 'admin' | 'super_admin';
 
-export type SubscriptionTier = 'free' | 'pro' | 'team' | 'enterprise';
+export type SubscriptionTier = 'free' | 'starter' | 'pro' | 'team' | 'enterprise';
 
 export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing' | 'paused';
 
@@ -156,45 +156,38 @@ export interface UserSubscriptionUpdate {
 }
 
 // ============================================
-// TABLE TYPES: NEW BILLING SYSTEM (Polar)
+// TABLE TYPES: USER BILLING (Polar integration)
 // ============================================
 
-export interface Subscription {
-  id: string;
+export interface UserBilling {
   user_id: string;
-  plan_key: string;
-  provider: string;
-  status: 'active' | 'cancelled' | 'expired';
-  period: 'annual' | 'lifetime' | 'monthly';
-  is_lifetime: boolean;
-  polar_subscription_id: string | null;
   polar_customer_id: string | null;
-  started_at: string;
-  ends_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SubscriptionEntitlements {
-  user_id: string;
-  boards_limit: number;
+  polar_subscription_id: string | null;
+  product_id: string | null;
+  product_price_id: string | null;
+  active_plan: string;
+  plan_category: 'individual' | 'team';
+  billing_type: 'annual' | 'lifetime';
+  subscription_status: string;
+  is_lifetime: boolean;
+  boards: number;
+  blocks: number;
   storage_gb: number;
   seats: number;
-  blocks_unlimited: boolean;
-  source_plan: string;
+  access_expires_at: string | null;
+  current_period_end: string | null;
+  applied_addons: AddonEntry[];
+  last_event_type: string | null;
+  last_event_id: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface SubscriptionAddon {
-  id: string;
-  user_id: string;
-  addon_key: string;
+export interface AddonEntry {
+  addon_id: string;
   extra_boards: number;
   extra_storage_gb: number;
-  polar_order_id: string | null;
-  created_at: string;
-  updated_at: string;
+  purchased_at: string;
 }
 
 export interface UserEntitlements {
@@ -580,6 +573,7 @@ export const PROVIDER_INFO: Record<LLMProvider, { name: string; icon: string; co
 
 export const TIER_INFO: Record<SubscriptionTier, { name: string; color: string }> = {
   free: { name: 'Free', color: '#6b7280' },
+  starter: { name: 'Starter', color: '#10b981' },
   pro: { name: 'Pro', color: '#3b82f6' },
   team: { name: 'Team', color: '#8b5cf6' },
   enterprise: { name: 'Enterprise', color: '#f59e0b' },
