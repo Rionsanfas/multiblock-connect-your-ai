@@ -35,18 +35,57 @@ const ADDON_ENTITLEMENTS: Record<string, { extra_boards: number; extra_storage_g
 };
 
 /**
- * Extract Supabase user_id from Polar's external_reference_id.
- * NON-NEGOTIABLE: no fallbacks, no email matching.
+ * Extract Supabase user_id from Polar's webhook payload.
+ * Polar sends user_id in different locations depending on event type:
+ * - checkout.completed: external_reference_id OR checkout.customer.external_id
+ * - subscription.*: customer.external_id
+ * - order.*: customer.external_id
+ * NON-NEGOTIABLE: no email matching.
  */
 function extractExternalReferenceUserId(data: any): string | null {
-  const externalRef = data?.external_reference_id ?? null;
-
-  if (typeof externalRef === "string" && externalRef.length > 0) {
-    return externalRef;
+  // Priority 1: external_reference_id (direct field)
+  if (typeof data?.external_reference_id === "string" && data.external_reference_id.length > 0) {
+    console.log("[polar-webhook] Found external_reference_id:", data.external_reference_id);
+    return data.external_reference_id;
   }
 
-  console.error("[polar-webhook] Missing external_reference_id — cannot map user", {
-    external_reference_id: externalRef,
+  // Priority 2: customer.external_id (Polar's standard location for linked customers)
+  if (typeof data?.customer?.external_id === "string" && data.customer.external_id.length > 0) {
+    console.log("[polar-webhook] Found customer.external_id:", data.customer.external_id);
+    return data.customer.external_id;
+  }
+
+  // Priority 3: checkout.customer.external_id (nested checkout object)
+  if (typeof data?.checkout?.customer?.external_id === "string" && data.checkout.customer.external_id.length > 0) {
+    console.log("[polar-webhook] Found checkout.customer.external_id:", data.checkout.customer.external_id);
+    return data.checkout.customer.external_id;
+  }
+
+  // Priority 4: subscription.customer.external_id
+  if (typeof data?.subscription?.customer?.external_id === "string" && data.subscription.customer.external_id.length > 0) {
+    console.log("[polar-webhook] Found subscription.customer.external_id:", data.subscription.customer.external_id);
+    return data.subscription.customer.external_id;
+  }
+
+  // Priority 5: metadata.user_id (fallback from checkout metadata)
+  if (typeof data?.metadata?.user_id === "string" && data.metadata.user_id.length > 0) {
+    console.log("[polar-webhook] Found metadata.user_id:", data.metadata.user_id);
+    return data.metadata.user_id;
+  }
+
+  // Priority 6: checkout.metadata.user_id
+  if (typeof data?.checkout?.metadata?.user_id === "string" && data.checkout.metadata.user_id.length > 0) {
+    console.log("[polar-webhook] Found checkout.metadata.user_id:", data.checkout.metadata.user_id);
+    return data.checkout.metadata.user_id;
+  }
+
+  console.error("[polar-webhook] Missing user_id — cannot map user. Searched:", {
+    external_reference_id: data?.external_reference_id ?? null,
+    customer_external_id: data?.customer?.external_id ?? null,
+    checkout_customer_external_id: data?.checkout?.customer?.external_id ?? null,
+    subscription_customer_external_id: data?.subscription?.customer?.external_id ?? null,
+    metadata_user_id: data?.metadata?.user_id ?? null,
+    checkout_metadata_user_id: data?.checkout?.metadata?.user_id ?? null,
     data_keys: Object.keys(data || {}),
     customer_keys: Object.keys(data?.customer || {}),
   });
