@@ -297,88 +297,6 @@ export type Database = {
         }
         Relationships: []
       }
-      subscription_addons: {
-        Row: {
-          addon_key: string
-          created_at: string
-          extra_boards: number
-          extra_storage_gb: number
-          id: string
-          polar_order_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          addon_key: string
-          created_at?: string
-          extra_boards?: number
-          extra_storage_gb?: number
-          id?: string
-          polar_order_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          addon_key?: string
-          created_at?: string
-          extra_boards?: number
-          extra_storage_gb?: number
-          id?: string
-          polar_order_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_addons_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_entitlements: {
-        Row: {
-          blocks_unlimited: boolean
-          boards_limit: number
-          created_at: string
-          seats: number
-          source_plan: string
-          storage_gb: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          blocks_unlimited?: boolean
-          boards_limit?: number
-          created_at?: string
-          seats?: number
-          source_plan?: string
-          storage_gb?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          blocks_unlimited?: boolean
-          boards_limit?: number
-          created_at?: string
-          seats?: number
-          source_plan?: string
-          storage_gb?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_entitlements_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       subscription_plans: {
         Row: {
           billing_period: Database["public"]["Enums"]["billing_period"]
@@ -469,62 +387,6 @@ export type Database = {
         }
         Relationships: []
       }
-      subscriptions: {
-        Row: {
-          created_at: string
-          ends_at: string | null
-          id: string
-          is_lifetime: boolean
-          period: string
-          plan_key: string
-          polar_customer_id: string | null
-          polar_subscription_id: string | null
-          provider: string
-          started_at: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          ends_at?: string | null
-          id?: string
-          is_lifetime?: boolean
-          period?: string
-          plan_key: string
-          polar_customer_id?: string | null
-          polar_subscription_id?: string | null
-          provider?: string
-          started_at?: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          ends_at?: string | null
-          id?: string
-          is_lifetime?: boolean
-          period?: string
-          plan_key?: string
-          polar_customer_id?: string | null
-          polar_subscription_id?: string | null
-          provider?: string
-          started_at?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       uploads: {
         Row: {
           block_id: string | null
@@ -579,63 +441,6 @@ export type Database = {
           },
         ]
       }
-      user_addons: {
-        Row: {
-          addon_plan_id: string
-          created_at: string
-          expires_at: string | null
-          id: string
-          is_active: boolean
-          polar_order_id: string | null
-          quantity: number
-          snapshot_extra_boards: number | null
-          snapshot_storage_mb: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          addon_plan_id: string
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean
-          polar_order_id?: string | null
-          quantity?: number
-          snapshot_extra_boards?: number | null
-          snapshot_storage_mb?: number | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          addon_plan_id?: string
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean
-          polar_order_id?: string | null
-          quantity?: number
-          snapshot_extra_boards?: number | null
-          snapshot_storage_mb?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_addons_addon_plan_id_fkey"
-            columns: ["addon_plan_id"]
-            isOneToOne: false
-            referencedRelation: "subscription_plans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_addons_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_billing: {
         Row: {
           active_plan: string | null
@@ -644,7 +449,12 @@ export type Database = {
           created_at: string | null
           current_period_end: string | null
           is_lifetime: boolean | null
+          last_event_id: string | null
+          last_event_type: string | null
           polar_customer_id: string | null
+          polar_subscription_id: string | null
+          product_id: string | null
+          product_price_id: string | null
           seats: number | null
           storage_gb: number | null
           subscription_status: string | null
@@ -658,7 +468,12 @@ export type Database = {
           created_at?: string | null
           current_period_end?: string | null
           is_lifetime?: boolean | null
+          last_event_id?: string | null
+          last_event_type?: string | null
           polar_customer_id?: string | null
+          polar_subscription_id?: string | null
+          product_id?: string | null
+          product_price_id?: string | null
           seats?: number | null
           storage_gb?: number | null
           subscription_status?: string | null
@@ -672,7 +487,12 @@ export type Database = {
           created_at?: string | null
           current_period_end?: string | null
           is_lifetime?: boolean | null
+          last_event_id?: string | null
+          last_event_type?: string | null
           polar_customer_id?: string | null
+          polar_subscription_id?: string | null
+          product_id?: string | null
+          product_price_id?: string | null
           seats?: number | null
           storage_gb?: number | null
           subscription_status?: string | null
