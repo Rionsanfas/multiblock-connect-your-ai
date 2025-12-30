@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Webhook } from "https://esm.sh/standardwebhooks@1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,26 +36,18 @@ const ADDON_ENTITLEMENTS: Record<string, { extra_boards: number; extra_storage_g
 
 /**
  * Extract Supabase user_id from Polar's external_reference_id.
- * This is the ONLY allowed linkage (no email guessing).
+ * NON-NEGOTIABLE: no fallbacks, no email matching.
  */
 function extractExternalReferenceUserId(data: any): string | null {
-  const externalRef =
-    data?.external_reference_id ??
-    data?.checkout?.external_reference_id ??
-    data?.subscription?.external_reference_id ??
-    data?.order?.external_reference_id ??
-    data?.customer?.external_reference_id ??
-    null;
+  const externalRef = data?.external_reference_id ?? null;
 
-  if (typeof externalRef === 'string' && externalRef.length > 0) {
+  if (typeof externalRef === "string" && externalRef.length > 0) {
     return externalRef;
   }
 
-  console.error('[polar-webhook] Missing external_reference_id', {
+  console.error("[polar-webhook] Missing external_reference_id — cannot map user", {
+    external_reference_id: externalRef,
     data_keys: Object.keys(data || {}),
-    checkout_keys: Object.keys(data?.checkout || {}),
-    subscription_keys: Object.keys(data?.subscription || {}),
-    order_keys: Object.keys(data?.order || {}),
     customer_keys: Object.keys(data?.customer || {}),
   });
 
@@ -312,227 +305,236 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const body = await req.text();
-    const event = JSON.parse(body);
+  const startedAt = Date.now();
 
-    console.log('========================================');
-    console.log('[polar-webhook] received', {
-      type: event.type,
-      event_id: event.data?.id,
-      customer_id: event.data?.customer?.id || event.data?.customer_id || null,
-      external_reference_id: event.data?.external_reference_id || event.data?.checkout?.external_reference_id || null,
-    });
-    console.log('[polar-webhook] metadata', {
-      data_metadata: event.data?.metadata || {},
-      checkout_metadata: event.data?.checkout?.metadata || {},
-    });
-    console.log('========================================');
+  // 1) Read raw body (MANDATORY: needed for signature verification + logging)
+  const body = await req.text();
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    let success = true;
-
-    switch (event.type) {
-      // ==========================================
-      // CHECKOUT COMPLETED - Primary handler
-      // ==========================================
-      case 'checkout.completed': {
-        const userId = extractExternalReferenceUserId(event.data);
-        const planKey = extractPlanKey(event.data);
-        const isAddon = isAddonPurchase(event.data);
-
-        if (!userId) {
-          return new Response(
-            JSON.stringify({ error: 'Missing external_reference_id' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        if (!planKey) {
-          console.error('CRITICAL: No plan_key in checkout.completed');
-          return new Response(
-            JSON.stringify({ error: 'Missing plan_key in metadata' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        console.log('[polar-webhook] checkout_completed', { user_id: userId, plan_key: planKey, is_addon: isAddon });
-
-        if (isAddon) {
-          success = await handleAddonPurchase(supabase, userId, planKey, event.data?.id, event.data?.customer?.id || event.data?.customer_id || null);
-        } else {
-          const planEntitlements = PLAN_ENTITLEMENTS[planKey];
-          success = await updateUserBillingAtomic(
-            supabase,
-            userId,
-            event.data?.customer?.id || event.data?.customer_id || null,
-            planKey,
-            'active',
-            planEntitlements?.is_lifetime ?? false,
-            event.data?.subscription?.current_period_end || null,
-            event.data?.subscription?.id || event.data?.subscription_id || null
-          );
-        }
-        break;
-      }
-
-      // ==========================================
-      // SUBSCRIPTION EVENTS
-      // ==========================================
-      case 'subscription.created':
-      case 'subscription.active':
-      case 'subscription.updated': {
-        const userId = extractExternalReferenceUserId(event.data);
-        const planKey = extractPlanKey(event.data);
-
-        if (!userId) {
-          return new Response(
-            JSON.stringify({ error: 'Missing external_reference_id' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        if (planKey) {
-          const entitlements = PLAN_ENTITLEMENTS[planKey];
-          const status = event.data?.status === 'active' ? 'active' : 'canceled';
-          
-          success = await updateUserBillingAtomic(
-            supabase,
-            userId,
-            event.data?.customer?.id || event.data?.customer_id || null,
-            planKey,
-            status,
-            entitlements?.is_lifetime ?? false,
-            event.data?.current_period_end || null,
-            event.data?.id || null
-          );
-        } else {
-          // Update status only if we have user but no plan
-          const now = new Date().toISOString();
-          await supabase
-            .from('user_billing')
-            .update({
-              subscription_status: event.data?.status === 'active' ? 'active' : 'canceled',
-              current_period_end: event.data?.current_period_end || null,
-              updated_at: now,
-            })
-            .eq('user_id', userId);
-        }
-        break;
-      }
-
-      // ==========================================
-      // CANCELLATION
-      // ==========================================
-      case 'subscription.cancelled':
-      case 'subscription.canceled': {
-        const userId = extractExternalReferenceUserId(event.data);
-
-        if (!userId) {
-          return new Response(
-            JSON.stringify({ error: 'Missing external_reference_id' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        const now = new Date().toISOString();
-
-        // Update user_billing
-        await supabase
-          .from('user_billing')
-          .update({
-            subscription_status: 'canceled',
-            updated_at: now,
-          })
-          .eq('user_id', userId);
-
-        // Update subscriptions
-        await supabase
-          .from('subscriptions')
-          .update({
-            status: 'cancelled',
-            updated_at: now,
-          })
-          .eq('user_id', userId);
-
-        // Update legacy
-        await supabase
-          .from('user_subscriptions')
-          .update({
-            status: 'canceled',
-            updated_at: now,
-          })
-          .eq('user_id', userId);
-
-        console.log('✓ Subscription cancelled for user:', userId);
-        break;
-      }
-
-      // ==========================================
-      // ORDER EVENTS (for one-time purchases like LTD)
-      // ==========================================
-      case 'order.paid': {
-        const userId = extractExternalReferenceUserId(event.data);
-        const planKey = extractPlanKey(event.data);
-        const isAddon = isAddonPurchase(event.data);
-
-        if (!userId) {
-          return new Response(
-            JSON.stringify({ error: 'Missing external_reference_id' }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        if (!planKey) {
-          console.log('Order event without plan_key metadata - likely handled by checkout.completed');
-          break;
-        }
-
-        console.log('Processing order.paid:', { userId, planKey, isAddon });
-
-        if (isAddon) {
-          success = await handleAddonPurchase(supabase, userId, planKey, event.data?.id, event.data?.customer?.id || null);
-        } else {
-          const orderEntitlements = PLAN_ENTITLEMENTS[planKey];
-          success = await updateUserBillingAtomic(
-            supabase,
-            userId,
-            event.data?.customer?.id || null,
-            planKey,
-            'active',
-            orderEntitlements?.is_lifetime ?? false,
-            null, // One-time purchases don't have period end
-            null
-          );
-        }
-        break;
-      }
-
-      default:
-        console.log('Unhandled event type:', event.type);
-    }
-
-    if (!success) {
-      return new Response(
-        JSON.stringify({ error: 'Database update failed' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
+  // 2) Verify webhook signature (MANDATORY)
+  const webhookSecret = Deno.env.get('POLAR_WEBHOOK_SECRET') ?? '';
+  if (!webhookSecret) {
+    console.error('[polar-webhook] POLAR_WEBHOOK_SECRET missing in env');
     return new Response(
-      JSON.stringify({ received: true, success: true }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-  } catch (error) {
-    console.error('Webhook processing error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Webhook processing failed', message: String(error) }),
+      JSON.stringify({ error: 'Server misconfigured' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
+
+  try {
+    const wh = new Webhook(btoa(webhookSecret));
+    wh.verify(body, {
+      'webhook-id': req.headers.get('webhook-id') ?? '',
+      'webhook-timestamp': req.headers.get('webhook-timestamp') ?? '',
+      'webhook-signature': req.headers.get('webhook-signature') ?? '',
+    });
+  } catch (err) {
+    console.error('[polar-webhook] Signature verification failed', {
+      error: String(err),
+      headers_present: {
+        webhook_id: Boolean(req.headers.get('webhook-id')),
+        webhook_timestamp: Boolean(req.headers.get('webhook-timestamp')),
+        webhook_signature: Boolean(req.headers.get('webhook-signature')),
+      },
+    });
+
+    return new Response(
+      JSON.stringify({ error: 'Invalid webhook signature' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // 3) Parse JSON safely
+  let event: any;
+  try {
+    event = JSON.parse(body);
+  } catch (err) {
+    console.error('[polar-webhook] Invalid JSON payload', { error: String(err) });
+    return new Response(
+      JSON.stringify({ error: 'Invalid JSON' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // 4) Log full raw payload (minus secrets) + key fields (MANDATORY)
+  console.log('========================================');
+  console.log('[polar-webhook] raw_payload', body);
+  console.log('[polar-webhook] received', {
+    type: event?.type ?? null,
+    event_id: event?.data?.id ?? null,
+    external_reference_id: event?.data?.external_reference_id ?? null,
+    customer_id: event?.data?.customer?.id ?? null,
+    customer_id_fallback_field: event?.data?.customer_id ?? null,
+  });
+  console.log('[polar-webhook] data_snapshot', {
+    subscription_status: event?.data?.subscription?.status ?? event?.data?.status ?? null,
+    subscription_current_period_end:
+      event?.data?.subscription?.current_period_end ?? event?.data?.current_period_end ?? null,
+    product_id: event?.data?.product?.id ?? event?.data?.product_id ?? null,
+    price_id: event?.data?.price?.id ?? event?.data?.price_id ?? null,
+  });
+  console.log('========================================');
+
+  const eventType = event?.type;
+  if (typeof eventType !== 'string' || eventType.length === 0) {
+    console.error('[polar-webhook] Missing event.type');
+    return new Response(
+      JSON.stringify({ error: 'Missing event.type' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // 5) Build service-role Supabase client (MANDATORY)
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  // 6) Validate + extract required fields (NO GUESSING)
+  const userId = extractExternalReferenceUserId(event?.data);
+  if (!userId) {
+    return new Response(
+      JSON.stringify({ error: 'Missing external_reference_id — cannot map user' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const polarCustomerId = event?.data?.customer?.id ?? null;
+  if (typeof polarCustomerId !== 'string' || polarCustomerId.length === 0) {
+    console.error('[polar-webhook] Missing event.data.customer.id');
+    return new Response(
+      JSON.stringify({ error: 'Missing customer.id' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Verify user exists in Supabase Auth (MANDATORY)
+  try {
+    const { data, error } = await supabase.auth.admin.getUserById(userId);
+    if (error || !data?.user) {
+      console.error('[polar-webhook] Unknown user_id (auth.users)', { user_id: userId, error });
+      return new Response(
+        JSON.stringify({ error: 'Unknown user_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  } catch (err) {
+    console.error('[polar-webhook] auth.admin.getUserById failed', { user_id: userId, error: String(err) });
+    return new Response(
+      JSON.stringify({ error: 'User validation failed' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Plan/product identifier (MANDATORY for non-cancel events)
+  const planIdentifier =
+    event?.data?.product?.id ??
+    event?.data?.product_id ??
+    event?.data?.price?.id ??
+    event?.data?.price_id ??
+    null;
+
+  // Status + period end (nullable)
+  const subscriptionStatus = event?.data?.subscription?.status ?? event?.data?.status ?? null;
+  const currentPeriodEnd =
+    event?.data?.subscription?.current_period_end ??
+    event?.data?.current_period_end ??
+    null;
+
+  // Lifetime: best-effort derivation directly from payload fields (no plan lookup)
+  const isLifetime = !event?.data?.recurring_interval && !event?.data?.recurring_interval_count;
+
+  // Enforce required fields per event type
+  const requiresPlan = ['checkout.completed', 'subscription.created', 'subscription.active', 'subscription.updated', 'order.paid'].includes(eventType);
+  if (requiresPlan && (typeof planIdentifier !== 'string' || planIdentifier.length === 0)) {
+    console.error('[polar-webhook] Missing plan identifier (product/price id)', { eventType });
+    return new Response(
+      JSON.stringify({ error: 'Missing plan identifier' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  if (typeof subscriptionStatus !== 'string' || subscriptionStatus.length === 0) {
+    console.error('[polar-webhook] Missing subscription status', { eventType });
+    return new Response(
+      JSON.stringify({ error: 'Missing subscription status' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // 7) UPSERT user_billing (MANDATORY) — 200 ONLY if this succeeds
+  // Preserve existing entitlement fields unless we can map via metadata plan_key.
+  const now = new Date().toISOString();
+
+  const { data: existingBilling, error: existingBillingError } = await supabase
+    .from('user_billing')
+    .select('boards, blocks, storage_gb, seats, active_plan')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existingBillingError) {
+    console.error('[polar-webhook] user_billing select failed', { user_id: userId, error: existingBillingError });
+    return new Response(
+      JSON.stringify({ error: 'DB read failed' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const planKey = extractPlanKey(event?.data) ?? planIdentifier ?? existingBilling?.active_plan ?? 'free';
+  const entitlements = PLAN_ENTITLEMENTS[planKey];
+
+  const boards = entitlements?.boards_limit ?? existingBilling?.boards ?? 3;
+  const blocks = entitlements?.blocks_unlimited ? -1 : (existingBilling?.blocks ?? 10);
+  const storageGb = entitlements?.storage_gb ?? existingBilling?.storage_gb ?? 1;
+  const seats = entitlements?.seats ?? existingBilling?.seats ?? 1;
+
+  console.log('[polar-webhook] extracted_values', {
+    event_type: eventType,
+    user_id: userId,
+    polar_customer_id: polarCustomerId,
+    active_plan: planKey,
+    subscription_status: subscriptionStatus,
+    current_period_end: currentPeriodEnd,
+    is_lifetime: isLifetime,
+  });
+
+  const { data: upserted, error: upsertError } = await supabase
+    .from('user_billing')
+    .upsert(
+      {
+        user_id: userId,
+        polar_customer_id: polarCustomerId,
+        active_plan: planKey,
+        subscription_status: subscriptionStatus,
+        current_period_end: currentPeriodEnd,
+        is_lifetime: isLifetime,
+        boards,
+        blocks,
+        storage_gb: storageGb,
+        seats,
+        updated_at: now,
+      },
+      { onConflict: 'user_id' }
+    )
+    .select('user_id, active_plan, subscription_status, polar_customer_id, current_period_end, is_lifetime, boards, blocks, storage_gb, seats, updated_at')
+    .maybeSingle();
+
+  if (upsertError) {
+    console.error('[polar-webhook] user_billing upsert failed', {
+      user_id: userId,
+      error: upsertError,
+      took_ms: Date.now() - startedAt,
+    });
+
+    return new Response(
+      JSON.stringify({ error: 'DB write failed' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  console.log('[polar-webhook] DB WRITE SUCCESS', { row: upserted, took_ms: Date.now() - startedAt });
+
+  return new Response(
+    JSON.stringify({ received: true, success: true }),
+    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
 });
