@@ -159,22 +159,84 @@ const CHECKOUT_TO_ADDON: Record<string, AddonConfig> = {
  * Extract checkout key from various Polar data structures
  */
 function extractCheckoutKey(data: any): string | null {
-  // Try checkout URL
+  console.log('[polar-webhook] extractCheckoutKey - Full data:', JSON.stringify(data, null, 2).substring(0, 2000));
+  
+  // Try checkout URL from various locations
   const checkoutUrl = data?.checkout_url || data?.metadata?.checkout_url || data?.product?.checkout_url;
   if (checkoutUrl) {
     const match = checkoutUrl.match(/polar_cl_[A-Za-z0-9]+/);
-    if (match) return match[0];
+    if (match) {
+      console.log('[polar-webhook] Found checkout key from URL:', match[0]);
+      return match[0];
+    }
   }
   
-  // Try product name matching
-  const productName = data?.product?.name?.toLowerCase() || '';
-  if (productName.includes('starter') && productName.includes('individual') && !productName.includes('ltd')) {
+  // Try product ID matching (Polar product IDs)
+  const productId = data?.product_id || data?.product?.id;
+  console.log('[polar-webhook] Product ID:', productId);
+  
+  // Try product name matching - comprehensive matching
+  const productName = (data?.product?.name || data?.product_name || '').toLowerCase();
+  console.log('[polar-webhook] Product name:', productName);
+  
+  // Individual Annual plans
+  if ((productName.includes('starter') || productName.includes('individual')) && 
+      !productName.includes('team') && 
+      !productName.includes('ltd') && 
+      !productName.includes('lifetime') &&
+      !productName.includes('pro')) {
+    console.log('[polar-webhook] Matched: Starter Individual Annual');
     return 'polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v';
   }
-  if (productName.includes('pro') && productName.includes('individual') && !productName.includes('ltd')) {
+  
+  if (productName.includes('pro') && 
+      !productName.includes('team') && 
+      !productName.includes('ltd') && 
+      !productName.includes('lifetime')) {
+    console.log('[polar-webhook] Matched: Pro Individual Annual');
     return 'polar_cl_0ANxHBAcEKSneKreosoVddmOPsNRvBMDaHKgv1QrrU9';
   }
   
+  // Team Annual plans
+  if (productName.includes('starter') && productName.includes('team') && 
+      !productName.includes('ltd') && !productName.includes('lifetime')) {
+    console.log('[polar-webhook] Matched: Starter Team Annual');
+    return 'polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy';
+  }
+  
+  if (productName.includes('pro') && productName.includes('team') && 
+      !productName.includes('ltd') && !productName.includes('lifetime')) {
+    console.log('[polar-webhook] Matched: Pro Team Annual');
+    return 'polar_cl_kEOB6DUJjs7JONbOH91zrlACAQDEub2L9px0f3s4BuS';
+  }
+  
+  // Lifetime Individual plans
+  if ((productName.includes('ltd') || productName.includes('lifetime')) && 
+      productName.includes('starter') && !productName.includes('team')) {
+    console.log('[polar-webhook] Matched: LTD Starter Individual');
+    return 'polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw';
+  }
+  
+  if ((productName.includes('ltd') || productName.includes('lifetime')) && 
+      productName.includes('pro') && !productName.includes('team')) {
+    console.log('[polar-webhook] Matched: LTD Pro Individual');
+    return 'polar_cl_j6g5GaxCZ3MqM7FVpqt6vbsqk8zUUuLyUOIgR03k0oU';
+  }
+  
+  // Lifetime Team plans
+  if ((productName.includes('ltd') || productName.includes('lifetime')) && 
+      productName.includes('starter') && productName.includes('team')) {
+    console.log('[polar-webhook] Matched: LTD Starter Team');
+    return 'polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc';
+  }
+  
+  if ((productName.includes('ltd') || productName.includes('lifetime')) && 
+      productName.includes('pro') && productName.includes('team')) {
+    console.log('[polar-webhook] Matched: LTD Pro Team');
+    return 'polar_cl_pQBNRD7r0QBz4pp47hOhg21aTfj5MLn9ffRnL0dxbnR';
+  }
+  
+  console.warn('[polar-webhook] Could not match product to any plan');
   return null;
 }
 
