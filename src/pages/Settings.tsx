@@ -9,21 +9,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCurrentUser, useUserStats } from "@/hooks/useCurrentUser";
 import { toast } from "sonner";
-import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera, CreditCard } from "lucide-react";
-import { Link } from "react-router-dom";
+import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera, CreditCard, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { pricingPlans, boardAddons } from "@/mocks/seed";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BillingSection } from "@/components/billing/BillingSection";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Settings() {
   const { user } = useCurrentUser();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
     email: user?.email || "",
   });
   const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Logged out successfully");
+    navigate("/");
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,6 +242,31 @@ export default function Settings() {
                     </div>
                     <Button variant="outline" asChild>
                       <Link to="/terms">View Terms</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Logout Section */}
+              <Card className="bg-card/80 backdrop-blur-xl border-border/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LogOut className="h-5 w-5" />
+                    Session
+                  </CardTitle>
+                  <CardDescription>Manage your current session</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Log Out</p>
+                      <p className="text-sm text-muted-foreground">
+                        Sign out of your account on this device
+                      </p>
+                    </div>
+                    <Button variant="outline" onClick={handleLogout}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Log Out
                     </Button>
                   </div>
                 </CardContent>
