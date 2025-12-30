@@ -34,40 +34,30 @@ const ADDON_ENTITLEMENTS: Record<string, { extra_boards: number; extra_storage_g
 };
 
 /**
- * Extract user_id from multiple possible locations in Polar webhook data
+ * Extract Supabase user_id from Polar's external_reference_id.
+ * This is the ONLY allowed linkage (no email guessing).
  */
-function extractUserId(data: any): string | null {
-  // 1. Direct metadata on event data
-  if (data?.metadata?.user_id) {
-    console.log('Found user_id in data.metadata:', data.metadata.user_id);
-    return data.metadata.user_id;
-  }
-  
-  // 2. Checkout metadata (for checkout.completed)
-  if (data?.checkout?.metadata?.user_id) {
-    console.log('Found user_id in checkout.metadata:', data.checkout.metadata.user_id);
-    return data.checkout.metadata.user_id;
-  }
-  
-  // 3. Subscription metadata
-  if (data?.subscription?.metadata?.user_id) {
-    console.log('Found user_id in subscription.metadata:', data.subscription.metadata.user_id);
-    return data.subscription.metadata.user_id;
-  }
-  
-  // 4. Order metadata
-  if (data?.order?.metadata?.user_id) {
-    console.log('Found user_id in order.metadata:', data.order.metadata.user_id);
-    return data.order.metadata.user_id;
+function extractExternalReferenceUserId(data: any): string | null {
+  const externalRef =
+    data?.external_reference_id ??
+    data?.checkout?.external_reference_id ??
+    data?.subscription?.external_reference_id ??
+    data?.order?.external_reference_id ??
+    data?.customer?.external_reference_id ??
+    null;
+
+  if (typeof externalRef === 'string' && externalRef.length > 0) {
+    return externalRef;
   }
 
-  // 5. Customer metadata
-  if (data?.customer?.metadata?.user_id) {
-    console.log('Found user_id in customer.metadata:', data.customer.metadata.user_id);
-    return data.customer.metadata.user_id;
-  }
+  console.error('[polar-webhook] Missing external_reference_id', {
+    data_keys: Object.keys(data || {}),
+    checkout_keys: Object.keys(data?.checkout || {}),
+    subscription_keys: Object.keys(data?.subscription || {}),
+    order_keys: Object.keys(data?.order || {}),
+    customer_keys: Object.keys(data?.customer || {}),
+  });
 
-  console.error('No user_id found in any metadata location. Data keys:', Object.keys(data || {}));
   return null;
 }
 
@@ -109,23 +99,39 @@ async function updateUserBillingAtomic(
   const now = new Date().toISOString();
   const normalizedStatus = status === 'cancelled' ? 'canceled' : status;
   const entitlements = PLAN_ENTITLEMENTS[planKey];
-  
-  console.log('ATOMIC UPDATE for user:', userId, {
-    polarCustomerId,
-    planKey,
+
+  console.log('[polar-webhook] billing_update_start', {
+    user_id: userId,
+    polar_customer_id: polarCustomerId,
+    plan_key: planKey,
     status: normalizedStatus,
-    isLifetime,
-    currentPeriodEnd,
-    entitlements,
+    is_lifetime: isLifetime,
+    current_period_end: currentPeriodEnd,
   });
 
+  // Never overwrite an existing polar_customer_id with null/empty
+  const { data: existingBilling, error: existingErr } = await supabase
+    .from('user_billing')
+    .select('polar_customer_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existingErr) {
+    console.error('[polar-webhook] billing_select_failed', { user_id: userId, error: existingErr });
+    return false;
+  }
+
+  const effectivePolarCustomerId =
+    (typeof polarCustomerId === 'string' && polarCustomerId.length > 0)
+      ? polarCustomerId
+      : (existingBilling?.polar_customer_id ?? null);
+
   // 1. Upsert user_billing (CRITICAL for customer portal + frontend display)
-  // Now includes boards, blocks, storage_gb, seats columns
-  const { error: billingError } = await supabase
+  const { data: billingRow, error: billingError } = await supabase
     .from('user_billing')
     .upsert({
       user_id: userId,
-      polar_customer_id: polarCustomerId,
+      polar_customer_id: effectivePolarCustomerId,
       active_plan: planKey,
       subscription_status: normalizedStatus,
       is_lifetime: isLifetime,
@@ -135,13 +141,16 @@ async function updateUserBillingAtomic(
       storage_gb: entitlements?.storage_gb ?? 1,
       seats: entitlements?.seats ?? 1,
       updated_at: now,
-    }, { onConflict: 'user_id' });
+    }, { onConflict: 'user_id' })
+    .select('user_id, active_plan, subscription_status, polar_customer_id, boards, storage_gb, seats')
+    .maybeSingle();
 
   if (billingError) {
-    console.error('Failed to upsert user_billing:', billingError);
+    console.error('[polar-webhook] billing_upsert_failed', { user_id: userId, error: billingError });
     return false;
   }
-  console.log('✓ user_billing updated with entitlements');
+
+  console.log('[polar-webhook] billing_upsert_ok', { row: billingRow });
 
   // 2. Upsert subscriptions table
   const { error: subError } = await supabase
@@ -154,17 +163,16 @@ async function updateUserBillingAtomic(
       period: isLifetime ? 'lifetime' : 'annual',
       is_lifetime: isLifetime,
       polar_subscription_id: polarSubscriptionId,
-      polar_customer_id: polarCustomerId,
+      polar_customer_id: effectivePolarCustomerId,
       started_at: now,
       ends_at: isLifetime ? null : currentPeriodEnd,
       updated_at: now,
     }, { onConflict: 'user_id' });
 
   if (subError) {
-    console.error('Failed to upsert subscriptions:', subError);
+    console.error('[polar-webhook] subscriptions_upsert_failed', { user_id: userId, error: subError });
     return false;
   }
-  console.log('✓ subscriptions updated');
 
   // 3. Upsert subscription_entitlements
   if (entitlements) {
@@ -181,16 +189,15 @@ async function updateUserBillingAtomic(
       }, { onConflict: 'user_id' });
 
     if (entError) {
-      console.error('Failed to upsert subscription_entitlements:', entError);
+      console.error('[polar-webhook] entitlements_upsert_failed', { user_id: userId, error: entError });
       return false;
     }
-    console.log('✓ subscription_entitlements updated');
   }
 
   // 4. Update legacy user_subscriptions for backward compatibility
   const storageMb = entitlements ? entitlements.storage_gb * 1024 : 100;
   const blocksLimit = entitlements?.blocks_unlimited ? 999999 : 10;
-  
+
   const { error: legacyError } = await supabase
     .from('user_subscriptions')
     .update({
@@ -204,11 +211,10 @@ async function updateUserBillingAtomic(
     .eq('user_id', userId);
 
   if (legacyError) {
-    console.warn('Legacy user_subscriptions update failed (non-critical):', legacyError);
-  } else {
-    console.log('✓ user_subscriptions (legacy) updated');
+    console.warn('[polar-webhook] legacy_user_subscriptions_update_failed', { user_id: userId, error: legacyError });
   }
 
+  console.log('[polar-webhook] billing_update_done', { user_id: userId });
   return true;
 }
 
@@ -309,12 +315,18 @@ serve(async (req) => {
   try {
     const body = await req.text();
     const event = JSON.parse(body);
-    
+
     console.log('========================================');
-    console.log('Polar webhook received:', event.type);
-    console.log('Event ID:', event.data?.id);
-    console.log('Full metadata:', JSON.stringify(event.data?.metadata || {}));
-    console.log('Checkout metadata:', JSON.stringify(event.data?.checkout?.metadata || {}));
+    console.log('[polar-webhook] received', {
+      type: event.type,
+      event_id: event.data?.id,
+      customer_id: event.data?.customer?.id || event.data?.customer_id || null,
+      external_reference_id: event.data?.external_reference_id || event.data?.checkout?.external_reference_id || null,
+    });
+    console.log('[polar-webhook] metadata', {
+      data_metadata: event.data?.metadata || {},
+      checkout_metadata: event.data?.checkout?.metadata || {},
+    });
     console.log('========================================');
 
     const supabase = createClient(
@@ -329,14 +341,13 @@ serve(async (req) => {
       // CHECKOUT COMPLETED - Primary handler
       // ==========================================
       case 'checkout.completed': {
-        const userId = extractUserId(event.data);
+        const userId = extractExternalReferenceUserId(event.data);
         const planKey = extractPlanKey(event.data);
         const isAddon = isAddonPurchase(event.data);
-        
+
         if (!userId) {
-          console.error('CRITICAL: No user_id in checkout.completed');
           return new Response(
-            JSON.stringify({ error: 'Missing user_id in metadata', received_metadata: event.data?.metadata }),
+            JSON.stringify({ error: 'Missing external_reference_id' }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -349,7 +360,7 @@ serve(async (req) => {
           );
         }
 
-        console.log('Processing checkout.completed:', { userId, planKey, isAddon });
+        console.log('[polar-webhook] checkout_completed', { user_id: userId, plan_key: planKey, is_addon: isAddon });
 
         if (isAddon) {
           success = await handleAddonPurchase(supabase, userId, planKey, event.data?.id, event.data?.customer?.id || event.data?.customer_id || null);
@@ -375,15 +386,13 @@ serve(async (req) => {
       case 'subscription.created':
       case 'subscription.active':
       case 'subscription.updated': {
-        const userId = extractUserId(event.data);
+        const userId = extractExternalReferenceUserId(event.data);
         const planKey = extractPlanKey(event.data);
-        
+
         if (!userId) {
-          console.warn('No user_id in subscription event - may be from external source');
-          // Don't fail - this might be a Polar-initiated event without our metadata
           return new Response(
-            JSON.stringify({ received: true, skipped: 'no_user_id' }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ error: 'Missing external_reference_id' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -421,13 +430,12 @@ serve(async (req) => {
       // ==========================================
       case 'subscription.cancelled':
       case 'subscription.canceled': {
-        const userId = extractUserId(event.data);
-        
+        const userId = extractExternalReferenceUserId(event.data);
+
         if (!userId) {
-          console.warn('No user_id in cancellation event');
           return new Response(
-            JSON.stringify({ received: true, skipped: 'no_user_id' }),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ error: 'Missing external_reference_id' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
@@ -468,12 +476,19 @@ serve(async (req) => {
       // ORDER EVENTS (for one-time purchases like LTD)
       // ==========================================
       case 'order.paid': {
-        const userId = extractUserId(event.data);
+        const userId = extractExternalReferenceUserId(event.data);
         const planKey = extractPlanKey(event.data);
         const isAddon = isAddonPurchase(event.data);
 
-        if (!userId || !planKey) {
-          console.log('Order event without full metadata - likely handled by checkout.completed');
+        if (!userId) {
+          return new Response(
+            JSON.stringify({ error: 'Missing external_reference_id' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (!planKey) {
+          console.log('Order event without plan_key metadata - likely handled by checkout.completed');
           break;
         }
 
