@@ -908,7 +908,6 @@ export type Database = {
         Returns: string
       }
       decrement_ltd_seats: { Args: never; Returns: number }
-      delete_team: { Args: { p_team_id: string }; Returns: boolean }
       delete_team_invitation: {
         Args: { p_invitation_id: string }
         Returns: boolean
