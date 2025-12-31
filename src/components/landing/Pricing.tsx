@@ -1,4 +1,4 @@
-import { Zap, Info, HardDrive, Infinity, Clock, AlertTriangle } from "lucide-react";
+import { Zap, Infinity, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,9 +11,7 @@ import {
   getTeamLifetimePlans
 } from "@/config/plans";
 import { PricingCard } from "@/components/pricing/PricingCard";
-
-const LTD_TOTAL = 250;
-const LTD_REMAINING = 173; // TODO: Fetch from database
+import { LtdScarcityBadge } from "@/components/pricing/LtdScarcityBadge";
 
 const Pricing = () => {
   const freePlan = getFreePlan();
@@ -21,8 +19,6 @@ const Pricing = () => {
   const teamAnnualPlans = getTeamAnnualPlans();
   const individualLifetimePlans = getIndividualLifetimePlans();
   const teamLifetimePlans = getTeamLifetimePlans();
-
-  const ltdSoldOut = LTD_REMAINING <= 0;
 
   return (
     <TooltipProvider>
@@ -109,21 +105,9 @@ const Pricing = () => {
 
               {/* Lifetime Deals */}
               <TabsContent value="lifetime" className="mt-8">
-                {/* LTD Highlight Header */}
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/40 mb-4 shadow-[0_0_30px_-5px_hsl(var(--accent)/0.4)]">
-                    <Infinity className="h-4 w-4 text-accent" />
-                    <span className="text-sm font-semibold text-accent">Limited Lifetime Deals</span>
-                  </div>
-                  <p className="text-muted-foreground mb-3">Pay once, use forever</p>
-                  
-                  {/* Scarcity Warning */}
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <AlertTriangle className="h-4 w-4 text-destructive" />
-                    <span className="text-sm font-medium text-destructive">
-                      {ltdSoldOut ? 'Sold Out' : `Only ${LTD_REMAINING} of ${LTD_TOTAL} remaining`}
-                    </span>
-                  </div>
+                {/* LTD Scarcity Badge */}
+                <div className="flex justify-center mb-8">
+                  <LtdScarcityBadge />
                 </div>
 
                 {/* Individual Lifetime */}

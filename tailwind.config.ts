@@ -124,10 +124,25 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "floating-block": {
+          "0%, 100%": { 
+            transform: "translate(-50%, -50%) translateY(0) translateX(0) rotate(0deg)",
+          },
+          "25%": { 
+            transform: "translate(-50%, -50%) translateY(-15px) translateX(10px) rotate(2deg)",
+          },
+          "50%": { 
+            transform: "translate(-50%, -50%) translateY(-5px) translateX(-8px) rotate(-1deg)",
+          },
+          "75%": { 
+            transform: "translate(-50%, -50%) translateY(-20px) translateX(5px) rotate(1deg)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "floating-block": "floating-block ease-in-out infinite",
       },
     },
   },
