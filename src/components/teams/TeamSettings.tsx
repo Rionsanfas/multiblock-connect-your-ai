@@ -192,7 +192,7 @@ export function TeamSettings() {
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
                 disabled={!isTeamOwner}
-                className="bg-secondary/30 border-border/30"
+                className="bg-secondary/40 border-border/40 focus:border-primary/50"
               />
               {isTeamOwner && teamName !== team?.name && (
                 <Button onClick={handleUpdateName} disabled={updateTeam.isPending} className="btn-3d-primary">
@@ -269,10 +269,10 @@ export function TeamSettings() {
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                className="flex-1 bg-secondary/30 border-border/30"
+                className="flex-1 bg-secondary/40 border-border/40 focus:border-primary/50"
               />
               <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamRole)}>
-                <SelectTrigger className="w-32 bg-secondary/30 border-border/30">
+                <SelectTrigger className="w-32 bg-secondary/40 border-border/40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30">
@@ -283,7 +283,7 @@ export function TeamSettings() {
               <Button 
                 onClick={handleCreateInvitation}
                 disabled={!inviteEmail.trim() || createInvitation.isPending}
-                className="key-icon-3d"
+                className="btn-3d-primary"
               >
                 {createInvitation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -417,10 +417,10 @@ export function TeamSettings() {
       </Card>
 
       {/* Danger Zone */}
-      <Card className="settings-card-3d border-destructive/30 bg-destructive/5">
+      <Card className="settings-card-3d border-red-500/20 bg-red-500/5">
         <CardHeader>
-          <CardTitle className="text-destructive flex items-center gap-2">
-            <div className="key-icon-3d p-2 rounded-lg bg-destructive/20">
+          <CardTitle className="text-red-400 flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
               <Trash2 className="h-4 w-4" />
             </div>
             Danger Zone
@@ -433,7 +433,7 @@ export function TeamSettings() {
           {!isTeamOwner && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start glass-card border-border/30 hover:bg-secondary/40">
+                <Button variant="outline" className="w-full justify-start border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400">
                   <LogOut className="mr-2 h-4 w-4" />
                   Leave Team
                 </Button>
@@ -459,7 +459,7 @@ export function TeamSettings() {
           {isTeamOwner && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Team
                 </Button>

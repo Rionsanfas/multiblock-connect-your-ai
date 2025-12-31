@@ -70,17 +70,19 @@ export function BillingSection() {
     (billing?.subscription_status === 'active' || billing?.is_lifetime);
 
   return (
-    <Card className="bg-card/80 backdrop-blur-xl border-border/50">
+    <Card className="settings-card-3d">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5 text-primary" />
+          <div className="key-icon-3d p-2 rounded-lg">
+            <CreditCard className="h-4 w-4" />
+          </div>
           Billing & Subscription
         </CardTitle>
         <CardDescription>Manage your subscription and billing details</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Current Plan Info */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/20">
+        <div className="glass-card p-4 rounded-xl">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Crown className="h-4 w-4 text-primary" />
@@ -114,7 +116,7 @@ export function BillingSection() {
           </div>
         )}
 
-        <Separator />
+        <Separator className="bg-border/30" />
 
         {/* Manage Subscription Button */}
         <div className="flex flex-col gap-3">
@@ -122,7 +124,7 @@ export function BillingSection() {
             <Button 
               onClick={handleManageSubscription} 
               disabled={isOpening}
-              className="w-full sm:w-auto"
+              className="btn-3d-primary w-full"
             >
               {isOpening ? (
                 <>
@@ -139,7 +141,7 @@ export function BillingSection() {
           ) : (
             <div className="text-sm text-muted-foreground">
               <p>No active subscription found.</p>
-              <Button variant="link" className="p-0 h-auto" asChild>
+              <Button variant="link" className="p-0 h-auto text-primary" asChild>
                 <a href="/pricing">View pricing plans →</a>
               </Button>
             </div>

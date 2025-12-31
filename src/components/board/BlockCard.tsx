@@ -523,7 +523,7 @@ export function BlockCard({
         <ContextMenuSeparator />
         <ContextMenuItem
           onClick={handleDeleteBlock}
-          className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm text-destructive focus:text-destructive"
+          className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm text-red-400 focus:text-red-400 focus:bg-red-500/10"
         >
           <Trash2 className="h-4 w-4" />
           Delete Block
