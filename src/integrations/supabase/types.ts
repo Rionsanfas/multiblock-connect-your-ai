@@ -835,7 +835,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      api_keys_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          is_valid: boolean | null
+          key_hint: string | null
+          last_validated_at: string | null
+          provider: Database["public"]["Enums"]["llm_provider"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          is_valid?: boolean | null
+          key_hint?: string | null
+          last_validated_at?: string | null
+          provider?: Database["public"]["Enums"]["llm_provider"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          is_valid?: boolean | null
+          key_hint?: string | null
+          last_validated_at?: string | null
+          provider?: Database["public"]["Enums"]["llm_provider"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       _internal_get_team_max_seats: {
