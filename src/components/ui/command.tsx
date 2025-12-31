@@ -101,15 +101,19 @@ CommandSeparator.displayName = CommandPrimitive.Separator.displayName;
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Item>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => (
   <CommandPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:opacity-50",
+      "group/cmd-item relative flex cursor-default select-none items-center rounded-lg px-3 py-2 text-sm outline-none transition-all duration-200 overflow-hidden data-[disabled=true]:pointer-events-none data-[selected='true']:bg-secondary/60 data-[disabled=true]:opacity-50",
       className,
     )}
     {...props}
-  />
+  >
+    {/* Gold accent indicator on selection */}
+    <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full transition-all duration-300 bg-transparent opacity-0 group-data-[selected=true]/cmd-item:opacity-100 group-data-[selected=true]/cmd-item:bg-gradient-to-b group-data-[selected=true]/cmd-item:from-[hsl(var(--accent))] group-data-[selected=true]/cmd-item:via-[hsl(var(--glow-warm))] group-data-[selected=true]/cmd-item:to-[hsl(var(--accent))] group-data-[selected=true]/cmd-item:shadow-[0_0_12px_hsl(var(--accent)/0.6)]" />
+    {children}
+  </CommandPrimitive.Item>
 ));
 
 CommandItem.displayName = CommandPrimitive.Item.displayName;

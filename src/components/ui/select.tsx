@@ -105,11 +105,13 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground",
+      "relative flex w-full cursor-default select-none items-center rounded-lg py-2 pl-8 pr-4 text-sm outline-none transition-all duration-200 overflow-hidden data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-secondary/60 data-[state=checked]:bg-secondary/60",
       className,
     )}
     {...props}
   >
+    {/* Gold accent indicator */}
+    <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full transition-all duration-300 bg-transparent data-[state=checked]:bg-gradient-to-b data-[state=checked]:from-[hsl(var(--accent))] data-[state=checked]:via-[hsl(var(--glow-warm))] data-[state=checked]:to-[hsl(var(--accent))] data-[state=checked]:shadow-[0_0_12px_hsl(var(--accent)/0.6)] focus:bg-[hsl(var(--accent)/0.5)] focus:opacity-40" />
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
         <Check className="h-4 w-4" />

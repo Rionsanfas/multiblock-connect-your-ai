@@ -129,8 +129,8 @@ function WorkspaceList({
             value="personal"
             onSelect={() => onSelect('personal')}
             className={cn(
-              "cursor-pointer mx-2 my-1 rounded-lg transition-all",
-              isPersonalWorkspace && "bg-primary/10 border border-primary/20"
+              "cursor-pointer mx-1 my-0.5 rounded-lg transition-all",
+              isPersonalWorkspace && "bg-secondary/60"
             )}
           >
             <div className="flex items-center gap-3 w-full">
@@ -153,8 +153,8 @@ function WorkspaceList({
                 value={team.team_id}
                 onSelect={() => onSelect(team.team_id)}
                 className={cn(
-                  "cursor-pointer mx-2 my-1 rounded-lg transition-all",
-                  currentWorkspace.teamId === team.team_id && "bg-primary/10 border border-primary/20"
+                  "cursor-pointer mx-1 my-0.5 rounded-lg transition-all",
+                  currentWorkspace.teamId === team.team_id && "bg-secondary/60"
                 )}
               >
                 <div className="flex items-center gap-3 w-full">
@@ -182,7 +182,7 @@ function WorkspaceList({
           <CommandItem
             onSelect={onCreateTeam}
             className={cn(
-              "cursor-pointer mx-2 my-1 rounded-lg",
+              "cursor-pointer mx-1 my-0.5 rounded-lg",
               !canCreateMoreTeams && "opacity-50"
             )}
             disabled={!canCreateMoreTeams}

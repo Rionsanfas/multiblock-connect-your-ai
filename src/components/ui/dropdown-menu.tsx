@@ -75,16 +75,20 @@ const DropdownMenuItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
   }
->(({ className, inset, ...props }, ref) => (
+>(({ className, inset, children, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground",
+      "group/item relative flex cursor-default select-none items-center rounded-lg px-3 py-2 text-sm outline-none transition-all duration-200 overflow-hidden data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-secondary/60",
       inset && "pl-8",
       className,
     )}
     {...props}
-  />
+  >
+    {/* Gold accent indicator on focus */}
+    <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full transition-all duration-300 bg-transparent opacity-0 group-focus/item:opacity-100 group-focus/item:bg-gradient-to-b group-focus/item:from-[hsl(var(--accent))] group-focus/item:via-[hsl(var(--glow-warm))] group-focus/item:to-[hsl(var(--accent))] group-focus/item:shadow-[0_0_12px_hsl(var(--accent)/0.6)]" />
+    {children}
+  </DropdownMenuPrimitive.Item>
 ));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
