@@ -288,10 +288,12 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-destructive/10 border-destructive/50">
+              <Card className="settings-card-3d border-red-500/20 bg-red-500/5">
                 <CardHeader>
-                  <CardTitle className="text-destructive flex items-center gap-2">
-                    <Trash2 className="h-5 w-5" />
+                  <CardTitle className="text-red-400 flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                      <Trash2 className="h-4 w-4" />
+                    </div>
                     Danger Zone
                   </CardTitle>
                   <CardDescription>
@@ -306,7 +308,11 @@ export default function Settings() {
                         Permanently delete your account and all data
                       </p>
                     </div>
-                    <Button variant="destructive" onClick={handleDeleteAccount}>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleDeleteAccount}
+                      className="border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400"
+                    >
                       Delete Account
                     </Button>
                   </div>
