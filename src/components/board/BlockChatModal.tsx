@@ -335,14 +335,17 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
         {/* Main content area with optional sidebar */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar - only visible in fullscreen mode */}
+          {/* Sidebar - matching dashboard sidebar design */}
           {isFullscreen && isSidebarOpen && (
-            <div className="w-64 border-r border-border/20 flex-shrink-0 flex flex-col bg-secondary/5">
-              <div className="px-4 py-3 border-b border-border/20">
-                <h3 className="text-sm font-medium text-muted-foreground">Board Chats</h3>
+            <aside className="w-60 border-r border-border/10 flex-shrink-0 flex flex-col bg-card/80 backdrop-blur-xl">
+              {/* Sidebar header */}
+              <div className="p-5 pb-4">
+                <h3 className="text-lg font-semibold text-foreground tracking-tight">Board Chats</h3>
               </div>
-              <ScrollArea className="flex-1">
-                <div className="p-2 space-y-1">
+              
+              {/* Navigation */}
+              <ScrollArea className="flex-1 px-3 py-2">
+                <nav className="space-y-1">
                   {boardBlocks.map((b) => {
                     const isActive = b.id === blockId;
                     const bModelConfig = b.model_id ? getModelConfig(b.model_id) : null;
@@ -351,31 +354,36 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                         key={b.id}
                         onClick={() => openBlockChat(b.id)}
                         className={cn(
-                          "w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
-                          isActive 
-                            ? "bg-secondary/60 text-foreground" 
-                            : "hover:bg-secondary/40 text-muted-foreground hover:text-foreground"
+                          "sidebar-nav-item group relative flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200 overflow-hidden",
+                          isActive
+                            ? "bg-secondary/60 text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
                         )}
                       >
-                        {/* Active indicator glow */}
-                        {isActive && (
-                          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full bg-gradient-to-b from-[hsl(320,70%,50%/0.8)] via-[hsl(280,60%,55%/1)] to-[hsl(320,70%,50%/0.8)] blur-[2px]" />
-                        )}
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                          <span className="text-sm truncate flex-1">{b.title}</span>
+                        {/* Gold highlight indicator - matching dashboard */}
+                        <span
+                          className={cn(
+                            "sidebar-indicator absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full transition-all duration-500 ease-out",
+                            isActive
+                              ? "bg-gradient-to-b from-[hsl(var(--accent))] via-[hsl(var(--glow-warm))] to-[hsl(var(--accent))] opacity-100 shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
+                              : "bg-transparent opacity-0 group-hover:opacity-40 group-hover:bg-[hsl(var(--accent)/0.5)]"
+                          )}
+                        />
+                        <div className={cn("icon-3d p-1.5 rounded-lg", isActive && "icon-3d-active")}>
+                          <MessageSquare className={cn("h-4 w-4 flex-shrink-0 transition-all duration-200 text-foreground/90", isActive && "text-foreground drop-shadow-[0_0_6px_hsl(0_0%_100%/0.5)]")} />
                         </div>
-                        {bModelConfig && (
-                          <div className="mt-1 ml-6">
-                            <span className="text-[10px] text-muted-foreground/70">{bModelConfig.name}</span>
-                          </div>
-                        )}
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium truncate block">{b.title}</span>
+                          {bModelConfig && (
+                            <span className="text-[10px] text-muted-foreground/70 truncate block">{bModelConfig.name}</span>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
-                </div>
+                </nav>
               </ScrollArea>
-            </div>
+            </aside>
           )}
 
           {/* Chat content area */}
