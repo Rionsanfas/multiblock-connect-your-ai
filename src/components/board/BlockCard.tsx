@@ -35,9 +35,11 @@ export function BlockCard({
   onEndConnection,
   isConnecting,
 }: BlockCardProps) {
-  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const hasDraggedRef = useRef(false);
-  const [, forceUpdate] = useState(0);
+  const activePointerIdRef = useRef<number | null>(null);
+  const dragElementRef = useRef<HTMLElement | null>(null);
+  const didFinalizeDragRef = useRef(false);
   const [isRunning, setIsRunning] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeCorner, setResizeCorner] = useState<string | null>(null);
@@ -76,19 +78,33 @@ export function BlockCard({
     blockPositionRef.current = { x: block.position.x, y: block.position.y };
   }, [block.position.x, block.position.y]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest(".no-drag")) return;
+    if (isResizing) return;
+
     e.stopPropagation();
     e.preventDefault();
-    
-    isDraggingRef.current = true;
+
+    activePointerIdRef.current = e.pointerId;
+    dragElementRef.current = e.currentTarget;
+    didFinalizeDragRef.current = false;
+
     hasDraggedRef.current = false;
     startPos.current = { x: e.clientX, y: e.clientY };
+
+    const currentPos = blockPositionRef.current;
     dragOffset.current = {
-      x: e.clientX / zoom - block.position.x,
-      y: e.clientY / zoom - block.position.y,
+      x: e.clientX / zoom - currentPos.x,
+      y: e.clientY / zoom - currentPos.y,
     };
-    forceUpdate(n => n + 1);
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    setIsDragging(true);
     onSelect();
   };
 
@@ -162,11 +178,41 @@ export function BlockCard({
     setResizeCorner(null);
   };
 
-  // Drag event listeners - use refs to avoid stale closures
+  // Pointer-driven drag listeners - attached only while dragging
   useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current || isResizing) return;
-      
+    if (!isDragging) return;
+
+    const pointerId = activePointerIdRef.current;
+    const dragEl = dragElementRef.current;
+
+    const finalize = () => {
+      if (didFinalizeDragRef.current) return;
+      didFinalizeDragRef.current = true;
+
+      if (hasDraggedRef.current) {
+        persistBlockPosition(block.id, blockPositionRef.current);
+      }
+
+      hasDraggedRef.current = false;
+      activePointerIdRef.current = null;
+      setIsDragging(false);
+
+      if (dragEl && pointerId != null) {
+        try {
+          dragEl.releasePointerCapture(pointerId);
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (pointerId == null || e.pointerId !== pointerId) return;
+      if (isResizing) return;
+
+      // Prevent page scroll on touch/trackpad while dragging
+      e.preventDefault();
+
       const dx = Math.abs(e.clientX - startPos.current.x);
       const dy = Math.abs(e.clientY - startPos.current.y);
       if (dx > 3 || dy > 3) {
@@ -178,40 +224,50 @@ export function BlockCard({
       blockPositionRef.current = { x: newX, y: newY };
 
       requestAnimationFrame(() => {
-        if (isDraggingRef.current) {
-          updateBlockPosition(block.id, { x: newX, y: newY });
-        }
+        updateBlockPosition(block.id, { x: newX, y: newY });
       });
     };
-    
-    const handleGlobalMouseUp = () => {
-      if (isDraggingRef.current) {
-        if (hasDraggedRef.current) {
-          // Persist final position to database
-          persistBlockPosition(block.id, blockPositionRef.current);
-        }
-        isDraggingRef.current = false;
-        hasDraggedRef.current = false;
-        forceUpdate(n => n + 1);
-      }
+
+    const onPointerUp = (e: PointerEvent) => {
+      if (pointerId == null || e.pointerId !== pointerId) return;
+      finalize();
     };
-    
-    // Always attach listeners to ensure cleanup happens
-    window.addEventListener("mousemove", handleGlobalMouseMove);
-    window.addEventListener("mouseup", handleGlobalMouseUp);
-    window.addEventListener("mouseleave", handleGlobalMouseUp);
-    window.addEventListener("blur", handleGlobalMouseUp);
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) handleGlobalMouseUp();
-    });
-    
+
+    const onPointerCancel = (e: PointerEvent) => {
+      if (pointerId == null || e.pointerId !== pointerId) return;
+      finalize();
+    };
+
+    const onBlur = () => finalize();
+    const onVisibilityChange = () => {
+      if (document.hidden) finalize();
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerCancel);
+    window.addEventListener('blur', onBlur);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    if (dragEl) {
+      dragEl.addEventListener('lostpointercapture', finalize);
+    }
+
     return () => {
-      window.removeEventListener("mousemove", handleGlobalMouseMove);
-      window.removeEventListener("mouseup", handleGlobalMouseUp);
-      window.removeEventListener("mouseleave", handleGlobalMouseUp);
-      window.removeEventListener("blur", handleGlobalMouseUp);
+      window.removeEventListener('pointermove', onPointerMove as any);
+      window.removeEventListener('pointerup', onPointerUp as any);
+      window.removeEventListener('pointercancel', onPointerCancel as any);
+      window.removeEventListener('blur', onBlur);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+
+      if (dragEl) {
+        dragEl.removeEventListener('lostpointercapture', finalize);
+      }
+
+      // Safety: if we unmount mid-drag, finalize once
+      finalize();
     };
-  }, [block.id, zoom, isResizing, updateBlockPosition, persistBlockPosition]);
+  }, [isDragging, isResizing, zoom, block.id, updateBlockPosition, persistBlockPosition]);
 
   useEffect(() => {
     if (isResizing) {
@@ -259,15 +315,16 @@ export function BlockCard({
         <div
           className={cn(
             "block-card absolute select-none",
-            isDraggingRef.current ? "cursor-grabbing z-50" : "cursor-move",
+            isDragging ? "cursor-grabbing z-50" : "cursor-move",
             isResizing && "z-50"
           )}
           style={{
             left: block.position.x,
             top: block.position.y,
             width: size.width,
+            touchAction: 'none',
           }}
-          onMouseDown={handleMouseDown}
+          onPointerDown={handlePointerDown}
           onClick={handleClick}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => {
@@ -421,10 +478,10 @@ export function BlockCard({
               "block-main-card relative rounded-2xl",
               "bg-[hsl(0_0%_8%/0.95)] backdrop-blur-xl",
               "border border-[hsl(0_0%_20%/0.6)]",
-              isSelected 
-                ? "shadow-[0_8px_32px_rgba(0,0,0,0.4)]" 
+              isSelected
+                ? "shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
                 : "shadow-[0_4px_24px_rgba(0,0,0,0.3)]",
-              isDraggingRef.current && "shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+              isDragging && "shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
             )}
             onMouseUp={(e) => {
               // Allow dropping connections anywhere on the main card
