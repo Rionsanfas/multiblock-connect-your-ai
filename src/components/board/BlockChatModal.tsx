@@ -26,7 +26,7 @@ import { useTextSelection } from "@/hooks/useTextSelection";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { TextSelectionMenu } from "@/components/chat/TextSelectionMenu";
-import { BranchDialog } from "@/components/chat/BranchDialog";
+
 import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
 import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useModelConfig";
@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Message as LegacyMessage } from "@/types";
-import type { ChatReference, BranchParams } from "@/types/chat-references";
+import type { ChatReference } from "@/types/chat-references";
 import { createReference, formatReferencesForContext } from "@/types/chat-references";
 
 interface BlockChatModalProps {
@@ -74,9 +74,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   // References state
   const [pendingReferences, setPendingReferences] = useState<ChatReference[]>([]);
   
-  // Branch dialog state
-  const [branchParams, setBranchParams] = useState<BranchParams | null>(null);
-  const [isBranchDialogOpen, setIsBranchDialogOpen] = useState(false);
+  
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -168,76 +166,43 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     toast.success('Reference added');
   }, [textSelection, blockId]);
 
-  // Handle branching to new block
-  const handleBranch = useCallback(() => {
+  // Handle branching to new block - directly create and navigate
+  const handleBranch = useCallback(async () => {
     if (!textSelection.hasSelection || !textSelection.messageId || !textSelection.messageRole || !block) {
       return;
     }
 
-    setBranchParams({
-      source_block_id: blockId,
-      source_block_title: block.title,
-      source_message_id: textSelection.messageId,
-      source_role: textSelection.messageRole,
-      selected_text: textSelection.selectedText,
-      board_id: block.board_id,
-    });
-    setIsBranchDialogOpen(true);
+    const selectedText = textSelection.selectedText;
+    const sourceTitle = block.title;
     textSelection.clearSelection();
-  }, [textSelection, blockId, block]);
-
-  // Confirm branch creation
-  const handleConfirmBranch = useCallback(async (newTitle: string, includeHistory: boolean) => {
-    if (!branchParams || !block) return;
 
     try {
-      // Create new block with source context - use same model as current block
+      // Create new block with same model
       const newBlock = await blocksDb.create({
-        board_id: branchParams.board_id,
-        title: newTitle,
+        board_id: block.board_id,
+        title: `Branch from ${sourceTitle}`,
         model_id: block.model_id,
         provider: currentModel?.provider || 'openai',
-        position_x: block.position.x + 400,
-        position_y: block.position.y + 50,
-        system_prompt: `You are a helpful assistant. This conversation was branched from "${branchParams.source_block_title}".
+        position_x: block.position.x + 450,
+        position_y: block.position.y,
+        system_prompt: `You are a helpful assistant. This conversation was branched from "${sourceTitle}".
 
-The user has selected this specific text to focus on:
-"${branchParams.selected_text}"
+The user wants to explore this specific text in depth:
+"${selectedText}"
 
-Please continue the conversation with special attention to this selected context. Help the user explore, analyze, or build upon this specific topic.`,
+Focus your responses on analyzing, expanding, or discussing this topic. Be thorough and insightful.`,
       });
 
-      // Copy chat history if requested
-      if (includeHistory && blockMessages.length > 0) {
-        for (const msg of blockMessages) {
-          if (msg.role === 'user' || msg.role === 'assistant') {
-            await messagesDb.create(
-              newBlock.id,
-              msg.role as 'user' | 'assistant',
-              msg.content,
-              msg.meta as Record<string, unknown> | undefined
-            );
-          }
-        }
-        
-        // Add a system message indicating the branch focus
-        await messagesDb.create(
-          newBlock.id,
-          'assistant',
-          `---\n\n**Branched conversation** — Now focusing on:\n> "${branchParams.selected_text.length > 300 ? branchParams.selected_text.substring(0, 297) + '...' : branchParams.selected_text}"\n\nHow would you like to explore this further?`
-        );
-      } else {
-        // If not including history, add the selected text as initial context
-        await messagesDb.create(
-          newBlock.id,
-          'assistant',
-          `**Starting from selected text:**\n> "${branchParams.selected_text}"\n\n*(Branched from "${branchParams.source_block_title}")*\n\nHow would you like to explore this topic?`
-        );
-      }
+      // Add the selected text as the first user message
+      await messagesDb.create(
+        newBlock.id,
+        'user',
+        selectedText
+      );
 
       queryClient.invalidateQueries({ queryKey: ['board-blocks', block.board_id] });
       queryClient.invalidateQueries({ queryKey: ['block-messages', newBlock.id] });
-      toast.success(`Created branch: ${newTitle}`);
+      toast.success('Branch created');
       
       // Open the new block's chat
       openBlockChat(newBlock.id);
@@ -245,7 +210,7 @@ Please continue the conversation with special attention to this selected context
       console.error('Failed to create branch:', error);
       toast.error('Failed to create branch');
     }
-  }, [branchParams, block, blockMessages, currentModel, queryClient, openBlockChat]);
+  }, [textSelection, blockId, block, currentModel, queryClient, openBlockChat]);
 
   const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[], references?: ChatReference[]) => {
     if (!content.trim() && (!references || references.length === 0) || messageStatus !== 'idle' || !block) return;
@@ -573,15 +538,6 @@ Please continue the conversation with special attention to this selected context
           onClose={textSelection.clearSelection}
         />
       )}
-
-      {/* Branch Dialog */}
-      <BranchDialog
-        isOpen={isBranchDialogOpen}
-        onClose={() => setIsBranchDialogOpen(false)}
-        onConfirm={handleConfirmBranch}
-        params={branchParams}
-        messageCount={blockMessages.length}
-      />
     </>
   );
 }
