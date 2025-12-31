@@ -22,7 +22,7 @@ import { useTeamContext } from "@/contexts/TeamContext";
 const navItems = [
   { icon: Layers, label: "Boards", href: "/dashboard", showAlways: true },
   { icon: Key, label: "API Keys", href: "/settings/keys", showAlways: true },
-  { icon: Users, label: "Team Settings", href: "/team/settings", showForTeamOnly: true },
+  { icon: Users, label: "Team Settings", href: "/team/settings", showAlways: true },
   { icon: CreditCard, label: "Pricing", href: "/pricing", showForFreePlanOnly: true },
   { icon: Settings, label: "Settings", href: "/settings", showAlways: true },
 ];
@@ -85,11 +85,9 @@ export function AppSidebar() {
         {navItems.map((item) => {
           // Show based on plan conditions
           const isFreePlan = user?.plan?.toLowerCase() === 'free';
-          const { currentTeamId } = useTeamContext();
           
           if (item.showForFreePlanOnly && !isFreePlan) return null;
-          if (item.showForTeamOnly && !currentTeamId) return null;
-          if (!item.showAlways && !item.showForFreePlanOnly && !item.showForTeamOnly) return null;
+          if (!item.showAlways && !item.showForFreePlanOnly) return null;
           
           const isActive = location.pathname === item.href;
           const NavItem = (
