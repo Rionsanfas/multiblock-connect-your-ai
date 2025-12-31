@@ -246,15 +246,15 @@ export default function ApiKeys() {
                 value={newKey.provider} 
                 onValueChange={(v) => setNewKey({ ...newKey, provider: v as LLMProvider })}
               >
-                <SelectTrigger className="select-trigger-shiny">
+                <SelectTrigger className="bg-secondary/40 border-border/20 rounded-xl h-11">
                   <SelectValue placeholder="Select provider" />
                 </SelectTrigger>
-                <SelectContent className="select-content-shiny">
+                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
                   {SUPPORTED_PROVIDERS.map((provider) => (
                     <SelectItem 
                       key={provider.id} 
                       value={provider.id}
-                      className="select-item-shiny"
+                      className="rounded-lg cursor-pointer"
                     >
                       {provider.name}
                     </SelectItem>
