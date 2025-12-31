@@ -1,4 +1,4 @@
-import { Zap, Info, HardDrive, Infinity, Clock } from "lucide-react";
+import { Zap, Info, HardDrive, Infinity, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -21,6 +21,9 @@ import { AddonCard } from "@/components/pricing/AddonCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
+const LTD_TOTAL = 250;
+const LTD_REMAINING = 173; // TODO: Fetch from database
+
 export default function Pricing() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -32,6 +35,8 @@ export default function Pricing() {
   const individualLifetimePlans = getIndividualLifetimePlans();
   const teamLifetimePlans = getTeamLifetimePlans();
   const addons = getActiveAddons();
+
+  const ltdSoldOut = LTD_REMAINING <= 0;
 
   return (
     <TooltipProvider>
@@ -96,14 +101,23 @@ export default function Pricing() {
                 </div>
               </TabsContent>
 
-              {/* Lifetime Deals */}
+              {/* Lifetime Deals - Highlighted */}
               <TabsContent value="lifetime" className="mt-8">
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-4">
+                {/* LTD Highlight Header */}
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/40 mb-4 shadow-[0_0_30px_-5px_hsl(var(--accent)/0.4)]">
                     <Infinity className="h-4 w-4 text-accent" />
-                    <span className="text-sm font-medium text-accent">One-time payment, lifetime access</span>
+                    <span className="text-sm font-semibold text-accent">Limited Lifetime Deals</span>
                   </div>
-                  <p className="text-muted-foreground">Pay once, use forever</p>
+                  <p className="text-muted-foreground mb-3">Pay once, use forever</p>
+                  
+                  {/* Scarcity Warning */}
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <span className="text-sm font-medium text-destructive">
+                      {ltdSoldOut ? 'Sold Out' : `Only ${LTD_REMAINING} of ${LTD_TOTAL} remaining`}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Individual Lifetime */}
@@ -111,7 +125,11 @@ export default function Pricing() {
                   <h3 className="text-xl font-semibold text-center mb-6">Individual Lifetime Deals</h3>
                   <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
                     {individualLifetimePlans.map((plan) => (
-                      <PricingCard key={plan.id} plan={plan} />
+                      <div key={plan.id} className="relative">
+                        {/* LTD Glow Effect */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
+                        <PricingCard plan={plan} />
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -121,7 +139,11 @@ export default function Pricing() {
                   <h3 className="text-xl font-semibold text-center mb-6">Team Lifetime Deals</h3>
                   <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
                     {teamLifetimePlans.map((plan) => (
-                      <PricingCard key={plan.id} plan={plan} showSeats />
+                      <div key={plan.id} className="relative">
+                        {/* LTD Glow Effect */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
+                        <PricingCard plan={plan} showSeats />
+                      </div>
                     ))}
                   </div>
                 </div>

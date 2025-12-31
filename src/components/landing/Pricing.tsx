@@ -1,15 +1,28 @@
-import { Check, Info, HardDrive, Users, LayoutGrid, Plus } from "lucide-react";
+import { Zap, Info, HardDrive, Infinity, Clock, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
-import { PRICING_PLANS, formatStorage, formatPlanPrice } from "@/config/plans";
-import { PricingButton } from "@/components/pricing/PricingButton";
+import { 
+  getFreePlan,
+  getIndividualAnnualPlans, 
+  getTeamAnnualPlans, 
+  getIndividualLifetimePlans,
+  getTeamLifetimePlans
+} from "@/config/plans";
+import { PricingCard } from "@/components/pricing/PricingCard";
+
+const LTD_TOTAL = 250;
+const LTD_REMAINING = 173; // TODO: Fetch from database
 
 const Pricing = () => {
-  // Show only free and pro on landing page
-  const displayPlans = PRICING_PLANS.filter((p) => 
-    p.is_active && (p.tier === "free" || p.tier === "pro")
-  );
+  const freePlan = getFreePlan();
+  const individualAnnualPlans = getIndividualAnnualPlans();
+  const teamAnnualPlans = getTeamAnnualPlans();
+  const individualLifetimePlans = getIndividualLifetimePlans();
+  const teamLifetimePlans = getTeamLifetimePlans();
+
+  const ltdSoldOut = LTD_REMAINING <= 0;
 
   return (
     <TooltipProvider>
@@ -18,16 +31,15 @@ const Pricing = () => {
         className="relative"
         style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
       >
-        {/* Container */}
         <div
-          className="w-full max-w-[1200px] mx-auto"
+          className="w-full max-w-7xl mx-auto"
           style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
         >
           {/* Header */}
-          <AnimatedSection delay={0} className="text-center" style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}>
+          <AnimatedSection delay={0} className="text-center" style={{ marginBottom: "clamp(32px, 5vw, 48px)" }}>
             <span className="section-badge mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-              Pricing
+              <Zap className="h-4 w-4" />
+              Simple Pricing
             </span>
             <h2
               className="font-bold text-foreground mt-4 text-wrap-balance"
@@ -36,168 +48,121 @@ const Pricing = () => {
                 marginBottom: "clamp(12px, 2vw, 16px)",
               }}
             >
-              Simple, Transparent Pricing
+              Choose Your Plan
             </h2>
             <p
               className="text-muted-foreground max-w-xl mx-auto text-break"
               style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
             >
-              Start free, upgrade when you need more. Yearly billing for best value.
+              Start free, upgrade when you need more. Annual plans and lifetime deals available.
             </p>
           </AnimatedSection>
 
-          {/* Pricing Cards */}
-          <div
-            className="grid max-w-5xl mx-auto align-start"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))",
-              gap: "clamp(16px, 2.5vw, 24px)",
-            }}
-          >
-            {displayPlans.map((plan, index) => (
-              <AnimatedElement key={plan.id} delay={index * 150}>
-                <div className={`premium-card-wrapper ${plan.highlight ? "scale-105" : ""} h-full`}>
-                  <div className="premium-card-gradient" />
-                  <div className="premium-card-content h-full flex flex-col" style={{ padding: "clamp(20px, 3vw, 32px)" }}>
-                    {plan.badge && (
-                      <div
-                        className="absolute top-2 left-1/2 -translate-x-1/2 rounded-full z-10 badge-3d-shiny"
-                        style={{
-                          padding: "4px 12px",
-                          fontSize: "clamp(0.55rem, 0.5rem + 0.12vw, 0.65rem)",
-                        }}
-                      >
-                        {plan.badge}
-                      </div>
-                    )}
+          {/* Plan Category Tabs */}
+          <AnimatedSection delay={100}>
+            <Tabs defaultValue="individual" className="w-full">
+              <TabsList className="tabs-3d grid w-full max-w-2xl mx-auto grid-cols-3 mb-8">
+                <TabsTrigger value="individual" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Individual
+                </TabsTrigger>
+                <TabsTrigger value="team" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Teams
+                </TabsTrigger>
+                <TabsTrigger value="lifetime" className="flex items-center gap-2">
+                  <Infinity className="h-4 w-4" />
+                  Lifetime
+                </TabsTrigger>
+              </TabsList>
 
-                    <div style={{ marginBottom: "clamp(16px, 2.5vw, 24px)" }}>
-                      <h3
-                        className={`font-bold ${plan.highlight ? "text-gold-shine" : "text-foreground"}`}
-                        style={{
-                          fontSize: "clamp(1.125rem, 1rem + 0.5vw, 1.5rem)",
-                          marginBottom: "12px",
-                        }}
-                      >
-                        {plan.name}
-                      </h3>
-                      <div className="flex items-baseline gap-1">
-                        <span
-                          className="font-bold text-foreground"
-                          style={{ fontSize: "clamp(2rem, 1.75rem + 1.5vw, 3rem)" }}
-                        >
-                          {plan.price_cents === 0 ? 'Free' : `$${plan.price_cents / 100}`}
-                        </span>
-                        {plan.price_cents > 0 && (
-                          <span
-                            className="text-muted-foreground"
-                            style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
-                          >
-                            /year
-                          </span>
-                        )}
-                      </div>
-                    </div>
+              {/* Individual Annual Plans */}
+              <TabsContent value="individual" className="mt-8">
+                <div className="text-center mb-6">
+                  <p className="text-muted-foreground">Annual plans for individual users</p>
+                </div>
+                <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
+                  <AnimatedElement delay={0}>
+                    <PricingCard plan={freePlan} />
+                  </AnimatedElement>
+                  {individualAnnualPlans.map((plan, index) => (
+                    <AnimatedElement key={plan.id} delay={(index + 1) * 100}>
+                      <PricingCard plan={plan} />
+                    </AnimatedElement>
+                  ))}
+                </div>
+              </TabsContent>
 
-                    {/* Key Stats */}
-                    <div
-                      className="rounded-xl bg-muted/20 border border-border/30"
-                      style={{
-                        padding: "clamp(12px, 2vw, 16px)",
-                        marginBottom: "clamp(16px, 2.5vw, 24px)",
-                      }}
-                    >
-                      <div
-                        className="flex items-center gap-2 text-foreground"
-                        style={{
-                          fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
-                          marginBottom: "clamp(8px, 1vw, 12px)",
-                        }}
-                      >
-                        <LayoutGrid
-                          className="text-accent flex-shrink-0"
-                          style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
-                        />
-                        {plan.boards} board{plan.boards > 1 ? "s" : ""}
-                      </div>
-                      <div
-                        className="flex items-center gap-2 text-foreground"
-                        style={{
-                          fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
-                          marginBottom: "clamp(8px, 1vw, 12px)",
-                        }}
-                      >
-                        <Plus
-                          className="text-accent flex-shrink-0"
-                          style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
-                        />
-                        {plan.blocks_per_board === "unlimited" ? "Unlimited" : plan.blocks_per_board} blocks/board
-                      </div>
-                      <div
-                        className="flex items-center gap-2 text-foreground"
-                        style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)" }}
-                      >
-                        <HardDrive
-                          className="text-accent flex-shrink-0"
-                          style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
-                        />
-                        {formatStorage(plan.storage_mb)} storage
-                        <Tooltip>
-                          <TooltipTrigger className="min-w-[24px] min-h-[24px] flex items-center justify-center">
-                            <Info style={{ width: "12px", height: "12px" }} className="text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs" style={{ fontSize: "clamp(0.625rem, 0.6rem + 0.1vw, 0.75rem)" }}>
-                              Storage covers messages, blocks, and uploaded files
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      {plan.seats > 1 && (
-                        <div
-                          className="flex items-center gap-2 text-foreground"
-                          style={{
-                            fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
-                            marginTop: "clamp(8px, 1vw, 12px)",
-                          }}
-                        >
-                          <Users
-                            className="text-accent flex-shrink-0"
-                            style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
-                          />
-                          {plan.seats} team seats
-                        </div>
-                      )}
-                    </div>
+              {/* Team Annual Plans */}
+              <TabsContent value="team" className="mt-8">
+                <div className="text-center mb-6">
+                  <p className="text-muted-foreground">Annual plans for teams</p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
+                  {teamAnnualPlans.map((plan, index) => (
+                    <AnimatedElement key={plan.id} delay={index * 100}>
+                      <PricingCard plan={plan} showSeats />
+                    </AnimatedElement>
+                  ))}
+                </div>
+              </TabsContent>
 
-                    <ul className="flex-1" style={{ marginBottom: "clamp(20px, 3vw, 32px)" }}>
-                      {plan.features.slice(3).map((feature) => (
-                        <li
-                          key={feature}
-                          className="flex items-center gap-2 text-foreground text-break"
-                          style={{
-                            fontSize: "clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem)",
-                            marginBottom: "clamp(8px, 1vw, 12px)",
-                          }}
-                        >
-                          <Check
-                            className="text-accent flex-shrink-0"
-                            style={{ width: "clamp(14px, 1.5vw, 16px)", height: "clamp(14px, 1.5vw, 16px)" }}
-                          />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <PricingButton plan={plan} />
+              {/* Lifetime Deals */}
+              <TabsContent value="lifetime" className="mt-8">
+                {/* LTD Highlight Header */}
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-accent/20 to-accent/10 border border-accent/40 mb-4 shadow-[0_0_30px_-5px_hsl(var(--accent)/0.4)]">
+                    <Infinity className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-semibold text-accent">Limited Lifetime Deals</span>
+                  </div>
+                  <p className="text-muted-foreground mb-3">Pay once, use forever</p>
+                  
+                  {/* Scarcity Warning */}
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <span className="text-sm font-medium text-destructive">
+                      {ltdSoldOut ? 'Sold Out' : `Only ${LTD_REMAINING} of ${LTD_TOTAL} remaining`}
+                    </span>
                   </div>
                 </div>
-              </AnimatedElement>
-            ))}
-          </div>
 
-          {/* Team Plans CTA */}
-          <AnimatedSection delay={400} className="text-center" style={{ marginTop: "clamp(32px, 4vw, 40px)" }}>
+                {/* Individual Lifetime */}
+                <div className="mb-10">
+                  <h3 className="text-lg font-semibold text-center mb-6 text-muted-foreground">Individual Lifetime Deals</h3>
+                  <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
+                    {individualLifetimePlans.map((plan, index) => (
+                      <AnimatedElement key={plan.id} delay={index * 100}>
+                        <div className="relative">
+                          {/* LTD Glow Effect */}
+                          <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
+                          <PricingCard plan={plan} />
+                        </div>
+                      </AnimatedElement>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Team Lifetime */}
+                <div>
+                  <h3 className="text-lg font-semibold text-center mb-6 text-muted-foreground">Team Lifetime Deals</h3>
+                  <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
+                    {teamLifetimePlans.map((plan, index) => (
+                      <AnimatedElement key={plan.id} delay={index * 100}>
+                        <div className="relative">
+                          {/* LTD Glow Effect */}
+                          <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
+                          <PricingCard plan={plan} showSeats />
+                        </div>
+                      </AnimatedElement>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </AnimatedSection>
+
+          {/* View All Plans CTA */}
+          <AnimatedSection delay={300} className="text-center" style={{ marginTop: "clamp(32px, 4vw, 48px)" }}>
             <p
               className="text-muted-foreground"
               style={{
@@ -205,14 +170,14 @@ const Pricing = () => {
                 marginBottom: "12px",
               }}
             >
-              Need team features or more power?
+              Need add-ons or enterprise solutions?
             </p>
             <Link
               to="/pricing"
               className="text-accent hover:text-accent/80 font-medium transition-colors min-h-[44px] inline-flex items-center"
               style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)" }}
             >
-              View All Plans →
+              View All Plans & Add-ons →
             </Link>
           </AnimatedSection>
         </div>
