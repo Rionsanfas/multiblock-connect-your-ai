@@ -156,7 +156,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden relative bg-[hsl(220_20%_4%)]">
+    <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden relative bg-[hsl(220_20%_4%)] dot-grid-bg">
       {/* Ambient lighting effects */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Top light */}

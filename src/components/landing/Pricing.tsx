@@ -24,7 +24,7 @@ const Pricing = () => {
     <TooltipProvider>
       <section
         id="pricing"
-        className="relative"
+        className="relative dot-grid-bg"
         style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
       >
         <div
