@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   Layers,
   Key,
   CreditCard,
   Settings,
   ChevronLeft,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -16,10 +16,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { WorkspaceSwitcher } from "@/components/teams/WorkspaceSwitcher";
+import { useTeamContext } from "@/contexts/TeamContext";
 
 const navItems = [
   { icon: Layers, label: "Boards", href: "/dashboard", showAlways: true },
   { icon: Key, label: "API Keys", href: "/settings/keys", showAlways: true },
+  { icon: Users, label: "Team Settings", href: "/team/settings", showForTeamOnly: true },
   { icon: CreditCard, label: "Pricing", href: "/pricing", showForFreePlanOnly: true },
   { icon: Settings, label: "Settings", href: "/settings", showAlways: true },
 ];

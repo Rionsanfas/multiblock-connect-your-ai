@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { TeamProvider } from "@/contexts/TeamContext";
 import { GlobalLoader } from "@/components/GlobalLoader";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -13,6 +14,8 @@ import Pricing from "./pages/Pricing";
 import Checkout from "./pages/Checkout";
 import ApiKeys from "./pages/ApiKeys";
 import Settings from "./pages/Settings";
+import TeamSettingsPage from "./pages/TeamSettingsPage";
+import AcceptInvitePage from "./pages/AcceptInvitePage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import RefundPolicy from "./pages/RefundPolicy";
@@ -23,7 +26,6 @@ const queryClient = new QueryClient();
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   
-  // Don't redirect while still loading - parent shows loader
   if (isLoading) {
     return null;
   }
@@ -38,12 +40,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   
-  // Don't redirect while still loading
   if (isLoading) {
     return null;
   }
   
-  // If already authenticated, redirect to dashboard
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -54,7 +54,6 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   const { isLoading } = useAuth();
 
-  // Show global loader during auth hydration
   if (isLoading) {
     return <GlobalLoader />;
   }
@@ -65,6 +64,7 @@ function AppRoutes() {
       <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/checkout" element={<Checkout />} />
+      <Route path="/invite/:token" element={<AcceptInvitePage />} />
       <Route
         path="/dashboard"
         element={
@@ -97,6 +97,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/team/settings"
+        element={
+          <ProtectedRoute>
+            <TeamSettingsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/refund" element={<RefundPolicy />} />
@@ -112,7 +120,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <TeamProvider>
+            <AppRoutes />
+          </TeamProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
