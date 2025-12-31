@@ -67,10 +67,10 @@ export default function Checkout() {
   if (!offer && !isComplete) {
     return (
       <div className="min-h-screen noise-bg flex items-center justify-center p-4">
-        <GlassCard className="p-8 text-center max-w-md">
-          <h1 className="text-xl font-bold mb-4">Invalid offer</h1>
-          <p className="text-muted-foreground mb-6">This offer doesn't exist or has expired.</p>
-          <Button asChild>
+        <GlassCard className="p-5 sm:p-8 text-center max-w-md mx-4">
+          <h1 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Invalid offer</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">This offer doesn't exist or has expired.</p>
+          <Button asChild className="w-full sm:w-auto">
             <Link to="/pricing">View Pricing</Link>
           </Button>
         </GlassCard>
@@ -82,16 +82,16 @@ export default function Checkout() {
     return (
       <div className="min-h-screen noise-bg flex items-center justify-center p-4">
         <div className="absolute inset-0 overflow-hidden">
-          <div className="gradient-blur w-96 h-96 bg-green-500/20 top-1/4 left-1/4" />
-          <div className="gradient-blur w-96 h-96 bg-primary/20 bottom-1/4 right-1/4" />
+          <div className="gradient-blur w-64 sm:w-96 h-64 sm:h-96 bg-green-500/20 top-1/4 left-1/4" />
+          <div className="gradient-blur w-64 sm:w-96 h-64 sm:h-96 bg-primary/20 bottom-1/4 right-1/4" />
         </div>
 
-        <GlassCard className="p-8 text-center max-w-md relative z-10" glow>
-          <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="h-8 w-8 text-green-400" />
+        <GlassCard className="p-5 sm:p-8 text-center max-w-md mx-4 relative z-10" glow>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4 sm:mb-6">
+            <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-400" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Purchase Complete!</h1>
-          <p className="text-muted-foreground mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold mb-2">Purchase Complete!</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
             Welcome to MultiBlock {offer?.title}! Your lifetime access is now active.
           </p>
           <div className="space-y-3">
@@ -112,16 +112,16 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen noise-bg flex items-center justify-center p-4">
-      <GlassCard className="p-8 text-center max-w-md">
-        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-          <Zap className="h-8 w-8 text-primary" />
+      <GlassCard className="p-5 sm:p-8 text-center max-w-md mx-4">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4 sm:mb-6">
+          <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">Processing Your Order</h1>
-        <p className="text-muted-foreground mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold mb-2">Processing Your Order</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
           {offer?.title} - ${(offer?.price_cents || 0) / 100}
         </p>
-        <div className="flex items-center justify-center gap-2 text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin" />
+        <div className="flex items-center justify-center gap-2 text-sm sm:text-base text-muted-foreground">
+          <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
           <span>Redirecting to checkout...</span>
         </div>
       </GlassCard>

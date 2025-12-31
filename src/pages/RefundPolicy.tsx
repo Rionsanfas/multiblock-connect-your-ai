@@ -15,11 +15,11 @@ export default function RefundPolicy() {
       <div className="noise-overlay" />
       <Navbar />
 
-      <main className="relative z-10 pt-24 pb-16">
+      <main className="relative z-10 pt-20 sm:pt-24 pb-12 sm:pb-16">
         <div className="container max-w-4xl mx-auto px-4">
           {/* Breadcrumb */}
-          <Breadcrumb className="mb-6">
-            <BreadcrumbList>
+          <Breadcrumb className="mb-4 sm:mb-6">
+            <BreadcrumbList className="text-xs sm:text-sm">
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <Link to="/">Home</Link>
@@ -32,16 +32,16 @@ export default function RefundPolicy() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="bg-card/80 backdrop-blur-xl rounded-2xl border border-border/50 p-8 md:p-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Refund Policy</h1>
-            <p className="text-muted-foreground mb-8">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-border/50 p-5 sm:p-8 md:p-12">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">Refund Policy</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">
               Last Updated: December 12, 2025 · Effective Date: December 12, 2025
             </p>
 
-            <div className="prose prose-invert max-w-none space-y-8">
+            <div className="prose prose-invert max-w-none space-y-6 sm:space-y-8">
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">1. Refund Eligibility</h2>
-                <p className="text-muted-foreground leading-relaxed">
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2 sm:mb-3">1. Refund Eligibility</h2>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   Refunds are available within <strong className="text-foreground">7 days</strong> of your initial
                   purchase date. This policy applies to yearly subscription plans only.
                 </p>

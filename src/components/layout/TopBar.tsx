@@ -62,9 +62,9 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
   };
 
   return (
-    <header className="h-16 flex items-center justify-between px-5 gap-4">
+    <header className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-5 gap-2 sm:gap-4">
       {/* Left section */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {showBoardControls && (
           <button
             onClick={() => navigate("/dashboard")}
@@ -112,7 +112,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
 
       {/* Center section - Zoom controls only */}
       {showBoardControls && (
-        <div className="flex items-center gap-1">
+        <div className="hidden sm:flex items-center gap-1">
           {/* Zoom controls */}
           <div className="flex items-center gap-1 px-2">
             <button

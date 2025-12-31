@@ -7,11 +7,11 @@ export default function TermsOfService() {
       <div className="noise-overlay" />
       <Navbar />
       
-      <main className="relative z-10 pt-24 pb-16">
+      <main className="relative z-10 pt-20 sm:pt-24 pb-12 sm:pb-16">
         <div className="container max-w-4xl mx-auto px-4">
           {/* Breadcrumb */}
-          <Breadcrumb className="mb-6">
-            <BreadcrumbList>
+          <Breadcrumb className="mb-4 sm:mb-6">
+            <BreadcrumbList className="text-xs sm:text-sm">
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <Link to="/">Home</Link>
@@ -24,19 +24,19 @@ export default function TermsOfService() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="bg-card/80 backdrop-blur-xl rounded-2xl border border-border/50 p-8 md:p-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Terms of Service</h1>
-            <p className="text-muted-foreground mb-8">Effective Date: December 12, 2025</p>
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-border/50 p-5 sm:p-8 md:p-12">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">Terms of Service</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">Effective Date: December 12, 2025</p>
 
-            <div className="prose prose-invert max-w-none space-y-8">
+            <div className="prose prose-invert max-w-none space-y-6 sm:space-y-8">
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">1. Introduction</h2>
-                <p className="text-muted-foreground leading-relaxed">Welcome to Multiblock. These Terms of Service ("Terms") govern your access to and use of our platform, including our website, applications, APIs, and all related services. By creating an account or using our services, you agree to be bound by these Terms.</p>
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2 sm:mb-3">1. Introduction</h2>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Welcome to Multiblock. These Terms of Service ("Terms") govern your access to and use of our platform, including our website, applications, APIs, and all related services. By creating an account or using our services, you agree to be bound by these Terms.</p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">2. Eligibility</h2>
-                <p className="text-muted-foreground leading-relaxed">
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2 sm:mb-3">2. Eligibility</h2>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   You must be at least 13 years old to use our services. If you are between 13 and 18 years old, you must have parental or guardian consent. By using our services, you represent and warrant that you meet these eligibility requirements.
                 </p>
               </section>

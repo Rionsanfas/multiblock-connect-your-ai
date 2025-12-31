@@ -195,7 +195,7 @@ export default function Auth() {
 
       {/* Glass Card */}
       <div 
-        className="relative z-10 w-full max-w-md"
+        className="relative z-10 w-full max-w-md px-4 sm:px-0"
         style={cardStyle}
       >
         {/* Card border glow */}
@@ -231,28 +231,28 @@ export default function Auth() {
             }}
           />
 
-          <div className="relative p-8">
+          <div className="relative p-5 sm:p-8">
             {/* Header */}
-            <div className="text-center mb-8" style={headerStyle}>
+            <div className="text-center mb-6 sm:mb-8" style={headerStyle}>
               <Link 
                 to="/" 
-                className="inline-block text-xl font-bold text-foreground hover:text-accent transition-colors mb-6"
+                className="inline-block text-lg sm:text-xl font-bold text-foreground hover:text-accent transition-colors mb-4 sm:mb-6"
               >
                 MultiBlock
               </Link>
-              <h1 className="text-2xl font-bold mb-2 text-foreground">
+              <h1 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">
                 {mode === 'signup' ? 'Create your account' : 'Welcome back'}
               </h1>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 {mode === 'signup' 
                   ? 'Start building with AI-powered blocks' 
                   : 'Sign in to continue to your workspace'}
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {mode === 'signup' && (
-                <div className="space-y-2" style={formFieldStyle(0)}>
+                <div className="space-y-1.5 sm:space-y-2" style={formFieldStyle(0)}>
                   <Label htmlFor="fullName" className="text-xs text-muted-foreground uppercase tracking-wider">
                     Full Name
                   </Label>
@@ -262,7 +262,7 @@ export default function Auth() {
                     placeholder="John Doe"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
+                    className="h-10 sm:h-12 text-sm sm:text-base bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
                   />
                   {errors.fullName && (
                     <p className="text-sm text-destructive">{errors.fullName}</p>
@@ -270,7 +270,7 @@ export default function Auth() {
                 </div>
               )}
               
-              <div className="space-y-2" style={formFieldStyle(mode === 'signup' ? 50 : 0)}>
+              <div className="space-y-1.5 sm:space-y-2" style={formFieldStyle(mode === 'signup' ? 50 : 0)}>
                 <Label htmlFor="email" className="text-xs text-muted-foreground uppercase tracking-wider">
                   Email
                 </Label>
@@ -280,14 +280,14 @@ export default function Auth() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
+                  className="h-10 sm:h-12 text-sm sm:text-base bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
                 />
                 {errors.email && (
                   <p className="text-sm text-destructive">{errors.email}</p>
                 )}
               </div>
               
-              <div className="space-y-2" style={formFieldStyle(mode === 'signup' ? 100 : 50)}>
+              <div className="space-y-1.5 sm:space-y-2" style={formFieldStyle(mode === 'signup' ? 100 : 50)}>
                 <Label htmlFor="password" className="text-xs text-muted-foreground uppercase tracking-wider">
                   Password
                 </Label>
@@ -298,7 +298,7 @@ export default function Auth() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pr-11 h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
+                    className="pr-11 h-10 sm:h-12 text-sm sm:text-base bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
                   />
                   <button
                     type="button"
@@ -325,7 +325,7 @@ export default function Auth() {
               <div style={buttonStyle}>
                 <Button 
                   type="submit" 
-                  className="w-full h-12 rounded-xl gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm" 
+                  className="w-full h-10 sm:h-12 rounded-xl gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm" 
                   disabled={isLoading}
                 >
                   {isLoading ? (
