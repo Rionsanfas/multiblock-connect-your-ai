@@ -35,8 +35,9 @@ export function BlockCard({
   onEndConnection,
   isConnecting,
 }: BlockCardProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [hasDragged, setHasDragged] = useState(false);
+  const isDraggingRef = useRef(false);
+  const hasDraggedRef = useRef(false);
+  const [, forceUpdate] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeCorner, setResizeCorner] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export function BlockCard({
   const startPos = useRef({ x: 0, y: 0 });
   const startSize = useRef({ width: 0, height: 0 });
   const startBlockPos = useRef({ x: 0, y: 0 });
+  const blockPositionRef = useRef({ x: block.position.x, y: block.position.y });
 
   const { openBlockChat, messages, zoom } = useAppStore();
   const {
@@ -69,52 +71,29 @@ export function BlockCard({
   const provider = modelConfig?.provider || null;
   const needsModelSelection = !block.model_id || !modelConfig;
 
+  // Keep position ref in sync
+  useEffect(() => {
+    blockPositionRef.current = { x: block.position.x, y: block.position.y };
+  }, [block.position.x, block.position.y]);
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest(".no-drag")) return;
     e.stopPropagation();
-    setIsDragging(true);
-    setHasDragged(false);
+    e.preventDefault();
+    
+    isDraggingRef.current = true;
+    hasDraggedRef.current = false;
     startPos.current = { x: e.clientX, y: e.clientY };
     dragOffset.current = {
       x: e.clientX / zoom - block.position.x,
       y: e.clientY / zoom - block.position.y,
     };
+    forceUpdate(n => n + 1);
     onSelect();
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging && !isResizing) {
-      const dx = Math.abs(e.clientX - startPos.current.x);
-      const dy = Math.abs(e.clientY - startPos.current.y);
-      if (dx > 3 || dy > 3) {
-        setHasDragged(true);
-      }
-
-      const newX = e.clientX / zoom - dragOffset.current.x;
-      const newY = e.clientY / zoom - dragOffset.current.y;
-
-      // Use requestAnimationFrame for smoother updates
-      requestAnimationFrame(() => {
-        updateBlockPosition(block.id, { x: newX, y: newY });
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    if (isDragging) {
-      if (hasDragged) {
-        // Persist final position to database
-        const finalX = block.position.x;
-        const finalY = block.position.y;
-        persistBlockPosition(block.id, { x: finalX, y: finalY });
-      }
-      setIsDragging(false);
-      setHasDragged(false);
-    }
-  };
-
   const handleClick = () => {
-    if (!hasDragged && !isResizing) {
+    if (!hasDraggedRef.current && !isResizing) {
       openBlockChat(block.id);
     }
   };
@@ -183,23 +162,56 @@ export function BlockCard({
     setResizeCorner(null);
   };
 
+  // Drag event listeners - use refs to avoid stale closures
   useEffect(() => {
-    if (isDragging) {
-      const handleGlobalMouseMove = (e: MouseEvent) => handleMouseMove(e);
-      const handleGlobalMouseUp = () => handleMouseUp();
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current || isResizing) return;
       
-      window.addEventListener("mousemove", handleGlobalMouseMove);
-      window.addEventListener("mouseup", handleGlobalMouseUp);
-      // Also handle if mouse leaves the window
-      window.addEventListener("mouseleave", handleGlobalMouseUp);
-      
-      return () => {
-        window.removeEventListener("mousemove", handleGlobalMouseMove);
-        window.removeEventListener("mouseup", handleGlobalMouseUp);
-        window.removeEventListener("mouseleave", handleGlobalMouseUp);
-      };
-    }
-  }, [isDragging, zoom, block.id, hasDragged]);
+      const dx = Math.abs(e.clientX - startPos.current.x);
+      const dy = Math.abs(e.clientY - startPos.current.y);
+      if (dx > 3 || dy > 3) {
+        hasDraggedRef.current = true;
+      }
+
+      const newX = e.clientX / zoom - dragOffset.current.x;
+      const newY = e.clientY / zoom - dragOffset.current.y;
+      blockPositionRef.current = { x: newX, y: newY };
+
+      requestAnimationFrame(() => {
+        if (isDraggingRef.current) {
+          updateBlockPosition(block.id, { x: newX, y: newY });
+        }
+      });
+    };
+    
+    const handleGlobalMouseUp = () => {
+      if (isDraggingRef.current) {
+        if (hasDraggedRef.current) {
+          // Persist final position to database
+          persistBlockPosition(block.id, blockPositionRef.current);
+        }
+        isDraggingRef.current = false;
+        hasDraggedRef.current = false;
+        forceUpdate(n => n + 1);
+      }
+    };
+    
+    // Always attach listeners to ensure cleanup happens
+    window.addEventListener("mousemove", handleGlobalMouseMove);
+    window.addEventListener("mouseup", handleGlobalMouseUp);
+    window.addEventListener("mouseleave", handleGlobalMouseUp);
+    window.addEventListener("blur", handleGlobalMouseUp);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) handleGlobalMouseUp();
+    });
+    
+    return () => {
+      window.removeEventListener("mousemove", handleGlobalMouseMove);
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
+      window.removeEventListener("mouseleave", handleGlobalMouseUp);
+      window.removeEventListener("blur", handleGlobalMouseUp);
+    };
+  }, [block.id, zoom, isResizing, updateBlockPosition, persistBlockPosition]);
 
   useEffect(() => {
     if (isResizing) {
@@ -247,7 +259,7 @@ export function BlockCard({
         <div
           className={cn(
             "block-card absolute select-none",
-            isDragging ? "cursor-grabbing z-50" : "cursor-move",
+            isDraggingRef.current ? "cursor-grabbing z-50" : "cursor-move",
             isResizing && "z-50"
           )}
           style={{
@@ -412,7 +424,7 @@ export function BlockCard({
               isSelected 
                 ? "shadow-[0_8px_32px_rgba(0,0,0,0.4)]" 
                 : "shadow-[0_4px_24px_rgba(0,0,0,0.3)]",
-              isDragging && "shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+              isDraggingRef.current && "shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
             )}
             onMouseUp={(e) => {
               // Allow dropping connections anywhere on the main card

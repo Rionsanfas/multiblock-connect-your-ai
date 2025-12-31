@@ -55,7 +55,7 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
 
   return (
     <>
-      <aside className="absolute left-4 top-4 z-20 flex flex-col gap-2">
+      <aside className="fixed left-4 top-20 z-50 flex flex-col gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="p-3 rounded-xl btn-3d-shiny text-foreground">
