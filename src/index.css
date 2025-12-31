@@ -2944,9 +2944,9 @@
 .user-message-glow::after {
   content: '';
   position: absolute;
-  top: 0;
+  top: 8px;
   right: -6px;
-  bottom: 0;
+  height: 20px;
   width: 4px;
   border-radius: 4px;
   background: linear-gradient(
@@ -2956,7 +2956,8 @@
     hsl(45, 90%, 55%) 100%
   );
   box-shadow: 
-    0 0 8px hsl(45, 100%, 50% / 0.8),
-    0 0 16px hsl(45, 100%, 50% / 0.5),
-    0 0 24px hsl(45, 100%, 50% / 0.3);
+    0 0 10px hsl(45, 100%, 50% / 0.9),
+    0 0 20px hsl(45, 100%, 50% / 0.6),
+    0 0 30px hsl(45, 100%, 50% / 0.4),
+    0 0 40px hsl(45, 100%, 50% / 0.2);
 }
