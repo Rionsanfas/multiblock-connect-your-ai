@@ -124,7 +124,6 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
         strokeOpacity="0.15"
         strokeLinecap="round"
         filter={`url(#${glowFilterId})`}
-        className="transition-all duration-300"
       />
 
       {/* Middle glow layer */}
@@ -135,7 +134,6 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
         strokeWidth={isDrawing ? "6" : "10"}
         strokeOpacity="0.3"
         strokeLinecap="round"
-        className="transition-all duration-300"
       />
 
       {/* Main visible path - bright core */}
@@ -146,7 +144,6 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
         strokeWidth={isDrawing ? "2" : "3"}
         strokeDasharray={isDrawing ? "8 6" : "none"}
         strokeLinecap="round"
-        className="transition-all duration-300"
       />
 
       {/* Inner bright highlight - creates the bright center line effect */}
