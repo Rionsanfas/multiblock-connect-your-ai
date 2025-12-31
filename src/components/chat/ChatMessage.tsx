@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Copy, Check, Trash2, RotateCcw, User, Bot, Paperclip } from 'lucide-react';
+import { Copy, Check, Trash2, RotateCcw, Paperclip } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -40,13 +40,6 @@ export function ChatMessage({
         isUser && "justify-end"
       )}
     >
-      {/* Avatar for assistant */}
-      {isAssistant && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-          <Bot className="h-4 w-4 text-primary" />
-        </div>
-      )}
-
       {/* Message content */}
       <div className={cn("flex flex-col max-w-[85%]", isUser && "items-end")}>
         {/* Attachments */}
@@ -67,12 +60,12 @@ export function ChatMessage({
           </div>
         )}
 
-        {/* Message bubble */}
+        {/* Message bubble with glow effect for user messages */}
         <div
           className={cn(
-            "rounded-2xl text-sm",
+            "rounded-2xl text-sm relative",
             isUser 
-              ? "bg-primary text-primary-foreground px-4 py-2.5"
+              ? "bg-secondary/60 text-foreground px-4 py-2.5 user-message-glow"
               : "bg-transparent py-1"
           )}
         >
@@ -145,13 +138,6 @@ export function ChatMessage({
           </div>
         )}
       </div>
-
-      {/* Avatar for user */}
-      {isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
-          <User className="h-4 w-4 text-muted-foreground" />
-        </div>
-      )}
     </div>
   );
 }

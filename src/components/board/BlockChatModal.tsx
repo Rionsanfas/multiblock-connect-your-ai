@@ -6,7 +6,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2, AlertCircle } from "lucide-react";
+import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2, AlertCircle, Maximize2, Minimize2, PanelLeftClose, PanelLeft, MessageSquare } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ import { ProviderBadge } from "@/components/ui/provider-badge";
 import { Spinner } from "@/components/ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAppStore } from "@/store/useAppStore";
 import { useBlockMessages, useMessageActions, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { ChatMessage } from "@/components/chat/ChatMessage";
@@ -24,6 +25,7 @@ import { useUserApiKeys } from "@/hooks/useApiKeys";
 import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useModelConfig";
 import { useBlockIncomingContext } from "@/hooks/useBlockConnections";
 import { useBlock } from "@/hooks/useBlockData";
+import { useBoardBlocks } from "@/hooks/useBoardBlocks";
 import { blocksDb } from "@/lib/database";
 import { getModelConfig, PROVIDERS, type Provider } from "@/types";
 import { toast } from "sonner";
@@ -57,12 +59,14 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [streamingContent, setStreamingContent] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState("");
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const { data: supabaseBlock, isLoading: blockLoading, error: blockError } = useBlock(blockId);
-  const { closeBlockChat } = useAppStore();
+  const { closeBlockChat, openBlockChat } = useAppStore();
   
   const block = supabaseBlock ? {
     id: supabaseBlock.id,
@@ -82,6 +86,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const { sendMessage: persistMessage, deleteMessage: deletePersistedMessage } = useMessageActions(blockId);
   const blockUsage = useBlockUsage(blockId);
   const incomingContext = useBlockIncomingContext(blockId);
+  
+  // Get all blocks on this board for the sidebar
+  const boardBlocks = useBoardBlocks(block?.board_id || '');
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -222,10 +229,29 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   return (
     <Dialog open onOpenChange={() => closeBlockChat()}>
-      <DialogContent hideCloseButton className="max-w-2xl w-[90vw] h-[80vh] max-h-[700px] flex flex-col rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl">
+      <DialogContent 
+        hideCloseButton 
+        className={cn(
+          "flex flex-col rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300",
+          isFullscreen 
+            ? "w-[100vw] h-[100vh] max-w-none max-h-none rounded-none" 
+            : "max-w-2xl w-[90vw] h-[80vh] max-h-[700px]"
+        )}
+      >
         <DialogHeader className="px-5 py-4 border-b border-border/20 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Sidebar toggle - only show in fullscreen */}
+              {isFullscreen && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="p-2 rounded-lg"
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                >
+                  {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                </Button>
+              )}
               <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -275,6 +301,15 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                   </div>
                 </PopoverContent>
               </Popover>
+              {/* Fullscreen toggle button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="p-2 rounded-lg"
+                onClick={() => setIsFullscreen(!isFullscreen)}
+              >
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
               <Button variant="ghost" size="icon" className="p-2 rounded-lg" onClick={() => closeBlockChat()}><X className="h-4 w-4" /></Button>
             </div>
           </div>
@@ -298,29 +333,78 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-6 w-6" /></div>
-          : blockMessages.length === 0 && !streamingContent ? (
-            <div className="flex flex-col items-center justify-center h-full text-center"><Sparkles className="h-8 w-8 text-muted-foreground/50 mb-3" /><p className="text-muted-foreground text-sm">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div>
-          ) : (
-            <>
-              {blockMessages.map((message) => (
-                <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} />
-              ))}
-              {streamingContent && <ChatMessage message={{ id: 'streaming', block_id: blockId, role: 'assistant', content: streamingContent, size_bytes: 0, created_at: new Date().toISOString() }} isStreaming />}
-              {messageStatus === 'waiting_llm' && !streamingContent && (
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <Spinner className="h-4 w-4" />
-                  <span>Thinking...</span>
+        {/* Main content area with optional sidebar */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar - only visible in fullscreen mode */}
+          {isFullscreen && isSidebarOpen && (
+            <div className="w-64 border-r border-border/20 flex-shrink-0 flex flex-col bg-secondary/5">
+              <div className="px-4 py-3 border-b border-border/20">
+                <h3 className="text-sm font-medium text-muted-foreground">Board Chats</h3>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-2 space-y-1">
+                  {boardBlocks.map((b) => {
+                    const isActive = b.id === blockId;
+                    const bModelConfig = b.model_id ? getModelConfig(b.model_id) : null;
+                    return (
+                      <button
+                        key={b.id}
+                        onClick={() => openBlockChat(b.id)}
+                        className={cn(
+                          "w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
+                          isActive 
+                            ? "bg-secondary/60 text-foreground" 
+                            : "hover:bg-secondary/40 text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {/* Active indicator glow */}
+                        {isActive && (
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full bg-gradient-to-b from-[hsl(320,70%,50%/0.8)] via-[hsl(280,60%,55%/1)] to-[hsl(320,70%,50%/0.8)] blur-[2px]" />
+                        )}
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                          <span className="text-sm truncate flex-1">{b.title}</span>
+                        </div>
+                        {bModelConfig && (
+                          <div className="mt-1 ml-6">
+                            <span className="text-[10px] text-muted-foreground/70">{bModelConfig.name}</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </>
+              </ScrollArea>
+            </div>
           )}
-        </div>
 
-        <div className="px-5 py-4 border-t border-border/20 flex-shrink-0">
-          <ChatInput onSend={handleSend} onStop={handleStop} isRunning={isRunning} disabled={needsModelSelection || !hasKeyForCurrentProvider} placeholder={needsModelSelection ? "Select a model..." : !hasKeyForCurrentProvider ? "Add an API key..." : "Type a message..."} />
+          {/* Chat content area */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-6 w-6" /></div>
+              : blockMessages.length === 0 && !streamingContent ? (
+                <div className="flex flex-col items-center justify-center h-full text-center"><Sparkles className="h-8 w-8 text-muted-foreground/50 mb-3" /><p className="text-muted-foreground text-sm">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div>
+              ) : (
+                <>
+                  {blockMessages.map((message) => (
+                    <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} />
+                  ))}
+                  {streamingContent && <ChatMessage message={{ id: 'streaming', block_id: blockId, role: 'assistant', content: streamingContent, size_bytes: 0, created_at: new Date().toISOString() }} isStreaming />}
+                  {messageStatus === 'waiting_llm' && !streamingContent && (
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Spinner className="h-4 w-4" />
+                      <span>Thinking...</span>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </>
+              )}
+            </div>
+
+            <div className="px-5 py-4 border-t border-border/20 flex-shrink-0">
+              <ChatInput onSend={handleSend} onStop={handleStop} isRunning={isRunning} disabled={needsModelSelection || !hasKeyForCurrentProvider} placeholder={needsModelSelection ? "Select a model..." : !hasKeyForCurrentProvider ? "Add an API key..." : "Type a message..."} />
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

@@ -101,13 +101,16 @@ export function BlockCard({
   };
 
   const handleMouseUp = () => {
-    if (isDragging && hasDragged) {
-      // Persist final position to database
-      const finalX = block.position.x;
-      const finalY = block.position.y;
-      persistBlockPosition(block.id, { x: finalX, y: finalY });
+    if (isDragging) {
+      if (hasDragged) {
+        // Persist final position to database
+        const finalX = block.position.x;
+        const finalY = block.position.y;
+        persistBlockPosition(block.id, { x: finalX, y: finalY });
+      }
+      setIsDragging(false);
+      setHasDragged(false);
     }
-    setIsDragging(false);
   };
 
   const handleClick = () => {
@@ -182,14 +185,21 @@ export function BlockCard({
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
+      const handleGlobalMouseMove = (e: MouseEvent) => handleMouseMove(e);
+      const handleGlobalMouseUp = () => handleMouseUp();
+      
+      window.addEventListener("mousemove", handleGlobalMouseMove);
+      window.addEventListener("mouseup", handleGlobalMouseUp);
+      // Also handle if mouse leaves the window
+      window.addEventListener("mouseleave", handleGlobalMouseUp);
+      
       return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
+        window.removeEventListener("mousemove", handleGlobalMouseMove);
+        window.removeEventListener("mouseup", handleGlobalMouseUp);
+        window.removeEventListener("mouseleave", handleGlobalMouseUp);
       };
     }
-  }, [isDragging, zoom]);
+  }, [isDragging, zoom, block.id, hasDragged]);
 
   useEffect(() => {
     if (isResizing) {
