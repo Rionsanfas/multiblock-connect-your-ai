@@ -31,7 +31,19 @@ export function FloatingBlocksBackground({ showLightBeam = false }: FloatingBloc
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       {/* ============================================
-          SOFT CINEMATIC AMBIENT LIGHTS
+          GRID DOTS PATTERN
+          ============================================ */}
+      <div 
+        className="absolute inset-0 transition-opacity duration-[2000ms]"
+        style={{
+          backgroundImage: `radial-gradient(circle at center, hsl(0 0% 30% / 0.4) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+          opacity: showLightBeam ? 0.6 : 0,
+        }}
+      />
+
+      {/* ============================================
+          SOFT CINEMATIC AMBIENT LIGHTS (B&W)
           4K quality gradient orbs
           ============================================ */}
       
@@ -43,7 +55,7 @@ export function FloatingBlocksBackground({ showLightBeam = false }: FloatingBloc
           left: '-10%',
           width: '70%',
           height: '70%',
-          background: 'radial-gradient(ellipse at center, hsl(220 30% 20% / 0.4) 0%, hsl(220 20% 15% / 0.2) 30%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, hsl(0 0% 25% / 0.4) 0%, hsl(0 0% 15% / 0.2) 30%, transparent 70%)',
           filter: 'blur(80px)',
           opacity: showLightBeam ? 0.8 : 0,
         }}
@@ -63,7 +75,7 @@ export function FloatingBlocksBackground({ showLightBeam = false }: FloatingBloc
         }}
       />
 
-      {/* Subtle warm accent - right side */}
+      {/* Subtle gray accent - right side */}
       <div 
         className="absolute transition-opacity duration-[3000ms]"
         style={{
@@ -71,13 +83,13 @@ export function FloatingBlocksBackground({ showLightBeam = false }: FloatingBloc
           right: '-5%',
           width: '45%',
           height: '60%',
-          background: 'radial-gradient(ellipse at center, hsl(30 20% 20% / 0.15) 0%, hsl(25 15% 15% / 0.08) 40%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, hsl(0 0% 30% / 0.15) 0%, hsl(0 0% 20% / 0.08) 40%, transparent 70%)',
           filter: 'blur(100px)',
           opacity: showLightBeam ? 0.7 : 0,
         }}
       />
 
-      {/* Cool accent - bottom left */}
+      {/* Cool gray accent - bottom left */}
       <div 
         className="absolute transition-opacity duration-[2800ms]"
         style={{
@@ -85,7 +97,7 @@ export function FloatingBlocksBackground({ showLightBeam = false }: FloatingBloc
           left: '5%',
           width: '40%',
           height: '45%',
-          background: 'radial-gradient(ellipse at center, hsl(200 30% 18% / 0.2) 0%, hsl(210 25% 12% / 0.1) 40%, transparent 70%)',
+          background: 'radial-gradient(ellipse at center, hsl(0 0% 25% / 0.2) 0%, hsl(0 0% 15% / 0.1) 40%, transparent 70%)',
           filter: 'blur(90px)',
           opacity: showLightBeam ? 0.6 : 0,
         }}

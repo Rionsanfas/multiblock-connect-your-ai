@@ -67,8 +67,9 @@
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 30 15% 50%;
-    --accent-foreground: 0 0% 95%;
+    /* Gold accent for pricing cards only */
+    --accent: 45 80% 55%;
+    --accent-foreground: 0 0% 4%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 95%;
@@ -79,8 +80,8 @@
 
     --radius: 0.75rem;
 
-    /* Custom design tokens */
-    --glow-warm: 30 20% 60%;
+    /* Custom design tokens - black/white theme */
+    --glow-warm: 0 0% 70%;
     --glass-bg: 0 0% 100% / 0.03;
     --glass-border: 0 0% 100% / 0.08;
     --noise-opacity: 0.03;
