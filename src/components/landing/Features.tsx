@@ -27,7 +27,7 @@ const Features = () => {
   return (
     <section
       id="features"
-      className="relative"
+      className="relative dot-grid-bg"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
       <div
@@ -57,7 +57,7 @@ const Features = () => {
           </p>
         </AnimatedSection>
 
-        {/* Premium Dark Glass Cards Grid */}
+        {/* Premium Glassmorphism Feature Cards Grid with 3D Icons */}
         <div
           className="grid"
           style={{
@@ -71,29 +71,40 @@ const Features = () => {
               key={feature.title}
               delay={index * 150}
             >
-              <div className="premium-dark-card group h-full">
-                {/* Inner decorative lines */}
-                <div className="premium-dark-card-lines" />
-                
-                {/* Icon container */}
-                <div className="premium-dark-card-icon-area">
-                  <div className="premium-dark-card-icon">
-                    <Feature3DIcon type={feature.iconType} />
-                  </div>
-                  {/* Connection nodes decoration */}
-                  <div className="premium-dark-card-node premium-dark-card-node-left" />
-                  <div className="premium-dark-card-node premium-dark-card-node-right" />
+              <div
+                className="glass-card-hover group dot-grid-card h-full"
+                style={{
+                  padding: "clamp(20px, 2.5vw, 28px)",
+                  paddingTop: "clamp(12px, 1.5vw, 16px)",
+                }}
+              >
+                {/* 3D Animated Icon */}
+                <div className="relative z-10">
+                  <Feature3DIcon type={feature.iconType} />
                 </div>
 
-                {/* Content */}
-                <div className="premium-dark-card-content">
-                  <h3 className="premium-dark-card-title">
-                    {feature.title}
-                  </h3>
-                  <p className="premium-dark-card-desc">
-                    {feature.description}
-                  </p>
-                </div>
+                {/* Title */}
+                <h3
+                  className="font-semibold text-foreground text-wrap-balance text-center relative z-10"
+                  style={{
+                    fontSize: "clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem)",
+                    marginBottom: "clamp(10px, 1.5vw, 14px)",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {feature.title}
+                </h3>
+
+                {/* Description */}
+                <p
+                  className="text-muted-foreground leading-relaxed text-break text-center relative z-10"
+                  style={{
+                    fontSize: "clamp(0.875rem, 0.82rem + 0.2vw, 0.95rem)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {feature.description}
+                </p>
               </div>
             </AnimatedElement>
           ))}

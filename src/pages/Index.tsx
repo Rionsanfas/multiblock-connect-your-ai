@@ -25,17 +25,7 @@ const Index = () => {
   }
 
   return (
-    <div className="liquid-bg noise-overlay min-h-screen relative">
-      {/* Full-page grid dots background */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0"
-        style={{
-          backgroundImage: `radial-gradient(circle at center, hsl(0 0% 50%) 0.8px, transparent 0.8px)`,
-          backgroundSize: '20px 20px',
-          opacity: 0.25,
-        }}
-        aria-hidden="true"
-      />
+    <div className="liquid-bg noise-overlay min-h-screen dot-grid-bg">
       <Navbar />
       <main className="relative z-10">
         <Hero />

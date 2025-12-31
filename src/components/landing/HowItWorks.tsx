@@ -119,7 +119,7 @@ const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="relative"
+      className="relative dot-grid-bg"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
       {/* Background blur effect */}
@@ -163,25 +163,19 @@ const HowItWorks = () => {
         <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left side - Add Blocks (Big Card) */}
           <AnimatedElement delay={100}>
-            <div className="premium-dark-card premium-dark-card-large group h-full min-h-[400px] lg:min-h-[500px]">
-              {/* Inner decorative lines */}
-              <div className="premium-dark-card-lines" />
-              
-              {/* Icon area */}
-              <div className="premium-dark-card-icon-area flex-1">
-                <div className="premium-dark-card-icon premium-dark-card-icon-large">
+            <div className="hiw-bento-card hiw-card-3d hiw-card-3d-left hiw-card-featured dot-grid-card h-full min-h-[400px] lg:min-h-[500px]">
+              <div className="hiw-card-3d-inner h-full flex flex-col">
+                {/* 3D Plus Icon */}
+                <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
                   <Plus3DIcon />
                 </div>
-                {/* Connection nodes decoration */}
-                <div className="premium-dark-card-node premium-dark-card-node-left" />
-                <div className="premium-dark-card-node premium-dark-card-node-right" />
-              </div>
-              
-              <div className="premium-dark-card-content p-6">
-                <h3 className="premium-dark-card-title text-2xl mb-3">Add Blocks</h3>
-                <p className="premium-dark-card-desc text-base">
-                  Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, and more.
-                </p>
+                
+                <div className="hiw-bento-content p-6">
+                  <h3 className="hiw-bento-title text-2xl mb-3">Add Blocks</h3>
+                  <p className="hiw-bento-desc text-base">
+                    Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, and more.
+                  </p>
+                </div>
               </div>
             </div>
           </AnimatedElement>
@@ -190,42 +184,38 @@ const HowItWorks = () => {
           <div className="flex flex-col gap-6">
             {/* Card 2 - Chat with Models */}
             <AnimatedElement delay={200}>
-              <div className="premium-dark-card group h-full min-h-[230px]">
-                <div className="premium-dark-card-lines" />
-                
-                <div className="premium-dark-card-icon-area flex-1">
-                  <div className="hiw-overflow-text-new flex items-center justify-center">
+              <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[230px]">
+                <div className="hiw-card-3d-inner h-full flex flex-col">
+                  {/* Sequential letter highlight text */}
+                  <div className="hiw-overflow-text-new flex-1 flex items-center justify-center">
                     <LetterHighlight text="Compare" />
                   </div>
-                </div>
-                
-                <div className="premium-dark-card-content p-5">
-                  <h3 className="premium-dark-card-title text-xl mb-2">Chat with Models</h3>
-                  <p className="premium-dark-card-desc text-sm">
-                    Interact with each model independently. Compare responses in real-time.
-                  </p>
+                  
+                  <div className="hiw-bento-content hiw-content-bottom p-5">
+                    <h3 className="hiw-bento-title text-xl mb-2">Chat with Models</h3>
+                    <p className="hiw-bento-desc text-sm">
+                      Interact with each model independently. Compare responses in real-time.
+                    </p>
+                  </div>
                 </div>
               </div>
             </AnimatedElement>
 
             {/* Card 3 - Connect Them */}
             <AnimatedElement delay={300}>
-              <div className="premium-dark-card group h-full min-h-[230px]">
-                <div className="premium-dark-card-lines" />
-                
-                <div className="premium-dark-card-icon-area flex-1">
-                  <div className="premium-dark-card-icon">
+              <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[230px]">
+                <div className="hiw-card-3d-inner h-full flex flex-col">
+                  {/* 3D Link Icon */}
+                  <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
                     <Link3DIcon />
                   </div>
-                  <div className="premium-dark-card-node premium-dark-card-node-left" />
-                  <div className="premium-dark-card-node premium-dark-card-node-right" />
-                </div>
-                
-                <div className="premium-dark-card-content p-5">
-                  <h3 className="premium-dark-card-title text-xl mb-2">Connect Them</h3>
-                  <p className="premium-dark-card-desc text-sm">
-                    Draw connections between blocks. One model's output becomes another's input.
-                  </p>
+                  
+                  <div className="hiw-bento-content p-5">
+                    <h3 className="hiw-bento-title text-xl mb-2">Connect Them</h3>
+                    <p className="hiw-bento-desc text-sm">
+                      Draw connections between blocks. One model's output becomes another's input.
+                    </p>
+                  </div>
                 </div>
               </div>
             </AnimatedElement>
