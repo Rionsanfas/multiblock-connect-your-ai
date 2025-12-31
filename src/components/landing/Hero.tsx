@@ -1,6 +1,7 @@
 import { ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { HeroBlocks } from "./HeroBlocks";
+import { FloatingBlocksBackground } from "./FloatingBlocksBackground";
 import { useState, useEffect } from "react";
 
 const Hero = () => {
@@ -47,6 +48,9 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen overflow-hidden" style={{ paddingTop: "clamp(80px, 12vw, 128px)", paddingBottom: "clamp(48px, 6vw, 80px)" }}>
+      {/* Floating Blocks Background - blurry ambient effect */}
+      <FloatingBlocksBackground />
+      
       {/* Soft Warm Noisy Background */}
       <div className="absolute inset-0 hero-glow-bg" />
       <div className="absolute inset-0 hero-noise" />

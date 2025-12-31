@@ -226,6 +226,30 @@ export type Database = {
           },
         ]
       }
+      ltd_inventory: {
+        Row: {
+          created_at: string
+          id: string
+          remaining_seats: number
+          total_seats: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          remaining_seats?: number
+          total_seats?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          remaining_seats?: number
+          total_seats?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           block_id: string
@@ -704,6 +728,7 @@ export type Database = {
         Args: { p_file_size_bytes?: number; p_user_id: string }
         Returns: boolean
       }
+      decrement_ltd_seats: { Args: never; Returns: number }
       get_block_incoming_connections: {
         Args: { p_block_id: string }
         Returns: {
@@ -750,6 +775,13 @@ export type Database = {
           storage_used_bytes: number
           storage_used_mb: number
           tier: Database["public"]["Enums"]["subscription_tier"]
+        }[]
+      }
+      get_ltd_inventory: {
+        Args: never
+        Returns: {
+          remaining_seats: number
+          total_seats: number
         }[]
       }
       get_user_api_key_count: { Args: { p_user_id: string }; Returns: number }
