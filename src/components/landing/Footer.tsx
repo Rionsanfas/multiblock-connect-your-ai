@@ -44,9 +44,9 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Links - flex-wrap for graceful wrapping */}
+          {/* Links - centered properly */}
           <div 
-            className="flex flex-wrap items-center justify-center order-1 md:order-2"
+            className="flex flex-wrap items-center justify-center order-1 md:order-2 flex-1 md:justify-center"
             style={{ gap: "clamp(16px, 3vw, 32px)" }}
           >
             <Link 

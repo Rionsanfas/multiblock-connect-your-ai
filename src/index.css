@@ -2395,8 +2395,8 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, hsl(var(--foreground) / 0.12) 1px, transparent 1px);
-  background-size: 16px 16px;
+  background-image: radial-gradient(circle, hsl(var(--foreground) / 0.06) 1px, transparent 1px);
+  background-size: 20px 20px;
   pointer-events: none;
   z-index: 0;
 }
