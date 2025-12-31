@@ -260,7 +260,9 @@ export default function Dashboard() {
                 <p className="text-muted-foreground">{userBoards.length} boards</p>
               </div>
             </div>
-            <WorkspaceSwitcher collapsed />
+            <div className="absolute top-6 right-6">
+              <WorkspaceSwitcher />
+            </div>
           </div>
 
           {/* Toolbar */}
