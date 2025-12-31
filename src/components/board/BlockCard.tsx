@@ -225,10 +225,10 @@ export function BlockCard({
     }
   };
 
-  // Bracket configuration
-  const bracketOffset = 10; // Offset from block edge for connection bracket
-  const cornerOffset = 16; // Larger offset for corner resize brackets
-  const cornerBracketSize = 18; // Size of corner resize brackets
+  // Bracket configuration - symmetric spacing
+  const bracketOffset = 12; // Symmetric offset from block edge for connection bracket
+  const cornerOffset = 20; // Larger offset for corner resize brackets
+  const cornerBracketSize = 20; // Size of corner resize brackets
   const borderRadius = 16; // Matches rounded-2xl
 
   return (
@@ -253,35 +253,35 @@ export function BlockCard({
             setIsConnectionZoneHovered(false);
           }}
         >
-          {/* Layer 1: Full outline bracket for connections - always visible, offset from block */}
+          {/* Layer 1: Full outline bracket for connections - always visible, symmetric offset */}
           <div 
             className={cn(
               "absolute pointer-events-none transition-all duration-150",
-              isConnectionZoneHovered && "drop-shadow-[0_0_8px_hsl(0,0%,60%)]"
+              isConnectionZoneHovered && "drop-shadow-[0_0_12px_hsl(0,0%,70%)]"
             )}
             style={{
               top: -bracketOffset,
               left: -bracketOffset,
-              width: `calc(100% + ${bracketOffset * 2}px)`,
-              height: `calc(100% + ${bracketOffset * 2}px)`,
+              width: size.width + bracketOffset * 2,
+              height: size.height + bracketOffset * 2,
             }}
           >
             <svg 
-              className="w-full h-full overflow-visible"
-              viewBox={`0 0 ${size.width + bracketOffset * 2} ${size.height + bracketOffset * 2}`}
-              preserveAspectRatio="none"
+              width={size.width + bracketOffset * 2}
+              height={size.height + bracketOffset * 2}
+              className="overflow-visible"
             >
               <rect
-                x="1.5"
-                y="1.5"
-                width={size.width + bracketOffset * 2 - 3}
-                height={size.height + bracketOffset * 2 - 3}
-                rx={borderRadius + bracketOffset - 4}
-                ry={borderRadius + bracketOffset - 4}
+                x="2"
+                y="2"
+                width={size.width + bracketOffset * 2 - 4}
+                height={size.height + bracketOffset * 2 - 4}
+                rx={borderRadius + 8}
+                ry={borderRadius + 8}
                 fill="none"
-                stroke={isConnectionZoneHovered ? "hsl(0, 0%, 55%)" : "hsl(0, 0%, 30%)"}
-                strokeWidth={isConnectionZoneHovered ? "2" : "1.5"}
-                strokeOpacity={isConnectionZoneHovered ? "0.9" : "0.6"}
+                stroke={isConnectionZoneHovered ? "hsl(0, 0%, 60%)" : "hsl(0, 0%, 35%)"}
+                strokeWidth={isConnectionZoneHovered ? "2.5" : "1.5"}
+                strokeOpacity={isConnectionZoneHovered ? "1" : "0.7"}
               />
             </svg>
           </div>
