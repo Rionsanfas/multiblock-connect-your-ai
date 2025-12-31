@@ -1,5 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
+import { SectionBackground } from "./SectionBackground";
 
 const faqs = [
   {
@@ -48,12 +49,15 @@ const FAQ = () => {
   return (
     <section
       id="faq"
-      className="relative dot-grid-bg"
+      className="relative"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
+      {/* Background effects */}
+      <SectionBackground intensity="subtle" />
+
       {/* Container */}
       <div
-        className="w-full max-w-[1200px] mx-auto"
+        className="relative z-10 w-full max-w-[1200px] mx-auto"
         style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
       >
         {/* Header */}
