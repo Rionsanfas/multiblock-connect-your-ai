@@ -56,8 +56,12 @@ const Pricing = () => {
 
           {/* Plan Category Tabs */}
           <AnimatedSection delay={100}>
-            <Tabs defaultValue="individual" className="w-full">
+            <Tabs defaultValue="lifetime" className="w-full">
               <TabsList className="tabs-3d grid w-full max-w-2xl mx-auto grid-cols-3 mb-8">
+                <TabsTrigger value="lifetime" className="flex items-center gap-2">
+                  <Infinity className="h-4 w-4" />
+                  Lifetime
+                </TabsTrigger>
                 <TabsTrigger value="individual" className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Individual
@@ -65,10 +69,6 @@ const Pricing = () => {
                 <TabsTrigger value="team" className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Teams
-                </TabsTrigger>
-                <TabsTrigger value="lifetime" className="flex items-center gap-2">
-                  <Infinity className="h-4 w-4" />
-                  Lifetime
                 </TabsTrigger>
               </TabsList>
 
