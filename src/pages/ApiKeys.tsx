@@ -137,25 +137,25 @@ export default function ApiKeys() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-bold">API Keys</h1>
-            <p className="text-muted-foreground">Manage your AI provider API keys (BYOK)</p>
+            <h1 className="text-xl sm:text-2xl font-bold">API Keys</h1>
+            <p className="text-sm text-muted-foreground">Manage your AI provider API keys (BYOK)</p>
           </div>
-          <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl">
+          <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Add Key
           </Button>
         </div>
 
         {/* Security Notice */}
-        <GlassCard variant="soft" className="p-4 rounded-xl mb-6 border-primary/20">
-          <div className="flex items-center gap-3">
-            <Shield className="h-5 w-5 text-primary" />
-            <div className="text-sm">
+        <GlassCard variant="soft" className="p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 border-primary/20">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+            <div className="text-xs sm:text-sm">
               <span className="font-medium">Your keys are stored securely</span>
-              <span className="text-muted-foreground ml-2">Keys are encrypted in our database</span>
+              <span className="text-muted-foreground ml-1 sm:ml-2 hidden sm:inline">Keys are encrypted in our database</span>
             </div>
           </div>
         </GlassCard>
@@ -185,43 +185,43 @@ export default function ApiKeys() {
             }
           />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {userKeys.map((key: ApiKeyDisplay) => {
               const providerInfo = getProviderInfo(key.provider);
               return (
-                <GlassCard key={key.id} variant="soft" className="p-5 rounded-2xl">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                <GlassCard key={key.id} variant="soft" className="p-3 sm:p-5 rounded-xl sm:rounded-2xl">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                       <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center key-icon-3d"
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center key-icon-3d flex-shrink-0"
                         style={{ backgroundColor: `${providerInfo.color}20` }}
                       >
-                        <Key className="h-5 w-5" style={{ color: providerInfo.color }} />
+                        <Key className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: providerInfo.color }} />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-lg text-foreground">{providerInfo.name}</h3>
+                          <h3 className="font-semibold text-sm sm:text-lg text-foreground truncate">{providerInfo.name}</h3>
                           {key.is_valid === false && (
                             <Badge variant="destructive" className="text-xs">Invalid</Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          <span className="font-mono">{showKeys[key.id] ? key.key_hint : "••••••••••••"}</span>
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 text-xs text-muted-foreground mt-0.5 sm:mt-1">
+                          <span className="font-mono">{showKeys[key.id] ? key.key_hint : "••••••"}</span>
                           <button 
                             onClick={() => toggleShowKey(key.id)}
                             className="p-1 rounded hover:bg-secondary/50 transition-colors"
                           >
                             {showKeys[key.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                           </button>
-                          <span>•</span>
-                          <span>Added {formatDate(key.created_at)}</span>
+                          <span className="hidden sm:inline">•</span>
+                          <span className="hidden sm:inline">Added {formatDate(key.created_at)}</span>
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={() => setDeleteId(key.id)}
                       disabled={deleteKeyMutation.isPending}
-                      className="p-2.5 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                      className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105 disabled:opacity-50 flex-shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

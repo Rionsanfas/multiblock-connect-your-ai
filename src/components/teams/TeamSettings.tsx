@@ -163,11 +163,11 @@ export function TeamSettings() {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Team Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your team's settings and members</p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Team Settings</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage your team's settings and members</p>
       </div>
 
       {/* Team Info */}
@@ -263,34 +263,36 @@ export function TeamSettings() {
         <CardContent className="space-y-4">
           {/* Invite Form */}
           {canManageTeam && (
-            <div className="flex gap-2 pb-4 border-b border-border/30">
+            <div className="flex flex-col sm:flex-row gap-2 pb-4 border-b border-border/30">
               <Input
                 placeholder="Email address"
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                className="flex-1 bg-secondary/40 border-border/40 focus:border-primary/50"
+                className="flex-1 bg-secondary/40 border-border/40 focus:border-primary/50 text-sm"
               />
-              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamRole)}>
-                <SelectTrigger className="w-32 bg-secondary/40 border-border/40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30">
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button 
-                onClick={handleCreateInvitation}
-                disabled={!inviteEmail.trim() || createInvitation.isPending}
-                className="btn-3d-primary"
-              >
-                {createInvitation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Mail className="h-4 w-4" />
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamRole)}>
+                  <SelectTrigger className="w-28 sm:w-32 bg-secondary/40 border-border/40 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30">
+                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={handleCreateInvitation}
+                  disabled={!inviteEmail.trim() || createInvitation.isPending}
+                  className="btn-3d-primary"
+                >
+                  {createInvitation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
           )}
 

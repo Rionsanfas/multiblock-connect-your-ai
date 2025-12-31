@@ -35,8 +35,8 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "relative flex flex-col h-screen bg-card/80 backdrop-blur-xl border-r border-border/10 transition-all duration-300 rounded-r-2xl",
-        collapsed ? "w-[72px]" : "w-60"
+        "relative hidden md:flex flex-col h-screen bg-card/80 backdrop-blur-xl border-r border-border/10 transition-all duration-300 rounded-r-2xl",
+        collapsed ? "w-[72px]" : "w-52 lg:w-60"
       )}
     >
       {/* Dashboard Title */}

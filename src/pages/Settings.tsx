@@ -71,33 +71,33 @@ export default function Settings() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground mt-1">Manage your account and preferences</p>
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Settings</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage your account and preferences</p>
         </div>
 
-        <Tabs defaultValue="billing" className="space-y-6">
-          <TabsList className="tabs-3d flex-wrap h-auto gap-1 p-1.5">
-            <TabsTrigger value="billing" className="gap-2 px-4 py-2.5">
-              <CreditCard className="h-4 w-4 icon-3d" />
-              Billing
+        <Tabs defaultValue="billing" className="space-y-4 sm:space-y-6">
+          <TabsList className="tabs-3d flex-wrap h-auto gap-1 p-1 sm:p-1.5 w-full justify-start overflow-x-auto">
+            <TabsTrigger value="billing" className="gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm">
+              <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 icon-3d" />
+              <span className="hidden xs:inline">Billing</span>
             </TabsTrigger>
-            <TabsTrigger value="plan" className="gap-2 px-4 py-2.5">
-              <Crown className="h-4 w-4 icon-3d" />
-              Plan & Usage
+            <TabsTrigger value="plan" className="gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm">
+              <Crown className="h-3.5 w-3.5 sm:h-4 sm:w-4 icon-3d" />
+              <span className="hidden xs:inline">Plan</span>
             </TabsTrigger>
-            <TabsTrigger value="profile" className="gap-2 px-4 py-2.5">
-              <User className="h-4 w-4 icon-3d" />
-              Profile
+            <TabsTrigger value="profile" className="gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm">
+              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 icon-3d" />
+              <span className="hidden xs:inline">Profile</span>
             </TabsTrigger>
-            <TabsTrigger value="cookies" className="gap-2 px-4 py-2.5">
-              <Cookie className="h-4 w-4 icon-3d" />
-              Cookies
+            <TabsTrigger value="cookies" className="gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm">
+              <Cookie className="h-3.5 w-3.5 sm:h-4 sm:w-4 icon-3d" />
+              <span className="hidden xs:inline">Cookies</span>
             </TabsTrigger>
-            <TabsTrigger value="privacy" className="gap-2 px-4 py-2.5">
-              <Shield className="h-4 w-4 icon-3d" />
-              Privacy
+            <TabsTrigger value="privacy" className="gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm">
+              <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 icon-3d" />
+              <span className="hidden xs:inline">Privacy</span>
             </TabsTrigger>
           </TabsList>
 
@@ -113,22 +113,22 @@ export default function Settings() {
 
           <TabsContent value="profile">
             <Card className="settings-card-3d">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3">
-                  <div className="key-icon-3d p-2.5 rounded-xl">
-                    <User className="h-4 w-4" />
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg">
+                  <div className="key-icon-3d p-2 sm:p-2.5 rounded-xl">
+                    <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
                   Profile Information
                 </CardTitle>
-                <CardDescription>Update your personal details</CardDescription>
+                <CardDescription className="text-xs sm:text-sm">Update your personal details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0 sm:pt-0">
                 {/* Profile Picture */}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4 sm:gap-6">
                   <div className="relative">
-                    <Avatar className="h-24 w-24 border-2 border-border ring-4 ring-background shadow-lg">
+                    <Avatar className="h-16 w-16 sm:h-24 sm:w-24 border-2 border-border ring-2 sm:ring-4 ring-background shadow-lg">
                       <AvatarImage src={profileImage || undefined} alt="Profile" />
-                      <AvatarFallback className="text-2xl bg-secondary/50">
+                      <AvatarFallback className="text-lg sm:text-2xl bg-secondary/50">
                         {profileForm.name?.charAt(0)?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>

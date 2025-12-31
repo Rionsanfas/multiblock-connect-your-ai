@@ -71,27 +71,27 @@ export function BillingSection() {
 
   return (
     <Card className="settings-card-3d">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <div className="key-icon-3d p-2 rounded-lg">
-            <CreditCard className="h-4 w-4" />
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <div className="key-icon-3d p-1.5 sm:p-2 rounded-lg">
+            <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
           Billing & Subscription
         </CardTitle>
-        <CardDescription>Manage your subscription and billing details</CardDescription>
+        <CardDescription className="text-xs sm:text-sm">Manage your subscription and billing details</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0 sm:pt-0">
         {/* Current Plan Info */}
-        <div className="glass-card p-4 rounded-xl">
+        <div className="glass-card p-3 sm:p-4 rounded-xl">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Crown className="h-4 w-4 text-primary" />
-              <span className="font-semibold">
+              <Crown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+              <span className="font-semibold text-sm sm:text-base">
                 {billing?.active_plan ? formatPlanName(billing.active_plan) : 'Free Plan'}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Badge variant={getStatusBadgeVariant(billing?.subscription_status || 'inactive')}>
+            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+              <Badge variant={getStatusBadgeVariant(billing?.subscription_status || 'inactive')} className="text-xs">
                 {billing?.is_lifetime ? 'Lifetime' : (billing?.subscription_status || 'inactive')}
               </Badge>
               {billing?.is_lifetime && (

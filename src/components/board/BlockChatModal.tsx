@@ -256,30 +256,30 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
         <DialogContent 
           hideCloseButton 
           className={cn(
-            "flex flex-col rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300",
+            "flex flex-col rounded-xl sm:rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300",
             isFullscreen 
               ? "w-[100vw] h-[100vh] max-w-none max-h-none rounded-none" 
-              : "max-w-2xl w-[90vw] h-[80vh] max-h-[700px]"
+              : "max-w-2xl w-[95vw] sm:w-[90vw] h-[85vh] sm:h-[80vh] max-h-[700px]"
           )}
         >
-          <DialogHeader className="px-5 py-4 border-b border-border/20 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+          <DialogHeader className="px-3 sm:px-5 py-3 sm:py-4 border-b border-border/20 flex-shrink-0">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                 {/* Sidebar toggle - only show in fullscreen */}
                 {isFullscreen && (
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="p-2 rounded-lg"
+                    className="p-2 rounded-lg flex-shrink-0"
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                   >
                     {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
                   </Button>
                 )}
-                <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
+                <DialogTitle className="text-sm sm:text-base font-medium truncate">{block.title}</DialogTitle>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/20 h-auto", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
+                    <Button variant="ghost" className={cn("hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg border border-border/20 h-auto text-xs sm:text-sm", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
                       {currentModel ? <ProviderBadge provider={currentModel.provider} model={currentModel.name} /> : <span className="text-sm text-muted-foreground">Select Model</span>}
                       {!hasKeyForCurrentProvider && <Lock className="h-3 w-3 text-destructive" />}
                       <ChevronDown className="h-3 w-3 text-muted-foreground" />

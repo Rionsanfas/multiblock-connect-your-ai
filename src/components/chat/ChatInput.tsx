@@ -202,18 +202,18 @@ export function ChatInput({
       )}
 
       {/* Input area */}
-      <div className="px-4 py-3">
-        <div className="flex items-end gap-2">
+      <div className="px-3 sm:px-4 py-2 sm:py-3">
+        <div className="flex items-end gap-1.5 sm:gap-2">
           {/* Attachment button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
             className={cn(
-              "p-2.5 rounded-xl transition-all hover:bg-secondary/50",
+              "p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all hover:bg-secondary/50 flex-shrink-0",
               disabled && "opacity-50 cursor-not-allowed"
             )}
           >
-            <Paperclip className="h-5 w-5 text-muted-foreground" />
+            <Paperclip className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
           </button>
           <input
             ref={fileInputRef}
@@ -232,7 +232,7 @@ export function ChatInput({
             placeholder={references.length > 0 ? 'Add a message with your references...' : placeholder}
             disabled={disabled}
             className={cn(
-              "min-h-[44px] max-h-[200px] resize-none rounded-xl border-border/30 text-sm bg-secondary/30 focus:bg-secondary/50 transition-colors",
+              "min-h-[40px] sm:min-h-[44px] max-h-[160px] sm:max-h-[200px] resize-none rounded-lg sm:rounded-xl border-border/30 text-sm bg-secondary/30 focus:bg-secondary/50 transition-colors",
               disabled && "opacity-50"
             )}
             rows={1}
@@ -242,20 +242,20 @@ export function ChatInput({
           {isRunning ? (
             <button
               onClick={onStop}
-              className="p-2.5 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all"
+              className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all flex-shrink-0"
             >
-              <Square className="h-5 w-5 fill-current" />
+              <Square className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
             </button>
           ) : (
             <button
               onClick={handleSend}
               disabled={disabled || (!input.trim() && attachments.length === 0 && references.length === 0)}
               className={cn(
-                "p-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all",
+                "p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all flex-shrink-0",
                 (disabled || (!input.trim() && attachments.length === 0 && references.length === 0)) && "opacity-50 cursor-not-allowed"
               )}
             >
-              <Send className="h-5 w-5" />
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
           )}
         </div>

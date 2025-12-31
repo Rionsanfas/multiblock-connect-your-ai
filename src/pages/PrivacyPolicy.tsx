@@ -7,11 +7,11 @@ export default function PrivacyPolicy() {
       <div className="noise-overlay" />
       <Navbar />
       
-      <main className="relative z-10 pt-24 pb-16">
+      <main className="relative z-10 pt-20 sm:pt-24 pb-12 sm:pb-16">
         <div className="container max-w-4xl mx-auto px-4">
           {/* Breadcrumb */}
-          <Breadcrumb className="mb-6">
-            <BreadcrumbList>
+          <Breadcrumb className="mb-4 sm:mb-6">
+            <BreadcrumbList className="text-xs sm:text-sm">
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
                   <Link to="/">Home</Link>
@@ -24,25 +24,25 @@ export default function PrivacyPolicy() {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <div className="bg-card/80 backdrop-blur-xl rounded-2xl border border-border/50 p-8 md:p-12">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Privacy Policy</h1>
-            <p className="text-muted-foreground mb-8">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-border/50 p-5 sm:p-8 md:p-12">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">Privacy Policy</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">
               Last Updated: December 12, 2025 · Effective Date: December 12, 2025
             </p>
 
-            <div className="prose prose-invert max-w-none space-y-8">
+            <div className="prose prose-invert max-w-none space-y-6 sm:space-y-8">
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">1. Introduction</h2>
-                <p className="text-muted-foreground leading-relaxed">
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2 sm:mb-3">1. Introduction</h2>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   Welcome to Multiblock. This Privacy Policy explains how we collect, use, store, and protect your personal information when you access or use our service, including our website, applications, and APIs. By using our services, you agree to this Privacy Policy.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">2. Information We Collect</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-2 sm:mb-3">2. Information We Collect</h2>
                 
-                <h3 className="text-lg font-medium text-foreground mb-2 mt-4">2.1 Account Data</h3>
-                <p className="text-muted-foreground leading-relaxed mb-3">
+                <h3 className="text-base sm:text-lg font-medium text-foreground mb-2 mt-4">2.1 Account Data</h3>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-3">
                   When you create an account, we collect:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">

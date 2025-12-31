@@ -50,7 +50,7 @@ export function ChatMessage({
       )}
     >
       {/* Message content */}
-      <div className={cn("flex flex-col max-w-[85%]", isUser && "items-end")}>
+      <div className={cn("flex flex-col max-w-[95%] sm:max-w-[85%]", isUser && "items-end")}>
         {/* References displayed above message */}
         {references && references.length > 0 && (
           <div className="mb-2 space-y-1.5 w-full">
@@ -103,9 +103,9 @@ export function ChatMessage({
         {/* Message bubble with glow effect for user messages */}
         <div
           className={cn(
-            "rounded-2xl text-sm relative",
+            "rounded-xl sm:rounded-2xl text-sm relative",
             isUser 
-              ? "bg-secondary/60 text-foreground px-4 py-2.5 user-message-glow"
+              ? "bg-secondary/60 text-foreground px-3 sm:px-4 py-2 sm:py-2.5 user-message-glow"
               : "bg-transparent py-1"
           )}
         >
