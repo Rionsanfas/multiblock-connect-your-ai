@@ -2644,250 +2644,143 @@
 }
 
 /* ============================================================
-   TRUE 3D ICON SYSTEM - Icon shape itself is 3D
-   Plus icon made of two crossing 3D bars
-   Link icon made of two interlocking chain rings
+   TRUE 3D ICON SYSTEM - Cube with depth
    ============================================================ */
 
-.hiw-icon-3d-scene {
-  perspective: 800px;
+.hiw-3d-icon-scene {
+  perspective: 600px;
   perspective-origin: center center;
-  width: clamp(120px, 18vw, 200px);
-  height: clamp(120px, 18vw, 200px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hiw-link-scene {
   width: clamp(100px, 14vw, 160px);
   height: clamp(100px, 14vw, 160px);
 }
 
-.hiw-icon-3d-wrapper {
+.hiw-3d-link-scene {
+  width: clamp(80px, 12vw, 120px);
+  height: clamp(80px, 12vw, 120px);
+}
+
+.hiw-3d-icon-cube {
   position: relative;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  animation: icon3dFloat 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: cube3dFloat 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hiw-icon-3d-scene:hover .hiw-icon-3d-wrapper {
+.hiw-3d-icon-scene:hover .hiw-3d-icon-cube {
   animation-play-state: paused;
-  transform: rotateX(-8deg) rotateY(20deg) scale(1.05);
+  transform: rotateX(-5deg) rotateY(15deg) translateZ(10px);
 }
 
-@keyframes icon3dFloat {
+@keyframes cube3dFloat {
   0%, 100% {
-    transform: rotateX(12deg) rotateY(-10deg);
+    transform: rotateX(10deg) rotateY(-8deg) translateZ(0);
   }
   33% {
-    transform: rotateX(8deg) rotateY(8deg);
+    transform: rotateX(5deg) rotateY(5deg) translateZ(5px);
   }
   66% {
-    transform: rotateX(-5deg) rotateY(-5deg);
+    transform: rotateX(-5deg) rotateY(-5deg) translateZ(8px);
   }
 }
 
-/* ============================================
-   3D PLUS ICON - Two crossing bars with depth
-   ============================================ */
-
-.hiw-plus-bar {
+.hiw-3d-face {
   position: absolute;
-  transform-style: preserve-3d;
-}
-
-.hiw-plus-horizontal {
-  width: 80%;
-  height: 22%;
-  left: 10%;
-  top: 39%;
-}
-
-.hiw-plus-vertical {
-  width: 22%;
-  height: 80%;
-  left: 39%;
-  top: 10%;
-}
-
-.hiw-bar-face {
-  position: absolute;
+  width: 100%;
+  height: 100%;
   backface-visibility: hidden;
-}
-
-/* Front and back faces */
-.hiw-plus-horizontal .hiw-bar-front,
-.hiw-plus-horizontal .hiw-bar-back {
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-}
-
-.hiw-plus-vertical .hiw-bar-front,
-.hiw-plus-vertical .hiw-bar-back {
-  width: 100%;
-  height: 100%;
-  border-radius: 6px;
-}
-
-.hiw-bar-front {
-  background: linear-gradient(145deg, hsl(0 0% 95%), hsl(0 0% 85%));
-  transform: translateZ(12px);
-  box-shadow: 
-    inset 0 2px 0 hsl(0 0% 100%),
-    inset 0 -2px 4px hsl(0 0% 0% / 0.1),
-    0 10px 30px -5px hsl(0 0% 0% / 0.4);
-}
-
-.hiw-bar-back {
-  background: hsl(0 0% 60%);
-  transform: translateZ(-12px);
-}
-
-/* Top and bottom faces */
-.hiw-plus-horizontal .hiw-bar-top {
-  width: 100%;
-  height: 24px;
-  top: 0;
-  left: 0;
-  background: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 90%));
-  transform: rotateX(90deg) translateZ(0);
-  transform-origin: top;
-  border-radius: 6px 6px 0 0;
-}
-
-.hiw-plus-horizontal .hiw-bar-bottom {
-  width: 100%;
-  height: 24px;
-  bottom: 0;
-  left: 0;
-  background: hsl(0 0% 70%);
-  transform: rotateX(-90deg) translateZ(0);
-  transform-origin: bottom;
-  border-radius: 0 0 6px 6px;
-}
-
-.hiw-plus-vertical .hiw-bar-top {
-  width: 100%;
-  height: 24px;
-  top: 0;
-  left: 0;
-  background: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 90%));
-  transform: rotateX(90deg) translateZ(0);
-  transform-origin: top;
-  border-radius: 6px 6px 0 0;
-}
-
-.hiw-plus-vertical .hiw-bar-bottom {
-  width: 100%;
-  height: 24px;
-  bottom: 0;
-  left: 0;
-  background: hsl(0 0% 70%);
-  transform: rotateX(-90deg) translateZ(0);
-  transform-origin: bottom;
-  border-radius: 0 0 6px 6px;
-}
-
-/* Left and right faces */
-.hiw-plus-horizontal .hiw-bar-left {
-  width: 24px;
-  height: 100%;
-  left: 0;
-  top: 0;
-  background: linear-gradient(90deg, hsl(0 0% 80%), hsl(0 0% 88%));
-  transform: rotateY(-90deg) translateZ(0);
-  transform-origin: left;
-  border-radius: 6px 0 0 6px;
-}
-
-.hiw-plus-horizontal .hiw-bar-right {
-  width: 24px;
-  height: 100%;
-  right: 0;
-  top: 0;
-  background: hsl(0 0% 75%);
-  transform: rotateY(90deg) translateZ(0);
-  transform-origin: right;
-  border-radius: 0 6px 6px 0;
-}
-
-.hiw-plus-vertical .hiw-bar-left {
-  width: 24px;
-  height: 100%;
-  left: 0;
-  top: 0;
-  background: linear-gradient(90deg, hsl(0 0% 80%), hsl(0 0% 88%));
-  transform: rotateY(-90deg) translateZ(0);
-  transform-origin: left;
-  border-radius: 6px 0 0 6px;
-}
-
-.hiw-plus-vertical .hiw-bar-right {
-  width: 24px;
-  height: 100%;
-  right: 0;
-  top: 0;
-  background: hsl(0 0% 75%);
-  transform: rotateY(90deg) translateZ(0);
-  transform-origin: right;
-  border-radius: 0 6px 6px 0;
-}
-
-/* ============================================
-   3D LINK ICON - Two interlocking chain rings
-   ============================================ */
-
-.hiw-link-wrapper {
+  border-radius: clamp(16px, 2vw, 24px);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hiw-chain-link {
-  position: absolute;
-  transform-style: preserve-3d;
-}
-
-.hiw-chain-link-1 {
-  transform: translateX(-15%) translateZ(8px) rotateZ(-45deg);
-}
-
-.hiw-chain-link-2 {
-  transform: translateX(15%) translateZ(-8px) rotateZ(-45deg);
-}
-
-.hiw-chain-ring {
-  width: clamp(50px, 7vw, 70px);
-  height: clamp(70px, 10vw, 100px);
-  border: clamp(10px, 1.5vw, 16px) solid;
-  border-color: hsl(0 0% 90%);
-  border-radius: 50px;
+/* Front face - main visible face with icon */
+.hiw-3d-face-front {
+  background: linear-gradient(
+    145deg,
+    hsl(0 0% 18%),
+    hsl(0 0% 12%)
+  );
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  transform: translateZ(20px);
   box-shadow: 
-    inset 4px 4px 8px hsl(0 0% 100% / 0.8),
-    inset -2px -2px 6px hsl(0 0% 0% / 0.15),
-    4px 8px 20px -4px hsl(0 0% 0% / 0.4),
-    -2px -2px 10px hsl(0 0% 100% / 0.1);
-  background: transparent;
+    inset 0 1px 0 hsl(0 0% 100% / 0.15),
+    inset 0 -2px 6px hsl(0 0% 0% / 0.2),
+    0 15px 40px -10px hsl(0 0% 0% / 0.6);
+  color: hsl(var(--foreground));
+  padding: 25%;
 }
 
-.hiw-chain-link-1 .hiw-chain-ring {
-  border-color: hsl(0 0% 92%);
+.hiw-3d-icon-scene:hover .hiw-3d-face-front {
   box-shadow: 
-    inset 4px 4px 10px hsl(0 0% 100%),
-    inset -3px -3px 8px hsl(0 0% 0% / 0.12),
-    6px 12px 25px -6px hsl(0 0% 0% / 0.45);
+    inset 0 1px 0 hsl(0 0% 100% / 0.2),
+    inset 0 -2px 6px hsl(0 0% 0% / 0.2),
+    0 20px 50px -10px hsl(0 0% 0% / 0.7),
+    0 0 40px -10px hsl(0 0% 100% / 0.1);
 }
 
-.hiw-chain-link-2 .hiw-chain-ring {
-  border-color: hsl(0 0% 85%);
-  box-shadow: 
-    inset 3px 3px 8px hsl(0 0% 100% / 0.7),
-    inset -2px -2px 6px hsl(0 0% 0% / 0.18),
-    4px 8px 20px -4px hsl(0 0% 0% / 0.35);
+.hiw-3d-face-front svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 4px hsl(0 0% 0% / 0.3));
+  transition: filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hiw-3d-icon-scene:hover .hiw-3d-face-front svg {
+  filter: drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4));
+}
+
+/* Back face */
+.hiw-3d-face-back {
+  background: hsl(0 0% 8%);
+  transform: translateZ(-20px) rotateY(180deg);
+}
+
+/* Top face - subtle highlight */
+.hiw-3d-face-top {
+  height: 40px;
+  background: linear-gradient(
+    180deg,
+    hsl(0 0% 22%),
+    hsl(0 0% 16%)
+  );
+  transform: rotateX(90deg) translateZ(20px);
+  transform-origin: top;
+}
+
+/* Bottom face - shadow receiver */
+.hiw-3d-face-bottom {
+  height: 40px;
+  background: hsl(0 0% 6%);
+  transform: rotateX(-90deg) translateZ(calc(100% - 20px));
+  transform-origin: bottom;
+}
+
+/* Left face */
+.hiw-3d-face-left {
+  width: 40px;
+  background: linear-gradient(
+    90deg,
+    hsl(0 0% 10%),
+    hsl(0 0% 14%)
+  );
+  transform: rotateY(-90deg) translateZ(20px);
+  transform-origin: left;
+}
+
+/* Right face - catches light */
+.hiw-3d-face-right {
+  width: 40px;
+  background: linear-gradient(
+    90deg,
+    hsl(0 0% 16%),
+    hsl(0 0% 10%)
+  );
+  transform: rotateY(90deg) translateZ(calc(100% - 20px));
+  transform-origin: right;
 }
 
 /* Sequential Letter Highlight for Card 2 */
