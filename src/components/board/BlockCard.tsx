@@ -243,9 +243,15 @@ export function BlockCard({
       if (document.hidden) finalize();
     };
 
+    // Mouse fallbacks (some environments miss pointerup)
+    const onMouseUp = () => finalize();
+    const onMouseLeaveWindow = () => finalize();
+
     window.addEventListener('pointermove', onPointerMove, { passive: false });
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerCancel);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('mouseleave', onMouseLeaveWindow);
     window.addEventListener('blur', onBlur);
     document.addEventListener('visibilitychange', onVisibilityChange);
 
@@ -257,6 +263,8 @@ export function BlockCard({
       window.removeEventListener('pointermove', onPointerMove as any);
       window.removeEventListener('pointerup', onPointerUp as any);
       window.removeEventListener('pointercancel', onPointerCancel as any);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('mouseleave', onMouseLeaveWindow);
       window.removeEventListener('blur', onBlur);
       document.removeEventListener('visibilitychange', onVisibilityChange);
 
