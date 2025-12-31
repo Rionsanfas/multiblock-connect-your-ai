@@ -453,10 +453,19 @@ serve(async (req) => {
     const totalExtraBoards = currentAddons.reduce((sum, a) => sum + (a.extra_boards || 0), 0);
     const totalExtraStorage = currentAddons.reduce((sum, a) => sum + (a.extra_storage_gb || 0), 0);
 
+    // Extract customer ID for add-on purchases too
+    const addonCustomerId = 
+      data?.customer_id || 
+      data?.customer?.id || 
+      data?.subscription?.customer_id ||
+      currentBilling?.polar_customer_id ||
+      null;
+
     const { error: addonError } = await supabase
       .from('user_billing')
       .upsert({
         user_id: userId,
+        polar_customer_id: addonCustomerId || currentBilling?.polar_customer_id,
         boards: (currentBilling?.boards || 1) + addonConfig.extra_boards,
         storage_gb: (currentBilling?.storage_gb || 1) + addonConfig.extra_storage_gb,
         applied_addons: currentAddons,
@@ -524,11 +533,33 @@ serve(async (req) => {
     }
   }
 
+  // Extract customer ID from various locations in Polar webhook payloads
+  const extractedCustomerId = 
+    data?.customer_id || 
+    data?.customer?.id || 
+    data?.subscription?.customer_id ||
+    data?.subscription?.customer?.id ||
+    data?.checkout?.customer_id ||
+    data?.checkout?.customer?.id ||
+    data?.order?.customer_id ||
+    data?.order?.customer?.id ||
+    null;
+  
+  // Extract subscription ID from various locations
+  const extractedSubscriptionId = 
+    data?.subscription_id || 
+    data?.subscription?.id ||
+    data?.id ||
+    null;
+
+  console.log("[polar-webhook] Extracted customer_id:", extractedCustomerId);
+  console.log("[polar-webhook] Extracted subscription_id:", extractedSubscriptionId);
+
   // Upsert billing data
   const billingData = {
     user_id: userId,
-    polar_customer_id: data?.customer_id || data?.customer?.id || null,
-    polar_subscription_id: data?.subscription_id || data?.id || null,
+    polar_customer_id: extractedCustomerId,
+    polar_subscription_id: extractedSubscriptionId,
     product_id: data?.product_id || data?.product?.id || null,
     product_price_id: data?.product_price_id || null,
     active_plan: planConfig.plan_key,
