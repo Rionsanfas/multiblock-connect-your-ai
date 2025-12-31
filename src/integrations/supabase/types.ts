@@ -187,6 +187,7 @@ export type Database = {
           is_archived: boolean | null
           is_public: boolean | null
           name: string
+          team_id: string | null
           updated_at: string
           user_id: string
         }
@@ -200,6 +201,7 @@ export type Database = {
           is_archived?: boolean | null
           is_public?: boolean | null
           name?: string
+          team_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -213,10 +215,18 @@ export type Database = {
           is_archived?: boolean | null
           is_public?: boolean | null
           name?: string
+          team_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "boards_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "boards_user_id_fkey"
             columns: ["user_id"]
@@ -410,6 +420,137 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      team_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invitations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       uploads: {
         Row: {
@@ -697,6 +838,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_team_invitation: {
+        Args: { p_token: string }
+        Returns: {
+          error_message: string
+          success: boolean
+          team_id: string
+          team_name: string
+        }[]
+      }
       atomic_increment_daily_counter: {
         Args: { p_counter_type: string; p_user_id: string }
         Returns: boolean
@@ -728,6 +878,7 @@ export type Database = {
         Args: { p_file_size_bytes?: number; p_user_id: string }
         Returns: boolean
       }
+      create_team: { Args: { p_name: string; p_slug: string }; Returns: string }
       decrement_ltd_seats: { Args: never; Returns: number }
       get_block_incoming_connections: {
         Args: { p_block_id: string }
@@ -784,6 +935,19 @@ export type Database = {
           total_seats: number
         }[]
       }
+      get_team_limits: {
+        Args: { p_team_id: string }
+        Returns: {
+          current_boards: number
+          current_seats: number
+          max_blocks_per_board: number
+          max_boards: number
+          max_seats: number
+          storage_gb: number
+        }[]
+      }
+      get_team_max_seats: { Args: { p_team_id: string }; Returns: number }
+      get_team_seat_count: { Args: { p_team_id: string }; Returns: number }
       get_user_api_key_count: { Args: { p_user_id: string }; Returns: number }
       get_user_board_count: { Args: { p_user_id: string }; Returns: number }
       get_user_effective_limits: {
@@ -842,6 +1006,22 @@ export type Database = {
           tier: Database["public"]["Enums"]["subscription_tier"]
         }[]
       }
+      get_user_team_role: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: Database["public"]["Enums"]["team_role"]
+      }
+      get_user_teams: {
+        Args: { p_user_id: string }
+        Returns: {
+          board_count: number
+          is_owner: boolean
+          member_count: number
+          team_id: string
+          team_name: string
+          team_slug: string
+          user_role: Database["public"]["Enums"]["team_role"]
+        }[]
+      }
       get_user_usage_stats: {
         Args: { p_user_id: string }
         Returns: {
@@ -862,16 +1042,41 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_team_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["team_role"]
+          p_team_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       increment_message_count: {
         Args: { p_user_id: string }
         Returns: undefined
       }
       is_in_grace: { Args: { p_user_id: string }; Returns: boolean }
+      is_team_admin_or_owner: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_team_member: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_team_owner: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
       recalculate_user_storage: {
         Args: { p_user_id: string }
         Returns: undefined
       }
       reset_daily_usage: { Args: never; Returns: undefined }
+      team_can_add_member: { Args: { p_team_id: string }; Returns: boolean }
+      transfer_board_to_team: {
+        Args: { p_board_id: string; p_team_id: string }
+        Returns: boolean
+      }
       update_user_grace_status: {
         Args: { p_user_id: string }
         Returns: undefined
@@ -905,6 +1110,7 @@ export type Database = {
         | "trialing"
         | "paused"
       subscription_tier: "free" | "pro" | "team" | "enterprise" | "starter"
+      team_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1050,6 +1256,7 @@ export const Constants = {
         "paused",
       ],
       subscription_tier: ["free", "pro", "team", "enterprise", "starter"],
+      team_role: ["owner", "admin", "member"],
     },
   },
 } as const
