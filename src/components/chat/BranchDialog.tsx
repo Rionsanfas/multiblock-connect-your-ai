@@ -1,11 +1,11 @@
 /**
  * BranchDialog - Dialog for creating a new block from selected text
  * 
- * Allows user to configure the new block before creation.
+ * Creates a branch with chat history and focuses on the selected text.
  */
 
 import { useState } from 'react';
-import { GitBranch, ArrowRight, Sparkles } from 'lucide-react';
+import { GitBranch, ArrowRight, Sparkles, History } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,22 +15,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { MODEL_CONFIGS, PROVIDERS, type Provider } from '@/types';
+import { Switch } from '@/components/ui/switch';
 import type { BranchParams } from '@/types/chat-references';
 
 interface BranchDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (title: string, modelId: string) => void;
+  onConfirm: (title: string, includeHistory: boolean) => void;
   params: BranchParams | null;
-  currentModelId?: string;
+  messageCount?: number;
 }
 
 export function BranchDialog({
@@ -38,10 +31,10 @@ export function BranchDialog({
   onClose,
   onConfirm,
   params,
-  currentModelId,
+  messageCount = 0,
 }: BranchDialogProps) {
   const [title, setTitle] = useState('');
-  const [selectedModel, setSelectedModel] = useState(currentModelId || 'gpt-4o');
+  const [includeHistory, setIncludeHistory] = useState(true);
 
   if (!params) return null;
 
@@ -50,17 +43,11 @@ export function BranchDialog({
     ? params.selected_text.substring(0, 197) + '...'
     : params.selected_text;
 
-  // Group models by provider
-  const modelsByProvider = MODEL_CONFIGS.reduce((acc, model) => {
-    if (!acc[model.provider]) acc[model.provider] = [];
-    acc[model.provider].push(model);
-    return acc;
-  }, {} as Record<Provider, typeof MODEL_CONFIGS>);
-
   const handleConfirm = () => {
     const finalTitle = title.trim() || `Branch from ${params.source_block_title}`;
-    onConfirm(finalTitle, selectedModel);
+    onConfirm(finalTitle, includeHistory);
     setTitle('');
+    setIncludeHistory(true);
     onClose();
   };
 
@@ -79,7 +66,7 @@ export function BranchDialog({
           <div className="p-3 rounded-lg bg-secondary/40 border border-border/20">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <Sparkles className="h-3 w-3" />
-              <span>From "{params.source_block_title}"</span>
+              <span>Selected text from "{params.source_block_title}"</span>
             </div>
             <p className="text-sm text-foreground leading-relaxed">
               "{previewText}"
@@ -99,41 +86,29 @@ export function BranchDialog({
             />
           </div>
 
-          {/* Model selection */}
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Model</Label>
-            <Select value={selectedModel} onValueChange={setSelectedModel}>
-              <SelectTrigger className="bg-secondary/40 rounded-lg border-border/20 h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-lg max-h-60">
-                {Object.entries(modelsByProvider).map(([provider, models]) => (
-                  <div key={provider}>
-                    <div
-                      className="px-2 py-1.5 text-xs font-semibold text-muted-foreground"
-                      style={{ color: PROVIDERS[provider as Provider].color }}
-                    >
-                      {PROVIDERS[provider as Provider].name}
-                    </div>
-                    {models.slice(0, 4).map((model) => (
-                      <SelectItem
-                        key={model.id}
-                        value={model.id}
-                        className="rounded-md pl-4"
-                      >
-                        {model.name}
-                      </SelectItem>
-                    ))}
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Include history toggle */}
+          {messageCount > 0 && (
+            <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border/20">
+              <div className="flex items-center gap-2">
+                <History className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Include chat history</p>
+                  <p className="text-xs text-muted-foreground">
+                    Copy {messageCount} message{messageCount > 1 ? 's' : ''} to the new block
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={includeHistory}
+                onCheckedChange={setIncludeHistory}
+              />
+            </div>
+          )}
 
-          {/* Note about what will happen */}
+          {/* Info about what will happen */}
           <p className="text-xs text-muted-foreground">
-            A new block will be created with the selected text as initial context.
-            The new chat will start with a system note linking back to this source.
+            The AI will focus on the selected text and continue the conversation from there.
+            {includeHistory && messageCount > 0 && ' Full conversation context will be preserved.'}
           </p>
 
           {/* Actions */}
@@ -150,7 +125,7 @@ export function BranchDialog({
               className="flex-1 bg-[hsl(var(--accent))] hover:bg-[hsl(var(--accent)/0.9)] text-foreground rounded-lg"
             >
               <ArrowRight className="h-4 w-4 mr-2" />
-              Create Block
+              Create Branch
             </Button>
           </div>
         </div>

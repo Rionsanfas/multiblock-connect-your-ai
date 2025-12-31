@@ -33,7 +33,7 @@ import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useMo
 import { useBlockIncomingContext } from "@/hooks/useBlockConnections";
 import { useBlock } from "@/hooks/useBlockData";
 import { useBoardBlocks } from "@/hooks/useBoardBlocks";
-import { blocksDb } from "@/lib/database";
+import { blocksDb, messagesDb } from "@/lib/database";
 import { getModelConfig, PROVIDERS, type Provider } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -187,29 +187,65 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   }, [textSelection, blockId, block]);
 
   // Confirm branch creation
-  const handleConfirmBranch = useCallback(async (newTitle: string, modelId: string) => {
+  const handleConfirmBranch = useCallback(async (newTitle: string, includeHistory: boolean) => {
     if (!branchParams || !block) return;
 
     try {
-      const modelConfig = getModelConfig(modelId);
-      // Create new block with source context
-      await blocksDb.create({
+      // Create new block with source context - use same model as current block
+      const newBlock = await blocksDb.create({
         board_id: branchParams.board_id,
         title: newTitle,
-        model_id: modelId,
-        provider: modelConfig?.provider || 'openai',
+        model_id: block.model_id,
+        provider: currentModel?.provider || 'openai',
         position_x: block.position.x + 400,
         position_y: block.position.y + 50,
-        system_prompt: `You are a helpful assistant. This conversation was branched from "${branchParams.source_block_title}".\n\nContext from source:\n"${branchParams.selected_text}"`,
+        system_prompt: `You are a helpful assistant. This conversation was branched from "${branchParams.source_block_title}".
+
+The user has selected this specific text to focus on:
+"${branchParams.selected_text}"
+
+Please continue the conversation with special attention to this selected context. Help the user explore, analyze, or build upon this specific topic.`,
       });
 
+      // Copy chat history if requested
+      if (includeHistory && blockMessages.length > 0) {
+        for (const msg of blockMessages) {
+          if (msg.role === 'user' || msg.role === 'assistant') {
+            await messagesDb.create(
+              newBlock.id,
+              msg.role as 'user' | 'assistant',
+              msg.content,
+              msg.meta as Record<string, unknown> | undefined
+            );
+          }
+        }
+        
+        // Add a system message indicating the branch focus
+        await messagesDb.create(
+          newBlock.id,
+          'assistant',
+          `---\n\n**Branched conversation** — Now focusing on:\n> "${branchParams.selected_text.length > 300 ? branchParams.selected_text.substring(0, 297) + '...' : branchParams.selected_text}"\n\nHow would you like to explore this further?`
+        );
+      } else {
+        // If not including history, add the selected text as initial context
+        await messagesDb.create(
+          newBlock.id,
+          'assistant',
+          `**Starting from selected text:**\n> "${branchParams.selected_text}"\n\n*(Branched from "${branchParams.source_block_title}")*\n\nHow would you like to explore this topic?`
+        );
+      }
+
       queryClient.invalidateQueries({ queryKey: ['board-blocks', block.board_id] });
+      queryClient.invalidateQueries({ queryKey: ['block-messages', newBlock.id] });
       toast.success(`Created branch: ${newTitle}`);
-      closeBlockChat(); // Close modal to show new block on canvas
+      
+      // Open the new block's chat
+      openBlockChat(newBlock.id);
     } catch (error) {
+      console.error('Failed to create branch:', error);
       toast.error('Failed to create branch');
     }
-  }, [branchParams, block, closeBlockChat, queryClient]);
+  }, [branchParams, block, blockMessages, currentModel, queryClient, openBlockChat]);
 
   const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[], references?: ChatReference[]) => {
     if (!content.trim() && (!references || references.length === 0) || messageStatus !== 'idle' || !block) return;
@@ -544,7 +580,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
         onClose={() => setIsBranchDialogOpen(false)}
         onConfirm={handleConfirmBranch}
         params={branchParams}
-        currentModelId={block?.model_id}
+        messageCount={blockMessages.length}
       />
     </>
   );
