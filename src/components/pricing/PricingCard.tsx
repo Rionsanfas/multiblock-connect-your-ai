@@ -17,12 +17,12 @@ export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
   const isEnterprise = plan.tier === 'enterprise';
 
   return (
-    <div className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''} h-full`}>
+    <div className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''} h-full pt-4`}>
       <div className="premium-card-gradient" />
       <div className="premium-card-content h-full p-6 relative flex flex-col">
         {/* Badge */}
         {plan.badge && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs rounded-full z-10 badge-3d-shiny whitespace-nowrap">
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 text-xs rounded-full z-20 badge-3d-shiny whitespace-nowrap">
             {plan.badge}
           </div>
         )}
