@@ -35,7 +35,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-background" style={{ paddingTop: "clamp(100px, 14vw, 160px)", paddingBottom: "clamp(48px, 6vw, 80px)" }}>
+    <section className="relative min-h-screen overflow-hidden bg-background dot-grid-bg" style={{ paddingTop: "clamp(100px, 14vw, 160px)", paddingBottom: "clamp(48px, 6vw, 80px)" }}>
       {/* Pure black background */}
       <div className="absolute inset-0 bg-background" />
       
