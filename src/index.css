@@ -329,7 +329,7 @@
   }
 
   .glass-card-hover:hover {
-    border-color: hsl(0 0% 100% / 0.12);
+    border-color: hsl(0 0% 100% / 0.15);
     background: linear-gradient(
       145deg,
       hsl(0 0% 10% / 0.9),
@@ -337,7 +337,6 @@
     );
     box-shadow: 
       0 8px 40px -8px hsl(0 0% 0% / 0.5),
-      0 0 60px -20px hsl(var(--accent) / 0.15),
       inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
     transform: translateY(-2px);
   }
@@ -2508,17 +2507,16 @@
   perspective: 1000px;
 }
 
-/* Featured First Card - Unique Style */
+/* Featured First Card - Clean Style (no golden highlight) */
 .hiw-card-featured {
   background: linear-gradient(
     145deg,
     hsl(0 0% 10% / 0.95),
     hsl(0 0% 6% / 0.98)
   );
-  border: 1px solid hsl(var(--accent) / 0.3);
+  border: 1px solid hsl(0 0% 100% / 0.08);
   box-shadow: 
-    0 0 40px hsl(var(--accent) / 0.15),
-    0 0 80px hsl(var(--accent) / 0.08),
+    0 8px 32px hsl(0 0% 0% / 0.4),
     inset 0 1px 0 hsl(0 0% 100% / 0.05);
 }
 
@@ -2532,7 +2530,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    hsl(var(--accent) / 0.5),
+    hsl(0 0% 100% / 0.1),
     transparent
   );
 }
@@ -2546,7 +2544,7 @@
   width: 1px;
   background: linear-gradient(
     180deg,
-    hsl(var(--accent) / 0.5),
+    hsl(0 0% 100% / 0.08),
     transparent 70%
   );
 }
@@ -2642,37 +2640,41 @@
   padding: clamp(16px, 2vw, 32px);
 }
 
-/* 3D Plus Icon */
+/* 3D Plus Icon - Bigger, premium 3D styling */
 .hiw-3d-plus {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  perspective: 300px;
 }
 
 .hiw-3d-plus-icon {
-  width: clamp(80px, 12vw, 140px);
-  height: clamp(80px, 12vw, 140px);
+  width: clamp(100px, 16vw, 180px);
+  height: clamp(100px, 16vw, 180px);
   color: hsl(var(--foreground));
   filter: 
-    drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
-    drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
-    drop-shadow(0 0 40px hsl(var(--accent) / 0.3));
-  animation: hiw3dPlusGlow 3s ease-in-out infinite;
+    drop-shadow(0 6px 12px hsl(0 0% 0% / 0.5))
+    drop-shadow(0 12px 24px hsl(0 0% 0% / 0.4))
+    drop-shadow(0 2px 0 hsl(0 0% 30%));
+  animation: hiw3dPlusFloat 4s ease-in-out infinite;
+  transform-style: preserve-3d;
 }
 
-@keyframes hiw3dPlusGlow {
+@keyframes hiw3dPlusFloat {
   0%, 100% {
+    transform: rotateX(8deg) rotateY(-5deg) translateY(0);
     filter: 
-      drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
-      drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
-      drop-shadow(0 0 30px hsl(var(--accent) / 0.2));
+      drop-shadow(0 6px 12px hsl(0 0% 0% / 0.5))
+      drop-shadow(0 12px 24px hsl(0 0% 0% / 0.4))
+      drop-shadow(0 2px 0 hsl(0 0% 30%));
   }
   50% {
+    transform: rotateX(5deg) rotateY(5deg) translateY(-8px);
     filter: 
-      drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
-      drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
-      drop-shadow(0 0 50px hsl(var(--accent) / 0.5));
+      drop-shadow(0 10px 16px hsl(0 0% 0% / 0.5))
+      drop-shadow(0 18px 32px hsl(0 0% 0% / 0.4))
+      drop-shadow(0 3px 0 hsl(0 0% 35%));
   }
 }
 
@@ -2705,39 +2707,41 @@
   text-shadow: 0 0 30px hsl(var(--accent) / 0.5);
 }
 
-/* 3D Link Icon */
+/* 3D Link Icon - Bigger, premium 3D styling */
 .hiw-3d-link {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  perspective: 300px;
 }
 
 .hiw-3d-link-icon {
-  width: clamp(60px, 10vw, 100px);
-  height: clamp(60px, 10vw, 100px);
+  width: clamp(72px, 12vw, 120px);
+  height: clamp(72px, 12vw, 120px);
   color: hsl(var(--foreground));
   filter: 
-    drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
-    drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
-    drop-shadow(0 0 30px hsl(var(--accent) / 0.2));
-  animation: hiw3dLinkGlow 4s ease-in-out infinite;
+    drop-shadow(0 5px 10px hsl(0 0% 0% / 0.5))
+    drop-shadow(0 10px 20px hsl(0 0% 0% / 0.4))
+    drop-shadow(0 2px 0 hsl(0 0% 30%));
+  animation: hiw3dLinkFloat 4s ease-in-out infinite;
+  transform-style: preserve-3d;
 }
 
-@keyframes hiw3dLinkGlow {
+@keyframes hiw3dLinkFloat {
   0%, 100% {
+    transform: rotateX(5deg) rotateY(5deg) translateY(0);
     filter: 
-      drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
-      drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
-      drop-shadow(0 0 20px hsl(var(--accent) / 0.1));
-    transform: scale(1);
+      drop-shadow(0 5px 10px hsl(0 0% 0% / 0.5))
+      drop-shadow(0 10px 20px hsl(0 0% 0% / 0.4))
+      drop-shadow(0 2px 0 hsl(0 0% 30%));
   }
   50% {
+    transform: rotateX(-3deg) rotateY(-5deg) translateY(-6px);
     filter: 
-      drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4))
-      drop-shadow(0 8px 16px hsl(0 0% 0% / 0.3))
-      drop-shadow(0 0 60px hsl(var(--accent) / 0.6));
-    transform: scale(1.05);
+      drop-shadow(0 8px 14px hsl(0 0% 0% / 0.5))
+      drop-shadow(0 14px 28px hsl(0 0% 0% / 0.4))
+      drop-shadow(0 3px 0 hsl(0 0% 35%));
   }
 }
 
