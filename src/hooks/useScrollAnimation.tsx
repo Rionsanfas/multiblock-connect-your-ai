@@ -28,8 +28,8 @@ export function useScrollAnimation({
   delay = 0,
   duration = 800,
   offsetY = 40,
-  fadeOutThreshold = 0.85,
-  fadeInThreshold = 0.15,
+  fadeOutThreshold = 0.925, // 85% visible = fade starts at 92.5% from top
+  fadeInThreshold = 0.075,  // 85% visible = fade ends at 7.5% from top
 }: ScrollAnimationOptions = {}): [React.RefObject<HTMLDivElement>, ScrollAnimationState] {
   const ref = useRef<HTMLDivElement>(null);
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false);
