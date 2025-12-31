@@ -1,4 +1,3 @@
-import { Plus, Link } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
 
@@ -62,6 +61,60 @@ const LetterHighlight = ({ text }: { text: string }) => {
   );
 };
 
+/* 3D Plus Icon with real depth */
+const Plus3DIcon = () => {
+  return (
+    <div className="hiw-3d-icon-scene">
+      <div className="hiw-3d-icon-cube hiw-3d-plus-cube">
+        {/* Front face - main icon */}
+        <div className="hiw-3d-face hiw-3d-face-front">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </div>
+        {/* Back face */}
+        <div className="hiw-3d-face hiw-3d-face-back" />
+        {/* Top face */}
+        <div className="hiw-3d-face hiw-3d-face-top" />
+        {/* Bottom face */}
+        <div className="hiw-3d-face hiw-3d-face-bottom" />
+        {/* Left face */}
+        <div className="hiw-3d-face hiw-3d-face-left" />
+        {/* Right face */}
+        <div className="hiw-3d-face hiw-3d-face-right" />
+      </div>
+    </div>
+  );
+};
+
+/* 3D Link Icon with real depth */
+const Link3DIcon = () => {
+  return (
+    <div className="hiw-3d-icon-scene hiw-3d-link-scene">
+      <div className="hiw-3d-icon-cube hiw-3d-link-cube">
+        {/* Front face - main icon */}
+        <div className="hiw-3d-face hiw-3d-face-front">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+        </div>
+        {/* Back face */}
+        <div className="hiw-3d-face hiw-3d-face-back" />
+        {/* Top face */}
+        <div className="hiw-3d-face hiw-3d-face-top" />
+        {/* Bottom face */}
+        <div className="hiw-3d-face hiw-3d-face-bottom" />
+        {/* Left face */}
+        <div className="hiw-3d-face hiw-3d-face-left" />
+        {/* Right face */}
+        <div className="hiw-3d-face hiw-3d-face-right" />
+      </div>
+    </div>
+  );
+};
+
 const HowItWorks = () => {
   return (
     <section
@@ -114,9 +167,7 @@ const HowItWorks = () => {
               <div className="hiw-card-3d-inner h-full flex flex-col">
                 {/* 3D Plus Icon */}
                 <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
-                  <div className="hiw-3d-plus">
-                    <Plus className="hiw-3d-plus-icon" strokeWidth={2.5} />
-                  </div>
+                  <Plus3DIcon />
                 </div>
                 
                 <div className="hiw-bento-content p-6">
@@ -156,9 +207,7 @@ const HowItWorks = () => {
                 <div className="hiw-card-3d-inner h-full flex flex-col">
                   {/* 3D Link Icon */}
                   <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
-                    <div className="hiw-3d-link">
-                      <Link className="hiw-3d-link-icon" strokeWidth={2} />
-                    </div>
+                    <Link3DIcon />
                   </div>
                   
                   <div className="hiw-bento-content p-5">

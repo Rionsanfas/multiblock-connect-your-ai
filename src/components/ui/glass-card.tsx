@@ -30,7 +30,7 @@ const GlassCard = React.forwardRef<HTMLDivElement, GlassCardProps>(
       <div
         ref={ref}
         className={cn(
-          "relative rounded-2xl border backdrop-blur-xl transition-all duration-300",
+          "relative rounded-2xl border backdrop-blur-xl transition-all duration-500 ease-out",
           variant === "default" && "bg-card/40 border-border/20 shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
           variant === "hover" && "bg-card/40 border-border/20 hover:bg-card/60 hover:border-border/30 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] shadow-[0_2px_8px_rgba(0,0,0,0.04)]",
           variant === "solid" && "bg-card/70 border-border/30 shadow-[0_4px_12px_rgba(0,0,0,0.06)]",
