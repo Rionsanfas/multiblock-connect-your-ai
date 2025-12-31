@@ -19,8 +19,9 @@ export const apiKeyService = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
+    // Use the safe view that excludes the encrypted column
     const { data, error } = await supabase
-      .from('api_keys')
+      .from('api_keys_safe')
       .select('id, provider, key_hint, is_valid, last_validated_at, created_at')
       .eq('user_id', user.id);
 
@@ -83,23 +84,9 @@ export const apiKeyService = {
     return (data as boolean) ?? false;
   },
 
-  /**
-   * Get decrypted API key for making LLM calls
-   * This should ONLY be called from edge functions, not from client
-   * For client-side, use the chat edge function which handles decryption internally
-   */
-  async getDecryptedKey(provider: LLMProvider): Promise<string | null> {
-    const { data, error } = await supabase.functions.invoke('encrypt-api-key', {
-      body: { action: 'decrypt', provider },
-    });
-
-    if (error || !data?.api_key) {
-      console.error('[apiKeyService.getDecryptedKey] Error:', error);
-      return null;
-    }
-
-    return data.api_key;
-  },
+  // NOTE: getDecryptedKey has been REMOVED for security.
+  // All AI calls must go through the chat-proxy edge function.
+  // Frontend cannot and should not access decrypted API keys.
 
   /**
    * Test if an API key is valid (format check only, no actual API call)
