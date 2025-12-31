@@ -1,23 +1,17 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './useAuth';
-import { subscriptionsDb, boardsDb, apiKeysDb } from '@/lib/database';
+import { useBilling } from './useBilling';
+import { boardsDb, apiKeysDb } from '@/lib/database';
 import { toast } from 'sonner';
 
 /**
- * Fetch real plan limits from Supabase subscription
+ * Fetch real plan limits from user_billing table (Polar-synced)
  */
 export function usePlanLimits() {
   const { user, isAuthenticated } = useAuth();
+  const { data: billing, isLoading: billingLoading } = useBilling();
   
-  // Fetch subscription data
-  const { data: subscription, isLoading: subLoading } = useQuery({
-    queryKey: ['user-subscription', user?.id],
-    queryFn: () => subscriptionsDb.getCurrent(),
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
   // Fetch board count
   const { data: boardCount = 0, isLoading: boardsLoading } = useQuery({
     queryKey: ['user-board-count', user?.id],
@@ -34,57 +28,90 @@ export function usePlanLimits() {
     staleTime: 1 * 60 * 1000,
   });
 
-  const isLoading = subLoading || boardsLoading || keysLoading;
+  const isLoading = billingLoading || boardsLoading || keysLoading;
 
   return useMemo(() => {
-    // Default limits for free tier if no subscription found
-    const maxBoards = subscription?.max_boards ?? 3;
-    const maxBlocksPerBoard = subscription?.max_blocks_per_board ?? 10;
-    const maxApiKeys = subscription?.max_api_keys ?? 2;
-    const maxMessagesPerDay = subscription?.max_messages_per_day ?? 50;
-    const messagesUsedToday = subscription?.messages_used_today ?? 0;
-    const tier = subscription?.tier ?? 'free';
-    const planName = subscription?.plan_name ?? 'Free';
-
+    // Get limits from billing (user_billing table from Polar)
+    const isActive = billing?.subscription_status === 'active' || billing?.is_lifetime;
+    const planName = billing?.active_plan ?? 'free';
+    const isFree = !isActive || planName === 'free';
+    
+    // Board limits - use total_boards which includes addons
+    const maxBoards = billing?.total_boards ?? 1;
+    const maxBlocksPerBoard = billing?.blocks ?? -1; // -1 is unlimited
+    const maxStorageMb = (billing?.total_storage_gb ?? 0.1) * 1024; // Convert GB to MB
+    const maxSeats = billing?.seats ?? 1;
+    
+    // For free plan, use default limits
+    const effectiveMaxBoards = isFree ? 1 : maxBoards;
+    const effectiveMaxBlocks = isFree ? 3 : maxBlocksPerBoard;
+    const effectiveStorageMb = isFree ? 100 : maxStorageMb;
+    
     // -1 means unlimited
     const isUnlimited = (val: number) => val === -1;
-    const isFree = tier === 'free';
     
     return {
       // Loading state
       isLoading,
       
       // Plan info
-      plan: tier,
-      planName,
+      plan: isFree ? 'free' : planName,
+      planName: getPlanDisplayName(planName),
       isFree,
+      isActive,
+      isLifetime: billing?.is_lifetime ?? false,
       
       // Board limits
-      boardsLimit: maxBoards,
+      boardsLimit: effectiveMaxBoards,
       boardsUsed: boardCount,
-      canCreateBoard: isUnlimited(maxBoards) || boardCount < maxBoards,
-      boardsRemaining: isUnlimited(maxBoards) ? Infinity : Math.max(0, maxBoards - boardCount),
-      boardsUnlimited: isUnlimited(maxBoards),
+      canCreateBoard: isUnlimited(effectiveMaxBoards) || boardCount < effectiveMaxBoards,
+      boardsRemaining: isUnlimited(effectiveMaxBoards) ? Infinity : Math.max(0, effectiveMaxBoards - boardCount),
+      boardsUnlimited: isUnlimited(effectiveMaxBoards),
       
       // Block limits (per board) - checked at creation time
-      blocksPerBoard: maxBlocksPerBoard,
-      blocksUnlimited: isUnlimited(maxBlocksPerBoard),
+      blocksPerBoard: effectiveMaxBlocks,
+      blocksUnlimited: isUnlimited(effectiveMaxBlocks),
       
-      // API key limits
-      apiKeysLimit: maxApiKeys,
+      // Storage limits
+      storageLimitMb: effectiveStorageMb,
+      storageLimitGb: effectiveStorageMb / 1024,
+      
+      // Seats
+      seatsLimit: maxSeats,
+      
+      // API key limits (default 2 for free, 10 for paid)
+      apiKeysLimit: isFree ? 2 : 10,
       apiKeysUsed: apiKeyCount,
-      canAddApiKey: isUnlimited(maxApiKeys) || apiKeyCount < maxApiKeys,
-      apiKeysRemaining: isUnlimited(maxApiKeys) ? Infinity : Math.max(0, maxApiKeys - apiKeyCount),
-      apiKeysUnlimited: isUnlimited(maxApiKeys),
+      canAddApiKey: apiKeyCount < (isFree ? 2 : 10),
+      apiKeysRemaining: Math.max(0, (isFree ? 2 : 10) - apiKeyCount),
+      apiKeysUnlimited: false,
       
-      // Message limits
-      messagesPerDay: maxMessagesPerDay,
-      messagesUsedToday,
-      canSendMessage: isUnlimited(maxMessagesPerDay) || messagesUsedToday < maxMessagesPerDay,
-      messagesRemaining: isUnlimited(maxMessagesPerDay) ? Infinity : Math.max(0, maxMessagesPerDay - messagesUsedToday),
-      messagesUnlimited: isUnlimited(maxMessagesPerDay),
+      // Message limits - all paid plans have unlimited
+      messagesPerDay: isFree ? 50 : -1,
+      messagesUsedToday: 0,
+      canSendMessage: true,
+      messagesRemaining: isFree ? 50 : Infinity,
+      messagesUnlimited: !isFree,
     };
-  }, [subscription, boardCount, apiKeyCount, isLoading]);
+  }, [billing, boardCount, apiKeyCount, isLoading]);
+}
+
+/**
+ * Get human-readable plan name
+ */
+function getPlanDisplayName(planKey: string): string {
+  const names: Record<string, string> = {
+    'free': 'Free',
+    'starter-individual-annual': 'Starter',
+    'pro-individual-annual': 'Pro',
+    'starter-team-annual': 'Starter Team',
+    'pro-team-annual': 'Pro Team',
+    'ltd-starter-individual': 'Starter LTD',
+    'ltd-pro-individual': 'Pro LTD',
+    'ltd-starter-team': 'Starter Team LTD',
+    'ltd-pro-team': 'Pro Team LTD',
+  };
+  return names[planKey] || planKey.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 /**
@@ -102,7 +129,7 @@ export function usePlanEnforcement() {
     if (!limits.canCreateBoard) {
       toast.error(`Board limit reached`, {
         description: limits.isFree 
-          ? `Free plan allows ${limits.boardsLimit} boards. Upgrade for more.`
+          ? `Free plan allows ${limits.boardsLimit} board. Upgrade for more.`
           : `Your ${limits.planName} plan allows ${limits.boardsLimit} boards.`,
         action: limits.isFree ? {
           label: "Upgrade",

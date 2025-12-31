@@ -216,13 +216,7 @@ export default function Dashboard() {
         <div className="flex-1 p-6 overflow-auto">
           {/* Usage Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <PlanUsageCard
-              planId={stats.plan}
-              boardsUsed={stats.boardsUsed}
-              boardsLimit={stats.boardsLimit}
-              seatsUsed={stats.seatsUsed}
-              seatsLimit={stats.seatsLimit}
-            />
+            <PlanUsageCard boardsUsed={stats.boardsUsed} />
             <StorageUsageCard
               usedMb={stats.storageUsedMb}
               limitMb={stats.storageLimitMb}

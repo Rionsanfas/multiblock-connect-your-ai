@@ -421,13 +421,10 @@ export const boardsDb = {
       throw new Error('Not authenticated');
     }
 
-    devLog('[boardsDb.create] Creating board');
+    devLog('[boardsDb.create] Creating board for user:', user.id);
 
-    const canCreate = await subscriptionsDb.canCreateBoard();
-    if (!canCreate) {
-      devLog('[boardsDb.create] Board limit reached');
-      throw new Error('Board limit reached. Please upgrade your plan.');
-    }
+    // Client-side check is done via usePlanEnforcement.enforceCreateBoard()
+    // Server-side RLS will also protect against unauthorized inserts
 
     const { data, error } = await supabase
       .from('boards')

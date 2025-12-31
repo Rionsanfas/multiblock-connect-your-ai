@@ -19,35 +19,38 @@ const PLAN_DISPLAY_NAMES: Record<string, string> = {
 };
 
 interface PlanUsageCardProps {
-  planId?: string;
   boardsUsed: number;
-  boardsLimit?: number;
-  seatsUsed?: number;
-  seatsLimit?: number;
 }
 
-export function PlanUsageCard({
-  planId,
-  boardsUsed,
-  boardsLimit: propBoardsLimit,
-  seatsUsed = 1,
-  seatsLimit: propSeatsLimit,
-}: PlanUsageCardProps) {
+export function PlanUsageCard({ boardsUsed }: PlanUsageCardProps) {
   const { data: billing, isLoading } = useBilling();
   
-  // Use billing data if available, otherwise use props
-  const activePlan = billing?.active_plan || planId || 'free';
+  // Get plan data from billing (user_billing table)
+  const activePlan = billing?.active_plan || 'free';
   const planName = PLAN_DISPLAY_NAMES[activePlan] || activePlan;
-  const boardsLimit = billing?.boards ?? propBoardsLimit ?? 3;
-  const seatsLimit = billing?.seats ?? propSeatsLimit ?? 1;
+  const isActive = billing?.subscription_status === 'active' || billing?.is_lifetime;
   const isLifetime = billing?.is_lifetime ?? false;
-  const status = billing?.subscription_status ?? 'inactive';
+  const isFree = !isActive || activePlan === 'free';
   
-  const boardPercentage = boardsLimit > 0 ? Math.min(boardsUsed / boardsLimit * 100, 100) : 0;
-  const seatPercentage = seatsLimit > 1 ? Math.min(seatsUsed / seatsLimit * 100, 100) : 0;
+  // Board limits from billing
+  const boardsLimit = isFree ? 1 : (billing?.total_boards ?? 1);
+  const seatsLimit = billing?.seats ?? 1;
+  const seatsUsed = 1;
   
-  const isActive = status === 'active';
-  const isFree = activePlan === 'free' || !activePlan;
+  const boardPercentage = boardsLimit > 0 && boardsLimit !== -1 
+    ? Math.min(boardsUsed / boardsLimit * 100, 100) 
+    : 0;
+  const seatPercentage = seatsLimit > 1 
+    ? Math.min(seatsUsed / seatsLimit * 100, 100) 
+    : 0;
+
+  if (isLoading) {
+    return (
+      <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/20 shadow-[0_2px_8px_rgba(0,0,0,0.04)] animate-pulse">
+        <div className="h-20 bg-muted/20 rounded-lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-5 rounded-2xl bg-card/40 backdrop-blur-xl border border-border/20 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
@@ -68,7 +71,7 @@ export function PlanUsageCard({
               Active
             </Badge>
           )}
-          {status === 'canceled' && (
+          {billing?.subscription_status === 'canceled' && (
             <Badge variant="destructive" className="text-[10px] px-1.5 py-0.5">
               Canceled
             </Badge>
