@@ -40,7 +40,7 @@ export function BlockCard({
   const [isRunning, setIsRunning] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeCorner, setResizeCorner] = useState<string | null>(null);
-  const [isHoveringResize, setIsHoveringResize] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [size, setSize] = useState({
     width: block.config?.width || DEFAULT_WIDTH,
@@ -224,145 +224,241 @@ export function BlockCard({
     }
   };
 
+  // Corner bracket size
+  const bracketSize = 16;
+  const bracketThickness = 2;
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
         <div
           className={cn(
-            "block-card absolute select-none transition-shadow duration-150",
+            "block-card absolute select-none transition-all duration-200",
             isDragging ? "cursor-grabbing z-50" : "cursor-move",
-            isResizing && "z-50",
-            isSelected ? "btn-soft-active" : "btn-soft"
+            isResizing && "z-50"
           )}
           style={{
             left: block.position.x,
             top: block.position.y,
             width: size.width,
-            padding: 0,
-            boxShadow: isDragging
-              ? "0 20px 60px rgba(0,0,0,0.35), 0 0 24px hsl(var(--accent)/0.25)"
-              : isSelected
-                ? "0 8px 32px rgba(0,0,0,0.2), 0 0 16px hsl(var(--accent)/0.15)"
-                : undefined,
             willChange: isDragging ? "transform" : "auto",
           }}
           onMouseDown={handleMouseDown}
           onClick={handleClick}
-          onMouseEnter={() => setIsHoveringResize(true)}
-          onMouseLeave={() => !isResizing && setIsHoveringResize(false)}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => !isResizing && setIsHovered(false)}
         >
-          {/* Header */}
-          <div className="flex items-center gap-2 p-3 border-b border-border/15">
-            <div className="p-1 rounded-lg bg-secondary/40">
-              <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
-            <h3
-              className={cn(
-                "font-semibold flex-1 truncate text-sm",
-                isSelected && "text-[hsl(var(--accent))]"
-              )}
-            >
-              {block.title}
-            </h3>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <IconButton variant="ghost" size="sm" className="no-drag h-8 w-8">
-                  <MoreHorizontal className="h-5 w-5" />
-                </IconButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
-                <DropdownMenuItem onClick={() => openBlockChat(block.id)} className="rounded-lg text-sm">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Open Chat
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => duplicateBlock(block.id)} className="rounded-lg text-sm">
-                  <Copy className="h-4 w-4 mr-2" />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowTransferDialog(true)} className="rounded-lg text-sm">
-                  <Move className="h-4 w-4 mr-2" />
-                  Copy/Move to Board
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleDeleteBlock} className="text-destructive rounded-lg text-sm">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Content Preview */}
-          <div className="px-3 py-3 flex-1 overflow-hidden" style={{ minHeight: size.height - 100 }}>
-            {lastMessage ? (
-              <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                {lastMessage.content}
-              </p>
-            ) : needsModelSelection ? (
-              <p className="text-xs text-amber-500/80 italic">Select a model to start chatting</p>
-            ) : (
-              <p className="text-xs text-muted-foreground/50 italic">Click to chat</p>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/15 bg-secondary/10 rounded-b-2xl">
-            {provider ? (
-              <ProviderBadge provider={provider} model={modelConfig?.name || block.model_id} />
-            ) : (
-              <span className="text-xs text-amber-500">No model selected</span>
-            )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRun();
-              }}
-              disabled={isRunning}
-              className={cn(
-                "no-drag px-2.5 py-1 text-xs font-medium rounded-lg transition-all",
-                isRunning
-                  ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground animate-pulse shadow-[0_0_8px_hsl(40,70%,50%/0.4)]"
-                  : "bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {isRunning ? "running..." : "rerun"}
-            </button>
-          </div>
-
-          {/* Connection Nodes */}
-          <div
-            className="absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-foreground border-2 border-background cursor-crosshair hover:scale-125 transition-transform no-drag shadow-lg"
-            onMouseDown={(e) => {
-              e.stopPropagation();
-              onStartConnection();
-            }}
-            onMouseUp={(e) => {
-              e.stopPropagation();
-              if (isConnecting) onEndConnection();
-            }}
-          />
+          {/* Main card container */}
           <div
             className={cn(
-              "absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-foreground bg-background transition-all no-drag shadow-lg",
-              isConnecting && "scale-125 bg-foreground/20"
+              "relative rounded-2xl transition-all duration-200",
+              "bg-[hsl(0_0%_8%/0.95)] backdrop-blur-xl",
+              "border border-[hsl(0_0%_20%/0.6)]",
+              isSelected 
+                ? "shadow-[0_0_0_1px_hsl(45_80%_55%/0.4),0_8px_32px_rgba(0,0,0,0.4)]" 
+                : "shadow-[0_4px_24px_rgba(0,0,0,0.3)]",
+              isDragging && "shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
             )}
-            onMouseUp={(e) => {
-              e.stopPropagation();
-              if (isConnecting) onEndConnection();
-            }}
-          />
-
-          {/* Single floating resize handle - top right corner only */}
-          {(isSelected || isHoveringResize) && (
-            <div
+          >
+            {/* Corner brackets for connection - decorative L-shapes */}
+            {/* Top-left bracket */}
+            <div 
               className={cn(
-                "absolute w-5 h-5 rounded-full cursor-ne-resize no-drag transition-all duration-300",
-                "bg-foreground/50 shadow-[0_4px_16px_rgba(0,0,0,0.6)]",
-                "hover:bg-foreground/80 hover:scale-125 hover:shadow-[0_6px_20px_rgba(0,0,0,0.7)]"
+                "absolute -top-1 -left-1 pointer-events-auto cursor-crosshair no-drag transition-opacity duration-200",
+                (isHovered || isSelected) ? "opacity-100" : "opacity-0"
               )}
-              style={{ top: -14, right: -14 }}
-              onMouseDown={(e) => handleResizeStart(e, 'ne')}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onStartConnection();
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                if (isConnecting) onEndConnection();
+              }}
+            >
+              <svg width={bracketSize + 4} height={bracketSize + 4} className="overflow-visible">
+                <path
+                  d={`M ${bracketSize} 4 L 4 4 L 4 ${bracketSize}`}
+                  fill="none"
+                  stroke={isSelected ? "hsl(45, 80%, 55%)" : "hsl(0, 0%, 40%)"}
+                  strokeWidth={bracketThickness}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            {/* Top-right bracket */}
+            <div 
+              className={cn(
+                "absolute -top-1 -right-1 pointer-events-auto cursor-crosshair no-drag transition-opacity duration-200",
+                (isHovered || isSelected) ? "opacity-100" : "opacity-0"
+              )}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onStartConnection();
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                if (isConnecting) onEndConnection();
+              }}
+            >
+              <svg width={bracketSize + 4} height={bracketSize + 4} className="overflow-visible">
+                <path
+                  d={`M 4 4 L ${bracketSize} 4 L ${bracketSize} ${bracketSize}`}
+                  fill="none"
+                  stroke={isSelected ? "hsl(45, 80%, 55%)" : "hsl(0, 0%, 40%)"}
+                  strokeWidth={bracketThickness}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            {/* Bottom-left bracket - resize handle */}
+            <div 
+              className={cn(
+                "absolute -bottom-1 -left-1 pointer-events-auto cursor-sw-resize no-drag transition-opacity duration-200",
+                (isHovered || isSelected) ? "opacity-100" : "opacity-0"
+              )}
+              onMouseDown={(e) => handleResizeStart(e, 'sw')}
+            >
+              <svg width={bracketSize + 4} height={bracketSize + 4} className="overflow-visible">
+                <path
+                  d={`M 4 4 L 4 ${bracketSize} L ${bracketSize} ${bracketSize}`}
+                  fill="none"
+                  stroke={isSelected ? "hsl(45, 80%, 55%)" : "hsl(0, 0%, 40%)"}
+                  strokeWidth={bracketThickness}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            {/* Bottom-right bracket - resize handle */}
+            <div 
+              className={cn(
+                "absolute -bottom-1 -right-1 pointer-events-auto cursor-se-resize no-drag transition-opacity duration-200",
+                (isHovered || isSelected) ? "opacity-100" : "opacity-0"
+              )}
+              onMouseDown={(e) => handleResizeStart(e, 'se')}
+            >
+              <svg width={bracketSize + 4} height={bracketSize + 4} className="overflow-visible">
+                <path
+                  d={`M ${bracketSize} 4 L ${bracketSize} ${bracketSize} L 4 ${bracketSize}`}
+                  fill="none"
+                  stroke={isSelected ? "hsl(45, 80%, 55%)" : "hsl(0, 0%, 40%)"}
+                  strokeWidth={bracketThickness}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            {/* Header */}
+            <div className="flex items-center gap-2 p-3 border-b border-border/20">
+              <div className="p-1 rounded-lg bg-secondary/30">
+                <GripVertical className="h-3.5 w-3.5 text-muted-foreground/60" />
+              </div>
+              <h3
+                className={cn(
+                  "font-medium flex-1 truncate text-sm",
+                  isSelected ? "text-[hsl(45,80%,55%)]" : "text-foreground/90"
+                )}
+              >
+                {block.title}
+              </h3>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <IconButton variant="ghost" size="sm" className="no-drag h-7 w-7 opacity-60 hover:opacity-100">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </IconButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
+                  <DropdownMenuItem onClick={() => openBlockChat(block.id)} className="rounded-lg text-sm">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Open Chat
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => duplicateBlock(block.id)} className="rounded-lg text-sm">
+                    <Copy className="h-4 w-4 mr-2" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowTransferDialog(true)} className="rounded-lg text-sm">
+                    <Move className="h-4 w-4 mr-2" />
+                    Copy/Move to Board
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDeleteBlock} className="text-destructive rounded-lg text-sm">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Content Preview */}
+            <div className="px-3 py-3 flex-1 overflow-hidden" style={{ minHeight: size.height - 100 }}>
+              {lastMessage ? (
+                <p className="text-xs text-muted-foreground/80 line-clamp-3 leading-relaxed">
+                  {lastMessage.content}
+                </p>
+              ) : needsModelSelection ? (
+                <p className="text-xs text-amber-500/70 italic">Select a model to start chatting</p>
+              ) : (
+                <p className="text-xs text-muted-foreground/40 italic">Click to chat</p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/20 bg-secondary/5 rounded-b-2xl">
+              {provider ? (
+                <ProviderBadge provider={provider} model={modelConfig?.name || block.model_id} />
+              ) : (
+                <span className="text-xs text-amber-500/70">No model selected</span>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRun();
+                }}
+                disabled={isRunning}
+                className={cn(
+                  "no-drag px-2.5 py-1 text-xs font-medium rounded-lg transition-all",
+                  isRunning
+                    ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground animate-pulse shadow-[0_0_8px_hsl(40,70%,50%/0.4)]"
+                    : "bg-secondary/40 hover:bg-secondary/60 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {isRunning ? "running..." : "rerun"}
+              </button>
+            </div>
+
+            {/* Connection zones - invisible areas for starting connections */}
+            {/* Left edge connection zone */}
+            <div
+              className="absolute left-0 top-4 bottom-4 w-3 cursor-crosshair no-drag"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onStartConnection();
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                if (isConnecting) onEndConnection();
+              }}
             />
-          )}
+            {/* Right edge connection zone */}
+            <div
+              className="absolute right-0 top-4 bottom-4 w-3 cursor-crosshair no-drag"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onStartConnection();
+              }}
+              onMouseUp={(e) => {
+                e.stopPropagation();
+                if (isConnecting) onEndConnection();
+              }}
+            />
+          </div>
 
           {/* Block Transfer Dialog */}
           <BlockTransferDialog
