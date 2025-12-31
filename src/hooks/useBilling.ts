@@ -173,10 +173,10 @@ export function useBilling() {
 }
 
 export function useCustomerPortal() {
-  const openCustomerPortal = async () => {
+  const openCustomerPortal = async (): Promise<void> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      throw new Error('Not authenticated');
+      throw new Error('Please sign in to access billing');
     }
 
     const response = await supabase.functions.invoke('polar-customer-portal', {
@@ -186,19 +186,25 @@ export function useCustomerPortal() {
     });
 
     if (response.error) {
-      throw new Error(response.error.message || 'Failed to get customer portal');
+      console.error('Customer portal error:', response.error);
+      throw new Error(response.error.message || 'Failed to open billing portal');
     }
 
     const data = response.data as { customerPortalUrl?: string; error?: string };
 
     if (data.error) {
+      // Handle specific error cases
+      if (data.error.includes('No active subscription')) {
+        throw new Error('No subscription found. Please purchase a plan first.');
+      }
       throw new Error(data.error);
     }
 
     if (!data.customerPortalUrl) {
-      throw new Error('No portal URL returned');
+      throw new Error('Unable to generate billing portal link. Please try again.');
     }
 
+    // Redirect to pre-authenticated Polar customer portal
     window.location.href = data.customerPortalUrl;
   };
 
