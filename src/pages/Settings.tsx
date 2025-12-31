@@ -78,25 +78,25 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="billing" className="space-y-6">
-          <TabsList className="tabs-3d flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="billing" className="gap-2">
-              <CreditCard className="h-4 w-4" />
+          <TabsList className="tabs-3d flex-wrap h-auto gap-1 p-1.5">
+            <TabsTrigger value="billing" className="gap-2 px-4 py-2.5">
+              <CreditCard className="h-4 w-4 icon-3d" />
               Billing
             </TabsTrigger>
-            <TabsTrigger value="plan" className="gap-2">
-              <Crown className="h-4 w-4" />
+            <TabsTrigger value="plan" className="gap-2 px-4 py-2.5">
+              <Crown className="h-4 w-4 icon-3d" />
               Plan & Usage
             </TabsTrigger>
-            <TabsTrigger value="profile" className="gap-2">
-              <User className="h-4 w-4" />
+            <TabsTrigger value="profile" className="gap-2 px-4 py-2.5">
+              <User className="h-4 w-4 icon-3d" />
               Profile
             </TabsTrigger>
-            <TabsTrigger value="cookies" className="gap-2">
-              <Cookie className="h-4 w-4" />
+            <TabsTrigger value="cookies" className="gap-2 px-4 py-2.5">
+              <Cookie className="h-4 w-4 icon-3d" />
               Cookies
             </TabsTrigger>
-            <TabsTrigger value="privacy" className="gap-2">
-              <Shield className="h-4 w-4" />
+            <TabsTrigger value="privacy" className="gap-2 px-4 py-2.5">
+              <Shield className="h-4 w-4 icon-3d" />
               Privacy
             </TabsTrigger>
           </TabsList>
@@ -114,22 +114,27 @@ export default function Settings() {
           <TabsContent value="profile">
             <Card className="settings-card-3d">
               <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
+                <CardTitle className="flex items-center gap-3">
+                  <div className="key-icon-3d p-2.5 rounded-xl">
+                    <User className="h-4 w-4" />
+                  </div>
+                  Profile Information
+                </CardTitle>
                 <CardDescription>Update your personal details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Profile Picture */}
                 <div className="flex items-center gap-6">
                   <div className="relative">
-                    <Avatar className="h-24 w-24 border-2 border-border">
+                    <Avatar className="h-24 w-24 border-2 border-border ring-4 ring-background shadow-lg">
                       <AvatarImage src={profileImage || undefined} alt="Profile" />
-                      <AvatarFallback className="text-2xl bg-muted">
+                      <AvatarFallback className="text-2xl bg-secondary/50">
                         {profileForm.name?.charAt(0)?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
+                      className="absolute bottom-0 right-0 key-icon-3d p-2 rounded-full"
                     >
                       <Camera className="h-4 w-4" />
                     </button>
@@ -148,7 +153,7 @@ export default function Settings() {
                     </p>
                   </div>
                 </div>
-                <Separator />
+                <Separator className="bg-border/30" />
                 <div className="space-y-2">
                   <Label htmlFor="name">Display Name</Label>
                   <Input
@@ -156,6 +161,7 @@ export default function Settings() {
                     value={profileForm.name}
                     onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                     placeholder="Your name"
+                    className="bg-secondary/30 border-border/30"
                   />
                 </div>
                 <div className="space-y-2">
@@ -166,9 +172,10 @@ export default function Settings() {
                     value={profileForm.email}
                     onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                     placeholder="your@email.com"
+                    className="bg-secondary/30 border-border/30"
                   />
                 </div>
-                <Button onClick={handleProfileSave}>Save Changes</Button>
+                <Button onClick={handleProfileSave} className="btn-3d-primary">Save Changes</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -176,7 +183,12 @@ export default function Settings() {
           <TabsContent value="cookies">
             <Card className="settings-card-3d">
               <CardHeader>
-                <CardTitle>Cookie Preferences</CardTitle>
+                <CardTitle className="flex items-center gap-3">
+                  <div className="key-icon-3d p-2.5 rounded-xl">
+                    <Cookie className="h-4 w-4" />
+                  </div>
+                  Cookie Preferences
+                </CardTitle>
                 <CardDescription>
                   Manage how we use cookies. See our{" "}
                   <Link to="/privacy" className="text-primary hover:underline">
@@ -186,7 +198,7 @@ export default function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 rounded-xl glass-card">
                   <div className="space-y-0.5">
                     <Label>Essential Cookies</Label>
                     <p className="text-sm text-muted-foreground">
@@ -195,8 +207,7 @@ export default function Settings() {
                   </div>
                   <Switch checked={cookies.essential} disabled />
                 </div>
-                <Separator />
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between p-4 rounded-xl glass-card">
                   <div className="space-y-0.5">
                     <Label>Personalization Cookies</Label>
                     <p className="text-sm text-muted-foreground">
@@ -208,7 +219,7 @@ export default function Settings() {
                     onCheckedChange={(checked) => setCookies({ ...cookies, personalization: checked })}
                   />
                 </div>
-                <Button onClick={handleCookieSave}>Save Preferences</Button>
+                <Button onClick={handleCookieSave} className="btn-3d-primary">Save Preferences</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -218,30 +229,34 @@ export default function Settings() {
             <div className="space-y-6">
               <Card className="settings-card-3d">
                 <CardHeader>
-                  <CardTitle>Privacy & Data</CardTitle>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="key-icon-3d p-2.5 rounded-xl">
+                      <Shield className="h-4 w-4" />
+                    </div>
+                    Privacy & Data
+                  </CardTitle>
                   <CardDescription>Manage your data and privacy settings</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-4 rounded-xl glass-card">
                     <div>
                       <p className="font-medium">Privacy Policy</p>
                       <p className="text-sm text-muted-foreground">
                         Read our privacy policy
                       </p>
                     </div>
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" asChild className="key-icon-3d border-0">
                       <Link to="/privacy">View Policy</Link>
                     </Button>
                   </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-4 rounded-xl glass-card">
                     <div>
                       <p className="font-medium">Terms of Service</p>
                       <p className="text-sm text-muted-foreground">
                         Read our terms of service
                       </p>
                     </div>
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" asChild className="key-icon-3d border-0">
                       <Link to="/terms">View Terms</Link>
                     </Button>
                   </div>
