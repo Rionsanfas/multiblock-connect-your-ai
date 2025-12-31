@@ -56,8 +56,9 @@ export function useEntitlements() {
       return result as UserEntitlements;
     },
     enabled: isAuthenticated,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 5, // 5 minutes - entitlements rarely change
+    gcTime: 1000 * 60 * 15, // 15 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   // Refresh entitlements (call after checkout success)

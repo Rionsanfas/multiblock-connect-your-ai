@@ -17,7 +17,9 @@ export function usePlanLimits() {
     queryKey: ['user-board-count', user?.id],
     queryFn: () => boardsDb.getCount(),
     enabled: isAuthenticated,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   // Fetch API key count
@@ -25,7 +27,9 @@ export function usePlanLimits() {
     queryKey: ['user-apikey-count', user?.id],
     queryFn: () => apiKeysDb.getCount(),
     enabled: isAuthenticated,
-    staleTime: 1 * 60 * 1000,
+    staleTime: 1000 * 60 * 5, // 5 minutes - API keys rarely change
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   const isLoading = billingLoading || boardsLoading || keysLoading;

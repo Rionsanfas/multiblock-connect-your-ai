@@ -45,7 +45,9 @@ export function useWorkspaceBoards(): LegacyBoard[] {
       return boardsDb.getAll();
     },
     enabled: isAuthenticated && !!authUser?.id,
-    staleTime: 30 * 1000,
+    staleTime: 1000 * 60 * 2, // 2 minutes - reduce refetches
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   return useMemo(() => boards.map(transformBoard), [boards]);

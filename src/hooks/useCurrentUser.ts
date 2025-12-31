@@ -61,14 +61,18 @@ export function useCurrentUser(): CurrentUserState {
     queryKey: ['user-subscription', authUser?.id],
     queryFn: () => subscriptionsDb.getCurrent(),
     enabled: !!authUser,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 15, // 15 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   const { data: boardCount = 0, isLoading: boardsLoading } = useQuery({
     queryKey: ['user-board-count', authUser?.id],
     queryFn: () => boardsDb.getCount(),
     enabled: !!authUser,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   const legacyUser = useMemo((): LegacyUser | null => {
@@ -108,7 +112,9 @@ export function useUserBoards(): LegacyBoard[] {
     queryKey: ['user-boards', authUser?.id],
     queryFn: () => boardsDb.getAll(),
     enabled: isAuthenticated,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   // Transform to legacy format
@@ -169,7 +175,9 @@ export function useUserBoard(boardId: string | undefined): UseUserBoardResult {
       return result;
     },
     enabled: !authLoading && isAuthenticated && !!authUser?.id && !!boardId,
-    staleTime: 30 * 1000,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    refetchOnWindowFocus: false,
   });
   
   // Memoize the transformed board to ensure stable reference

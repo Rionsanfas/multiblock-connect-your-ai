@@ -14,8 +14,9 @@ export function useUserSubscription() {
     queryKey: ['user-subscription', user?.id],
     queryFn: () => subscriptionsDb.getCurrent(),
     enabled: isAuthenticated,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 5, // 5 minutes - subscription rarely changes
+    gcTime: 1000 * 60 * 15, // 15 minutes cache
+    refetchOnWindowFocus: false,
   });
   
   // Function to refresh subscription data (call after checkout)

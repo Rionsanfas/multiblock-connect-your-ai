@@ -95,7 +95,9 @@ export function useBilling() {
       };
     },
     enabled: !!user,
-    staleTime: 30000,
+    staleTime: 1000 * 60 * 5, // 5 minutes - billing rarely changes
+    gcTime: 1000 * 60 * 15, // 15 minutes cache
+    refetchOnWindowFocus: false,
   });
 
   // Real-time subscription for billing updates

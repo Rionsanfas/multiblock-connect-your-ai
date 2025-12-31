@@ -25,8 +25,9 @@ export function useBoardBlocks(boardId: string | undefined) {
       return blocks;
     },
     enabled: !authLoading && !!user?.id && !!boardId,
-    staleTime: 5 * 1000, // 5 seconds - keep data fresh
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60, // 1 minute - reduce refetches
+    gcTime: 1000 * 60 * 5, // 5 minutes cache
+    refetchOnWindowFocus: false, // Don't refetch on focus
   });
 
   // Transform to legacy format and sort

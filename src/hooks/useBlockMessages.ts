@@ -254,10 +254,13 @@ export function useMessageActions(blockId: string) {
 }
 
 /**
- * Hook to get aggregated usage statistics for a board (stub for compatibility)
+ * Hook to get aggregated usage statistics for a board
+ * Returns null to avoid extra queries - usage is shown per-block only when needed
  */
-export function useBoardUsage(boardId: string | null) {
-  return null; // TODO: Implement with Supabase aggregation
+export function useBoardUsage(boardId: string | null): { message_count: number; total_bytes: number } | null {
+  // Return null to avoid N+1 queries on dashboard
+  // Per-block usage is calculated in useBlockUsage when viewing individual blocks
+  return null;
 }
 
 /**
