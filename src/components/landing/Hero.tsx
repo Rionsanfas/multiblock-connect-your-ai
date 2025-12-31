@@ -47,17 +47,12 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden" style={{ paddingTop: "clamp(80px, 12vw, 128px)", paddingBottom: "clamp(48px, 6vw, 80px)" }}>
-      {/* Floating Blocks Background - blurry ambient effect */}
-      <FloatingBlocksBackground />
+    <section className="relative min-h-screen overflow-hidden bg-background" style={{ paddingTop: "clamp(80px, 12vw, 128px)", paddingBottom: "clamp(48px, 6vw, 80px)" }}>
+      {/* Pure black background */}
+      <div className="absolute inset-0 bg-background" />
       
-      {/* Soft Warm Noisy Background */}
-      <div className="absolute inset-0 hero-glow-bg" />
-      <div className="absolute inset-0 hero-noise" />
-      
-      {/* Cinematic Lighting Effect */}
-      <div className={`hero-lighting ${phase >= 1 ? 'active' : ''}`} />
-      <div className={`hero-light-bloom ${phase >= 1 ? 'active' : ''}`} />
+      {/* Floating Blocks Background with Light Beam */}
+      <FloatingBlocksBackground showLightBeam={phase >= 1} />
       
       {/* Container */}
       <div 
