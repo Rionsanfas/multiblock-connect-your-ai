@@ -81,7 +81,11 @@ serve(async (req) => {
 
     console.log('Found polar_customer_id:', billing.polar_customer_id);
 
-    // Call Polar API to create customer session
+    // Get the origin from the request for return URL
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/+$/, '') || '';
+    const returnUrl = origin ? `${origin}/settings` : undefined;
+
+    // Call Polar API to create customer session with pre-authenticated portal access
     const polarResponse = await fetch('https://api.polar.sh/v1/customer-sessions', {
       method: 'POST',
       headers: {
@@ -96,14 +100,22 @@ serve(async (req) => {
     if (!polarResponse.ok) {
       const errorText = await polarResponse.text();
       console.error('Polar API error:', polarResponse.status, errorText);
+      
+      // Parse error for better messaging
+      let errorMessage = 'Failed to create customer portal session';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail || errorJson.message || errorMessage;
+      } catch {}
+      
       return new Response(
-        JSON.stringify({ error: 'Failed to create customer portal session' }),
+        JSON.stringify({ error: errorMessage }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const sessionData = await polarResponse.json();
-    console.log('Customer session created successfully');
+    console.log('Customer session created successfully, portal URL:', sessionData.customer_portal_url);
 
     // Return the customer portal URL
     return new Response(
