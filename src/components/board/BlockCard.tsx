@@ -41,6 +41,7 @@ export function BlockCard({
   const [isResizing, setIsResizing] = useState(false);
   const [resizeCorner, setResizeCorner] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [isConnectionZoneHovered, setIsConnectionZoneHovered] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
   const [size, setSize] = useState({
     width: block.config?.width || DEFAULT_WIDTH,
@@ -225,8 +226,9 @@ export function BlockCard({
   };
 
   // Bracket configuration
-  const bracketOffset = 6; // Offset from block edge
-  const cornerBracketSize = 14; // Size of corner resize brackets
+  const bracketOffset = 10; // Offset from block edge for connection bracket
+  const cornerOffset = 16; // Larger offset for corner resize brackets
+  const cornerBracketSize = 18; // Size of corner resize brackets
   const borderRadius = 16; // Matches rounded-2xl
 
   return (
@@ -246,51 +248,63 @@ export function BlockCard({
           onMouseDown={handleMouseDown}
           onClick={handleClick}
           onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => !isResizing && setIsHovered(false)}
+          onMouseLeave={() => {
+            if (!isResizing) setIsHovered(false);
+            setIsConnectionZoneHovered(false);
+          }}
         >
           {/* Layer 1: Full outline bracket for connections - always visible, offset from block */}
           <div 
-            className="absolute pointer-events-none"
+            className={cn(
+              "absolute pointer-events-none transition-all duration-150",
+              isConnectionZoneHovered && "drop-shadow-[0_0_8px_hsl(0,0%,60%)]"
+            )}
             style={{
               top: -bracketOffset,
               left: -bracketOffset,
-              right: -bracketOffset,
-              bottom: -bracketOffset,
+              width: `calc(100% + ${bracketOffset * 2}px)`,
+              height: `calc(100% + ${bracketOffset * 2}px)`,
             }}
           >
             <svg 
-              className="w-full h-full overflow-visible" 
-              style={{ width: `calc(100% + ${bracketOffset * 2}px)`, height: `calc(100% + ${bracketOffset * 2}px)` }}
+              className="w-full h-full overflow-visible"
+              viewBox={`0 0 ${size.width + bracketOffset * 2} ${size.height + bracketOffset * 2}`}
               preserveAspectRatio="none"
             >
               <rect
-                x="1"
-                y="1"
-                width="calc(100% - 2px)"
-                height="calc(100% - 2px)"
-                rx={borderRadius + bracketOffset - 2}
-                ry={borderRadius + bracketOffset - 2}
+                x="1.5"
+                y="1.5"
+                width={size.width + bracketOffset * 2 - 3}
+                height={size.height + bracketOffset * 2 - 3}
+                rx={borderRadius + bracketOffset - 4}
+                ry={borderRadius + bracketOffset - 4}
                 fill="none"
-                stroke="hsl(0, 0%, 30%)"
-                strokeWidth="1.5"
-                strokeOpacity="0.6"
+                stroke={isConnectionZoneHovered ? "hsl(0, 0%, 55%)" : "hsl(0, 0%, 30%)"}
+                strokeWidth={isConnectionZoneHovered ? "2" : "1.5"}
+                strokeOpacity={isConnectionZoneHovered ? "0.9" : "0.6"}
               />
             </svg>
           </div>
           
-          {/* Connection click zone - invisible but clickable overlay for starting connections */}
+          {/* Connection click zone - invisible but clickable overlay for starting/ending connections */}
           <div 
             className="absolute cursor-crosshair no-drag pointer-events-auto"
             style={{
-              top: -bracketOffset - 4,
-              left: -bracketOffset - 4,
-              right: -bracketOffset - 4,
-              bottom: -bracketOffset - 4,
-              borderRadius: borderRadius + bracketOffset,
+              top: -bracketOffset - 8,
+              left: -bracketOffset - 8,
+              width: `calc(100% + ${(bracketOffset + 8) * 2}px)`,
+              height: `calc(100% + ${(bracketOffset + 8) * 2}px)`,
+              borderRadius: borderRadius + bracketOffset + 4,
             }}
+            onMouseEnter={() => setIsConnectionZoneHovered(true)}
+            onMouseLeave={() => setIsConnectionZoneHovered(false)}
             onMouseDown={(e) => {
-              e.stopPropagation();
-              onStartConnection();
+              // Only start connection if not clicking on the main card
+              const target = e.target as HTMLElement;
+              if (!target.closest('.block-main-card')) {
+                e.stopPropagation();
+                onStartConnection();
+              }
             }}
             onMouseUp={(e) => {
               e.stopPropagation();
@@ -298,19 +312,22 @@ export function BlockCard({
             }}
           />
 
-          {/* Layer 2: Corner resize brackets - always visible, small L-shapes at corners */}
+          {/* Layer 2: Corner resize brackets - visible only on hover, farther from block */}
           {/* Top-left corner bracket */}
           <div 
-            className="absolute pointer-events-auto cursor-nw-resize no-drag"
-            style={{ top: -bracketOffset - 4, left: -bracketOffset - 4 }}
+            className={cn(
+              "absolute pointer-events-auto cursor-nw-resize no-drag transition-opacity duration-150",
+              isHovered ? "opacity-100" : "opacity-0"
+            )}
+            style={{ top: -cornerOffset, left: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'nw')}
           >
-            <svg width={cornerBracketSize + 8} height={cornerBracketSize + 8} className="overflow-visible">
+            <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
-                d={`M ${cornerBracketSize + 4} 4 Q 4 4 4 ${cornerBracketSize + 4}`}
+                d={`M ${cornerBracketSize - 2} 2 Q 2 2 2 ${cornerBracketSize - 2}`}
                 fill="none"
-                stroke="hsl(0, 0%, 45%)"
-                strokeWidth="2"
+                stroke="hsl(0, 0%, 50%)"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
             </svg>
@@ -318,16 +335,19 @@ export function BlockCard({
 
           {/* Top-right corner bracket */}
           <div 
-            className="absolute pointer-events-auto cursor-ne-resize no-drag"
-            style={{ top: -bracketOffset - 4, right: -bracketOffset - 4 }}
+            className={cn(
+              "absolute pointer-events-auto cursor-ne-resize no-drag transition-opacity duration-150",
+              isHovered ? "opacity-100" : "opacity-0"
+            )}
+            style={{ top: -cornerOffset, right: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'ne')}
           >
-            <svg width={cornerBracketSize + 8} height={cornerBracketSize + 8} className="overflow-visible">
+            <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
-                d={`M 4 4 Q ${cornerBracketSize + 4} 4 ${cornerBracketSize + 4} ${cornerBracketSize + 4}`}
+                d={`M 2 2 Q ${cornerBracketSize - 2} 2 ${cornerBracketSize - 2} ${cornerBracketSize - 2}`}
                 fill="none"
-                stroke="hsl(0, 0%, 45%)"
-                strokeWidth="2"
+                stroke="hsl(0, 0%, 50%)"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
             </svg>
@@ -335,16 +355,19 @@ export function BlockCard({
 
           {/* Bottom-left corner bracket */}
           <div 
-            className="absolute pointer-events-auto cursor-sw-resize no-drag"
-            style={{ bottom: -bracketOffset - 4, left: -bracketOffset - 4 }}
+            className={cn(
+              "absolute pointer-events-auto cursor-sw-resize no-drag transition-opacity duration-150",
+              isHovered ? "opacity-100" : "opacity-0"
+            )}
+            style={{ bottom: -cornerOffset, left: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'sw')}
           >
-            <svg width={cornerBracketSize + 8} height={cornerBracketSize + 8} className="overflow-visible">
+            <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
-                d={`M 4 4 Q 4 ${cornerBracketSize + 4} ${cornerBracketSize + 4} ${cornerBracketSize + 4}`}
+                d={`M 2 2 Q 2 ${cornerBracketSize - 2} ${cornerBracketSize - 2} ${cornerBracketSize - 2}`}
                 fill="none"
-                stroke="hsl(0, 0%, 45%)"
-                strokeWidth="2"
+                stroke="hsl(0, 0%, 50%)"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
             </svg>
@@ -352,16 +375,19 @@ export function BlockCard({
 
           {/* Bottom-right corner bracket */}
           <div 
-            className="absolute pointer-events-auto cursor-se-resize no-drag"
-            style={{ bottom: -bracketOffset - 4, right: -bracketOffset - 4 }}
+            className={cn(
+              "absolute pointer-events-auto cursor-se-resize no-drag transition-opacity duration-150",
+              isHovered ? "opacity-100" : "opacity-0"
+            )}
+            style={{ bottom: -cornerOffset, right: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'se')}
           >
-            <svg width={cornerBracketSize + 8} height={cornerBracketSize + 8} className="overflow-visible">
+            <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
-                d={`M ${cornerBracketSize + 4} 4 Q ${cornerBracketSize + 4} ${cornerBracketSize + 4} 4 ${cornerBracketSize + 4}`}
+                d={`M ${cornerBracketSize - 2} 2 Q ${cornerBracketSize - 2} ${cornerBracketSize - 2} 2 ${cornerBracketSize - 2}`}
                 fill="none"
-                stroke="hsl(0, 0%, 45%)"
-                strokeWidth="2"
+                stroke="hsl(0, 0%, 50%)"
+                strokeWidth="2.5"
                 strokeLinecap="round"
               />
             </svg>
@@ -370,7 +396,7 @@ export function BlockCard({
           {/* Main card container */}
           <div
             className={cn(
-              "relative rounded-2xl",
+              "block-main-card relative rounded-2xl",
               "bg-[hsl(0_0%_8%/0.95)] backdrop-blur-xl",
               "border border-[hsl(0_0%_20%/0.6)]",
               isSelected 
@@ -378,6 +404,11 @@ export function BlockCard({
                 : "shadow-[0_4px_24px_rgba(0,0,0,0.3)]",
               isDragging && "shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
             )}
+            onMouseUp={(e) => {
+              // Allow dropping connections anywhere on the main card
+              e.stopPropagation();
+              if (isConnecting) onEndConnection();
+            }}
           >
 
             {/* Header */}
