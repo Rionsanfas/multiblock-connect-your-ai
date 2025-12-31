@@ -138,11 +138,40 @@ export default {
             transform: "translate(-50%, -50%) translateY(-20px) translateX(5px) rotate(1deg)",
           },
         },
+        "beam-pulse": {
+          "0%, 100%": { 
+            opacity: "0.8",
+            filter: "blur(0px)",
+          },
+          "50%": { 
+            opacity: "1",
+            filter: "blur(2px)",
+          },
+        },
+        "beam-flow": {
+          "0%": { 
+            transform: "translateY(-10%)",
+          },
+          "100%": { 
+            transform: "translateY(10%)",
+          },
+        },
+        "edge-shine": {
+          "0%": {
+            backgroundPosition: "200% 0",
+          },
+          "100%": {
+            backgroundPosition: "-200% 0",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "floating-block": "floating-block ease-in-out infinite",
+        "beam-pulse": "beam-pulse 3s ease-in-out infinite",
+        "beam-flow": "beam-flow 4s ease-in-out infinite alternate",
+        "edge-shine": "edge-shine 3s linear infinite",
       },
     },
   },

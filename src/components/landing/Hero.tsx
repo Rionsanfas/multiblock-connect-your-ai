@@ -39,7 +39,7 @@ const Hero = () => {
       {/* Pure black background */}
       <div className="absolute inset-0 bg-background" />
       
-      {/* Floating Blocks Background with Waterfall Light */}
+      {/* Floating Blocks Background with Centered Light Beam */}
       <FloatingBlocksBackground showLightBeam={phase >= 1} />
       
       {/* Container */}
@@ -49,14 +49,14 @@ const Hero = () => {
       >
         {/* Hero grid - adjusted for larger left, smaller right */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] items-center" style={{ gap: "clamp(24px, 4vw, 48px)" }}>
-          {/* Left: Text Content - Bigger */}
+          {/* Left: Text Content - Smaller text */}
           <div className="text-center lg:text-left order-2 lg:order-1">
-            {/* Headline with shadow effect like reference image */}
+            {/* Headline with shadow effect */}
             <h1 
               className="font-bold leading-tight text-wrap-balance"
               style={{ 
-                fontSize: "clamp(2.25rem, 1.5rem + 5vw, 5.5rem)",
-                marginBottom: "clamp(16px, 2vw, 24px)",
+                fontSize: "clamp(1.75rem, 1.2rem + 3.5vw, 4rem)",
+                marginBottom: "clamp(12px, 1.5vw, 20px)",
                 ...mainStyle,
               }}
             >
@@ -64,7 +64,7 @@ const Hero = () => {
                 className="block"
                 style={{
                   color: 'hsl(0 0% 100%)',
-                  textShadow: '0 4px 30px hsl(0 0% 100% / 0.15), 0 8px 60px hsl(210 100% 70% / 0.1)',
+                  textShadow: '0 4px 30px hsl(200 100% 80% / 0.2), 0 8px 60px hsl(200 100% 70% / 0.15)',
                 }}
               >
                 One Workspace.
@@ -72,24 +72,24 @@ const Hero = () => {
               <span 
                 className="block"
                 style={{
-                  background: 'linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 70%) 100%)',
+                  background: 'linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 65%) 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   textShadow: 'none',
-                  filter: 'drop-shadow(0 4px 20px hsl(210 100% 60% / 0.2))',
+                  filter: 'drop-shadow(0 4px 20px hsl(200 100% 70% / 0.25))',
                 }}
               >
                 Every AI Model.
               </span>
             </h1>
 
-            {/* Sub-headline */}
+            {/* Sub-headline - smaller */}
             <p 
-              className="text-muted-foreground max-w-xl mx-auto lg:mx-0 text-break"
+              className="text-muted-foreground max-w-lg mx-auto lg:mx-0 text-break"
               style={{ 
-                fontSize: "clamp(1rem, 0.85rem + 0.6vw, 1.35rem)",
-                marginBottom: "clamp(28px, 4vw, 48px)",
+                fontSize: "clamp(0.875rem, 0.75rem + 0.5vw, 1.1rem)",
+                marginBottom: "clamp(24px, 3vw, 40px)",
                 lineHeight: 1.7,
                 ...mainStyle,
               }}
@@ -98,7 +98,7 @@ const Hero = () => {
               to automate your workflows. Your keys, your control.
             </p>
 
-            {/* Single CTA Button - Glassmorphism 3D style */}
+            {/* CTA Button - Glassmorphism with animated edge shine */}
             <div 
               className="flex items-center justify-center lg:justify-start"
               style={buttonsStyle}
@@ -107,42 +107,42 @@ const Hero = () => {
                 to="/auth" 
                 className="group relative inline-flex items-center justify-center overflow-hidden"
                 style={{
-                  padding: '16px 40px',
-                  fontSize: 'clamp(0.95rem, 0.9rem + 0.3vw, 1.1rem)',
+                  padding: '14px 36px',
+                  fontSize: 'clamp(0.875rem, 0.8rem + 0.25vw, 1rem)',
                   fontWeight: 500,
                   letterSpacing: '0.02em',
                   borderRadius: '50px',
                   // Glassmorphism background
-                  background: 'linear-gradient(135deg, hsl(0 0% 100% / 0.12) 0%, hsl(0 0% 100% / 0.05) 100%)',
+                  background: 'linear-gradient(135deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0.04) 100%)',
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
-                  // Subtle border with gradient
-                  border: '1px solid hsl(0 0% 100% / 0.2)',
+                  // Subtle border
+                  border: '1px solid hsl(0 0% 100% / 0.15)',
                   // 3D shadow effect
                   boxShadow: `
-                    inset 0 1px 0 hsl(0 0% 100% / 0.2),
+                    inset 0 1px 0 hsl(0 0% 100% / 0.15),
                     inset 0 -1px 0 hsl(0 0% 0% / 0.1),
                     0 4px 20px hsl(0 0% 0% / 0.3),
                     0 8px 40px hsl(0 0% 0% / 0.2)
                   `,
-                  color: 'hsl(0 0% 95%)',
+                  color: 'hsl(0 0% 92%)',
                   transition: 'all 0.3s ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, hsl(0 0% 100% / 0.18) 0%, hsl(0 0% 100% / 0.08) 100%)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, hsl(0 0% 100% / 0.15) 0%, hsl(0 0% 100% / 0.06) 100%)';
                   e.currentTarget.style.boxShadow = `
-                    inset 0 1px 0 hsl(0 0% 100% / 0.25),
+                    inset 0 1px 0 hsl(0 0% 100% / 0.2),
                     inset 0 -1px 0 hsl(0 0% 0% / 0.1),
                     0 6px 30px hsl(0 0% 0% / 0.35),
                     0 12px 50px hsl(0 0% 0% / 0.25),
-                    0 0 40px hsl(0 0% 100% / 0.1)
+                    0 0 40px hsl(200 100% 80% / 0.1)
                   `;
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, hsl(0 0% 100% / 0.12) 0%, hsl(0 0% 100% / 0.05) 100%)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0.04) 100%)';
                   e.currentTarget.style.boxShadow = `
-                    inset 0 1px 0 hsl(0 0% 100% / 0.2),
+                    inset 0 1px 0 hsl(0 0% 100% / 0.15),
                     inset 0 -1px 0 hsl(0 0% 0% / 0.1),
                     0 4px 20px hsl(0 0% 0% / 0.3),
                     0 8px 40px hsl(0 0% 0% / 0.2)
@@ -150,14 +150,29 @@ const Hero = () => {
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                {/* Inner highlight */}
+                {/* Animated edge shine - loops around border */}
                 <span 
-                  className="absolute inset-0 rounded-[50px]"
+                  className="absolute inset-0 rounded-[50px] animate-edge-shine"
                   style={{
-                    background: 'linear-gradient(180deg, hsl(0 0% 100% / 0.1) 0%, transparent 50%)',
+                    background: 'linear-gradient(90deg, transparent 0%, transparent 40%, hsl(200 100% 85% / 0.4) 50%, transparent 60%, transparent 100%)',
+                    backgroundSize: '200% 100%',
+                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    maskComposite: 'xor',
+                    WebkitMaskComposite: 'xor',
+                    padding: '1px',
                     pointerEvents: 'none',
                   }}
                 />
+                
+                {/* Top gloss highlight */}
+                <span 
+                  className="absolute inset-0 rounded-[50px]"
+                  style={{
+                    background: 'linear-gradient(180deg, hsl(0 0% 100% / 0.08) 0%, transparent 50%)',
+                    pointerEvents: 'none',
+                  }}
+                />
+                
                 <span className="relative z-10">Get Access</span>
               </Link>
             </div>
@@ -167,8 +182,8 @@ const Hero = () => {
           <div 
             className="order-1 lg:order-2 flex items-center justify-center"
             style={{ 
-              minHeight: "clamp(200px, 30vw, 450px)",
-              maxHeight: "60vh",
+              minHeight: "clamp(180px, 25vw, 400px)",
+              maxHeight: "55vh",
               ...visualStyle,
             }}
           >
