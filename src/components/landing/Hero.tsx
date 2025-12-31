@@ -64,7 +64,7 @@ const Hero = () => {
                 className="block"
                 style={{
                   color: 'hsl(0 0% 100%)',
-                  textShadow: '0 4px 30px hsl(200 100% 80% / 0.2), 0 8px 60px hsl(200 100% 70% / 0.15)',
+                  textShadow: '0 4px 30px hsl(0 0% 100% / 0.15), 0 8px 60px hsl(0 0% 80% / 0.1)',
                 }}
               >
                 One Workspace.
@@ -77,7 +77,7 @@ const Hero = () => {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   textShadow: 'none',
-                  filter: 'drop-shadow(0 4px 20px hsl(200 100% 70% / 0.25))',
+                  filter: 'drop-shadow(0 4px 20px hsl(0 0% 100% / 0.15))',
                 }}
               >
                 Every AI Model.
@@ -135,7 +135,7 @@ const Hero = () => {
                     inset 0 -1px 0 hsl(0 0% 0% / 0.1),
                     0 6px 30px hsl(0 0% 0% / 0.35),
                     0 12px 50px hsl(0 0% 0% / 0.25),
-                    0 0 40px hsl(200 100% 80% / 0.1)
+                    0 0 40px hsl(0 0% 100% / 0.08)
                   `;
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
@@ -154,7 +154,7 @@ const Hero = () => {
                 <span 
                   className="absolute inset-0 rounded-[50px] animate-edge-shine"
                   style={{
-                    background: 'linear-gradient(90deg, transparent 0%, transparent 40%, hsl(200 100% 85% / 0.4) 50%, transparent 60%, transparent 100%)',
+                    background: 'linear-gradient(90deg, transparent 0%, transparent 40%, hsl(0 0% 100% / 0.4) 50%, transparent 60%, transparent 100%)',
                     backgroundSize: '200% 100%',
                     mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                     maskComposite: 'xor',
