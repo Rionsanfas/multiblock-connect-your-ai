@@ -372,6 +372,9 @@ export const apiKeysDb = {
 // ============================================
 
 export const boardsDb = {
+  /**
+   * Get all personal boards (no team_id)
+   */
   async getAll(includeArchived = false): Promise<Board[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -383,6 +386,7 @@ export const boardsDb = {
       .from('boards')
       .select('*')
       .eq('user_id', user.id)
+      .is('team_id', null) // Only personal boards
       .order('created_at', { ascending: false });
 
     if (!includeArchived) {
@@ -394,8 +398,45 @@ export const boardsDb = {
       devError('[boardsDb.getAll] Error:', error);
       throw error;
     }
-    devLog('[boardsDb.getAll] Fetched:', data?.length, 'boards');
+    devLog('[boardsDb.getAll] Fetched:', data?.length, 'personal boards');
     return (data || []) as Board[];
+  },
+
+  /**
+   * Get all boards for a specific team
+   */
+  async getForTeam(teamId: string, includeArchived = false): Promise<Board[]> {
+    let query = supabase
+      .from('boards')
+      .select('*')
+      .eq('team_id', teamId)
+      .order('created_at', { ascending: false });
+
+    if (!includeArchived) {
+      query = query.eq('is_archived', false);
+    }
+
+    const { data, error } = await query;
+    if (error) {
+      devError('[boardsDb.getForTeam] Error:', error);
+      throw error;
+    }
+    devLog('[boardsDb.getForTeam] Fetched:', data?.length, 'team boards');
+    return (data || []) as Board[];
+  },
+
+  /**
+   * Transfer a personal board to a team
+   */
+  async transferToTeam(boardId: string, teamId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .rpc('transfer_board_to_team', { p_board_id: boardId, p_team_id: teamId });
+
+    if (error) {
+      devError('[boardsDb.transferToTeam] Error:', error);
+      throw error;
+    }
+    return data as boolean;
   },
 
   async getById(id: string): Promise<Board | null> {

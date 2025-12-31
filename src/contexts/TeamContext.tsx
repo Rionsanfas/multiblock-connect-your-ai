@@ -31,6 +31,7 @@ interface TeamContextValue {
   isPersonalWorkspace: boolean;
   isTeamWorkspace: boolean;
   currentTeam: TeamWithStats | null;
+  currentTeamId: string | null;
   canManageTeam: boolean;
   isTeamOwner: boolean;
 }
@@ -110,6 +111,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     isPersonalWorkspace: currentWorkspace.type === 'personal',
     isTeamWorkspace: currentWorkspace.type === 'team',
     currentTeam,
+    currentTeamId: currentWorkspace.teamId,
     canManageTeam: currentWorkspace.teamRole === 'owner' || currentWorkspace.teamRole === 'admin',
     isTeamOwner: currentWorkspace.teamRole === 'owner',
   };
