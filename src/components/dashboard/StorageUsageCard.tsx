@@ -25,9 +25,11 @@ const formatStorage = (mb: number): string => {
 export function StorageUsageCard({ usedMb, limitMb: propLimitMb }: StorageUsageCardProps) {
   const { data: billing } = useBilling();
   
-  // Use billing data if available (storage_gb converted to MB)
-  const storageGb = billing?.storage_gb ?? 1;
-  const limitMb = storageGb === -1 ? -1 : (storageGb * 1024) || propLimitMb || 1024;
+  // Get storage from billing (includes addons) - total_storage_gb
+  const isActive = billing?.subscription_status === 'active' || billing?.is_lifetime;
+  const isFree = !isActive || billing?.active_plan === 'free';
+  const storageGb = isFree ? 0.1 : (billing?.total_storage_gb ?? 1);
+  const limitMb = storageGb === -1 ? -1 : (storageGb * 1024) || propLimitMb || 100;
   
   const isUnlimited = limitMb === -1;
   const percentage = isUnlimited ? 0 : Math.min((usedMb / limitMb) * 100, 100);

@@ -7,24 +7,25 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCurrentUser, useUserStats } from "@/hooks/useCurrentUser";
+import { useBilling } from "@/hooks/useBilling";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { toast } from "sonner";
 import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera, CreditCard, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
-import { pricingPlans, boardAddons } from "@/mocks/seed";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BillingSection } from "@/components/billing/BillingSection";
 import { useAuth } from "@/hooks/useAuth";
+import { ADDONS, formatStorage as formatStorageUtil } from "@/config/plans";
 
 export default function Settings() {
-  const { user } = useCurrentUser();
+  const { user: authUser, isAuthenticated } = useAuth();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const [profileForm, setProfileForm] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
+    name: authUser?.user_metadata?.full_name || authUser?.email?.split('@')[0] || "",
+    email: authUser?.email || "",
   });
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
@@ -319,15 +320,32 @@ const formatPrice = (cents: number): string => {
 };
 
 function PlanUsageSection() {
-  const { user } = useCurrentUser();
-  const stats = useUserStats();
+  const { data: billing, isLoading } = useBilling();
+  const limits = usePlanLimits();
   
-  if (!user || !stats) return null;
+  if (isLoading || limits.isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <Card className="bg-card/80 backdrop-blur-xl border-border/50">
+          <CardContent className="pt-6">
+            <div className="h-40 bg-muted/20 rounded-lg" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
-  const plan = pricingPlans.find(p => p.id === stats.plan);
+  const planName = limits.planName;
+  const isFree = limits.isFree;
+  const isLifetime = limits.isLifetime;
   
-  const storagePercentage = Math.min((stats.storageUsedMb / stats.storageLimitMb) * 100, 100);
-  const boardsPercentage = Math.min((stats.boardsUsed / stats.boardsLimit) * 100, 100);
+  const boardsLimit = limits.boardsLimit;
+  const boardsUsed = limits.boardsUsed;
+  const storageLimitMb = limits.storageLimitMb;
+  const storageUsedMb = 0; // TODO: Get from storage usage hook
+  
+  const storagePercentage = storageLimitMb > 0 ? Math.min((storageUsedMb / storageLimitMb) * 100, 100) : 0;
+  const boardsPercentage = boardsLimit > 0 && boardsLimit !== -1 ? Math.min((boardsUsed / boardsLimit) * 100, 100) : 0;
   const isStorageNearLimit = storagePercentage >= 80;
 
   return (
@@ -344,14 +362,16 @@ function PlanUsageSection() {
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/20">
             <div>
-              <p className="font-semibold text-lg">{plan?.name || 'Free / Starter'}</p>
+              <p className="font-semibold text-lg">{planName}</p>
               <p className="text-sm text-muted-foreground">
-                {plan?.price_cents === 0 ? 'Free forever' : `${formatPrice(plan?.price_cents || 0)}/year`}
+                {isFree ? 'Free forever' : isLifetime ? 'Lifetime access' : 'Annual subscription'}
               </p>
             </div>
-            <Button asChild>
-              <Link to="/pricing">Upgrade Plan</Link>
-            </Button>
+            {isFree && (
+              <Button asChild>
+                <Link to="/pricing">Upgrade Plan</Link>
+              </Button>
+            )}
           </div>
 
           {/* Usage Stats */}
@@ -362,9 +382,9 @@ function PlanUsageSection() {
                 <LayoutGrid className="h-4 w-4 text-primary" />
                 <span className="font-medium text-sm">Boards</span>
               </div>
-              <Progress value={boardsPercentage} className="h-2 mb-2" />
+              {boardsLimit !== -1 && <Progress value={boardsPercentage} className="h-2 mb-2" />}
               <p className="text-xs text-muted-foreground">
-                {stats.boardsUsed} of {stats.boardsLimit} boards used
+                {boardsUsed} of {boardsLimit === -1 ? 'Unlimited' : boardsLimit} boards used
               </p>
             </GlassCard>
 
@@ -379,7 +399,7 @@ function PlanUsageSection() {
                 className={`h-2 mb-2 ${isStorageNearLimit ? '[&>div]:bg-amber-500' : ''}`}
               />
               <p className="text-xs text-muted-foreground">
-                {formatStorage(stats.storageUsedMb)} of {formatStorage(stats.storageLimitMb)} used
+                {formatStorage(storageUsedMb)} of {formatStorage(storageLimitMb)} used
               </p>
               {isStorageNearLimit && (
                 <p className="text-xs text-amber-500 mt-1">Approaching storage limit</p>
@@ -397,20 +417,26 @@ function PlanUsageSection() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {boardAddons.map((addon) => (
+            {ADDONS.filter(a => a.is_active).slice(0, 4).map((addon) => (
               <GlassCard key={addon.id} variant="hover" className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary mb-1">+{addon.boards}</div>
+                <div className="text-2xl font-bold text-primary mb-1">+{addon.extra_boards}</div>
                 <div className="text-xs text-muted-foreground mb-2">boards</div>
                 <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-3">
                   <HardDrive className="h-3 w-3" />
-                  +{formatStorage(addon.storage_mb)}
+                  +{formatStorageUtil(addon.extra_storage_mb)}
                 </div>
                 <div className="text-lg font-bold mb-2">{formatPrice(addon.price_cents)}</div>
                 <Button 
                   variant="outline" 
                   size="sm" 
                   className="w-full text-xs"
-                  onClick={() => toast.success("Add-on added to cart")}
+                  onClick={() => {
+                    if (addon.checkout_url) {
+                      window.open(addon.checkout_url, '_blank');
+                    } else {
+                      toast.info("Add-on checkout coming soon");
+                    }
+                  }}
                 >
                   Add
                 </Button>
