@@ -3,6 +3,10 @@
  * 
  * CRITICAL: All messages are persisted to Supabase.
  * No Zustand-only messages allowed.
+ * 
+ * Features:
+ * - Text selection referencing (attach quoted text to next message)
+ * - Branch to new block (create new block from selected text)
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -18,8 +22,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAppStore } from "@/store/useAppStore";
 import { useBlockMessages, useMessageActions, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
+import { useTextSelection } from "@/hooks/useTextSelection";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { TextSelectionMenu } from "@/components/chat/TextSelectionMenu";
+import { BranchDialog } from "@/components/chat/BranchDialog";
 import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
 import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useModelConfig";
@@ -33,6 +40,8 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Message as LegacyMessage } from "@/types";
+import type { ChatReference, BranchParams } from "@/types/chat-references";
+import { createReference, formatReferencesForContext } from "@/types/chat-references";
 
 interface BlockChatModalProps {
   blockId: string;
@@ -61,12 +70,25 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [title, setTitle] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // References state
+  const [pendingReferences, setPendingReferences] = useState<ChatReference[]>([]);
+  
+  // Branch dialog state
+  const [branchParams, setBranchParams] = useState<BranchParams | null>(null);
+  const [isBranchDialogOpen, setIsBranchDialogOpen] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  // Text selection hook
+  const textSelection = useTextSelection(chatContainerRef);
+
   const { data: supabaseBlock, isLoading: blockLoading, error: blockError } = useBlock(blockId);
   const { closeBlockChat, openBlockChat } = useAppStore();
+  
   
   const block = supabaseBlock ? {
     id: supabaseBlock.id,
@@ -127,8 +149,70 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     setIsEditingTitle(false);
   };
 
-  const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[]) => {
-    if (!content.trim() || messageStatus !== 'idle' || !block) return;
+  // Handle adding a reference from text selection
+  const handleAddReference = useCallback(() => {
+    if (!textSelection.hasSelection || !textSelection.messageId || !textSelection.messageRole) {
+      return;
+    }
+
+    const reference = createReference(
+      textSelection.messageId,
+      blockId,
+      textSelection.messageRole,
+      textSelection.selectedText,
+      textSelection.range || { start: 0, end: textSelection.selectedText.length }
+    );
+
+    setPendingReferences(prev => [...prev, reference]);
+    textSelection.clearSelection();
+    toast.success('Reference added');
+  }, [textSelection, blockId]);
+
+  // Handle branching to new block
+  const handleBranch = useCallback(() => {
+    if (!textSelection.hasSelection || !textSelection.messageId || !textSelection.messageRole || !block) {
+      return;
+    }
+
+    setBranchParams({
+      source_block_id: blockId,
+      source_block_title: block.title,
+      source_message_id: textSelection.messageId,
+      source_role: textSelection.messageRole,
+      selected_text: textSelection.selectedText,
+      board_id: block.board_id,
+    });
+    setIsBranchDialogOpen(true);
+    textSelection.clearSelection();
+  }, [textSelection, blockId, block]);
+
+  // Confirm branch creation
+  const handleConfirmBranch = useCallback(async (newTitle: string, modelId: string) => {
+    if (!branchParams || !block) return;
+
+    try {
+      const modelConfig = getModelConfig(modelId);
+      // Create new block with source context
+      await blocksDb.create({
+        board_id: branchParams.board_id,
+        title: newTitle,
+        model_id: modelId,
+        provider: modelConfig?.provider || 'openai',
+        position_x: block.position.x + 400,
+        position_y: block.position.y + 50,
+        system_prompt: `You are a helpful assistant. This conversation was branched from "${branchParams.source_block_title}".\n\nContext from source:\n"${branchParams.selected_text}"`,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['board-blocks', block.board_id] });
+      toast.success(`Created branch: ${newTitle}`);
+      closeBlockChat(); // Close modal to show new block on canvas
+    } catch (error) {
+      toast.error('Failed to create branch');
+    }
+  }, [branchParams, block, closeBlockChat, queryClient]);
+
+  const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[], references?: ChatReference[]) => {
+    if (!content.trim() && (!references || references.length === 0) || messageStatus !== 'idle' || !block) return;
 
     if (!hasKeyForCurrentProvider) {
       toast.error("No API key configured", { action: { label: "Add Key", onClick: () => navigate("/api-keys") } });
@@ -137,10 +221,17 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
     setErrorMessage(null);
 
+    // Build content with references
+    let fullContent = content;
+    if (references && references.length > 0) {
+      const referencesContext = formatReferencesForContext(references);
+      fullContent = `${referencesContext}\n\n${content}`;
+    }
+
     // 1) Append locally (optimistic) so UI is instant
     let userMessage;
     try {
-      userMessage = await persistMessage('user', content);
+      userMessage = await persistMessage('user', fullContent);
     } catch {
       setMessageStatus('error');
       setErrorMessage('Message failed to send.');
@@ -228,193 +319,233 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   }
 
   return (
-    <Dialog open onOpenChange={() => closeBlockChat()}>
-      <DialogContent 
-        hideCloseButton 
-        className={cn(
-          "flex flex-col rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300",
-          isFullscreen 
-            ? "w-[100vw] h-[100vh] max-w-none max-h-none rounded-none" 
-            : "max-w-2xl w-[90vw] h-[80vh] max-h-[700px]"
-        )}
-      >
-        <DialogHeader className="px-5 py-4 border-b border-border/20 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Sidebar toggle - only show in fullscreen */}
-              {isFullscreen && (
+    <>
+      <Dialog open onOpenChange={() => closeBlockChat()}>
+        <DialogContent 
+          hideCloseButton 
+          className={cn(
+            "flex flex-col rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300",
+            isFullscreen 
+              ? "w-[100vw] h-[100vh] max-w-none max-h-none rounded-none" 
+              : "max-w-2xl w-[90vw] h-[80vh] max-h-[700px]"
+          )}
+        >
+          <DialogHeader className="px-5 py-4 border-b border-border/20 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {/* Sidebar toggle - only show in fullscreen */}
+                {isFullscreen && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="p-2 rounded-lg"
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  >
+                    {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                  </Button>
+                )}
+                <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/20 h-auto", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
+                      {currentModel ? <ProviderBadge provider={currentModel.provider} model={currentModel.name} /> : <span className="text-sm text-muted-foreground">Select Model</span>}
+                      {!hasKeyForCurrentProvider && <Lock className="h-3 w-3 text-destructive" />}
+                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
+                    <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20"><Brain className="h-3 w-3" /><span>Switch model</span></div>
+                    {providers.map((provider) => {
+                      const hasKey = getProviderHasKey(provider.id);
+                      const models = (modelsByProvider[provider.id] || []).slice(0, 6);
+                      return (
+                        <div key={provider.id}>
+                          <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
+                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: provider.color }} /><span className="text-xs font-medium">{provider.name}</span></div>
+                            {hasKey ? <span className="flex items-center gap-1 text-[10px] text-green-500"><Zap className="h-2.5 w-2.5" />Connected</span> : <button onClick={(e) => { e.stopPropagation(); window.open(provider.apiKeyUrl, '_blank'); }} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"><ExternalLink className="h-2.5 w-2.5" />Get Key</button>}
+                          </DropdownMenuLabel>
+                          {models.map((model) => (
+                            <DropdownMenuItem key={model.id} disabled={!hasKey} className={cn("mx-1 rounded-md", !hasKey && "opacity-50", block.model_id === model.id && "bg-primary/10")} onClick={() => hasKey && handleModelSwitch(model.id)}>
+                              <span className="flex items-center gap-2 w-full"><span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} /><span className="text-sm truncate flex-1">{model.name}</span>{block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}</span>
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator className="my-1" />
+                        </div>
+                      );
+                    })}
+                    <DropdownMenuItem className="mx-1 rounded-md text-primary" onClick={() => navigate("/api-keys")}><Zap className="h-3 w-3 mr-2" />Manage API Keys</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {blockUsage && <span className="text-xs text-muted-foreground">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild><Button variant="ghost" size="icon" className="p-2 rounded-lg"><Settings className="h-4 w-4" /></Button></PopoverTrigger>
+                  <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl" side="bottom" align="end">
+                    <div className="font-semibold text-sm">Block Settings</div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Title</Label>
+                      {isEditingTitle ? (
+                        <div className="flex gap-2"><Input value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleTitleSave()} className="bg-secondary/50 rounded-lg border-border/30 h-9" autoFocus /><button className="p-2 rounded-lg" onClick={handleTitleSave}><Check className="h-3.5 w-3.5" /></button></div>
+                      ) : (
+                        <button onClick={() => { setTitle(block.title); setIsEditingTitle(true); }} className="w-full text-left p-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 flex items-center justify-between group text-sm"><span>{block.title}</span><Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100" /></button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                {/* Fullscreen toggle button */}
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   className="p-2 rounded-lg"
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  onClick={() => setIsFullscreen(!isFullscreen)}
                 >
-                  {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </Button>
-              )}
-              <DialogTitle className="text-base font-medium">{block.title}</DialogTitle>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border/20 h-auto", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
-                    {currentModel ? <ProviderBadge provider={currentModel.provider} model={currentModel.name} /> : <span className="text-sm text-muted-foreground">Select Model</span>}
-                    {!hasKeyForCurrentProvider && <Lock className="h-3 w-3 text-destructive" />}
-                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
-                  <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20"><Brain className="h-3 w-3" /><span>Switch model</span></div>
-                  {providers.map((provider) => {
-                    const hasKey = getProviderHasKey(provider.id);
-                    const models = (modelsByProvider[provider.id] || []).slice(0, 6);
-                    return (
-                      <div key={provider.id}>
-                        <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
-                          <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: provider.color }} /><span className="text-xs font-medium">{provider.name}</span></div>
-                          {hasKey ? <span className="flex items-center gap-1 text-[10px] text-green-500"><Zap className="h-2.5 w-2.5" />Connected</span> : <button onClick={(e) => { e.stopPropagation(); window.open(provider.apiKeyUrl, '_blank'); }} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"><ExternalLink className="h-2.5 w-2.5" />Get Key</button>}
-                        </DropdownMenuLabel>
-                        {models.map((model) => (
-                          <DropdownMenuItem key={model.id} disabled={!hasKey} className={cn("mx-1 rounded-md", !hasKey && "opacity-50", block.model_id === model.id && "bg-primary/10")} onClick={() => hasKey && handleModelSwitch(model.id)}>
-                            <span className="flex items-center gap-2 w-full"><span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} /><span className="text-sm truncate flex-1">{model.name}</span>{block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}</span>
-                          </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator className="my-1" />
-                      </div>
-                    );
-                  })}
-                  <DropdownMenuItem className="mx-1 rounded-md text-primary" onClick={() => navigate("/api-keys")}><Zap className="h-3 w-3 mr-2" />Manage API Keys</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {blockUsage && <span className="text-xs text-muted-foreground">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
-            </div>
-            <div className="flex items-center gap-2">
-              <Popover>
-                <PopoverTrigger asChild><Button variant="ghost" size="icon" className="p-2 rounded-lg"><Settings className="h-4 w-4" /></Button></PopoverTrigger>
-                <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl" side="bottom" align="end">
-                  <div className="font-semibold text-sm">Block Settings</div>
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Title</Label>
-                    {isEditingTitle ? (
-                      <div className="flex gap-2"><Input value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleTitleSave()} className="bg-secondary/50 rounded-lg border-border/30 h-9" autoFocus /><button className="p-2 rounded-lg" onClick={handleTitleSave}><Check className="h-3.5 w-3.5" /></button></div>
-                    ) : (
-                      <button onClick={() => { setTitle(block.title); setIsEditingTitle(true); }} className="w-full text-left p-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 flex items-center justify-between group text-sm"><span>{block.title}</span><Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100" /></button>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              {/* Fullscreen toggle button */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="p-2 rounded-lg"
-                onClick={() => setIsFullscreen(!isFullscreen)}
-              >
-                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              </Button>
-              <Button variant="ghost" size="icon" className="p-2 rounded-lg" onClick={() => closeBlockChat()}><X className="h-4 w-4" /></Button>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {!hasKeyForCurrentProvider && currentProvider && (
-          <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
-            <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-sm"><Lock className="h-4 w-4 text-destructive" /><span>No API key for {PROVIDERS[currentProvider].name}</span></div><button onClick={() => navigate("/api-keys")} className="text-xs text-primary hover:underline">Add API Key</button></div>
-          </div>
-        )}
-
-        {errorMessage && (
-          <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
-            <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" /><span>{errorMessage}</span></div><Button variant="ghost" size="sm" onClick={() => { setErrorMessage(null); setMessageStatus('idle'); }} className="text-xs">Dismiss</Button></div>
-          </div>
-        )}
-
-        {incomingContext.length > 0 && (
-          <div className="px-5 py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground"><Link2 className="h-3 w-3" /><span>Context from: {incomingContext.map(ctx => ctx.source_block_title).join(', ')}</span></div>
-          </div>
-        )}
-
-        {/* Main content area with optional sidebar */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar - matching dashboard sidebar design */}
-          {isFullscreen && isSidebarOpen && (
-            <aside className="w-60 border-r border-border/10 flex-shrink-0 flex flex-col bg-card/80 backdrop-blur-xl">
-              {/* Sidebar header */}
-              <div className="p-5 pb-4">
-                <h3 className="text-lg font-semibold text-foreground tracking-tight">Board Chats</h3>
+                <Button variant="ghost" size="icon" className="p-2 rounded-lg" onClick={() => closeBlockChat()}><X className="h-4 w-4" /></Button>
               </div>
-              
-              {/* Navigation */}
-              <ScrollArea className="flex-1 px-3 py-2">
-                <nav className="space-y-1">
-                  {boardBlocks.map((b) => {
-                    const isActive = b.id === blockId;
-                    const bModelConfig = b.model_id ? getModelConfig(b.model_id) : null;
-                    return (
-                      <button
-                        key={b.id}
-                        onClick={() => openBlockChat(b.id)}
-                        className={cn(
-                          "sidebar-nav-item group relative flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200 overflow-hidden",
-                          isActive
-                            ? "bg-secondary/60 text-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
-                        )}
-                      >
-                        {/* Gold highlight indicator - matching dashboard */}
-                        <span
-                          className={cn(
-                            "sidebar-indicator absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full transition-all duration-500 ease-out",
-                            isActive
-                              ? "bg-gradient-to-b from-[hsl(var(--accent))] via-[hsl(var(--glow-warm))] to-[hsl(var(--accent))] opacity-100 shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
-                              : "bg-transparent opacity-0 group-hover:opacity-40 group-hover:bg-[hsl(var(--accent)/0.5)]"
-                          )}
-                        />
-                        <div className={cn("icon-3d p-1.5 rounded-lg", isActive && "icon-3d-active")}>
-                          <MessageSquare className={cn("h-4 w-4 flex-shrink-0 transition-all duration-200 text-foreground/90", isActive && "text-foreground drop-shadow-[0_0_6px_hsl(0_0%_100%/0.5)]")} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm font-medium truncate block">{b.title}</span>
-                          {bModelConfig && (
-                            <span className="text-[10px] text-muted-foreground/70 truncate block">{bModelConfig.name}</span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </nav>
-              </ScrollArea>
-            </aside>
+            </div>
+          </DialogHeader>
+
+          {!hasKeyForCurrentProvider && currentProvider && (
+            <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
+              <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-sm"><Lock className="h-4 w-4 text-destructive" /><span>No API key for {PROVIDERS[currentProvider].name}</span></div><button onClick={() => navigate("/api-keys")} className="text-xs text-primary hover:underline">Add API Key</button></div>
+            </div>
           )}
 
-          {/* Chat content area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-6 w-6" /></div>
-              : blockMessages.length === 0 && !streamingContent ? (
-                <div className="flex flex-col items-center justify-center h-full text-center"><Sparkles className="h-8 w-8 text-muted-foreground/50 mb-3" /><p className="text-muted-foreground text-sm">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div>
-              ) : (
-                <>
-                  {blockMessages.map((message) => (
-                    <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} />
-                  ))}
-                  {streamingContent && <ChatMessage message={{ id: 'streaming', block_id: blockId, role: 'assistant', content: streamingContent, size_bytes: 0, created_at: new Date().toISOString() }} isStreaming />}
-                  {messageStatus === 'waiting_llm' && !streamingContent && (
-                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                      <Spinner className="h-4 w-4" />
-                      <span>Thinking...</span>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </>
-              )}
+          {errorMessage && (
+            <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
+              <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" /><span>{errorMessage}</span></div><Button variant="ghost" size="sm" onClick={() => { setErrorMessage(null); setMessageStatus('idle'); }} className="text-xs">Dismiss</Button></div>
             </div>
+          )}
 
-            <div className="px-5 py-4 border-t border-border/20 flex-shrink-0">
-              <ChatInput onSend={handleSend} onStop={handleStop} isRunning={isRunning} disabled={needsModelSelection || !hasKeyForCurrentProvider} placeholder={needsModelSelection ? "Select a model..." : !hasKeyForCurrentProvider ? "Add an API key..." : "Type a message..."} />
+          {incomingContext.length > 0 && (
+            <div className="px-5 py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground"><Link2 className="h-3 w-3" /><span>Context from: {incomingContext.map(ctx => ctx.source_block_title).join(', ')}</span></div>
+            </div>
+          )}
+
+          {/* Main content area with optional sidebar */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Sidebar - matching dashboard sidebar design */}
+            {isFullscreen && isSidebarOpen && (
+              <aside className="w-60 border-r border-border/10 flex-shrink-0 flex flex-col bg-card/80 backdrop-blur-xl">
+                {/* Sidebar header */}
+                <div className="p-5 pb-4">
+                  <h3 className="text-lg font-semibold text-foreground tracking-tight">Board Chats</h3>
+                </div>
+                
+                {/* Navigation */}
+                <ScrollArea className="flex-1 px-3 py-2">
+                  <nav className="space-y-1">
+                    {boardBlocks.map((b) => {
+                      const isActive = b.id === blockId;
+                      const bModelConfig = b.model_id ? getModelConfig(b.model_id) : null;
+                      return (
+                        <button
+                          key={b.id}
+                          onClick={() => openBlockChat(b.id)}
+                          className={cn(
+                            "sidebar-nav-item group relative flex items-center gap-3 w-full text-left px-4 py-3 rounded-xl transition-all duration-200 overflow-hidden",
+                            isActive
+                              ? "bg-secondary/60 text-foreground"
+                              : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
+                          )}
+                        >
+                          {/* Gold highlight indicator - matching dashboard */}
+                          <span
+                            className={cn(
+                              "sidebar-indicator absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full transition-all duration-500 ease-out",
+                              isActive
+                                ? "bg-gradient-to-b from-[hsl(var(--accent))] via-[hsl(var(--glow-warm))] to-[hsl(var(--accent))] opacity-100 shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
+                                : "bg-transparent opacity-0 group-hover:opacity-40 group-hover:bg-[hsl(var(--accent)/0.5)]"
+                            )}
+                          />
+                          <div className={cn("icon-3d p-1.5 rounded-lg", isActive && "icon-3d-active")}>
+                            <MessageSquare className={cn("h-4 w-4 flex-shrink-0 transition-all duration-200 text-foreground/90", isActive && "text-foreground drop-shadow-[0_0_6px_hsl(0_0%_100%/0.5)]")} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium truncate block">{b.title}</span>
+                            {bModelConfig && (
+                              <span className="text-[10px] text-muted-foreground/70 truncate block">{bModelConfig.name}</span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </ScrollArea>
+              </aside>
+            )}
+
+            {/* Chat content area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div 
+                ref={chatContainerRef}
+                className="flex-1 overflow-y-auto px-5 py-4 space-y-4"
+              >
+                {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-6 w-6" /></div>
+                : blockMessages.length === 0 && !streamingContent ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center"><Sparkles className="h-8 w-8 text-muted-foreground/50 mb-3" /><p className="text-muted-foreground text-sm">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div>
+                ) : (
+                  <>
+                    {blockMessages.map((message) => (
+                      <ChatMessage 
+                        key={message.id} 
+                        message={toDisplayMessage(message)} 
+                        onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} 
+                        onDelete={() => handleDeleteMessage(message.id)}
+                        selectable
+                      />
+                    ))}
+                    {streamingContent && <ChatMessage message={{ id: 'streaming', block_id: blockId, role: 'assistant', content: streamingContent, size_bytes: 0, created_at: new Date().toISOString() }} isStreaming />}
+                    {messageStatus === 'waiting_llm' && !streamingContent && (
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <Spinner className="h-4 w-4" />
+                        <span>Thinking...</span>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </>
+                )}
+              </div>
+
+              <ChatInput 
+                onSend={handleSend} 
+                onStop={handleStop} 
+                isRunning={isRunning} 
+                disabled={needsModelSelection || !hasKeyForCurrentProvider} 
+                placeholder={needsModelSelection ? "Select a model..." : !hasKeyForCurrentProvider ? "Add an API key..." : "Type a message..."}
+                references={pendingReferences}
+                onReferencesChange={setPendingReferences}
+              />
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      {/* Text Selection Menu - floating */}
+      {textSelection.hasSelection && textSelection.selectionRect && textSelection.messageId && textSelection.messageRole && (
+        <TextSelectionMenu
+          selectedText={textSelection.selectedText}
+          messageId={textSelection.messageId}
+          messageRole={textSelection.messageRole}
+          blockId={blockId}
+          selectionRect={textSelection.selectionRect}
+          onReference={handleAddReference}
+          onBranch={handleBranch}
+          onClose={textSelection.clearSelection}
+        />
+      )}
+
+      {/* Branch Dialog */}
+      <BranchDialog
+        isOpen={isBranchDialogOpen}
+        onClose={() => setIsBranchDialogOpen(false)}
+        onConfirm={handleConfirmBranch}
+        params={branchParams}
+        currentModelId={block?.model_id}
+      />
+    </>
   );
 }
