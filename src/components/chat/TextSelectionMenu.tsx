@@ -48,10 +48,12 @@ export function TextSelectionMenu({
         transform: 'translateX(-50%)',
       }}
       onMouseLeave={() => setIsHovered(null)}
+      onMouseDown={(e) => e.preventDefault()}
     >
       {/* Reference button */}
       <button
-        onClick={(e) => {
+        onMouseDown={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           onReference();
         }}
@@ -72,7 +74,8 @@ export function TextSelectionMenu({
 
       {/* Branch button */}
       <button
-        onClick={(e) => {
+        onMouseDown={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           onBranch();
         }}
@@ -90,7 +93,8 @@ export function TextSelectionMenu({
 
       {/* Close button */}
       <button
-        onClick={(e) => {
+        onMouseDown={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           onClose();
         }}
