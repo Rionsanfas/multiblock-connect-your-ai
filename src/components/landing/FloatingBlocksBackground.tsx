@@ -44,75 +44,75 @@ export function FloatingBlocksBackground({ showLightBeam = false }: FloatingBloc
 
       {/* ============================================
           SOFT CINEMATIC AMBIENT LIGHTS (B&W)
-          4K quality gradient orbs
+          Ultra-smooth gradients with high blur
           ============================================ */}
       
-      {/* Large soft ambient light - top left */}
-      <div 
-        className="absolute transition-opacity duration-[2000ms]"
-        style={{
-          top: '-20%',
-          left: '-10%',
-          width: '70%',
-          height: '70%',
-          background: 'radial-gradient(ellipse at center, hsl(0 0% 25% / 0.4) 0%, hsl(0 0% 15% / 0.2) 30%, transparent 70%)',
-          filter: 'blur(80px)',
-          opacity: showLightBeam ? 0.8 : 0,
-        }}
-      />
-
-      {/* Soft glow - top center */}
+      {/* Primary soft ambient light - top left - ultra smooth */}
       <div 
         className="absolute transition-opacity duration-[2500ms]"
         style={{
-          top: '-15%',
-          left: '30%',
-          width: '50%',
-          height: '50%',
-          background: 'radial-gradient(ellipse at center, hsl(0 0% 100% / 0.06) 0%, hsl(0 0% 90% / 0.03) 40%, transparent 70%)',
-          filter: 'blur(60px)',
+          top: '-25%',
+          left: '-15%',
+          width: '80%',
+          height: '80%',
+          background: 'radial-gradient(ellipse 70% 60% at center, hsl(0 0% 30% / 0.35) 0%, hsl(0 0% 20% / 0.15) 35%, hsl(0 0% 15% / 0.05) 60%, transparent 80%)',
+          filter: 'blur(120px)',
+          opacity: showLightBeam ? 0.9 : 0,
+        }}
+      />
+
+      {/* Soft center glow - very diffused */}
+      <div 
+        className="absolute transition-opacity duration-[3000ms]"
+        style={{
+          top: '-10%',
+          left: '25%',
+          width: '55%',
+          height: '55%',
+          background: 'radial-gradient(ellipse 80% 70% at center, hsl(0 0% 100% / 0.08) 0%, hsl(0 0% 90% / 0.04) 30%, hsl(0 0% 80% / 0.02) 50%, transparent 75%)',
+          filter: 'blur(100px)',
           opacity: showLightBeam ? 1 : 0,
         }}
       />
 
-      {/* Subtle gray accent - right side */}
+      {/* Flowing light accent - right side - super smooth */}
       <div 
-        className="absolute transition-opacity duration-[3000ms]"
+        className="absolute transition-opacity duration-[3500ms]"
         style={{
-          top: '10%',
-          right: '-5%',
-          width: '45%',
-          height: '60%',
-          background: 'radial-gradient(ellipse at center, hsl(0 0% 30% / 0.15) 0%, hsl(0 0% 20% / 0.08) 40%, transparent 70%)',
-          filter: 'blur(100px)',
+          top: '5%',
+          right: '-10%',
+          width: '55%',
+          height: '70%',
+          background: 'radial-gradient(ellipse 60% 80% at 70% 40%, hsl(0 0% 35% / 0.12) 0%, hsl(0 0% 25% / 0.06) 40%, hsl(0 0% 20% / 0.02) 60%, transparent 80%)',
+          filter: 'blur(140px)',
+          opacity: showLightBeam ? 0.8 : 0,
+        }}
+      />
+
+      {/* Soft bottom left accent - ultra diffused */}
+      <div 
+        className="absolute transition-opacity duration-[3200ms]"
+        style={{
+          bottom: '0%',
+          left: '0%',
+          width: '50%',
+          height: '55%',
+          background: 'radial-gradient(ellipse 70% 60% at 30% 70%, hsl(0 0% 28% / 0.18) 0%, hsl(0 0% 18% / 0.08) 40%, hsl(0 0% 12% / 0.03) 65%, transparent 85%)',
+          filter: 'blur(130px)',
           opacity: showLightBeam ? 0.7 : 0,
         }}
       />
 
-      {/* Cool gray accent - bottom left */}
+      {/* Hero blocks area highlight - subtle and smooth */}
       <div 
         className="absolute transition-opacity duration-[2800ms]"
         style={{
-          bottom: '5%',
-          left: '5%',
+          top: '15%',
+          right: '5%',
           width: '40%',
-          height: '45%',
-          background: 'radial-gradient(ellipse at center, hsl(0 0% 25% / 0.2) 0%, hsl(0 0% 15% / 0.1) 40%, transparent 70%)',
-          filter: 'blur(90px)',
-          opacity: showLightBeam ? 0.6 : 0,
-        }}
-      />
-
-      {/* Soft highlight - center right for hero blocks area */}
-      <div 
-        className="absolute transition-opacity duration-[2200ms]"
-        style={{
-          top: '20%',
-          right: '10%',
-          width: '35%',
-          height: '50%',
-          background: 'radial-gradient(ellipse at center, hsl(0 0% 100% / 0.04) 0%, hsl(0 0% 95% / 0.02) 50%, transparent 70%)',
-          filter: 'blur(50px)',
+          height: '55%',
+          background: 'radial-gradient(ellipse 60% 70% at center, hsl(0 0% 100% / 0.05) 0%, hsl(0 0% 95% / 0.025) 40%, hsl(0 0% 90% / 0.01) 60%, transparent 80%)',
+          filter: 'blur(80px)',
           opacity: showLightBeam ? 1 : 0,
         }}
       />
@@ -121,9 +121,32 @@ export function FloatingBlocksBackground({ showLightBeam = false }: FloatingBloc
       <div 
         className="absolute top-0 left-0 right-0 transition-opacity duration-[2000ms]"
         style={{
-          height: '40%',
-          background: 'linear-gradient(180deg, hsl(0 0% 8% / 0.3) 0%, transparent 100%)',
-          opacity: showLightBeam ? 0.5 : 0,
+          height: '45%',
+          background: 'linear-gradient(180deg, hsl(0 0% 8% / 0.25) 0%, hsl(0 0% 8% / 0.1) 50%, transparent 100%)',
+          opacity: showLightBeam ? 0.6 : 0,
+        }}
+      />
+
+      {/* ============================================
+          GRAINY TEXTURE OVERLAY
+          Subtle film grain effect ~20% visible
+          ============================================ */}
+      <div 
+        className="absolute inset-0 transition-opacity duration-[2000ms]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          opacity: showLightBeam ? 0.18 : 0,
+          mixBlendMode: 'overlay',
+        }}
+      />
+      
+      {/* Secondary grain layer for depth */}
+      <div 
+        className="absolute inset-0 transition-opacity duration-[2500ms]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise2)'/%3E%3C/svg%3E")`,
+          opacity: showLightBeam ? 0.08 : 0,
+          mixBlendMode: 'soft-light',
         }}
       />
 

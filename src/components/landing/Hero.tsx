@@ -48,7 +48,7 @@ const Hero = () => {
         style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
       >
         {/* Hero grid - adjusted for larger left, smaller right */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] items-center" style={{ gap: "clamp(24px, 4vw, 48px)" }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-center" style={{ gap: "clamp(24px, 3vw, 36px)" }}>
           {/* Left: Text Content - Smaller text */}
           <div className="text-center lg:text-left order-2 lg:order-1">
             {/* Headline with shadow effect */}
@@ -64,7 +64,7 @@ const Hero = () => {
                 className="block"
                 style={{
                   color: 'hsl(0 0% 100%)',
-                  textShadow: '0 4px 30px hsl(0 0% 100% / 0.15), 0 8px 60px hsl(0 0% 80% / 0.1)',
+                  textShadow: '0 2px 20px hsl(0 0% 100% / 0.35), 0 4px 40px hsl(0 0% 100% / 0.25), 0 8px 80px hsl(0 0% 100% / 0.15), 0 0 120px hsl(0 0% 100% / 0.1)',
                 }}
               >
                 One Workspace.
@@ -77,7 +77,7 @@ const Hero = () => {
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                   textShadow: 'none',
-                  filter: 'drop-shadow(0 4px 20px hsl(0 0% 100% / 0.15))',
+                  filter: 'drop-shadow(0 2px 15px hsl(0 0% 100% / 0.3)) drop-shadow(0 4px 30px hsl(0 0% 100% / 0.2)) drop-shadow(0 8px 50px hsl(0 0% 100% / 0.1))',
                 }}
               >
                 Every AI Model.
