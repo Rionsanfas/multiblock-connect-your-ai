@@ -49,42 +49,69 @@
 
 @layer base {
   :root {
-    --background: 0 0% 3%;
-    --foreground: 0 0% 96%;
+    /* ============================================================
+       REFINED GRAYSCALE PALETTE
+       Soft, premium blacks with low contrast for calm aesthetics.
+       Not pure black - uses warm-neutral undertones.
+       ============================================================ */
+    
+    /* Core backgrounds - soft charcoal, not harsh black */
+    --background: 0 0% 6%;
+    --foreground: 0 0% 90%;
 
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 96%;
+    /* Card surfaces - slightly elevated from background */
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 92%;
 
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 96%;
+    /* Popovers/dropdowns - match card elevation */
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 92%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
+    /* Primary - soft white, not pure white */
+    --primary: 0 0% 95%;
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 96%;
+    /* Secondary - elevated surface */
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 88%;
 
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 50%;
+    /* Muted - for disabled/subtle text */
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 55%;
 
-    /* Gold accent for pricing cards only */
+    /* PRESERVED: Gold accent for card effects, glows, and highlights only */
     --accent: 45 80% 55%;
-    --accent-foreground: 0 0% 0%;
+    --accent-foreground: 0 0% 8%;
 
-    --destructive: 0 0% 35%;
-    --destructive-foreground: 0 0% 100%;
+    /* Destructive - stays neutral gray for non-semantic contexts */
+    --destructive: 0 0% 40%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 0 0% 35%;
+    /* Borders and inputs - subtle definition */
+    --border: 0 0% 18%;
+    --input: 0 0% 14%;
+    --ring: 0 0% 40%;
 
     --radius: 0.75rem;
 
-    /* Custom design tokens - pure black/white theme */
-    --glow-warm: 0 0% 65%;
-    --glass-bg: 0 0% 100% / 0.03;
-    --glass-border: 0 0% 100% / 0.08;
-    --noise-opacity: 0.03;
+    /* Custom design tokens - refined grayscale */
+    --glow-warm: 0 0% 70%;
+    --glass-bg: 0 0% 100% / 0.04;
+    --glass-border: 0 0% 100% / 0.10;
+    --noise-opacity: 0.025;
+
+    /* Gray scale tokens for consistent usage */
+    --gray-50: 0 0% 98%;
+    --gray-100: 0 0% 94%;
+    --gray-200: 0 0% 86%;
+    --gray-300: 0 0% 70%;
+    --gray-400: 0 0% 55%;
+    --gray-500: 0 0% 42%;
+    --gray-600: 0 0% 32%;
+    --gray-700: 0 0% 22%;
+    --gray-800: 0 0% 14%;
+    --gray-900: 0 0% 9%;
+    --gray-950: 0 0% 6%;
 
     /* ============================================================
        FLUID SPACING VARIABLES
@@ -125,8 +152,8 @@
   }
 
   .dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 95%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 90%;
   }
 }
 
@@ -151,7 +178,7 @@
     overflow-x: hidden;
   }
 
-  /* Custom scrollbar - minimal black design */
+  /* Custom scrollbar - refined grayscale */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -162,12 +189,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(0 0% 25%);
+    background: hsl(var(--gray-600));
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(0 0% 35%);
+    background: hsl(var(--gray-500));
   }
 
   ::-webkit-scrollbar-corner {
@@ -177,7 +204,7 @@
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(0 0% 25%) transparent;
+    scrollbar-color: hsl(var(--gray-600)) transparent;
   }
 
   /* Fluid heading defaults */
