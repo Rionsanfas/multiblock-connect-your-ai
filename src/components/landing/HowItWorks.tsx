@@ -114,8 +114,8 @@ const HowItWorks = () => {
               <div className="hiw-card-3d-inner h-full flex flex-col">
                 {/* 3D Plus Icon */}
                 <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
-                  <div className="hiw-3d-plus scale-125">
-                    <Plus className="hiw-3d-plus-icon" strokeWidth={3} style={{ width: 80, height: 80 }} />
+                  <div className="hiw-3d-plus">
+                    <Plus className="hiw-3d-plus-icon" strokeWidth={2.5} />
                   </div>
                 </div>
                 
@@ -157,7 +157,7 @@ const HowItWorks = () => {
                   {/* 3D Link Icon */}
                   <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
                     <div className="hiw-3d-link">
-                      <Link className="hiw-3d-link-icon" strokeWidth={2.5} style={{ width: 56, height: 56 }} />
+                      <Link className="hiw-3d-link-icon" strokeWidth={2} />
                     </div>
                   </div>
                   

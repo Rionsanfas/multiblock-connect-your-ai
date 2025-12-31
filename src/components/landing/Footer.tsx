@@ -1,5 +1,11 @@
-import { Twitter, Github, Linkedin } from "lucide-react";
 import { Link } from "react-router-dom";
+
+/* Real X (Twitter) Logo SVG */
+const XLogo = () => (
+  <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+  </svg>
+);
 
 const Footer = () => {
   return (
@@ -66,31 +72,35 @@ const Footer = () => {
             </Link>
           </div>
 
-          {/* Social Links - min touch targets 44px */}
-          <div className="flex items-center gap-3 order-2 md:order-3">
+          {/* Social Links - Only X with 3D premium styling */}
+          <div className="flex items-center order-2 md:order-3">
             <a 
               href="#" 
-              className="rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              style={{ width: "44px", height: "44px" }}
-              aria-label="Twitter"
+              className="group relative rounded-full flex items-center justify-center text-muted-foreground transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              style={{ width: "48px", height: "48px" }}
+              aria-label="X (Twitter)"
             >
-              <Twitter style={{ width: "18px", height: "18px" }} />
-            </a>
-            <a 
-              href="#" 
-              className="rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              style={{ width: "44px", height: "44px" }}
-              aria-label="Github"
-            >
-              <Github style={{ width: "18px", height: "18px" }} />
-            </a>
-            <a 
-              href="#" 
-              className="rounded-full bg-secondary border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              style={{ width: "44px", height: "44px" }}
-              aria-label="Linkedin"
-            >
-              <Linkedin style={{ width: "18px", height: "18px" }} />
+              {/* 3D layered background */}
+              <div 
+                className="absolute inset-0 rounded-full bg-gradient-to-b from-secondary to-background border border-border/80 group-hover:border-muted-foreground/30 transition-all duration-300"
+                style={{
+                  boxShadow: `
+                    0 4px 12px -2px hsl(0 0% 0% / 0.4),
+                    0 2px 4px -1px hsl(0 0% 0% / 0.3),
+                    inset 0 1px 0 0 hsl(0 0% 100% / 0.08),
+                    inset 0 -1px 2px 0 hsl(0 0% 0% / 0.2)
+                  `
+                }}
+              />
+              {/* Icon with 3D effect */}
+              <div 
+                className="relative z-10 group-hover:text-foreground transition-all duration-300 group-hover:scale-105"
+                style={{
+                  filter: 'drop-shadow(0 1px 1px hsl(0 0% 0% / 0.3))'
+                }}
+              >
+                <XLogo />
+              </div>
             </a>
           </div>
         </div>
