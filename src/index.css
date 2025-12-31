@@ -2941,49 +2941,22 @@
   overflow: visible;
 }
 
-.user-message-glow::before {
-  content: '';
-  position: absolute;
-  top: 4px;
-  left: -4px;
-  bottom: 4px;
-  width: 3px;
-  border-radius: 8px 0 0 8px;
-  background: linear-gradient(
-    180deg,
-    hsl(var(--accent) / 0.6) 0%,
-    hsl(var(--glow-warm) / 0.9) 50%,
-    hsl(var(--accent) / 0.6) 100%
-  );
-  filter: blur(2px);
-  opacity: 0.9;
-  box-shadow: 0 0 12px hsl(var(--accent) / 0.5);
-  transition: opacity 0.3s ease;
-}
-
 .user-message-glow::after {
   content: '';
   position: absolute;
-  top: 4px;
-  right: -4px;
-  bottom: 4px;
-  width: 3px;
-  border-radius: 0 8px 8px 0;
+  top: 0;
+  right: -6px;
+  bottom: 0;
+  width: 4px;
+  border-radius: 4px;
   background: linear-gradient(
     180deg,
-    hsl(var(--accent) / 0.6) 0%,
-    hsl(var(--glow-warm) / 0.9) 50%,
-    hsl(var(--accent) / 0.6) 100%
+    hsl(45, 90%, 55%) 0%,
+    hsl(50, 100%, 50%) 50%,
+    hsl(45, 90%, 55%) 100%
   );
-  filter: blur(2px);
-  opacity: 0.9;
-  box-shadow: 0 0 12px hsl(var(--accent) / 0.5);
-  transition: opacity 0.3s ease;
-}
-
-.user-message-glow:hover::before,
-.user-message-glow:hover::after {
-  opacity: 1;
-  filter: blur(3px);
-  box-shadow: 0 0 16px hsl(var(--accent) / 0.7);
+  box-shadow: 
+    0 0 8px hsl(45, 100%, 50% / 0.8),
+    0 0 16px hsl(45, 100%, 50% / 0.5),
+    0 0 24px hsl(45, 100%, 50% / 0.3);
 }
