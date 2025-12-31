@@ -84,6 +84,12 @@ export function useUserTeams() {
   });
 }
 
+// Alias for convenience
+export function useTeams() {
+  const { data, isLoading, error } = useUserTeams();
+  return { teams: data || [], isLoading, error };
+}
+
 // ============================================
 // GET SINGLE TEAM
 // ============================================

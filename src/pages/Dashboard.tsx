@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen } from "lucide-react";
+import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen, Users } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,14 @@ import { SearchBar } from "@/components/ui/search-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SkeletonCard, SkeletonGrid } from "@/components/ui/skeleton-card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
-import { useCurrentUser, useUserBoards, useUserStats } from "@/hooks/useCurrentUser";
+import { useCurrentUser, useUserStats } from "@/hooks/useCurrentUser";
+import { useWorkspaceBoards } from "@/hooks/useWorkspaceBoards";
 import { useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { usePlanEnforcement } from "@/hooks/usePlanLimits";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTeamContext } from "@/contexts/TeamContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useEntitlements } from "@/hooks/useEntitlements";
@@ -22,6 +24,7 @@ import { toast } from "sonner";
 import type { Board } from "@/types";
 import { StorageUsageCard } from "@/components/dashboard/StorageUsageCard";
 import { PlanUsageCard } from "@/components/dashboard/PlanUsageCard";
+import { BoardTransferDialog } from "@/components/board/BoardTransferDialog";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -30,7 +33,8 @@ export default function Dashboard() {
   const { blocks } = useAppStore();
   const { user: authUser, isLoading: authLoading, isAuthenticated } = useAuth();
   const { user, isLoading: userLoading } = useCurrentUser();
-  const userBoards = useUserBoards();
+  const { isPersonalWorkspace, currentWorkspace } = useTeamContext();
+  const userBoards = useWorkspaceBoards();
   const stats = useUserStats();
   const { enforceCreateBoard, canCreateBoard, boardsRemaining, isFree } = usePlanEnforcement();
   const { refreshSubscription } = useUserSubscription();
@@ -40,6 +44,7 @@ export default function Dashboard() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [transferBoard, setTransferBoard] = useState<{ id: string; title: string } | null>(null);
 
   // Handle checkout success redirect from Polar
   useEffect(() => {
@@ -247,7 +252,9 @@ export default function Dashboard() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold">Your Boards</h1>
+              <h1 className="text-2xl font-bold">
+                {isPersonalWorkspace ? "Your Boards" : `${currentWorkspace.teamName} Boards`}
+              </h1>
               <p className="text-muted-foreground">{userBoards.length} boards</p>
             </div>
           </div>
@@ -301,6 +308,7 @@ export default function Dashboard() {
                   onOpen={() => navigate(`/board/${board.id}`)}
                   onDuplicate={() => handleDuplicate(board.id)}
                   onDelete={() => setDeleteId(board.id)}
+                  onTransfer={isPersonalWorkspace ? () => setTransferBoard({ id: board.id, title: board.title }) : undefined}
                 />
               ))}
             </div>
@@ -317,6 +325,15 @@ export default function Dashboard() {
         variant="destructive"
         onConfirm={handleDelete}
       />
+
+      {transferBoard && (
+        <BoardTransferDialog
+          boardId={transferBoard.id}
+          boardTitle={transferBoard.title}
+          open={!!transferBoard}
+          onOpenChange={(open) => !open && setTransferBoard(null)}
+        />
+      )}
     </DashboardLayout>
   );
 }
@@ -329,6 +346,7 @@ function BoardCardWithUsage(props: {
   onOpen: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onTransfer?: () => void;
 }) {
   const boardUsage = useBoardUsage(props.board.id);
   return <BoardCard {...props} usage={boardUsage} />;
@@ -341,6 +359,7 @@ function BoardCard({
   onOpen,
   onDuplicate,
   onDelete,
+  onTransfer,
   usage,
 }: {
   board: Board;
@@ -349,6 +368,7 @@ function BoardCard({
   onOpen: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onTransfer?: () => void;
   usage?: { message_count: number; total_bytes: number } | null;
 }) {
   return (
@@ -387,6 +407,16 @@ function BoardCard({
             <Copy className="h-4 w-4 mr-2" />
             Duplicate
           </DropdownMenuItem>
+          {onTransfer && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onTransfer(); }}>
+                <Users className="h-4 w-4 mr-2" />
+                Transfer to Team
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="text-destructive"
