@@ -85,8 +85,11 @@ export function AppSidebar() {
         {navItems.map((item) => {
           // Show based on plan conditions
           const isFreePlan = user?.plan?.toLowerCase() === 'free';
+          const { currentTeamId } = useTeamContext();
+          
           if (item.showForFreePlanOnly && !isFreePlan) return null;
-          if (!item.showAlways && !item.showForFreePlanOnly) return null;
+          if (item.showForTeamOnly && !currentTeamId) return null;
+          if (!item.showAlways && !item.showForFreePlanOnly && !item.showForTeamOnly) return null;
           
           const isActive = location.pathname === item.href;
           const NavItem = (

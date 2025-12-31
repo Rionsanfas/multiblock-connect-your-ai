@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
@@ -7,6 +10,20 @@ import FAQ from "@/components/landing/FAQ";
 import Footer from "@/components/landing/Footer";
 
 const Index = () => {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, isLoading, navigate]);
+
+  // Show nothing while checking auth to avoid flash
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <div className="liquid-bg noise-overlay min-h-screen dot-grid-bg">
       <Navbar />
