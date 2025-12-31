@@ -21,7 +21,17 @@ import TermsOfService from "./pages/TermsOfService";
 import RefundPolicy from "./pages/RefundPolicy";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60, // 1 minute - data stays fresh
+      gcTime: 1000 * 60 * 10, // 10 minutes - cache retention
+      refetchOnWindowFocus: false, // Disable auto-refetch on focus
+      refetchOnMount: false, // Use cached data on mount
+      retry: 1, // Reduce retry attempts
+    },
+  },
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();

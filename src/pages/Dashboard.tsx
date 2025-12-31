@@ -93,12 +93,21 @@ export default function Dashboard() {
     
     try {
       console.log('[Dashboard] Creating board...');
+      
+      // Create optimistic board for immediate navigation
+      const optimisticId = crypto.randomUUID();
+      
+      // Navigate immediately for instant feel
+      navigate(`/board/${optimisticId}`, { replace: true });
+      
       const board = await boardsDb.create({ name: "Untitled Board" });
       
       // Verify returned board has valid data
       if (!board?.id || !board?.user_id) {
         console.error('[Dashboard] Board creation returned invalid data:', board);
-        throw new Error('Board creation failed: Invalid response');
+        toast.error('Board creation failed');
+        navigate('/dashboard', { replace: true });
+        return;
       }
       
       console.log('[Dashboard] Board created successfully:', { 
@@ -107,17 +116,21 @@ export default function Dashboard() {
         name: board.name 
       });
       
-      // Invalidate boards query to refresh the list
-      await queryClient.invalidateQueries({ queryKey: ['user-boards'] });
-      await queryClient.invalidateQueries({ queryKey: ['user-board-count'] });
+      // Navigate to actual board (replace optimistic route)
+      if (board.id !== optimisticId) {
+        navigate(`/board/${board.id}`, { replace: true });
+      }
+      
+      // Invalidate boards query in background
+      queryClient.invalidateQueries({ queryKey: ['user-boards'] });
+      queryClient.invalidateQueries({ queryKey: ['user-board-count'] });
+      queryClient.invalidateQueries({ queryKey: ['workspace-boards'] });
       
       toast.success("Board created");
-      
-      // Navigate only after confirmed insert with valid ID
-      navigate(`/board/${board.id}`);
     } catch (error) {
       console.error('[Dashboard] Board creation failed:', error);
       toast.error(error instanceof Error ? error.message : "Failed to create board");
+      navigate('/dashboard', { replace: true });
     } finally {
       setIsCreating(false);
     }

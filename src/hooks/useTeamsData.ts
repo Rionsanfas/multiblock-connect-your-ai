@@ -81,6 +81,9 @@ export function useUserTeams() {
       return (data as TeamWithStats[]) || [];
     },
     enabled: !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutes - teams rarely change
+    gcTime: 1000 * 60 * 15, // 15 minutes cache
+    refetchOnWindowFocus: false,
   });
 }
 
