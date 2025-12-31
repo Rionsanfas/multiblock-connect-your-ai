@@ -31,9 +31,11 @@ const Navbar = () => {
       <div
         className={cn(
           "hidden lg:flex items-center gap-3 rounded-full transition-all duration-500 ease-out",
-          "border border-border/40 backdrop-blur-xl",
-          "bg-card/60 shadow-[0_4px_24px_-4px_hsl(0_0%_0%/0.4),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]",
-          isScrolled && "bg-card/80 border-border/60"
+          "backdrop-blur-xl",
+          // Transparent at top, visible background on scroll
+          isScrolled 
+            ? "bg-card/80 border border-border/60 shadow-[0_4px_24px_-4px_hsl(0_0%_0%/0.4),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]"
+            : "bg-transparent border border-transparent shadow-none"
         )}
         style={{ padding: "8px 12px" }}
       >
@@ -94,8 +96,10 @@ const Navbar = () => {
       <div
         className={cn(
           "lg:hidden w-full flex items-center justify-between rounded-full transition-all duration-500",
-          "border border-border/40 backdrop-blur-xl px-4 py-2",
-          "bg-card/60 shadow-[0_4px_24px_-4px_hsl(0_0%_0%/0.4),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]"
+          "backdrop-blur-xl px-4 py-2",
+          isScrolled 
+            ? "bg-card/80 border border-border/60 shadow-[0_4px_24px_-4px_hsl(0_0%_0%/0.4),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]"
+            : "bg-transparent border border-transparent shadow-none"
         )}
       >
         <Link to="/" className="flex items-center">
