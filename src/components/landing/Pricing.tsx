@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
+import { SectionBackground } from "./SectionBackground";
 import { 
   getFreePlan,
   getIndividualAnnualPlans, 
@@ -27,8 +28,11 @@ const Pricing = () => {
         className="relative"
         style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
       >
+        {/* Strong background effects for pricing */}
+        <SectionBackground intensity="strong" />
+
         <div
-          className="w-full max-w-7xl mx-auto"
+          className="relative z-10 w-full max-w-7xl mx-auto"
           style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
         >
           {/* Header */}

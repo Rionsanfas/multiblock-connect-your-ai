@@ -1,5 +1,6 @@
 import Feature3DIcon from "./Feature3DIcon";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
+import { SectionBackground } from "./SectionBackground";
 
 type IconType = "chat" | "connect" | "canvas";
 
@@ -27,11 +28,14 @@ const Features = () => {
   return (
     <section
       id="features"
-      className="relative dot-grid-bg"
+      className="relative"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
+      {/* Background effects */}
+      <SectionBackground intensity="normal" />
+
       <div
-        className="w-full max-w-[1200px] mx-auto"
+        className="relative z-10 w-full max-w-[1200px] mx-auto"
         style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
       >
         {/* Header */}

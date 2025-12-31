@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
+import { SectionBackground } from "./SectionBackground";
 
 const LetterHighlight = ({ text }: { text: string }) => {
   const [progress, setProgress] = useState(0);
@@ -61,55 +62,47 @@ const LetterHighlight = ({ text }: { text: string }) => {
   );
 };
 
-/* 3D Plus Icon with real depth */
+/* True 3D Plus Icon - The icon itself is 3D, not in a box */
 const Plus3DIcon = () => {
   return (
-    <div className="hiw-3d-icon-scene">
-      <div className="hiw-3d-icon-cube hiw-3d-plus-cube">
-        {/* Front face - main icon */}
-        <div className="hiw-3d-face hiw-3d-face-front">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
+    <div className="hiw-icon-3d-scene">
+      <div className="hiw-icon-3d-wrapper">
+        {/* Horizontal bar of the plus */}
+        <div className="hiw-plus-bar hiw-plus-horizontal">
+          <div className="hiw-bar-face hiw-bar-front" />
+          <div className="hiw-bar-face hiw-bar-back" />
+          <div className="hiw-bar-face hiw-bar-top" />
+          <div className="hiw-bar-face hiw-bar-bottom" />
+          <div className="hiw-bar-face hiw-bar-left" />
+          <div className="hiw-bar-face hiw-bar-right" />
         </div>
-        {/* Back face */}
-        <div className="hiw-3d-face hiw-3d-face-back" />
-        {/* Top face */}
-        <div className="hiw-3d-face hiw-3d-face-top" />
-        {/* Bottom face */}
-        <div className="hiw-3d-face hiw-3d-face-bottom" />
-        {/* Left face */}
-        <div className="hiw-3d-face hiw-3d-face-left" />
-        {/* Right face */}
-        <div className="hiw-3d-face hiw-3d-face-right" />
+        {/* Vertical bar of the plus */}
+        <div className="hiw-plus-bar hiw-plus-vertical">
+          <div className="hiw-bar-face hiw-bar-front" />
+          <div className="hiw-bar-face hiw-bar-back" />
+          <div className="hiw-bar-face hiw-bar-top" />
+          <div className="hiw-bar-face hiw-bar-bottom" />
+          <div className="hiw-bar-face hiw-bar-left" />
+          <div className="hiw-bar-face hiw-bar-right" />
+        </div>
       </div>
     </div>
   );
 };
 
-/* 3D Link Icon with real depth */
+/* True 3D Link Icon - Chain links in 3D */
 const Link3DIcon = () => {
   return (
-    <div className="hiw-3d-icon-scene hiw-3d-link-scene">
-      <div className="hiw-3d-icon-cube hiw-3d-link-cube">
-        {/* Front face - main icon */}
-        <div className="hiw-3d-face hiw-3d-face-front">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-          </svg>
+    <div className="hiw-icon-3d-scene hiw-link-scene">
+      <div className="hiw-icon-3d-wrapper hiw-link-wrapper">
+        {/* First chain link */}
+        <div className="hiw-chain-link hiw-chain-link-1">
+          <div className="hiw-chain-ring" />
         </div>
-        {/* Back face */}
-        <div className="hiw-3d-face hiw-3d-face-back" />
-        {/* Top face */}
-        <div className="hiw-3d-face hiw-3d-face-top" />
-        {/* Bottom face */}
-        <div className="hiw-3d-face hiw-3d-face-bottom" />
-        {/* Left face */}
-        <div className="hiw-3d-face hiw-3d-face-left" />
-        {/* Right face */}
-        <div className="hiw-3d-face hiw-3d-face-right" />
+        {/* Second chain link */}
+        <div className="hiw-chain-link hiw-chain-link-2">
+          <div className="hiw-chain-ring" />
+        </div>
       </div>
     </div>
   );
@@ -119,17 +112,11 @@ const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="relative dot-grid-bg"
+      className="relative"
       style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
     >
-      {/* Background blur effect */}
-      <div
-        className="gradient-blur bg-accent/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute"
-        style={{
-          width: "clamp(250px, 40vw, 500px)",
-          height: "clamp(250px, 40vw, 500px)",
-        }}
-      />
+      {/* Background effects */}
+      <SectionBackground intensity="normal" />
 
       {/* Container */}
       <div
