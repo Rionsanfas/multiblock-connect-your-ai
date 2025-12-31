@@ -21,18 +21,25 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
   
   const isSelected = connectionId === selectedConnectionId;
 
-  // Calculate control points for smooth curve
+  // Calculate smooth organic curve with horizontal bias for natural flow
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
   
-  const dirX = distance > 0 ? dx / distance : 1;
-  const dirY = distance > 0 ? dy / distance : 0;
+  // Use horizontal-biased control points for smoother, more organic curves
+  const controlOffset = Math.max(Math.min(distance * 0.5, 250), 60);
   
-  const controlOffset = Math.max(Math.min(distance * 0.4, 200), 80);
+  // Horizontal bias creates flowing, ribbon-like curves
+  const horizontalBias = Math.abs(dx) > Math.abs(dy) ? 0.9 : 0.6;
+  
+  // Control points curve outward horizontally, creating elegant S-curves
+  const cp1x = from.x + controlOffset * horizontalBias * Math.sign(dx || 1);
+  const cp1y = from.y + controlOffset * (1 - horizontalBias) * Math.sign(dy || 0.1);
+  const cp2x = to.x - controlOffset * horizontalBias * Math.sign(dx || 1);
+  const cp2y = to.y - controlOffset * (1 - horizontalBias) * Math.sign(dy || 0.1);
 
-  // Simple bezier curve path
-  const path = `M ${from.x} ${from.y} C ${from.x + dirX * controlOffset} ${from.y + dirY * controlOffset}, ${to.x - dirX * controlOffset} ${to.y - dirY * controlOffset}, ${to.x} ${to.y}`;
+  // Smooth cubic bezier path
+  const path = `M ${from.x} ${from.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${to.x} ${to.y}`;
 
   // Filter IDs
   const glowFilterId = `glow-${uniqueId}`;
@@ -82,9 +89,9 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
     onContextMenu?.(e);
   };
 
-  // Colors
-  const lineColor = isSelected ? "hsl(45, 80%, 55%)" : "hsl(0, 0%, 90%)";
-  const shadowColor = isSelected ? "hsl(45, 80%, 40%)" : "hsl(0, 0%, 40%)";
+  // Softer, more elegant colors
+  const lineColor = isSelected ? "hsl(45, 70%, 60%)" : "hsl(0, 0%, 75%)";
+  const shadowColor = isSelected ? "hsl(45, 60%, 35%)" : "hsl(0, 0%, 50%)";
 
   return (
     <g 
@@ -94,10 +101,10 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
       onClick={handleClick}
       onContextMenu={handleContextMenu}
     >
-      {/* Definitions */}
+      {/* Definitions - softer glow */}
       <defs>
-        <filter id={glowFilterId} x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="2" result="blur" />
+        <filter id={glowFilterId} x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
             <feMergeNode in="SourceGraphic" />
@@ -126,40 +133,44 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
         />
       )}
 
-      {/* 3D Line effect - shadow layer (creates depth) */}
+      {/* Soft, elegant line with subtle depth */}
       {!isDeleting && (
         <>
-          {/* Bottom shadow for 3D depth */}
+          {/* Soft shadow for subtle depth */}
           <path
             d={path}
             fill="none"
             stroke={shadowColor}
-            strokeWidth="4"
-            strokeOpacity="0.4"
+            strokeWidth="6"
+            strokeOpacity="0.15"
             strokeLinecap="round"
-            transform="translate(1, 2)"
+            strokeLinejoin="round"
+            transform="translate(0, 2)"
           />
           
-          {/* Main white line */}
+          {/* Main soft line */}
           <path
             d={path}
             fill="none"
             stroke={lineColor}
-            strokeWidth="3"
-            strokeOpacity="1"
+            strokeWidth="2.5"
+            strokeOpacity="0.9"
             strokeLinecap="round"
+            strokeLinejoin="round"
             filter={isHovered ? `url(#${glowFilterId})` : undefined}
+            className="transition-all duration-200"
           />
           
-          {/* Highlight for 3D effect */}
+          {/* Subtle highlight */}
           <path
             d={path}
             fill="none"
             stroke="hsl(0, 0%, 100%)"
-            strokeWidth="1.5"
-            strokeOpacity="0.6"
+            strokeWidth="1"
+            strokeOpacity="0.3"
             strokeLinecap="round"
-            transform="translate(-0.5, -0.5)"
+            strokeLinejoin="round"
+            transform="translate(-0.3, -0.3)"
           />
         </>
       )}
@@ -199,56 +210,58 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
         </text>
       )}
       
-      {/* End point dot */}
+      {/* Soft end point dot */}
       {!isDeleting && (
-        <g>
-          <circle
-            cx={to.x}
-            cy={to.y}
-            r="6"
-            fill={shadowColor}
-            fillOpacity="0.3"
-            transform="translate(1, 1)"
-          />
+        <g className="transition-all duration-200">
           <circle
             cx={to.x}
             cy={to.y}
             r="5"
-            fill={lineColor}
+            fill={shadowColor}
+            fillOpacity="0.2"
+            transform="translate(0, 1)"
           />
           <circle
-            cx={to.x - 1}
-            cy={to.y - 1}
-            r="2"
+            cx={to.x}
+            cy={to.y}
+            r="4"
+            fill={lineColor}
+            fillOpacity="0.9"
+          />
+          <circle
+            cx={to.x - 0.5}
+            cy={to.y - 0.5}
+            r="1.5"
             fill="hsl(0, 0%, 100%)"
-            fillOpacity="0.8"
+            fillOpacity="0.5"
           />
         </g>
       )}
 
-      {/* Start point dot */}
+      {/* Soft start point dot */}
       {!isDeleting && (
-        <g>
-          <circle
-            cx={from.x}
-            cy={from.y}
-            r="5"
-            fill={shadowColor}
-            fillOpacity="0.3"
-            transform="translate(1, 1)"
-          />
+        <g className="transition-all duration-200">
           <circle
             cx={from.x}
             cy={from.y}
             r="4"
-            fill={lineColor}
+            fill={shadowColor}
+            fillOpacity="0.2"
+            transform="translate(0, 1)"
           />
           <circle
-            cx={from.x - 0.5}
-            cy={from.y - 0.5}
-            r="1.5"
+            cx={from.x}
+            cy={from.y}
+            r="3"
+            fill={lineColor}
+            fillOpacity="0.9"
+          />
+          <circle
+            cx={from.x - 0.3}
+            cy={from.y - 0.3}
+            r="1"
             fill="hsl(0, 0%, 100%)"
-            fillOpacity="0.8"
+            fillOpacity="0.5"
           />
         </g>
       )}

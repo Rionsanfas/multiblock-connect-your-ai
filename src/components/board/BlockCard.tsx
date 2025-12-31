@@ -324,7 +324,8 @@ export function BlockCard({
           className={cn(
             "block-card absolute select-none",
             isDragging ? "cursor-grabbing z-50" : "cursor-move",
-            isResizing && "z-50"
+            isResizing && "z-50",
+            !isDragging && !isResizing && "transition-[left,top] duration-75 ease-out"
           )}
           style={{
             left: block.position.x,
