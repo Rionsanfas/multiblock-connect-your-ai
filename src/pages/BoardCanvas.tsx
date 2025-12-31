@@ -347,6 +347,7 @@ export default function BoardCanvas() {
   return (
     <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls hideSidebar>
       <div className="flex h-full relative">
+        {/* Fixed sidebar - outside of the canvas transform */}
         <BlocksSidebar boardId={board.id} onCenterView={handleCenterView} />
 
         <ContextMenu>
