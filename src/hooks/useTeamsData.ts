@@ -253,12 +253,11 @@ export function useDeleteTeam() {
   
   return useMutation({
     mutationFn: async (teamId: string) => {
-      const { error } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', teamId);
+      const { data, error } = await supabase
+        .rpc('delete_team', { p_team_id: teamId });
       
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
