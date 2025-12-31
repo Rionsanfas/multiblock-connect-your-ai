@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -256,17 +256,14 @@ export default function Auth() {
                   <Label htmlFor="fullName" className="text-xs text-muted-foreground uppercase tracking-wider">
                     Full Name
                   </Label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="John Doe"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="pl-11 h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-accent/50 focus:ring-accent/20 transition-all"
-                    />
-                  </div>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
+                  />
                   {errors.fullName && (
                     <p className="text-sm text-destructive">{errors.fullName}</p>
                   )}
@@ -277,31 +274,14 @@ export default function Auth() {
                 <Label htmlFor="email" className="text-xs text-muted-foreground uppercase tracking-wider">
                   Email
                 </Label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-11 h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-accent/50 focus:ring-accent/20 transition-all"
-                  />
-                  {/* Submit arrow inside email field */}
-                  {mode === 'signin' && email && (
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-accent flex items-center justify-center hover:bg-accent/80 transition-colors disabled:opacity-50"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-accent-foreground" />
-                      ) : (
-                        <ArrowRight className="h-4 w-4 text-accent-foreground" />
-                      )}
-                    </button>
-                  )}
-                </div>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
+                />
                 {errors.email && (
                   <p className="text-sm text-destructive">{errors.email}</p>
                 )}
@@ -311,15 +291,14 @@ export default function Auth() {
                 <Label htmlFor="password" className="text-xs text-muted-foreground uppercase tracking-wider">
                   Password
                 </Label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-accent transition-colors" />
+                <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-11 pr-11 h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-accent/50 focus:ring-accent/20 transition-all"
+                    className="pr-11 h-12 bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
                   />
                   <button
                     type="button"
