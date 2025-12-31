@@ -11,6 +11,8 @@ interface ScrollAnimationOptions {
   fadeOutThreshold?: number;
   /** How far from top of viewport to complete fade in (0-1) */
   fadeInThreshold?: number;
+  /** Minimum opacity - never go below this (0-1) */
+  minOpacity?: number;
 }
 
 interface ScrollAnimationState {
@@ -28,8 +30,9 @@ export function useScrollAnimation({
   delay = 0,
   duration = 800,
   offsetY = 40,
-  fadeOutThreshold = 0.85, // More visible fade - starts earlier
-  fadeInThreshold = 0.15,  // More visible fade - ends later
+  fadeOutThreshold = 0.95,
+  fadeInThreshold = 0.05,
+  minOpacity = 0.85,
 }: ScrollAnimationOptions = {}): [React.RefObject<HTMLDivElement>, ScrollAnimationState] {
   const ref = useRef<HTMLDivElement>(null);
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false);
@@ -57,7 +60,6 @@ export function useScrollAnimation({
     
     // Calculate visibility based on element position in viewport
     const elementCenter = rect.top + rect.height / 2;
-    const viewportCenter = windowHeight / 2;
     
     // Element is in the "safe zone" - fully visible
     const safeTop = windowHeight * fadeInThreshold;
@@ -69,20 +71,20 @@ export function useScrollAnimation({
     if (elementCenter < safeTop) {
       // Element is near the top - fade out slightly as it leaves
       const progress = Math.max(0, elementCenter / safeTop);
-      opacity = 0.3 + progress * 0.7;
-      yOffset = (1 - progress) * -15;
+      opacity = minOpacity + progress * (1 - minOpacity);
+      yOffset = (1 - progress) * -10;
     } else if (elementCenter > safeBottom) {
       // Element is near the bottom - fade in as it enters
       const distanceFromBottom = windowHeight - elementCenter;
       const fadeZone = windowHeight - safeBottom;
       const progress = Math.max(0, Math.min(1, distanceFromBottom / fadeZone));
-      opacity = 0.3 + progress * 0.7;
-      yOffset = (1 - progress) * 20;
+      opacity = minOpacity + progress * (1 - minOpacity);
+      yOffset = (1 - progress) * 15;
     }
 
     setScrollOpacity(opacity);
     setScrollY(yOffset);
-  }, [hasAnimatedIn, fadeInThreshold, fadeOutThreshold]);
+  }, [hasAnimatedIn, fadeInThreshold, fadeOutThreshold, minOpacity]);
 
   useEffect(() => {
     const onScroll = () => {
