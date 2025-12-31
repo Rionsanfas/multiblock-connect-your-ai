@@ -14,7 +14,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.admin-reencrypt-keys]
-verify_jwt = false
+verify_jwt = true
 
 [functions.polar-webhook]
 verify_jwt = false
