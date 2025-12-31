@@ -36,9 +36,9 @@ export function FloatingBlocksBackground({ showLightBeam = false }: FloatingBloc
       <div 
         className="absolute inset-0 transition-opacity duration-[2000ms]"
         style={{
-          backgroundImage: `radial-gradient(circle at center, hsl(0 0% 30% / 0.4) 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-          opacity: showLightBeam ? 0.6 : 0,
+          backgroundImage: `radial-gradient(circle at center, hsl(0 0% 50%) 0.8px, transparent 0.8px)`,
+          backgroundSize: '20px 20px',
+          opacity: showLightBeam ? 0.35 : 0,
         }}
       />
 
