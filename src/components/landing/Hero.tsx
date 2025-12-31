@@ -35,7 +35,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-background dot-grid-bg" style={{ paddingTop: "clamp(100px, 14vw, 160px)", paddingBottom: "clamp(48px, 6vw, 80px)" }}>
+    <section className="relative min-h-[100svh] overflow-hidden bg-background dot-grid-bg pt-20 pb-8 sm:pt-24 md:pt-28 lg:pt-32 sm:pb-12 md:pb-16">
       {/* Pure black background */}
       <div className="absolute inset-0 bg-background" />
       
@@ -43,22 +43,15 @@ const Hero = () => {
       <FloatingBlocksBackground showLightBeam={phase >= 1} />
       
       {/* Container */}
-      <div 
-        className="relative z-10 w-full max-w-[1200px] mx-auto"
-        style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
-      >
-        {/* Hero grid - adjusted for larger left, smaller right */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-center" style={{ gap: "clamp(24px, 3vw, 36px)" }}>
-          {/* Left: Text Content - Smaller text */}
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Hero grid - stacks on mobile/tablet, side-by-side on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-center gap-6 sm:gap-8 lg:gap-10">
+          {/* Left: Text Content */}
           <div className="text-center lg:text-left order-2 lg:order-1">
             {/* Headline with shadow effect */}
             <h1 
-              className="font-bold leading-tight text-wrap-balance"
-              style={{ 
-                fontSize: "clamp(1.75rem, 1.2rem + 3.5vw, 4rem)",
-                marginBottom: "clamp(12px, 1.5vw, 20px)",
-                ...mainStyle,
-              }}
+              className="font-bold leading-tight text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-3 sm:mb-4"
+              style={mainStyle}
             >
               <span 
                 className="block"
@@ -84,12 +77,10 @@ const Hero = () => {
               </span>
             </h1>
 
-            {/* Sub-headline - smaller */}
+            {/* Sub-headline */}
             <p 
-              className="text-muted-foreground max-w-lg mx-auto lg:mx-0 text-break"
+              className="text-muted-foreground max-w-lg mx-auto lg:mx-0 text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 lg:mb-10"
               style={{ 
-                fontSize: "clamp(0.875rem, 0.75rem + 0.5vw, 1.1rem)",
-                marginBottom: "clamp(24px, 3vw, 40px)",
                 lineHeight: 1.7,
                 ...mainStyle,
               }}
@@ -98,27 +89,20 @@ const Hero = () => {
               to automate your workflows. Your keys, your control.
             </p>
 
-            {/* CTA Button - Glassmorphism with animated edge shine */}
+            {/* CTA Button */}
             <div 
               className="flex items-center justify-center lg:justify-start"
               style={buttonsStyle}
             >
               <Link 
                 to="/auth" 
-                className="group relative inline-flex items-center justify-center overflow-hidden"
+                className="group relative inline-flex items-center justify-center overflow-hidden px-6 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-medium rounded-full"
                 style={{
-                  padding: '14px 36px',
-                  fontSize: 'clamp(0.875rem, 0.8rem + 0.25vw, 1rem)',
-                  fontWeight: 500,
                   letterSpacing: '0.02em',
-                  borderRadius: '50px',
-                  // Glassmorphism background
                   background: 'linear-gradient(135deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0.04) 100%)',
                   backdropFilter: 'blur(20px)',
                   WebkitBackdropFilter: 'blur(20px)',
-                  // Subtle border
                   border: '1px solid hsl(0 0% 100% / 0.15)',
-                  // 3D shadow effect
                   boxShadow: `
                     inset 0 1px 0 hsl(0 0% 100% / 0.15),
                     inset 0 -1px 0 hsl(0 0% 0% / 0.1),
@@ -130,29 +114,16 @@ const Hero = () => {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'linear-gradient(135deg, hsl(0 0% 100% / 0.15) 0%, hsl(0 0% 100% / 0.06) 100%)';
-                  e.currentTarget.style.boxShadow = `
-                    inset 0 1px 0 hsl(0 0% 100% / 0.2),
-                    inset 0 -1px 0 hsl(0 0% 0% / 0.1),
-                    0 6px 30px hsl(0 0% 0% / 0.35),
-                    0 12px 50px hsl(0 0% 0% / 0.25),
-                    0 0 40px hsl(0 0% 100% / 0.08)
-                  `;
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'linear-gradient(135deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0.04) 100%)';
-                  e.currentTarget.style.boxShadow = `
-                    inset 0 1px 0 hsl(0 0% 100% / 0.15),
-                    inset 0 -1px 0 hsl(0 0% 0% / 0.1),
-                    0 4px 20px hsl(0 0% 0% / 0.3),
-                    0 8px 40px hsl(0 0% 0% / 0.2)
-                  `;
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
-                {/* Animated edge shine - loops around border */}
+                {/* Animated edge shine */}
                 <span 
-                  className="absolute inset-0 rounded-[50px] animate-edge-shine"
+                  className="absolute inset-0 rounded-full animate-edge-shine"
                   style={{
                     background: 'linear-gradient(90deg, transparent 0%, transparent 40%, hsl(0 0% 100% / 0.4) 50%, transparent 60%, transparent 100%)',
                     backgroundSize: '200% 100%',
@@ -164,12 +135,11 @@ const Hero = () => {
                   }}
                 />
                 
-                {/* Top gloss highlight */}
+                {/* Top gloss */}
                 <span 
-                  className="absolute inset-0 rounded-[50px]"
+                  className="absolute inset-0 rounded-full pointer-events-none"
                   style={{
                     background: 'linear-gradient(180deg, hsl(0 0% 100% / 0.08) 0%, transparent 50%)',
-                    pointerEvents: 'none',
                   }}
                 />
                 
@@ -178,14 +148,10 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right: Connected Blocks Visual - Smaller */}
+          {/* Right: Connected Blocks Visual */}
           <div 
-            className="order-1 lg:order-2 flex items-center justify-center"
-            style={{ 
-              minHeight: "clamp(180px, 25vw, 400px)",
-              maxHeight: "55vh",
-              ...visualStyle,
-            }}
+            className="order-1 lg:order-2 flex items-center justify-center min-h-[180px] sm:min-h-[220px] md:min-h-[280px] lg:min-h-[350px] max-h-[45vh] lg:max-h-[55vh]"
+            style={visualStyle}
           >
             <HeroBlocks />
           </div>

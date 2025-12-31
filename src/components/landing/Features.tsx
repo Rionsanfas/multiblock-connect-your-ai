@@ -27,82 +27,40 @@ const Features = () => {
   return (
     <section
       id="features"
-      className="relative dot-grid-bg"
-      style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
+      className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24"
     >
-      <div
-        className="w-full max-w-[1200px] mx-auto"
-        style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
-      >
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <AnimatedSection delay={0} className="text-center" style={{ marginBottom: "clamp(40px, 6vw, 72px)" }}>
+        <AnimatedSection delay={0} className="text-center mb-8 sm:mb-12 md:mb-16">
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             Features
           </span>
-          <h2
-            className="font-bold text-foreground mt-4 text-wrap-balance"
-            style={{
-              fontSize: "clamp(1.5rem, 1rem + 2.5vw, 3rem)",
-              marginBottom: "clamp(12px, 2vw, 16px)",
-            }}
-          >
+          <h2 className="font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
             Built for AI Power Users
           </h2>
-          <p
-            className="text-muted-foreground max-w-xl mx-auto text-break"
-            style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
-          >
+          <p className="text-muted-foreground max-w-xl mx-auto text-break text-sm sm:text-base">
             Everything you need to orchestrate multiple AI models in a single, intuitive workspace.
           </p>
         </AnimatedSection>
 
-        {/* Premium Glassmorphism Feature Cards Grid with 3D Icons */}
-        <div
-          className="grid"
-          style={{
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))",
-            gap: "clamp(20px, 2.5vw, 32px)",
-            alignItems: "stretch",
-          }}
-        >
+        {/* Feature Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
           {features.map((feature, index) => (
-            <AnimatedElement
-              key={feature.title}
-              delay={index * 150}
-            >
-              <div
-                className="glass-card-hover group dot-grid-card h-full"
-                style={{
-                  padding: "clamp(20px, 2.5vw, 28px)",
-                  paddingTop: "clamp(12px, 1.5vw, 16px)",
-                }}
-              >
+            <AnimatedElement key={feature.title} delay={index * 150}>
+              <div className="glass-card-hover group dot-grid-card h-full p-4 sm:p-5 lg:p-6 pt-3 sm:pt-4">
                 {/* 3D Animated Icon */}
                 <div className="relative z-10">
                   <Feature3DIcon type={feature.iconType} />
                 </div>
 
                 {/* Title */}
-                <h3
-                  className="font-semibold text-foreground text-wrap-balance text-center relative z-10"
-                  style={{
-                    fontSize: "clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem)",
-                    marginBottom: "clamp(10px, 1.5vw, 14px)",
-                    letterSpacing: "-0.01em",
-                  }}
-                >
+                <h3 className="font-semibold text-foreground text-wrap-balance text-center relative z-10 text-base sm:text-lg lg:text-xl mb-2 sm:mb-3">
                   {feature.title}
                 </h3>
 
                 {/* Description */}
-                <p
-                  className="text-muted-foreground leading-relaxed text-break text-center relative z-10"
-                  style={{
-                    fontSize: "clamp(0.875rem, 0.82rem + 0.2vw, 0.95rem)",
-                    lineHeight: 1.6,
-                  }}
-                >
+                <p className="text-muted-foreground leading-relaxed text-break text-center relative z-10 text-sm sm:text-base">
                   {feature.description}
                 </p>
               </div>

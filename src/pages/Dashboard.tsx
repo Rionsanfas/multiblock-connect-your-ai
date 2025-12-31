@@ -219,24 +219,35 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="flex h-full">
       {/* Main Content */}
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="flex-1 p-4 sm:p-6 overflow-auto">
+          {/* Header with Workspace Switcher */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">
+                {isPersonalWorkspace ? "Your Boards" : `${currentWorkspace.teamName} Boards`}
+              </h1>
+              <p className="text-sm text-muted-foreground">{userBoards.length} boards</p>
+            </div>
+            <WorkspaceSwitcher />
+          </div>
+
           {/* Usage Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <PlanUsageCard boardsUsed={stats.boardsUsed} />
             <StorageUsageCard
               usedMb={stats.storageUsedMb}
               limitMb={stats.storageLimitMb}
             />
-            <GlassCard className="flex flex-col justify-center items-center p-6">
+            <GlassCard className="flex flex-col justify-center items-center p-4 sm:p-6">
               <Button 
                 onClick={handleCreateBoard} 
                 disabled={!canCreateBoard}
-                className="gap-2 btn-glow-edge text-primary font-medium rounded-xl py-3 px-6 bg-transparent hover:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                className="gap-2 btn-glow-edge text-primary font-medium rounded-xl py-2.5 sm:py-3 px-4 sm:px-6 text-sm sm:text-base bg-transparent hover:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Plus className="h-4 w-4" />
                 New Board
               </Button>
-              <p className="text-xs text-muted-foreground text-center mt-3">
+              <p className="text-xs text-muted-foreground text-center mt-2 sm:mt-3">
                 {boardsRemaining} {boardsRemaining === 1 ? 'board' : 'boards'} remaining
               </p>
               {isFree && !canCreateBoard && (
@@ -250,40 +261,26 @@ export default function Dashboard() {
               )}
             </GlassCard>
           </div>
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-2xl font-bold">
-                  {isPersonalWorkspace ? "Your Boards" : `${currentWorkspace.teamName} Boards`}
-                </h1>
-                <p className="text-muted-foreground">{userBoards.length} boards</p>
-              </div>
-            </div>
-            <div className="absolute top-6 right-6">
-              <WorkspaceSwitcher />
-            </div>
-          </div>
 
           {/* Toolbar */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-6">
             <SearchBar
               placeholder="Search boards..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onClear={() => setSearch("")}
-              className="flex-1 max-w-sm"
+              className="flex-1 sm:max-w-sm"
             />
-            <div className="flex items-center gap-1 p-1 rounded-xl btn-soft" style={{ padding: "4px" }}>
+            <div className="flex items-center gap-1 p-1 rounded-xl btn-soft self-start" style={{ padding: "4px" }}>
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2.5 rounded-lg transition-all duration-300 ${viewMode === "grid" ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground shadow-[0_0_12px_hsl(40,70%,50%/0.5)] bg-[length:200%_100%] animate-[goldShimmer_2s_ease-in-out_infinite]" : "text-muted-foreground hover:text-foreground"}`}
+                className={`p-2 sm:p-2.5 rounded-lg transition-all duration-300 ${viewMode === "grid" ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground shadow-[0_0_12px_hsl(40,70%,50%/0.5)] bg-[length:200%_100%] animate-[goldShimmer_2s_ease-in-out_infinite]" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <LayoutGrid className="h-4 w-4 icon-3d" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2.5 rounded-lg transition-all duration-300 ${viewMode === "list" ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground shadow-[0_0_12px_hsl(40,70%,50%/0.5)] bg-[length:200%_100%] animate-[goldShimmer_2s_ease-in-out_infinite]" : "text-muted-foreground hover:text-foreground"}`}
+                className={`p-2 sm:p-2.5 rounded-lg transition-all duration-300 ${viewMode === "list" ? "bg-gradient-to-r from-[hsl(35,60%,55%)] via-[hsl(40,70%,60%)] to-[hsl(35,60%,55%)] text-foreground shadow-[0_0_12px_hsl(40,70%,50%/0.5)] bg-[length:200%_100%] animate-[goldShimmer_2s_ease-in-out_infinite]" : "text-muted-foreground hover:text-foreground"}`}
               >
                 <List className="h-4 w-4 icon-3d" />
               </button>
@@ -297,14 +294,14 @@ export default function Dashboard() {
               title="No boards yet"
               description="Create your first board to start building AI workflows"
               action={
-                <Button onClick={handleCreateBoard} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl">
+                <Button onClick={handleCreateBoard} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl text-sm">
                   <Plus className="h-4 w-4" />
                   Create Board
                 </Button>
               }
             />
           ) : (
-            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"}>
+            <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" : "space-y-2 sm:space-y-3"}>
               {filteredBoards.map((board) => (
                 <BoardCardWithUsage
                   key={board.id}

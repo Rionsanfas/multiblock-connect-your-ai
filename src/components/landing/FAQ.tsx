@@ -48,66 +48,37 @@ const FAQ = () => {
   return (
     <section
       id="faq"
-      className="relative dot-grid-bg"
-      style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
+      className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24"
     >
       {/* Container */}
-      <div
-        className="w-full max-w-[1200px] mx-auto"
-        style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
-      >
+      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <AnimatedSection delay={0} className="text-center" style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}>
+        <AnimatedSection delay={0} className="text-center mb-8 sm:mb-12 md:mb-16">
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             FAQ
           </span>
-          <h2
-            className="font-bold text-foreground mt-4 text-wrap-balance"
-            style={{
-              fontSize: "clamp(1.5rem, 1rem + 2.5vw, 3rem)",
-              marginBottom: "clamp(12px, 2vw, 16px)",
-            }}
-          >
+          <h2 className="font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
             Frequently Asked Questions
           </h2>
-          <p
-            className="text-muted-foreground max-w-xl mx-auto text-break"
-            style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
-          >
+          <p className="text-muted-foreground max-w-xl mx-auto text-break text-sm sm:text-base">
             Everything you need to know about Multiblock.
           </p>
         </AnimatedSection>
 
-        {/* FAQ Accordion - max-width for readability */}
+        {/* FAQ Accordion */}
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-3">
+          <Accordion type="single" collapsible className="space-y-2 sm:space-y-3">
             {faqs.map((faq, index) => (
               <AnimatedElement key={index} delay={index * 80}>
                 <AccordionItem
                   value={`item-${index}`}
-                  className="glass-card border-border rounded-xl overflow-hidden"
-                  style={{ padding: "0 clamp(16px, 2.5vw, 24px)" }}
+                  className="glass-card border-border rounded-xl overflow-hidden px-4 sm:px-6"
                 >
-                  <AccordionTrigger
-                    className="text-left text-foreground hover:no-underline text-break"
-                    style={{
-                      fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
-                      paddingTop: "clamp(16px, 2vw, 20px)",
-                      paddingBottom: "clamp(16px, 2vw, 20px)",
-                      minHeight: "48px",
-                    }}
-                  >
+                  <AccordionTrigger className="text-left text-foreground hover:no-underline text-break text-sm sm:text-base py-4 sm:py-5 min-h-[48px]">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent
-                    className="text-muted-foreground text-break"
-                    style={{
-                      fontSize: "clamp(0.875rem, 0.8rem + 0.2vw, 1rem)",
-                      paddingBottom: "clamp(16px, 2vw, 20px)",
-                      lineHeight: 1.6,
-                    }}
-                  >
+                  <AccordionContent className="text-muted-foreground text-break text-sm sm:text-base pb-4 sm:pb-5 leading-relaxed">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>

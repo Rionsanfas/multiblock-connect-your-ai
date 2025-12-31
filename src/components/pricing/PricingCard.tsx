@@ -17,30 +17,30 @@ export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
   const isEnterprise = plan.tier === 'enterprise';
 
   return (
-    <div className={`premium-card-wrapper ${plan.highlight ? 'scale-105 z-10' : ''} h-full`}>
+    <div className={`premium-card-wrapper ${plan.highlight ? 'sm:scale-105 z-10' : ''} h-full`}>
       <div className="premium-card-gradient" />
-      <div className="premium-card-content h-full p-6 relative flex flex-col">
+      <div className="premium-card-content h-full p-4 sm:p-6 relative flex flex-col">
         {/* Badge */}
         {plan.badge && (
-          <div className="inline-flex self-start px-3 py-1 text-xs rounded-full mb-4 badge-3d-shiny whitespace-nowrap">
+          <div className="inline-flex self-start px-2 sm:px-3 py-1 text-xs rounded-full mb-3 sm:mb-4 badge-3d-shiny whitespace-nowrap">
             {plan.badge}
           </div>
         )}
 
         {/* Header */}
-        <div className="mb-6">
-          <h3 className={`text-2xl font-bold mb-2 ${plan.highlight ? 'text-gold-shine' : 'text-foreground'}`}>
+        <div className="mb-4 sm:mb-6">
+          <h3 className={`text-xl sm:text-2xl font-bold mb-1.5 sm:mb-2 ${plan.highlight ? 'text-gold-shine' : 'text-foreground'}`}>
             {plan.name}
           </h3>
-          <p className="text-sm text-muted-foreground mb-4">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
             {plan.description}
           </p>
           <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold">
+            <span className="text-3xl sm:text-4xl font-bold">
               {isEnterprise ? 'Custom' : plan.price_cents === 0 ? 'Free' : `$${(plan.price_cents / 100).toFixed(2)}`}
             </span>
             {plan.price_cents > 0 && !isEnterprise && (
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 {isLifetime ? ' one-time' : '/year'}
               </span>
             )}
