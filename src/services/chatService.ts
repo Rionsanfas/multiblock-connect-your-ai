@@ -1,5 +1,5 @@
-// Real Chat Service with Streaming Support
-// Uses encrypted API keys via edge function - NEVER exposes raw keys to frontend
+// Secure Chat Service with Streaming Support
+// All API calls go through chat-proxy edge function - API keys NEVER exposed to frontend
 
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -44,15 +44,6 @@ export interface MessageMeta {
   latency_ms?: number;
 }
 
-// Provider-specific API endpoints
-const PROVIDER_ENDPOINTS: Record<Provider, string> = {
-  openai: 'https://api.openai.com/v1/chat/completions',
-  anthropic: 'https://api.anthropic.com/v1/messages',
-  google: 'https://generativelanguage.googleapis.com/v1beta/models',
-  xai: 'https://api.x.ai/v1/chat/completions',
-  deepseek: 'https://api.deepseek.com/v1/chat/completions',
-};
-
 // Model ID mappings for each provider (internal ID -> API ID)
 const getProviderModelId = (modelId: string, provider: Provider): string => {
   const mappings: Record<string, string> = {
@@ -92,31 +83,6 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
 
 class ChatService {
   private abortController: AbortController | null = null;
-
-  /**
-   * Get decrypted API key for a provider from edge function
-   * NEVER stores or exposes raw keys on frontend
-   */
-  private async getDecryptedApiKey(provider: Provider): Promise<string | null> {
-    console.log('[ChatService] Requesting decrypted key for provider:', provider);
-    
-    const { data, error } = await supabase.functions.invoke('encrypt-api-key', {
-      body: { action: 'decrypt', provider },
-    });
-
-    if (error) {
-      console.error('[ChatService] Failed to get API key:', error);
-      return null;
-    }
-
-    if (!data?.api_key) {
-      console.warn('[ChatService] No API key found for provider:', provider);
-      return null;
-    }
-
-    console.log('[ChatService] Successfully retrieved decrypted key for:', provider);
-    return data.api_key;
-  }
 
   /**
    * Detect if message contains image generation request
@@ -261,7 +227,7 @@ class ChatService {
   }
 
   /**
-   * Stream chat completion - REAL API CALLS with encrypted keys
+   * Stream chat completion via secure proxy - API keys never exposed to frontend
    */
   async streamChat(
     modelId: string,
@@ -292,18 +258,11 @@ class ChatService {
     }
 
     const provider = modelConfig.provider;
-    
-    // Get decrypted API key from edge function
-    const apiKey = await this.getDecryptedApiKey(provider);
+    const providerModelId = getProviderModelId(resolvedModelId, provider);
 
-    if (!apiKey) {
-      callbacks.onError(`No valid API key for ${provider}. Please add your API key in Settings > API Keys.`);
-      return;
-    }
-
-    // Handle image generation separately
+    // Handle image generation separately (still needs direct call for now)
     if (modelConfig.supports_image_generation) {
-      await this.handleImageGeneration(modelConfig, messageContent, apiKey, callbacks);
+      await this.handleImageGeneration(modelConfig, messageContent, callbacks);
       return;
     }
 
@@ -312,39 +271,47 @@ class ChatService {
     let fullResponse = '';
 
     try {
-      const response = await this.callProviderAPI(
-        provider,
-        resolvedModelId,
-        messages,
-        apiKey,
-        config,
-        this.abortController.signal,
-        attachments
+      // Format messages with attachments for the proxy
+      const formattedMessages = this.formatMessagesWithAttachments(messages, attachments, provider);
+
+      // Get session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        callbacks.onError('Not authenticated. Please log in.');
+        return;
+      }
+
+      // Call chat-proxy edge function - API key decryption happens server-side
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-proxy`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            provider,
+            model_id: providerModelId,
+            messages: formattedMessages,
+            config: {
+              temperature: config?.temperature ?? 0.7,
+              maxTokens: config?.maxTokens ?? 2048,
+            },
+            stream: true,
+          }),
+          signal: this.abortController.signal,
+        }
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = `API request failed (${response.status})`;
-        
-        try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error?.message || errorJson.message || errorMessage;
-        } catch {
-          if (errorText) {
-            errorMessage = errorText.substring(0, 200);
-          }
-        }
+        const errorData = await response.json().catch(() => ({}));
+        let errorMessage = errorData.error || `API request failed (${response.status})`;
 
         if (response.status === 401) {
-          errorMessage = `Invalid API key for ${provider} - please check your credentials in Settings > API Keys`;
-        } else if (response.status === 403) {
-          errorMessage = `Access denied by ${provider} - your API key may lack required permissions`;
-        } else if (response.status === 429) {
-          errorMessage = `Rate limit exceeded on ${provider} - please try again in a few moments`;
-        } else if (response.status === 402) {
-          errorMessage = `Insufficient credits on ${provider} - please add funds to your provider account`;
-        } else if (response.status === 500 || response.status === 502 || response.status === 503) {
-          errorMessage = `${provider} service is temporarily unavailable - please try again`;
+          errorMessage = 'Not authenticated. Please log in again.';
+        } else if (response.status === 400 && errorMessage.includes('No valid API key')) {
+          errorMessage = `No valid API key for ${provider}. Please add your API key in Settings > API Keys.`;
         }
 
         callbacks.onError(errorMessage);
@@ -409,7 +376,7 @@ class ChatService {
           return;
         }
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          callbacks.onError(`Network error connecting to ${provider} - check your internet connection`);
+          callbacks.onError('Network error - check your internet connection');
         } else {
           callbacks.onError(`Error: ${error.message}`);
         }
@@ -422,12 +389,11 @@ class ChatService {
   }
 
   /**
-   * Handle image generation requests
+   * Handle image generation requests via proxy
    */
   private async handleImageGeneration(
     model: ModelConfig,
     prompt: string,
-    apiKey: string,
     callbacks: StreamCallbacks
   ): Promise<void> {
     const startTime = Date.now();
@@ -435,28 +401,38 @@ class ChatService {
     try {
       callbacks.onChunk('Generating image...\n\n');
       
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: model.id === 'dall-e-3' ? 'dall-e-3' : 'gpt-image-1',
-          prompt: prompt,
-          n: 1,
-          size: '1024x1024',
-        }),
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        callbacks.onError('Not authenticated. Please log in.');
+        return;
+      }
+
+      // Call image generation through proxy
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-proxy`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            provider: model.provider,
+            model_id: model.id,
+            action: 'image_generation',
+            prompt,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        callbacks.onError(errorData.error?.message || `Image generation failed (${response.status})`);
+        callbacks.onError(errorData.error || `Image generation failed (${response.status})`);
         return;
       }
 
       const data = await response.json();
-      const imageUrl = data.data?.[0]?.url;
+      const imageUrl = data.image_url;
 
       if (imageUrl) {
         const fullResponse = `![Generated Image](${imageUrl})\n\n*Image generated based on your prompt.*`;
@@ -470,179 +446,6 @@ class ChatService {
     } catch (error) {
       callbacks.onError(error instanceof Error ? error.message : 'Image generation failed');
     }
-  }
-
-  private async callProviderAPI(
-    provider: Provider,
-    modelId: string,
-    messages: ChatMessage[],
-    apiKey: string,
-    config?: { temperature?: number; maxTokens?: number },
-    signal?: AbortSignal,
-    attachments?: ChatAttachment[]
-  ): Promise<Response> {
-    const providerModelId = getProviderModelId(modelId, provider);
-
-    switch (provider) {
-      case 'anthropic':
-        return this.callAnthropicAPI(providerModelId, messages, apiKey, config, signal, attachments);
-      case 'google':
-        return this.callGoogleAPI(providerModelId, messages, apiKey, config, signal);
-      default:
-        return this.callOpenAICompatibleAPI(
-          provider,
-          providerModelId,
-          messages,
-          apiKey,
-          config,
-          signal,
-          attachments
-        );
-    }
-  }
-
-  private async callOpenAICompatibleAPI(
-    provider: Provider,
-    modelId: string,
-    messages: ChatMessage[],
-    apiKey: string,
-    config?: { temperature?: number; maxTokens?: number },
-    signal?: AbortSignal,
-    attachments?: ChatAttachment[]
-  ): Promise<Response> {
-    const endpoint = PROVIDER_ENDPOINTS[provider];
-    const formattedMessages = this.formatMessagesWithAttachments(messages, attachments, provider);
-
-    // OpenAI "new" models (GPT-5, GPT-4.1, o-series) do NOT support `temperature`
-    // and require `max_completion_tokens` instead of `max_tokens`.
-    const isOpenAIProvider = provider === 'openai';
-    const isOpenAINewerModel =
-      /^gpt-5(?!-image)/.test(modelId) ||
-      modelId.startsWith('gpt-4.1') ||
-      modelId.startsWith('o1') ||
-      modelId.startsWith('o3') ||
-      modelId.startsWith('o4');
-
-    const body: Record<string, unknown> = {
-      model: modelId,
-      messages: formattedMessages,
-      stream: true,
-    };
-
-    const maxTokens = config?.maxTokens ?? 2048;
-    if (isOpenAIProvider && isOpenAINewerModel) {
-      body.max_completion_tokens = maxTokens;
-      // Do not include temperature (OpenAI will reject it for these models)
-    } else {
-      body.max_tokens = maxTokens;
-      body.temperature = config?.temperature ?? 0.7;
-    }
-
-    return fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-      signal,
-    });
-  }
-
-  private async callAnthropicAPI(
-    modelId: string,
-    messages: ChatMessage[],
-    apiKey: string,
-    config?: { temperature?: number; maxTokens?: number },
-    signal?: AbortSignal,
-    attachments?: ChatAttachment[]
-  ): Promise<Response> {
-    const systemMessage = messages.find(m => m.role === 'system');
-    const nonSystemMessages = messages.filter(m => m.role !== 'system');
-
-    const formattedMessages = nonSystemMessages.map(m => {
-      if (m.role === 'user' && attachments?.length) {
-        const content: any[] = [];
-        
-        attachments.filter(a => a.type.startsWith('image/')).forEach(att => {
-          if (att.content) {
-            content.push({
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: att.type,
-                data: att.content.replace(/^data:image\/\w+;base64,/, ''),
-              },
-            });
-          }
-        });
-        
-        content.push({ type: 'text', text: typeof m.content === 'string' ? m.content : '' });
-        
-        return { role: m.role, content };
-      }
-      
-      return {
-        role: m.role,
-        content: typeof m.content === 'string' ? m.content : '',
-      };
-    });
-
-    return fetch(PROVIDER_ENDPOINTS.anthropic, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: modelId,
-        system: typeof systemMessage?.content === 'string' ? systemMessage.content : '',
-        messages: formattedMessages,
-        stream: true,
-        max_tokens: config?.maxTokens ?? 2048,
-        temperature: config?.temperature ?? 0.7,
-      }),
-      signal,
-    });
-  }
-
-  private async callGoogleAPI(
-    modelId: string,
-    messages: ChatMessage[],
-    apiKey: string,
-    config?: { temperature?: number; maxTokens?: number },
-    signal?: AbortSignal
-  ): Promise<Response> {
-    const endpoint = `${PROVIDER_ENDPOINTS.google}/${modelId}:streamGenerateContent?key=${apiKey}&alt=sse`;
-
-    const contents = messages
-      .filter(m => m.role !== 'system')
-      .map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: typeof m.content === 'string' ? m.content : '' }],
-      }));
-
-    const systemInstruction = messages.find(m => m.role === 'system');
-
-    return fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents,
-        systemInstruction: systemInstruction ? { 
-          parts: [{ text: typeof systemInstruction.content === 'string' ? systemInstruction.content : '' }] 
-        } : undefined,
-        generationConfig: {
-          temperature: config?.temperature ?? 0.7,
-          maxOutputTokens: config?.maxTokens ?? 2048,
-        },
-      }),
-      signal,
-    });
   }
 
   private formatMessagesWithAttachments(
@@ -665,12 +468,23 @@ class ChatService {
 
         attachments.filter(a => a.type.startsWith('image/')).forEach(att => {
           if (att.content) {
-            content.push({
-              type: 'image_url',
-              image_url: {
-                url: att.content.startsWith('data:') ? att.content : `data:${att.type};base64,${att.content}`,
-              },
-            });
+            if (provider === 'anthropic') {
+              content.push({
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: att.type,
+                  data: att.content.replace(/^data:image\/\w+;base64,/, ''),
+                },
+              });
+            } else {
+              content.push({
+                type: 'image_url',
+                image_url: {
+                  url: att.content.startsWith('data:') ? att.content : `data:${att.type};base64,${att.content}`,
+                },
+              });
+            }
           }
         });
 

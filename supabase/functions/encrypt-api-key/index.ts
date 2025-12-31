@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Get encryption key from environment - must be a 32-byte key for AES-256
-const ENCRYPTION_KEY = Deno.env.get("API_KEY_ENCRYPTION_SECRET") || "default-dev-key-32-chars-long!!";
+// Use service role key as encryption key - already available in edge functions, no extra secret needed
+const ENCRYPTION_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!.substring(0, 32);
 
 // Convert a string key to a CryptoKey for AES-256-GCM
 async function getAESKey(keyString: string): Promise<CryptoKey> {
@@ -208,32 +208,13 @@ serve(async (req) => {
       });
 
     } else if (action === "decrypt") {
-      // Decrypt a key for use (internal only - returns decrypted key)
-      if (!provider) {
-        return new Response(JSON.stringify({ error: "provider required" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const { data, error } = await supabase
-        .from("api_keys")
-        .select("api_key_encrypted")
-        .eq("user_id", user.id)
-        .eq("provider", provider)
-        .eq("is_valid", true)
-        .maybeSingle();
-
-      if (error || !data) {
-        return new Response(JSON.stringify({ error: "API key not found" }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const decryptedKey = await decrypt(data.api_key_encrypted, ENCRYPTION_KEY);
-
-      return new Response(JSON.stringify({ api_key: decryptedKey }), {
+      // SECURITY: Decrypt action is no longer available from frontend
+      // All AI calls must go through the chat-proxy edge function
+      console.warn("[encrypt-api-key] Decrypt action called from frontend - this is deprecated");
+      return new Response(JSON.stringify({ 
+        error: "Direct decryption is not allowed. Use the chat-proxy endpoint." 
+      }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
 
