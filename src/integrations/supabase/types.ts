@@ -838,6 +838,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _internal_get_team_max_seats: {
+        Args: { p_team_id: string }
+        Returns: number
+      }
+      _internal_get_team_seat_count: {
+        Args: { p_team_id: string }
+        Returns: number
+      }
+      _internal_is_team_admin_or_owner: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      _internal_is_team_member: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      _internal_is_team_owner: {
+        Args: { p_team_id: string; p_user_id: string }
+        Returns: boolean
+      }
       accept_team_invitation: {
         Args: { p_token: string }
         Returns: {
@@ -879,7 +899,19 @@ export type Database = {
         Returns: boolean
       }
       create_team: { Args: { p_name: string; p_slug: string }; Returns: string }
+      create_team_invitation: {
+        Args: {
+          p_email: string
+          p_role?: Database["public"]["Enums"]["team_role"]
+          p_team_id: string
+        }
+        Returns: string
+      }
       decrement_ltd_seats: { Args: never; Returns: number }
+      delete_team_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: boolean
+      }
       get_block_incoming_connections: {
         Args: { p_block_id: string }
         Returns: {
@@ -1071,10 +1103,26 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      remove_team_member: {
+        Args: { p_member_user_id: string; p_team_id: string }
+        Returns: boolean
+      }
       reset_daily_usage: { Args: never; Returns: undefined }
       team_can_add_member: { Args: { p_team_id: string }; Returns: boolean }
       transfer_board_to_team: {
         Args: { p_board_id: string; p_team_id: string }
+        Returns: boolean
+      }
+      transfer_team_ownership: {
+        Args: { p_new_owner_id: string; p_team_id: string }
+        Returns: boolean
+      }
+      update_team_member_role: {
+        Args: {
+          p_member_user_id: string
+          p_new_role: Database["public"]["Enums"]["team_role"]
+          p_team_id: string
+        }
         Returns: boolean
       }
       update_user_grace_status: {
