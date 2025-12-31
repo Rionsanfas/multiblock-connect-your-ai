@@ -37,8 +37,8 @@ export function TextSelectionMenu({
   return (
     <div
       className={cn(
-        "fixed z-[100] flex items-center gap-1 p-1 rounded-lg",
-        "bg-card/95 backdrop-blur-xl border border-border/30",
+        "fixed z-[9999] flex items-center gap-1 p-1.5 rounded-lg pointer-events-auto",
+        "bg-card border border-border/50",
         "shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)]",
         "animate-in fade-in-0 zoom-in-95 duration-150"
       )}
@@ -47,7 +47,6 @@ export function TextSelectionMenu({
         top: selectionRect.bottom + 8,
         transform: 'translateX(-50%)',
       }}
-      onMouseLeave={() => setIsHovered(null)}
       onMouseDown={(e) => e.preventDefault()}
     >
       {/* Reference button */}
