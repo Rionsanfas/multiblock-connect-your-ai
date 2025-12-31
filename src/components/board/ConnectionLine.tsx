@@ -1,4 +1,4 @@
-import { useState, useId, useRef, useEffect } from "react";
+import { useState, useId, useRef, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -21,34 +21,65 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
   
   const isSelected = connectionId === selectedConnectionId;
 
-  // Calculate control points for a smooth S-curve
+  // Calculate control points that follow the direction of the line
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
   
+  // Normalize direction
+  const dirX = distance > 0 ? dx / distance : 1;
+  const dirY = distance > 0 ? dy / distance : 0;
+  
+  // Perpendicular direction for offsets
+  const perpX = -dirY;
+  const perpY = dirX;
+  
   const controlOffset = Math.max(Math.min(distance * 0.4, 200), 80);
 
-  // Create smooth bezier curve path
-  const path = `M ${from.x} ${from.y} C ${from.x + controlOffset} ${from.y}, ${to.x - controlOffset} ${to.y}, ${to.x} ${to.y}`;
+  // Create smooth bezier curve path that follows the drag direction
+  const path = `M ${from.x} ${from.y} C ${from.x + dirX * controlOffset} ${from.y + dirY * controlOffset}, ${to.x - dirX * controlOffset} ${to.y - dirY * controlOffset}, ${to.x} ${to.y}`;
 
   // Create parallel offset paths for the flowing lines effect
   const createOffsetPath = (offset: number, splitAmount: number = 0) => {
-    const perpX = -dy / distance || 0;
-    const perpY = dx / distance || 0;
     const totalOffset = offset + splitAmount;
     const ox = perpX * totalOffset;
     const oy = perpY * totalOffset;
-    return `M ${from.x + ox} ${from.y + oy} C ${from.x + controlOffset + ox} ${from.y + oy}, ${to.x - controlOffset + ox} ${to.y + oy}, ${to.x + ox} ${to.y + oy}`;
+    return `M ${from.x + ox} ${from.y + oy} C ${from.x + dirX * controlOffset + ox} ${from.y + dirY * controlOffset + oy}, ${to.x - dirX * controlOffset + ox} ${to.y - dirY * controlOffset + oy}, ${to.x + ox} ${to.y + oy}`;
   };
 
-  // Create a path that retracts to the source
-  const createRetractPath = (progress: number) => {
-    const endX = from.x + (to.x - from.x) * (1 - progress);
-    const endY = from.y + (to.y - from.y) * (1 - progress);
-    const cp1x = from.x + controlOffset * (1 - progress);
-    const cp2x = endX - controlOffset * (1 - progress) * 0.5;
-    return `M ${from.x} ${from.y} C ${cp1x} ${from.y}, ${cp2x} ${endY}, ${endX} ${endY}`;
-  };
+  // Generate unique random-like parameters for each line to make them independent
+  const lineParams = useMemo(() => {
+    // Use connectionId or uniqueId to seed different values
+    const seed = connectionId ? connectionId.charCodeAt(0) + connectionId.charCodeAt(connectionId.length - 1) : 0;
+    return {
+      line1: {
+        dur: 3.5 + (seed % 5) * 0.3,
+        baseOffset: 6,
+        // Circular-like motion with different amplitudes
+        offsets: [6, 14, -2, 18, 8, -4, 12, 6],
+      },
+      line2: {
+        dur: 2.8 + ((seed + 1) % 4) * 0.4,
+        baseOffset: 0,
+        offsets: [0, 8, -6, 12, -3, 10, -8, 0],
+      },
+      line3: {
+        dur: 4.0 + ((seed + 2) % 6) * 0.25,
+        baseOffset: -6,
+        offsets: [-6, -16, 3, -20, -4, 2, -14, -6],
+      },
+      line4: {
+        dur: 3.2 + ((seed + 3) % 5) * 0.35,
+        baseOffset: 3,
+        offsets: [3, 10, -3, 14, 0, 8, -2, 3],
+      },
+      line5: {
+        dur: 3.8 + ((seed + 4) % 4) * 0.3,
+        baseOffset: -3,
+        offsets: [-3, -12, 4, -16, 2, -8, 0, -3],
+      },
+    };
+  }, [connectionId, uniqueId]);
 
   // Unique IDs for filters
   const glowFilterId = `glow-${uniqueId}`;
@@ -57,7 +88,6 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
   const handleMouseEnter = () => {
     if (isDrawing) return;
     setIsHovered(true);
-    // Start 1.5s timer to split
     hoverTimeoutRef.current = setTimeout(() => {
       setIsSplit(true);
     }, 1500);
@@ -77,9 +107,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isSplit && connectionId && !isDrawing) {
-      // Trigger delete animation
       setIsDeleting(true);
-      // After animation, delete
       setTimeout(() => {
         deleteConnection(connectionId);
       }, 400);
@@ -102,12 +130,11 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
     onContextMenu?.(e);
   };
 
-  // Split amount for the delete preview
   const splitOffset = isSplit ? 25 : 0;
 
-  // Colors
-  const lineColor = isSelected ? "hsl(0, 70%, 60%)" : "hsl(0, 0%, 85%)";
-  const glowColor = isSelected ? "hsl(0, 60%, 50%)" : "hsl(0, 0%, 70%)";
+  // Colors - using gold/accent for selected state
+  const lineColor = isSelected ? "hsl(45, 80%, 55%)" : "hsl(0, 0%, 85%)";
+  const glowColor = isSelected ? "hsl(45, 80%, 50%)" : "hsl(0, 0%, 70%)";
 
   return (
     <g 
@@ -154,7 +181,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
         <path
           d={path}
           fill="none"
-          stroke="hsl(0, 70%, 55%)"
+          stroke="hsl(45, 80%, 55%)"
           strokeWidth="14"
           strokeOpacity="0.2"
           strokeLinecap="round"
@@ -175,7 +202,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
             filter={`url(#${glowFilterId})`}
           />
           
-          {/* Line 1 - top offset, dramatic organic movement */}
+          {/* Line 1 - top offset, independent circular motion */}
           <path
             fill="none"
             stroke={lineColor}
@@ -188,25 +215,25 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
               <>
                 <animate
                   attributeName="d"
-                  values={`${createOffsetPath(4, splitOffset)};${createOffsetPath(8, splitOffset)};${createOffsetPath(2, splitOffset)};${createOffsetPath(10, splitOffset)};${createOffsetPath(5, splitOffset)};${createOffsetPath(4, splitOffset)}`}
-                  dur="2.5s"
+                  values={lineParams.line1.offsets.map(o => createOffsetPath(o, splitOffset)).join(';')}
+                  dur={`${lineParams.line1.dur}s`}
                   repeatCount="indefinite"
                   calcMode="spline"
-                  keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
+                  keySplines="0.4 0 0.6 1; 0.3 0 0.7 1; 0.5 0 0.5 1; 0.4 0 0.6 1; 0.3 0 0.7 1; 0.5 0 0.5 1; 0.4 0 0.6 1"
                 />
                 <animate
                   attributeName="stroke-opacity"
-                  values="0.6;0.8;0.4;0.7;0.5;0.6"
-                  dur="2s"
+                  values="0.6;0.85;0.4;0.75;0.5;0.8;0.45;0.6"
+                  dur={`${lineParams.line1.dur * 0.8}s`}
                   repeatCount="indefinite"
                 />
               </>
             ) : (
-              <set attributeName="d" to={createOffsetPath(4, 0)} />
+              <set attributeName="d" to={createOffsetPath(lineParams.line1.baseOffset, 0)} />
             )}
           </path>
 
-          {/* Line 2 - center main line */}
+          {/* Line 2 - center main line, distinct motion */}
           <path
             fill="none"
             stroke="hsl(0, 0%, 95%)"
@@ -218,16 +245,16 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
               <>
                 <animate
                   attributeName="d"
-                  values={`${createOffsetPath(0, 0)};${createOffsetPath(3, 0)};${createOffsetPath(-2, 0)};${createOffsetPath(4, 0)};${createOffsetPath(-1, 0)};${createOffsetPath(0, 0)}`}
-                  dur="2s"
+                  values={lineParams.line2.offsets.map(o => createOffsetPath(o, 0)).join(';')}
+                  dur={`${lineParams.line2.dur}s`}
                   repeatCount="indefinite"
                   calcMode="spline"
-                  keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
+                  keySplines="0.35 0 0.65 1; 0.4 0 0.6 1; 0.3 0 0.7 1; 0.45 0 0.55 1; 0.35 0 0.65 1; 0.4 0 0.6 1; 0.3 0 0.7 1"
                 />
                 <animate
                   attributeName="stroke-opacity"
-                  values="0.9;1;0.7;0.95;0.8;0.9"
-                  dur="1.8s"
+                  values="0.9;1;0.7;0.95;0.75;1;0.8;0.9"
+                  dur={`${lineParams.line2.dur * 0.9}s`}
                   repeatCount="indefinite"
                 />
               </>
@@ -236,7 +263,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
             )}
           </path>
 
-          {/* Line 3 - bottom offset */}
+          {/* Line 3 - bottom offset, independent motion */}
           <path
             fill="none"
             stroke={lineColor}
@@ -249,25 +276,25 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
               <>
                 <animate
                   attributeName="d"
-                  values={`${createOffsetPath(-4, -splitOffset)};${createOffsetPath(-9, -splitOffset)};${createOffsetPath(-3, -splitOffset)};${createOffsetPath(-7, -splitOffset)};${createOffsetPath(-5, -splitOffset)};${createOffsetPath(-4, -splitOffset)}`}
-                  dur="2.8s"
+                  values={lineParams.line3.offsets.map(o => createOffsetPath(o, -splitOffset)).join(';')}
+                  dur={`${lineParams.line3.dur}s`}
                   repeatCount="indefinite"
                   calcMode="spline"
-                  keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
+                  keySplines="0.45 0 0.55 1; 0.35 0 0.65 1; 0.4 0 0.6 1; 0.3 0 0.7 1; 0.45 0 0.55 1; 0.35 0 0.65 1; 0.4 0 0.6 1"
                 />
                 <animate
                   attributeName="stroke-opacity"
-                  values="0.6;0.7;0.4;0.8;0.5;0.6"
-                  dur="2.2s"
+                  values="0.6;0.75;0.4;0.85;0.5;0.7;0.55;0.6"
+                  dur={`${lineParams.line3.dur * 0.85}s`}
                   repeatCount="indefinite"
                 />
               </>
             ) : (
-              <set attributeName="d" to={createOffsetPath(-4, 0)} />
+              <set attributeName="d" to={createOffsetPath(lineParams.line3.baseOffset, 0)} />
             )}
           </path>
 
-          {/* Line 4 - subtle inner top */}
+          {/* Line 4 - subtle inner top, unique rhythm */}
           <path
             fill="none"
             stroke="hsl(0, 0%, 100%)"
@@ -278,18 +305,18 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
             {!isDrawing ? (
               <animate
                 attributeName="d"
-                values={`${createOffsetPath(2, splitOffset * 0.5)};${createOffsetPath(5, splitOffset * 0.5)};${createOffsetPath(0, splitOffset * 0.5)};${createOffsetPath(6, splitOffset * 0.5)};${createOffsetPath(2, splitOffset * 0.5)}`}
-                dur="2.2s"
+                values={lineParams.line4.offsets.map(o => createOffsetPath(o, splitOffset * 0.5)).join(';')}
+                dur={`${lineParams.line4.dur}s`}
                 repeatCount="indefinite"
                 calcMode="spline"
-                keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
+                keySplines="0.4 0 0.6 1; 0.35 0 0.65 1; 0.45 0 0.55 1; 0.3 0 0.7 1; 0.4 0 0.6 1; 0.35 0 0.65 1; 0.45 0 0.55 1"
               />
             ) : (
-              <set attributeName="d" to={createOffsetPath(2, 0)} />
+              <set attributeName="d" to={createOffsetPath(lineParams.line4.baseOffset, 0)} />
             )}
           </path>
 
-          {/* Line 5 - subtle inner bottom */}
+          {/* Line 5 - subtle inner bottom, own rhythm */}
           <path
             fill="none"
             stroke="hsl(0, 0%, 100%)"
@@ -300,14 +327,14 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
             {!isDrawing ? (
               <animate
                 attributeName="d"
-                values={`${createOffsetPath(-2, -splitOffset * 0.5)};${createOffsetPath(-6, -splitOffset * 0.5)};${createOffsetPath(-1, -splitOffset * 0.5)};${createOffsetPath(-5, -splitOffset * 0.5)};${createOffsetPath(-2, -splitOffset * 0.5)}`}
-                dur="2.4s"
+                values={lineParams.line5.offsets.map(o => createOffsetPath(o, -splitOffset * 0.5)).join(';')}
+                dur={`${lineParams.line5.dur}s`}
                 repeatCount="indefinite"
                 calcMode="spline"
-                keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"
+                keySplines="0.35 0 0.65 1; 0.4 0 0.6 1; 0.3 0 0.7 1; 0.45 0 0.55 1; 0.35 0 0.65 1; 0.4 0 0.6 1; 0.3 0 0.7 1"
               />
             ) : (
-              <set attributeName="d" to={createOffsetPath(-2, 0)} />
+              <set attributeName="d" to={createOffsetPath(lineParams.line5.baseOffset, 0)} />
             )}
           </path>
         </>
@@ -315,36 +342,34 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
 
       {/* Deleting animation - lines retract to source */}
       {isDeleting && (
-        <>
-          <path
-            d={path}
-            fill="none"
-            stroke="hsl(0, 0%, 85%)"
-            strokeWidth="2"
-            strokeOpacity="0.8"
-            strokeLinecap="round"
-          >
-            <animate
-              attributeName="d"
-              from={path}
-              to={`M ${from.x} ${from.y} C ${from.x} ${from.y}, ${from.x} ${from.y}, ${from.x} ${from.y}`}
-              dur="0.4s"
-              fill="freeze"
-              calcMode="spline"
-              keySplines="0.4 0 0.2 1"
-            />
-            <animate
-              attributeName="stroke-opacity"
-              from="0.8"
-              to="0"
-              dur="0.4s"
-              fill="freeze"
-            />
-          </path>
-        </>
+        <path
+          d={path}
+          fill="none"
+          stroke="hsl(0, 0%, 85%)"
+          strokeWidth="2"
+          strokeOpacity="0.8"
+          strokeLinecap="round"
+        >
+          <animate
+            attributeName="d"
+            from={path}
+            to={`M ${from.x} ${from.y} C ${from.x} ${from.y}, ${from.x} ${from.y}, ${from.x} ${from.y}`}
+            dur="0.4s"
+            fill="freeze"
+            calcMode="spline"
+            keySplines="0.4 0 0.2 1"
+          />
+          <animate
+            attributeName="stroke-opacity"
+            from="0.8"
+            to="0"
+            dur="0.4s"
+            fill="freeze"
+          />
+        </path>
       )}
 
-      {/* Split indicator - subtle hint when split */}
+      {/* Split indicator */}
       {isSplit && !isDeleting && (
         <text
           x={(from.x + to.x) / 2}

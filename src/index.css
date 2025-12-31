@@ -2860,7 +2860,8 @@
 
 /* ============================================================
    USER MESSAGE GLOW EFFECT
-   Subtle magenta/pink glow on the right edge of user messages
+   Gold/warm glow on the right edge of user messages
+   Matches dashboard sidebar active indicator style
    ============================================================ */
 .user-message-glow {
   position: relative;
@@ -2877,16 +2878,18 @@
   border-radius: 0 8px 8px 0;
   background: linear-gradient(
     180deg,
-    hsl(320 70% 50% / 0.6) 0%,
-    hsl(280 60% 55% / 0.8) 50%,
-    hsl(320 70% 50% / 0.6) 100%
+    hsl(var(--accent) / 0.6) 0%,
+    hsl(var(--glow-warm) / 0.9) 50%,
+    hsl(var(--accent) / 0.6) 100%
   );
   filter: blur(2px);
   opacity: 0.9;
+  box-shadow: 0 0 12px hsl(var(--accent) / 0.5);
   transition: opacity 0.3s ease;
 }
 
 .user-message-glow:hover::after {
   opacity: 1;
   filter: blur(3px);
+  box-shadow: 0 0 16px hsl(var(--accent) / 0.7);
 }
