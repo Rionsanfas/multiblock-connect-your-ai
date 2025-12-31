@@ -119,60 +119,43 @@ const HowItWorks = () => {
   return (
     <section
       id="how-it-works"
-      className="relative dot-grid-bg"
-      style={{ paddingTop: "var(--space-section)", paddingBottom: "var(--space-section)" }}
+      className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24"
     >
       {/* Background blur effect */}
       <div
-        className="gradient-blur bg-accent/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute"
-        style={{
-          width: "clamp(250px, 40vw, 500px)",
-          height: "clamp(250px, 40vw, 500px)",
-        }}
+        className="gradient-blur bg-accent/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute w-[200px] sm:w-[300px] md:w-[400px] lg:w-[500px] h-[200px] sm:h-[300px] md:h-[400px] lg:h-[500px]"
       />
 
       {/* Container */}
-      <div
-        className="relative z-10 w-full max-w-[1200px] mx-auto"
-        style={{ paddingLeft: "clamp(16px, 4vw, 32px)", paddingRight: "clamp(16px, 4vw, 32px)" }}
-      >
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <AnimatedSection delay={0} className="text-center" style={{ marginBottom: "clamp(32px, 5vw, 64px)" }}>
+        <AnimatedSection delay={0} className="text-center mb-8 sm:mb-12 md:mb-16">
           <span className="section-badge mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             How It Works
           </span>
-          <h2
-            className="font-bold text-foreground mt-4 text-wrap-balance"
-            style={{
-              fontSize: "clamp(1.5rem, 1rem + 2.5vw, 3rem)",
-              marginBottom: "clamp(12px, 2vw, 16px)",
-            }}
-          >
+          <h2 className="font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
             Simple. Powerful. Visual.
           </h2>
-          <p
-            className="text-muted-foreground max-w-xl mx-auto text-break"
-            style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
-          >
+          <p className="text-muted-foreground max-w-xl mx-auto text-break text-sm sm:text-base">
             Get started in minutes with an intuitive workflow designed for builders.
           </p>
         </AnimatedSection>
 
-        {/* Bento Grid - New Layout: Big card left, 2 stacked right */}
-        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bento Grid */}
+        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Left side - Add Blocks (Big Card) */}
           <AnimatedElement delay={100}>
-            <div className="hiw-bento-card hiw-card-3d hiw-card-3d-left hiw-card-featured dot-grid-card h-full min-h-[400px] lg:min-h-[500px]">
+            <div className="hiw-bento-card hiw-card-3d hiw-card-3d-left hiw-card-featured dot-grid-card h-full min-h-[280px] sm:min-h-[320px] lg:min-h-[420px]">
               <div className="hiw-card-3d-inner h-full flex flex-col">
                 {/* 3D Plus Icon */}
                 <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
                   <Plus3DIcon />
                 </div>
                 
-                <div className="hiw-bento-content p-6">
-                  <h3 className="hiw-bento-title text-2xl mb-3">Add Blocks</h3>
-                  <p className="hiw-bento-desc text-base">
+                <div className="hiw-bento-content p-4 sm:p-6">
+                  <h3 className="hiw-bento-title text-lg sm:text-xl lg:text-2xl mb-2 sm:mb-3">Add Blocks</h3>
+                  <p className="hiw-bento-desc text-sm sm:text-base">
                     Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, and more.
                   </p>
                 </div>
@@ -181,19 +164,19 @@ const HowItWorks = () => {
           </AnimatedElement>
 
           {/* Right side - 2 stacked cards */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4 sm:gap-6">
             {/* Card 2 - Chat with Models */}
             <AnimatedElement delay={200}>
-              <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[230px]">
+              <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[180px] sm:min-h-[200px]">
                 <div className="hiw-card-3d-inner h-full flex flex-col">
                   {/* Sequential letter highlight text */}
                   <div className="hiw-overflow-text-new flex-1 flex items-center justify-center">
                     <LetterHighlight text="Compare" />
                   </div>
                   
-                  <div className="hiw-bento-content hiw-content-bottom p-5">
-                    <h3 className="hiw-bento-title text-xl mb-2">Chat with Models</h3>
-                    <p className="hiw-bento-desc text-sm">
+                  <div className="hiw-bento-content hiw-content-bottom p-4 sm:p-5">
+                    <h3 className="hiw-bento-title text-lg sm:text-xl mb-1.5 sm:mb-2">Chat with Models</h3>
+                    <p className="hiw-bento-desc text-xs sm:text-sm">
                       Interact with each model independently. Compare responses in real-time.
                     </p>
                   </div>
@@ -203,16 +186,16 @@ const HowItWorks = () => {
 
             {/* Card 3 - Connect Them */}
             <AnimatedElement delay={300}>
-              <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[230px]">
+              <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[180px] sm:min-h-[200px]">
                 <div className="hiw-card-3d-inner h-full flex flex-col">
                   {/* 3D Link Icon */}
                   <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
                     <Link3DIcon />
                   </div>
                   
-                  <div className="hiw-bento-content p-5">
-                    <h3 className="hiw-bento-title text-xl mb-2">Connect Them</h3>
-                    <p className="hiw-bento-desc text-sm">
+                  <div className="hiw-bento-content p-4 sm:p-5">
+                    <h3 className="hiw-bento-title text-lg sm:text-xl mb-1.5 sm:mb-2">Connect Them</h3>
+                    <p className="hiw-bento-desc text-xs sm:text-sm">
                       Draw connections between blocks. One model's output becomes another's input.
                     </p>
                   </div>
