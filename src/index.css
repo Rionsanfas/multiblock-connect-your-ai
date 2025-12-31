@@ -926,7 +926,80 @@
       0 0 30px hsl(0 0% 100% / 0.1);
   }
 
-  /* 3D input field style */
+  /* 3D primary action button */
+  .btn-3d-primary {
+    background: linear-gradient(145deg, hsl(0 0% 25%) 0%, hsl(0 0% 15%) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.15);
+    box-shadow: 
+      0 4px 12px -2px hsl(0 0% 0% / 0.4),
+      inset 0 1px 2px 0 hsl(0 0% 100% / 0.15),
+      inset 0 -2px 4px 0 hsl(0 0% 0% / 0.15);
+    transition: all 0.3s ease;
+  }
+
+  .btn-3d-primary:hover {
+    background: linear-gradient(145deg, hsl(0 0% 30%) 0%, hsl(0 0% 18%) 100%);
+    box-shadow: 
+      0 6px 16px -2px hsl(0 0% 0% / 0.5),
+      inset 0 1px 2px 0 hsl(0 0% 100% / 0.2),
+      inset 0 -2px 4px 0 hsl(0 0% 0% / 0.15),
+      0 0 20px hsl(0 0% 100% / 0.08);
+  }
+
+  /* Big nav item with gold glow indicator - like dashboard sidebar */
+  .nav-item-3d {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(145deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.06);
+    box-shadow: 
+      0 4px 12px -4px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.04);
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .nav-item-3d:hover {
+    background: linear-gradient(145deg, hsl(0 0% 15%) 0%, hsl(0 0% 10%) 100%);
+    border-color: hsl(0 0% 100% / 0.1);
+  }
+
+  .nav-item-3d.active {
+    background: linear-gradient(145deg, hsl(0 0% 14%) 0%, hsl(0 0% 10%) 100%);
+  }
+
+  /* Gold glow indicator on right side */
+  .nav-item-3d .nav-indicator {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 70%;
+    border-radius: 4px 0 0 4px;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--accent)) 0%,
+      hsl(var(--glow-warm)) 50%,
+      hsl(var(--accent)) 100%
+    );
+    box-shadow: 0 0 12px hsl(var(--accent) / 0.6);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .nav-item-3d.active .nav-indicator,
+  .nav-item-3d:hover .nav-indicator {
+    opacity: 1;
+  }
+
+  .nav-item-3d:not(.active):hover .nav-indicator {
+    opacity: 0.5;
+  }
   .input-3d {
     background: linear-gradient(145deg, hsl(0 0% 12%) 0%, hsl(0 0% 8%) 100%);
     border: 1px solid hsl(0 0% 100% / 0.1);

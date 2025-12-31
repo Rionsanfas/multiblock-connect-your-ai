@@ -164,12 +164,20 @@ export function TeamSettings() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground">Team Settings</h1>
+        <p className="text-muted-foreground mt-1">Manage your team's settings and members</p>
+      </div>
+
       {/* Team Info */}
-      <Card>
+      <Card className="settings-card-3d">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Team Settings
+            <div className="key-icon-3d p-2 rounded-lg">
+              <Settings className="h-4 w-4" />
+            </div>
+            General Settings
           </CardTitle>
           <CardDescription>
             Manage your team's settings and preferences
@@ -184,9 +192,10 @@ export function TeamSettings() {
                 value={teamName}
                 onChange={(e) => setTeamName(e.target.value)}
                 disabled={!isTeamOwner}
+                className="bg-secondary/30 border-border/30"
               />
               {isTeamOwner && teamName !== team?.name && (
-                <Button onClick={handleUpdateName} disabled={updateTeam.isPending}>
+                <Button onClick={handleUpdateName} disabled={updateTeam.isPending} className="btn-3d-primary">
                   Save
                 </Button>
               )}
@@ -195,20 +204,31 @@ export function TeamSettings() {
 
           {limits && (
             <div className="space-y-4 pt-4">
-              <Separator />
+              <Separator className="bg-border/30" />
               <div className="grid gap-4 sm:grid-cols-2">
-                <div>
+                <div className="glass-card p-4 rounded-xl">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Seats</span>
+                    <span className="text-sm font-medium flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      Seats
+                    </span>
                     <span className="text-sm text-muted-foreground">
                       {limits.current_seats} / {limits.max_seats}
                     </span>
                   </div>
                   <Progress value={seatUsagePercent} className="h-2" />
                 </div>
-                <div>
+                <div className="glass-card p-4 rounded-xl">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Boards</span>
+                    <span className="text-sm font-medium flex items-center gap-2">
+                      <svg className="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                      </svg>
+                      Boards
+                    </span>
                     <span className="text-sm text-muted-foreground">
                       {limits.current_boards} / {limits.max_boards}
                     </span>
@@ -225,10 +245,12 @@ export function TeamSettings() {
       </Card>
 
       {/* Members */}
-      <Card>
+      <Card className="settings-card-3d">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+            <div className="key-icon-3d p-2 rounded-lg">
+              <Users className="h-4 w-4" />
+            </div>
             Members
             <Badge variant="secondary" className="ml-2">
               {members.length}
@@ -241,19 +263,19 @@ export function TeamSettings() {
         <CardContent className="space-y-4">
           {/* Invite Form */}
           {canManageTeam && (
-            <div className="flex gap-2 pb-4 border-b border-border">
+            <div className="flex gap-2 pb-4 border-b border-border/30">
               <Input
                 placeholder="Email address"
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                className="flex-1"
+                className="flex-1 bg-secondary/30 border-border/30"
               />
               <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamRole)}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-32 bg-secondary/30 border-border/30">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30">
                   <SelectItem value="member">Member</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
@@ -261,6 +283,7 @@ export function TeamSettings() {
               <Button 
                 onClick={handleCreateInvitation}
                 disabled={!inviteEmail.trim() || createInvitation.isPending}
+                className="key-icon-3d"
               >
                 {createInvitation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -280,11 +303,11 @@ export function TeamSettings() {
               {invitations.map((invite) => (
                 <div
                   key={invite.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"
+                  className="flex items-center justify-between p-3 rounded-xl glass-card"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs">
+                    <Avatar className="h-8 w-8 ring-2 ring-background">
+                      <AvatarFallback className="text-xs bg-secondary/50">
                         {invite.email.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -299,6 +322,7 @@ export function TeamSettings() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="key-icon-3d h-8 w-8"
                       onClick={() => handleCopyInviteLink(invite.token)}
                     >
                       <Copy className="h-4 w-4" />
@@ -306,6 +330,7 @@ export function TeamSettings() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="key-icon-3d h-8 w-8 hover:text-destructive"
                       onClick={() => deleteInvitation.mutate({ 
                         invitationId: invite.id, 
                         teamId 
@@ -328,11 +353,11 @@ export function TeamSettings() {
               return (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30"
+                  className="flex items-center justify-between p-3 rounded-xl glass-card"
                 >
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs">
+                    <Avatar className="h-8 w-8 ring-2 ring-background">
+                      <AvatarFallback className="text-xs bg-secondary/50">
                         {(member.profile?.full_name || member.profile?.email || 'U')
                           .charAt(0)
                           .toUpperCase()}
@@ -363,10 +388,10 @@ export function TeamSettings() {
                           })
                         }
                       >
-                        <SelectTrigger className="w-28 h-8">
+                        <SelectTrigger className="w-28 h-8 bg-secondary/30 border-border/30">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30">
                           <SelectItem value="member">Member</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
@@ -374,7 +399,7 @@ export function TeamSettings() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive"
+                        className="key-icon-3d h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => removeMember.mutate({ 
                           memberId: member.id, 
                           teamId 
@@ -392,9 +417,14 @@ export function TeamSettings() {
       </Card>
 
       {/* Danger Zone */}
-      <Card className="border-destructive/50">
+      <Card className="settings-card-3d border-destructive/30 bg-destructive/5">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <div className="key-icon-3d p-2 rounded-lg bg-destructive/20">
+              <Trash2 className="h-4 w-4" />
+            </div>
+            Danger Zone
+          </CardTitle>
           <CardDescription>
             Irreversible actions for this team
           </CardDescription>
@@ -403,12 +433,12 @@ export function TeamSettings() {
           {!isTeamOwner && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start glass-card border-border/30 hover:bg-secondary/40">
                   <LogOut className="mr-2 h-4 w-4" />
                   Leave Team
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-border/30">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Leave Team?</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -434,7 +464,7 @@ export function TeamSettings() {
                   Delete Team
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-border/30">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete Team?</AlertDialogTitle>
                   <AlertDialogDescription>
