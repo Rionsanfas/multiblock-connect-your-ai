@@ -1,16 +1,23 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Send, Square, Paperclip, X, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { ReferenceList } from './ReferenceBlock';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { ChatAttachment } from '@/services/chatService';
+import type { ChatReference } from '@/types/chat-references';
+import { formatReferencesForContext } from '@/types/chat-references';
 
 interface ChatInputProps {
-  onSend: (content: string, attachments?: ChatAttachment[]) => void;
+  onSend: (content: string, attachments?: ChatAttachment[], references?: ChatReference[]) => void;
   onStop?: () => void;
   isRunning?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** References to attach to the next message */
+  references?: ChatReference[];
+  /** Callback when references change */
+  onReferencesChange?: (refs: ChatReference[]) => void;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -32,6 +39,8 @@ export function ChatInput({
   isRunning,
   disabled,
   placeholder = 'Type your message...',
+  references = [],
+  onReferencesChange,
 }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -39,13 +48,19 @@ export function ChatInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSend = useCallback(() => {
-    if (!input.trim() && attachments.length === 0) return;
+    if (!input.trim() && attachments.length === 0 && references.length === 0) return;
     if (isRunning) return;
 
-    onSend(input.trim(), attachments.length > 0 ? attachments : undefined);
+    onSend(
+      input.trim(),
+      attachments.length > 0 ? attachments : undefined,
+      references.length > 0 ? references : undefined
+    );
     setInput('');
     setAttachments([]);
-  }, [input, attachments, isRunning, onSend]);
+    // Clear references after send
+    onReferencesChange?.([]);
+  }, [input, attachments, references, isRunning, onSend, onReferencesChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -129,6 +144,14 @@ export function ChatInput({
     setAttachments(prev => prev.filter(a => a.id !== id));
   };
 
+  const removeReference = (id: string) => {
+    onReferencesChange?.(references.filter(r => r.id !== id));
+  };
+
+  const clearAllReferences = () => {
+    onReferencesChange?.([]);
+  };
+
   return (
     <div
       className={cn(
@@ -139,6 +162,17 @@ export function ChatInput({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
     >
+      {/* References preview */}
+      {references.length > 0 && (
+        <div className="px-4 pt-3">
+          <ReferenceList
+            references={references}
+            onRemove={removeReference}
+            onClearAll={clearAllReferences}
+          />
+        </div>
+      )}
+
       {/* Attachments preview */}
       {attachments.length > 0 && (
         <div className="px-4 pt-3 flex flex-wrap gap-2">
@@ -195,7 +229,7 @@ export function ChatInput({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={references.length > 0 ? 'Add a message with your references...' : placeholder}
             disabled={disabled}
             className={cn(
               "min-h-[44px] max-h-[200px] resize-none rounded-xl border-border/30 text-sm bg-secondary/30 focus:bg-secondary/50 transition-colors",
@@ -215,10 +249,10 @@ export function ChatInput({
           ) : (
             <button
               onClick={handleSend}
-              disabled={disabled || (!input.trim() && attachments.length === 0)}
+              disabled={disabled || (!input.trim() && attachments.length === 0 && references.length === 0)}
               className={cn(
                 "p-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary transition-all",
-                (disabled || (!input.trim() && attachments.length === 0)) && "opacity-50 cursor-not-allowed"
+                (disabled || (!input.trim() && attachments.length === 0 && references.length === 0)) && "opacity-50 cursor-not-allowed"
               )}
             >
               <Send className="h-5 w-5" />

@@ -1,17 +1,22 @@
-import { useState } from 'react';
-import { Copy, Check, Trash2, RotateCcw, Paperclip } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Copy, Check, Trash2, RotateCcw, Paperclip, Quote, User, Bot } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Message } from '@/types';
 import type { ChatAttachment } from '@/services/chatService';
+import type { ChatReference } from '@/types/chat-references';
 
 interface ChatMessageProps {
   message: Message;
   onDelete?: (id: string) => void;
   onRetry?: (message: Message) => void;
   attachments?: ChatAttachment[];
+  /** References attached to this message */
+  references?: ChatReference[];
   isStreaming?: boolean;
+  /** Enable text selection for referencing */
+  selectable?: boolean;
 }
 
 export function ChatMessage({
@@ -19,7 +24,9 @@ export function ChatMessage({
   onDelete,
   onRetry,
   attachments,
+  references,
   isStreaming,
+  selectable = true,
 }: ChatMessageProps) {
   const [copied, setCopied] = useState(false);
   const isUser = message.role === 'user';
@@ -35,13 +42,46 @@ export function ChatMessage({
   return (
     <div
       data-message-id={message.id}
+      data-message-role={message.role}
       className={cn(
         "group flex gap-3 w-full",
-        isUser && "justify-end"
+        isUser && "justify-end",
+        selectable && "select-text"
       )}
     >
       {/* Message content */}
       <div className={cn("flex flex-col max-w-[85%]", isUser && "items-end")}>
+        {/* References displayed above message */}
+        {references && references.length > 0 && (
+          <div className="mb-2 space-y-1.5 w-full">
+            {references.map((ref) => (
+              <div
+                key={ref.id}
+                className="flex gap-2 p-2 rounded-lg bg-primary/5 border border-primary/20"
+              >
+                <Quote className="h-3 w-3 text-primary/60 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    {ref.source_role === 'user' ? (
+                      <User className="h-2.5 w-2.5 text-muted-foreground" />
+                    ) : (
+                      <Bot className="h-2.5 w-2.5 text-muted-foreground" />
+                    )}
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {ref.source_role === 'user' ? 'User' : 'Assistant'} said:
+                    </span>
+                  </div>
+                  <p className="text-xs text-foreground/80 leading-relaxed line-clamp-3">
+                    "{ref.selected_text.length > 150 
+                      ? ref.selected_text.substring(0, 147) + '...' 
+                      : ref.selected_text}"
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Attachments */}
         {attachments && attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
