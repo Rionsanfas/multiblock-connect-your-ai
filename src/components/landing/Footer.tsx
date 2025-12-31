@@ -76,13 +76,13 @@ const Footer = () => {
           <div className="flex items-center order-2 md:order-3">
             <a 
               href="#" 
-              className="group relative rounded-full flex items-center justify-center text-muted-foreground transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="group relative rounded-full flex items-center justify-center text-muted-foreground transition-all duration-500 ease-out focus:outline-none focus:ring-2 focus:ring-primary/50"
               style={{ width: "48px", height: "48px" }}
               aria-label="X (Twitter)"
             >
               {/* 3D layered background */}
               <div 
-                className="absolute inset-0 rounded-full bg-gradient-to-b from-secondary to-background border border-border/80 group-hover:border-muted-foreground/30 transition-all duration-300"
+                className="absolute inset-0 rounded-full bg-gradient-to-b from-secondary to-background border border-border/80 group-hover:border-muted-foreground/30 transition-all duration-500 ease-out"
                 style={{
                   boxShadow: `
                     0 4px 12px -2px hsl(0 0% 0% / 0.4),
@@ -94,7 +94,7 @@ const Footer = () => {
               />
               {/* Icon with 3D effect */}
               <div 
-                className="relative z-10 group-hover:text-foreground transition-all duration-300 group-hover:scale-105"
+                className="relative z-10 group-hover:text-foreground transition-all duration-500 ease-out group-hover:scale-105"
                 style={{
                   filter: 'drop-shadow(0 1px 1px hsl(0 0% 0% / 0.3))'
                 }}

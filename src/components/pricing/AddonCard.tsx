@@ -18,7 +18,7 @@ export function AddonCard({ addon }: AddonCardProps) {
   const { isAuthenticated } = useAuth();
 
   // Button styles
-  const buttonClass = 'w-full rounded-full font-medium transition-all duration-300 py-2 px-4 text-sm text-center inline-block cursor-pointer border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5';
+  const buttonClass = 'w-full rounded-full font-medium transition-all duration-500 ease-out py-2 px-4 text-sm text-center inline-block cursor-pointer border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5';
 
   return (
     <div className="premium-card-wrapper">

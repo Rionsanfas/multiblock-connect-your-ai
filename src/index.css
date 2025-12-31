@@ -325,7 +325,7 @@
 
   .glass-card-hover {
     @apply glass-card;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-card-hover:hover {
@@ -336,9 +336,9 @@
       hsl(0 0% 7% / 0.95)
     );
     box-shadow: 
-      0 8px 40px -8px hsl(0 0% 0% / 0.5),
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
-    transform: translateY(-2px);
+      0 12px 48px -12px hsl(0 0% 0% / 0.5),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+    transform: translateY(-3px);
   }
 
   /* Icon container for feature cards */
@@ -357,19 +357,19 @@
     box-shadow: 
       inset 0 1px 0 0 hsl(0 0% 100% / 0.05),
       0 2px 8px -2px hsl(0 0% 0% / 0.3);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .glass-card-hover:hover .glass-icon-box {
-    border-color: hsl(var(--accent) / 0.3);
+    border-color: hsl(0 0% 100% / 0.12);
     background: linear-gradient(
       135deg,
       hsl(0 0% 15% / 0.9),
       hsl(0 0% 10% / 0.95)
     );
     box-shadow: 
-      inset 0 1px 0 0 hsl(0 0% 100% / 0.08),
-      0 0 20px -4px hsl(var(--accent) / 0.2);
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.1),
+      0 4px 16px -4px hsl(0 0% 0% / 0.4);
   }
 
   /* ============================================================
@@ -381,7 +381,7 @@
     border-radius: 1.25rem;
     padding: 1px;
     overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .premium-card-wrapper::before {
@@ -397,7 +397,7 @@
       hsl(var(--accent) / 0.4) 100%
     );
     opacity: 0.6;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .premium-card-wrapper:hover::before {
@@ -414,7 +414,7 @@
       transparent 50%
     );
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
   }
 
@@ -433,13 +433,14 @@
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     height: 100%;
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .premium-card-wrapper:hover {
     transform: translateY(-4px);
     box-shadow: 
-      0 20px 40px -10px hsl(0 0% 0% / 0.5),
-      0 0 60px -10px hsl(var(--accent) / 0.2);
+      0 24px 48px -12px hsl(0 0% 0% / 0.5),
+      0 0 40px -10px hsl(var(--accent) / 0.15);
   }
 
   /* Plan title gradient animation */
@@ -2549,9 +2550,9 @@
   );
 }
 
-/* 3D Card Effect */
+/* 3D Card Effect - Smooth, soft transitions */
 .hiw-card-3d {
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hiw-card-3d-inner {
@@ -2559,33 +2560,35 @@
   flex-direction: column;
   height: 100%;
   padding: clamp(20px, 3vw, 32px);
-  transition: transform 0.4s ease;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Left card - tilts to the right */
 .hiw-card-3d-left {
   transform-style: preserve-3d;
-  animation: hiwCardFloatLeft 6s ease-in-out infinite;
+  animation: hiwCardFloatLeft 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .hiw-card-3d-left:hover {
-  transform: rotateY(5deg) rotateX(-2deg) scale(1.02);
+  animation-play-state: paused;
+  transform: rotateY(4deg) rotateX(-2deg) scale(1.01) translateY(-4px);
   box-shadow: 
-    -15px 15px 30px hsl(0 0% 0% / 0.3),
-    0 0 40px hsl(var(--accent) / 0.15);
+    -12px 18px 40px hsl(0 0% 0% / 0.35),
+    0 1px 0 inset hsl(0 0% 100% / 0.08);
 }
 
 /* Right cards - tilt to the left */
 .hiw-card-3d-right {
   transform-style: preserve-3d;
-  animation: hiwCardFloatRight 6s ease-in-out infinite;
+  animation: hiwCardFloatRight 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .hiw-card-3d-right:hover {
-  transform: rotateY(-5deg) rotateX(-2deg) scale(1.02);
+  animation-play-state: paused;
+  transform: rotateY(-4deg) rotateX(-2deg) scale(1.01) translateY(-4px);
   box-shadow: 
-    15px 15px 30px hsl(0 0% 0% / 0.3),
-    0 0 40px hsl(var(--accent) / 0.15);
+    12px 18px 40px hsl(0 0% 0% / 0.35),
+    0 1px 0 inset hsl(0 0% 100% / 0.08);
 }
 
 @keyframes hiwCardFloatLeft {
@@ -2593,7 +2596,7 @@
     transform: rotateY(2deg) rotateX(1deg) translateY(0);
   }
   50% {
-    transform: rotateY(3deg) rotateX(2deg) translateY(-5px);
+    transform: rotateY(3deg) rotateX(2deg) translateY(-4px);
   }
 }
 
@@ -2602,7 +2605,7 @@
     transform: rotateY(-2deg) rotateX(1deg) translateY(0);
   }
   50% {
-    transform: rotateY(-3deg) rotateX(2deg) translateY(-5px);
+    transform: rotateY(-3deg) rotateX(2deg) translateY(-4px);
   }
 }
 
@@ -2640,42 +2643,144 @@
   padding: clamp(16px, 2vw, 32px);
 }
 
-/* 3D Plus Icon - Bigger, premium 3D styling */
-.hiw-3d-plus {
+/* ============================================================
+   TRUE 3D ICON SYSTEM - Cube with depth
+   ============================================================ */
+
+.hiw-3d-icon-scene {
+  perspective: 600px;
+  perspective-origin: center center;
+  width: clamp(100px, 14vw, 160px);
+  height: clamp(100px, 14vw, 160px);
+}
+
+.hiw-3d-link-scene {
+  width: clamp(80px, 12vw, 120px);
+  height: clamp(80px, 12vw, 120px);
+}
+
+.hiw-3d-icon-cube {
   position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: cube3dFloat 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hiw-3d-icon-scene:hover .hiw-3d-icon-cube {
+  animation-play-state: paused;
+  transform: rotateX(-5deg) rotateY(15deg) translateZ(10px);
+}
+
+@keyframes cube3dFloat {
+  0%, 100% {
+    transform: rotateX(10deg) rotateY(-8deg) translateZ(0);
+  }
+  33% {
+    transform: rotateX(5deg) rotateY(5deg) translateZ(5px);
+  }
+  66% {
+    transform: rotateX(-5deg) rotateY(-5deg) translateZ(8px);
+  }
+}
+
+.hiw-3d-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: clamp(16px, 2vw, 24px);
   display: flex;
   align-items: center;
   justify-content: center;
-  perspective: 300px;
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.hiw-3d-plus-icon {
-  width: clamp(100px, 16vw, 180px);
-  height: clamp(100px, 16vw, 180px);
+/* Front face - main visible face with icon */
+.hiw-3d-face-front {
+  background: linear-gradient(
+    145deg,
+    hsl(0 0% 18%),
+    hsl(0 0% 12%)
+  );
+  border: 1px solid hsl(0 0% 100% / 0.1);
+  transform: translateZ(20px);
+  box-shadow: 
+    inset 0 1px 0 hsl(0 0% 100% / 0.15),
+    inset 0 -2px 6px hsl(0 0% 0% / 0.2),
+    0 15px 40px -10px hsl(0 0% 0% / 0.6);
   color: hsl(var(--foreground));
-  filter: 
-    drop-shadow(0 6px 12px hsl(0 0% 0% / 0.5))
-    drop-shadow(0 12px 24px hsl(0 0% 0% / 0.4))
-    drop-shadow(0 2px 0 hsl(0 0% 30%));
-  animation: hiw3dPlusFloat 4s ease-in-out infinite;
-  transform-style: preserve-3d;
+  padding: 25%;
 }
 
-@keyframes hiw3dPlusFloat {
-  0%, 100% {
-    transform: rotateX(8deg) rotateY(-5deg) translateY(0);
-    filter: 
-      drop-shadow(0 6px 12px hsl(0 0% 0% / 0.5))
-      drop-shadow(0 12px 24px hsl(0 0% 0% / 0.4))
-      drop-shadow(0 2px 0 hsl(0 0% 30%));
-  }
-  50% {
-    transform: rotateX(5deg) rotateY(5deg) translateY(-8px);
-    filter: 
-      drop-shadow(0 10px 16px hsl(0 0% 0% / 0.5))
-      drop-shadow(0 18px 32px hsl(0 0% 0% / 0.4))
-      drop-shadow(0 3px 0 hsl(0 0% 35%));
-  }
+.hiw-3d-icon-scene:hover .hiw-3d-face-front {
+  box-shadow: 
+    inset 0 1px 0 hsl(0 0% 100% / 0.2),
+    inset 0 -2px 6px hsl(0 0% 0% / 0.2),
+    0 20px 50px -10px hsl(0 0% 0% / 0.7),
+    0 0 40px -10px hsl(0 0% 100% / 0.1);
+}
+
+.hiw-3d-face-front svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 4px hsl(0 0% 0% / 0.3));
+  transition: filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hiw-3d-icon-scene:hover .hiw-3d-face-front svg {
+  filter: drop-shadow(0 4px 8px hsl(0 0% 0% / 0.4));
+}
+
+/* Back face */
+.hiw-3d-face-back {
+  background: hsl(0 0% 8%);
+  transform: translateZ(-20px) rotateY(180deg);
+}
+
+/* Top face - subtle highlight */
+.hiw-3d-face-top {
+  height: 40px;
+  background: linear-gradient(
+    180deg,
+    hsl(0 0% 22%),
+    hsl(0 0% 16%)
+  );
+  transform: rotateX(90deg) translateZ(20px);
+  transform-origin: top;
+}
+
+/* Bottom face - shadow receiver */
+.hiw-3d-face-bottom {
+  height: 40px;
+  background: hsl(0 0% 6%);
+  transform: rotateX(-90deg) translateZ(calc(100% - 20px));
+  transform-origin: bottom;
+}
+
+/* Left face */
+.hiw-3d-face-left {
+  width: 40px;
+  background: linear-gradient(
+    90deg,
+    hsl(0 0% 10%),
+    hsl(0 0% 14%)
+  );
+  transform: rotateY(-90deg) translateZ(20px);
+  transform-origin: left;
+}
+
+/* Right face - catches light */
+.hiw-3d-face-right {
+  width: 40px;
+  background: linear-gradient(
+    90deg,
+    hsl(0 0% 16%),
+    hsl(0 0% 10%)
+  );
+  transform: rotateY(90deg) translateZ(calc(100% - 20px));
+  transform-origin: right;
 }
 
 /* Sequential Letter Highlight for Card 2 */
@@ -2699,50 +2804,12 @@
 
 .hiw-letter {
   color: hsl(var(--foreground) / 0.12);
-  transition: color 0.15s ease-out, text-shadow 0.15s ease-out;
+  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1), text-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hiw-letter-active {
   color: hsl(var(--accent));
   text-shadow: 0 0 30px hsl(var(--accent) / 0.5);
-}
-
-/* 3D Link Icon - Bigger, premium 3D styling */
-.hiw-3d-link {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 300px;
-}
-
-.hiw-3d-link-icon {
-  width: clamp(72px, 12vw, 120px);
-  height: clamp(72px, 12vw, 120px);
-  color: hsl(var(--foreground));
-  filter: 
-    drop-shadow(0 5px 10px hsl(0 0% 0% / 0.5))
-    drop-shadow(0 10px 20px hsl(0 0% 0% / 0.4))
-    drop-shadow(0 2px 0 hsl(0 0% 30%));
-  animation: hiw3dLinkFloat 4s ease-in-out infinite;
-  transform-style: preserve-3d;
-}
-
-@keyframes hiw3dLinkFloat {
-  0%, 100% {
-    transform: rotateX(5deg) rotateY(5deg) translateY(0);
-    filter: 
-      drop-shadow(0 5px 10px hsl(0 0% 0% / 0.5))
-      drop-shadow(0 10px 20px hsl(0 0% 0% / 0.4))
-      drop-shadow(0 2px 0 hsl(0 0% 30%));
-  }
-  50% {
-    transform: rotateX(-3deg) rotateY(-5deg) translateY(-6px);
-    filter: 
-      drop-shadow(0 8px 14px hsl(0 0% 0% / 0.5))
-      drop-shadow(0 14px 28px hsl(0 0% 0% / 0.4))
-      drop-shadow(0 3px 0 hsl(0 0% 35%));
-  }
 }
 
 /* Responsive: Stack on mobile */

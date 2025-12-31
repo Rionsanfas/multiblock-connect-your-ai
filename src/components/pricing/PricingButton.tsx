@@ -31,7 +31,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   
   // Button styles based on variant and state
   const getButtonClass = (disabled: boolean = false) => {
-    const base = 'w-full rounded-full font-medium transition-all duration-300 py-3 px-6 text-center inline-block cursor-pointer';
+    const base = 'w-full rounded-full font-medium transition-all duration-500 ease-out py-3 px-6 text-center inline-block cursor-pointer';
     
     if (disabled) {
       return `${base} bg-muted text-muted-foreground cursor-not-allowed opacity-60`;
