@@ -22,10 +22,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAppStore } from "@/store/useAppStore";
 import { useBlockMessages, useMessageActions, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
-import { useTextSelection } from "@/hooks/useTextSelection";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
-import { TextSelectionMenu } from "@/components/chat/TextSelectionMenu";
 
 import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
@@ -80,9 +78,6 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
-  // Text selection hook
-  const textSelection = useTextSelection(chatContainerRef);
 
   const { data: supabaseBlock, isLoading: blockLoading, error: blockError } = useBlock(blockId);
   const { closeBlockChat, openBlockChat } = useAppStore();
@@ -147,70 +142,6 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     setIsEditingTitle(false);
   };
 
-  // Handle adding a reference from text selection
-  const handleAddReference = useCallback(() => {
-    if (!textSelection.hasSelection || !textSelection.messageId || !textSelection.messageRole) {
-      return;
-    }
-
-    const reference = createReference(
-      textSelection.messageId,
-      blockId,
-      textSelection.messageRole,
-      textSelection.selectedText,
-      textSelection.range || { start: 0, end: textSelection.selectedText.length }
-    );
-
-    setPendingReferences(prev => [...prev, reference]);
-    textSelection.clearSelection();
-    toast.success('Reference added');
-  }, [textSelection, blockId]);
-
-  // Handle branching to new block - directly create and navigate
-  const handleBranch = useCallback(async () => {
-    if (!textSelection.hasSelection || !textSelection.messageId || !textSelection.messageRole || !block) {
-      return;
-    }
-
-    const selectedText = textSelection.selectedText;
-    const sourceTitle = block.title;
-    textSelection.clearSelection();
-
-    try {
-      // Create new block with same model
-      const newBlock = await blocksDb.create({
-        board_id: block.board_id,
-        title: `Branch from ${sourceTitle}`,
-        model_id: block.model_id,
-        provider: currentModel?.provider || 'openai',
-        position_x: block.position.x + 450,
-        position_y: block.position.y,
-        system_prompt: `You are a helpful assistant. This conversation was branched from "${sourceTitle}".
-
-The user wants to explore this specific text in depth:
-"${selectedText}"
-
-Focus your responses on analyzing, expanding, or discussing this topic. Be thorough and insightful.`,
-      });
-
-      // Add the selected text as the first user message
-      await messagesDb.create(
-        newBlock.id,
-        'user',
-        selectedText
-      );
-
-      queryClient.invalidateQueries({ queryKey: ['board-blocks', block.board_id] });
-      queryClient.invalidateQueries({ queryKey: ['block-messages', newBlock.id] });
-      toast.success('Branch created');
-      
-      // Open the new block's chat
-      openBlockChat(newBlock.id);
-    } catch (error) {
-      console.error('Failed to create branch:', error);
-      toast.error('Failed to create branch');
-    }
-  }, [textSelection, blockId, block, currentModel, queryClient, openBlockChat]);
 
   const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[], references?: ChatReference[]) => {
     if (!content.trim() && (!references || references.length === 0) || messageStatus !== 'idle' || !block) return;
@@ -524,20 +455,6 @@ Focus your responses on analyzing, expanding, or discussing this topic. Be thoro
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Text Selection Menu - floating */}
-      {textSelection.hasSelection && textSelection.selectionRect && textSelection.messageId && textSelection.messageRole && (
-        <TextSelectionMenu
-          selectedText={textSelection.selectedText}
-          messageId={textSelection.messageId}
-          messageRole={textSelection.messageRole}
-          blockId={blockId}
-          selectionRect={textSelection.selectionRect}
-          onReference={handleAddReference}
-          onBranch={handleBranch}
-          onClose={textSelection.clearSelection}
-        />
-      )}
     </>
   );
 }
