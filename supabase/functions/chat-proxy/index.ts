@@ -240,13 +240,31 @@ serve(async (req) => {
     } else {
       // OpenAI-compatible (openai, xai, deepseek)
       headers["Authorization"] = `Bearer ${apiKey}`;
-      requestBody = {
-        model: model_id,
-        messages,
-        stream,
-        temperature: config?.temperature ?? 0.7,
-        max_tokens: config?.maxTokens || 4096,
-      };
+      
+      // Newer OpenAI models (GPT-5, O3, O4, GPT-4.1+) use max_completion_tokens and don't support temperature
+      const isNewerOpenAIModel = provider === "openai" && (
+        model_id.startsWith("gpt-5") ||
+        model_id.startsWith("gpt-4.1") ||
+        model_id.startsWith("o3") ||
+        model_id.startsWith("o4")
+      );
+      
+      if (isNewerOpenAIModel) {
+        requestBody = {
+          model: model_id,
+          messages,
+          stream,
+          max_completion_tokens: config?.maxTokens || 4096,
+        };
+      } else {
+        requestBody = {
+          model: model_id,
+          messages,
+          stream,
+          temperature: config?.temperature ?? 0.7,
+          max_tokens: config?.maxTokens || 4096,
+        };
+      }
     }
 
     const response = await fetch(endpoint, {
