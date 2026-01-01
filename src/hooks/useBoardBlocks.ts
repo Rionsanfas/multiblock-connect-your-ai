@@ -64,12 +64,12 @@ export function useBlockActions(boardId: string) {
   const canModify = !!user?.id && !!boardId;
 
   /**
-   * Create a block with optimistic UI - instant visual feedback, background sync
+   * Create a block via Supabase with optimistic UI
    */
-  const createBlock = useCallback((data: Partial<Block>): Block | null => {
-    if (!canModify || !user?.id) {
+  const createBlock = useCallback(async (data: Partial<Block>): Promise<Block | null> => {
+    if (!canModify) {
       devError('[useBlockActions.createBlock] Cannot create: no user or boardId');
-      return null;
+      throw new Error('Cannot create block: Board access denied');
     }
     
     // Enforce plan limits
@@ -78,11 +78,11 @@ export function useBlockActions(boardId: string) {
       return null;
     }
 
-    // Generate optimistic block immediately
-    const optimisticId = crypto.randomUUID();
-    const { getProviderFromModel } = require('@/config/models');
+    // Get provider from model_id
+    const { getProviderFromModel } = await import('@/config/models');
     const provider = data.model_id ? getProviderFromModel(data.model_id) : 'openai';
     
+    // Map to Supabase enum
     const providerMap: Record<string, LLMProvider> = {
       openai: 'openai',
       anthropic: 'anthropic', 
@@ -90,77 +90,47 @@ export function useBlockActions(boardId: string) {
       xai: 'xai',
       deepseek: 'deepseek',
     };
+    
     const supabaseProvider = providerMap[provider] || 'openai';
 
-    const optimisticBlock: Block = {
-      id: optimisticId,
-      board_id: boardId,
-      title: data.title || 'New Block',
-      type: 'chat' as const,
-      model_id: data.model_id || '',
-      system_prompt: data.system_prompt || 'You are a helpful assistant.',
-      config: { temperature: 0.7, max_tokens: 2048 },
-      position: data.position || { x: 100, y: 100 },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    devLog('[useBlockActions.createBlock] Creating block...');
 
-    devLog('[useBlockActions.createBlock] Optimistic add:', optimisticId);
-
-    // Optimistic update - add to cache IMMEDIATELY
-    queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
-      const arr = Array.isArray(old) ? old : [];
-      return [...arr, {
-        id: optimisticId,
+    try {
+      // INSERT into Supabase - returns full row
+      const block = await blocksDb.create({
         board_id: boardId,
-        title: optimisticBlock.title,
-        model_id: optimisticBlock.model_id,
+        title: data.title || 'New Block',
+        model_id: data.model_id || '',
         provider: supabaseProvider,
-        system_prompt: optimisticBlock.system_prompt,
-        position_x: optimisticBlock.position.x,
-        position_y: optimisticBlock.position.y,
+        system_prompt: data.system_prompt || 'You are a helpful assistant.',
+        position_x: data.position?.x || 100,
+        position_y: data.position?.y || 100,
         width: 400,
         height: 300,
-        created_at: optimisticBlock.created_at,
-        updated_at: optimisticBlock.updated_at,
-        user_id: user.id,
-      }];
-    });
+      });
 
-    // Background sync - don't await, don't block UI
-    (async () => {
-      try {
-        const realBlock = await blocksDb.create({
-          board_id: boardId,
-          title: data.title || 'New Block',
-          model_id: data.model_id || '',
-          provider: supabaseProvider,
-          system_prompt: data.system_prompt || 'You are a helpful assistant.',
-          position_x: data.position?.x || 100,
-          position_y: data.position?.y || 100,
-          width: 400,
-          height: 300,
-        });
+      devLog('[useBlockActions.createBlock] Insert succeeded:', block.id);
 
-        devLog('[useBlockActions.createBlock] Synced to DB:', realBlock.id);
+      // Invalidate query cache to trigger re-fetch
+      await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
 
-        // Replace optimistic block with real one (updates ID)
-        queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
-          const arr = Array.isArray(old) ? old : [];
-          return arr.map((b: any) => b?.id === optimisticId ? realBlock : b);
-        });
-      } catch (error) {
-        devError('[useBlockActions.createBlock] Sync failed, rolling back:', error);
-        // Rollback optimistic update
-        queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
-          const arr = Array.isArray(old) ? old : [];
-          return arr.filter((b: any) => b?.id !== optimisticId);
-        });
-        toast.error('Failed to create block');
-      }
-    })();
-
-    return optimisticBlock;
+      // Return the block from Supabase
+      return {
+        id: block.id,
+        board_id: block.board_id,
+        title: block.title || 'Untitled Block',
+        type: 'chat' as const,
+        model_id: block.model_id,
+        system_prompt: block.system_prompt || '',
+        config: { temperature: 0.7, max_tokens: 2048 },
+        position: { x: block.position_x, y: block.position_y },
+        created_at: block.created_at,
+        updated_at: block.updated_at,
+      };
+    } catch (error) {
+      devError('[useBlockActions.createBlock] Failed:', error);
+      throw error;
+    }
   }, [boardId, canModify, user, enforceCreateBlock, queryClient]);
 
   /**

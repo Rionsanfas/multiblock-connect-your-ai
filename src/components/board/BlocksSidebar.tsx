@@ -38,15 +38,13 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
 
   const handleModelSelect = (modelId: string) => {
     const model = MODEL_CONFIGS.find((m) => m.id === modelId);
-    const block = createBlock({
+    createBlock({
       title: pendingBlockTitle || "New Block",
       model_id: modelId,
       system_prompt: `You are a helpful assistant powered by ${model?.name || "AI"}.`,
       position: { x: 100 + boardBlocks.length * 50, y: 100 + boardBlocks.length * 50 },
     });
-    if (block) {
-      toast.success(`Created block with ${model?.name}`);
-    }
+    toast.success(`Created block with ${model?.name}`);
     setPendingBlockTitle(null);
   };
 
