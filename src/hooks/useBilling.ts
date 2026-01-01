@@ -176,39 +176,51 @@ export function useBilling() {
 
 export function useCustomerPortal() {
   const openCustomerPortal = async (): Promise<void> => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session) {
-      throw new Error('Please sign in to access billing');
+      throw new Error("Please sign in to access billing");
     }
 
-    const response = await supabase.functions.invoke('polar-customer-portal', {
+    // Use a direct call so we can handle 302 redirects reliably.
+    // (supabase.functions.invoke expects JSON and doesn't expose redirect Location headers)
+    const portalUrl =
+      "https://dpeljwqtkjjkriobkhtj.supabase.co/functions/v1/polar-customer-portal";
+
+    const res = await fetch(portalUrl, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${session.access_token}`,
       },
+      redirect: "manual",
     });
 
-    if (response.error) {
-      console.error('Customer portal error:', response.error);
-      throw new Error(response.error.message || 'Failed to open billing portal');
-    }
-
-    const data = response.data as { customerPortalUrl?: string; error?: string };
-
-    if (data.error) {
-      // Handle specific error cases
-      if (data.error.includes('No active subscription')) {
-        throw new Error('No subscription found. Please purchase a plan first.');
+    // If the Polar adapter returns a redirect, read the Location header and navigate.
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      if (!location) {
+        throw new Error("Billing portal redirect missing location header.");
       }
-      throw new Error(data.error);
+      window.location.assign(location);
+      return;
     }
 
-    if (!data.customerPortalUrl) {
-      throw new Error('Unable to generate billing portal link. Please try again.');
+    // Otherwise, it's likely an error JSON.
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text) as { error?: string };
+      if (data?.error) throw new Error(data.error);
+    } catch {
+      // ignore JSON parse errors
     }
 
-    // Redirect to pre-authenticated Polar customer portal
-    window.location.href = data.customerPortalUrl;
+    throw new Error(
+      "Failed to open billing portal. Please try again (or contact support if it persists).",
+    );
   };
 
   return { openCustomerPortal };
 }
+
