@@ -926,29 +926,40 @@
       0 0 30px hsl(0 0% 100% / 0.1);
   }
 
-  /* 3D primary action button - Glass style like hero CTA */
+  /* 3D primary action button - Classy with depth and shadows */
   .btn-3d-primary {
-    background: linear-gradient(135deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0.04) 100%);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(0 0% 100% / 0.15);
-    color: hsl(0 0% 92%);
+    background: linear-gradient(180deg, hsl(0 0% 28%) 0%, hsl(0 0% 18%) 50%, hsl(0 0% 14%) 100%);
+    border: 1px solid hsl(0 0% 35%);
+    border-bottom: 1px solid hsl(0 0% 10%);
+    color: hsl(0 0% 95%);
     box-shadow: 
-      inset 0 1px 0 hsl(0 0% 100% / 0.15),
-      inset 0 -1px 0 hsl(0 0% 0% / 0.1),
-      0 4px 20px hsl(0 0% 0% / 0.3),
-      0 8px 40px hsl(0 0% 0% / 0.2);
-    transition: all 0.3s ease;
+      inset 0 1px 1px hsl(0 0% 100% / 0.12),
+      inset 0 -2px 4px hsl(0 0% 0% / 0.25),
+      0 2px 4px hsl(0 0% 0% / 0.3),
+      0 4px 8px hsl(0 0% 0% / 0.25),
+      0 8px 16px hsl(0 0% 0% / 0.2),
+      0 16px 32px hsl(0 0% 0% / 0.15);
+    transition: all 0.2s ease;
+    text-shadow: 0 1px 2px hsl(0 0% 0% / 0.3);
   }
 
   .btn-3d-primary:hover {
-    background: linear-gradient(135deg, hsl(0 0% 100% / 0.15) 0%, hsl(0 0% 100% / 0.06) 100%);
-    transform: translateY(-2px);
+    background: linear-gradient(180deg, hsl(0 0% 32%) 0%, hsl(0 0% 22%) 50%, hsl(0 0% 18%) 100%);
+    transform: translateY(-1px);
     box-shadow: 
-      inset 0 1px 0 hsl(0 0% 100% / 0.2),
-      inset 0 -1px 0 hsl(0 0% 0% / 0.1),
-      0 8px 32px hsl(0 0% 0% / 0.4),
-      0 12px 48px hsl(0 0% 0% / 0.25);
+      inset 0 1px 1px hsl(0 0% 100% / 0.15),
+      inset 0 -2px 4px hsl(0 0% 0% / 0.2),
+      0 3px 6px hsl(0 0% 0% / 0.35),
+      0 6px 12px hsl(0 0% 0% / 0.3),
+      0 12px 24px hsl(0 0% 0% / 0.25),
+      0 20px 40px hsl(0 0% 0% / 0.2);
+  }
+
+  .btn-3d-primary:active {
+    transform: translateY(1px);
+    box-shadow: 
+      inset 0 2px 4px hsl(0 0% 0% / 0.3),
+      0 1px 2px hsl(0 0% 0% / 0.3);
   }
 
   /* Big nav item with gold glow indicator - like dashboard sidebar */
