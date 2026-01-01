@@ -184,8 +184,6 @@ export function useCustomerPortal() {
       throw new Error("Please sign in to access billing");
     }
 
-    // Use a direct call so we can handle 302 redirects reliably.
-    // (supabase.functions.invoke expects JSON and doesn't expose redirect Location headers)
     const portalUrl =
       "https://dpeljwqtkjjkriobkhtj.supabase.co/functions/v1/polar-customer-portal";
 
@@ -194,31 +192,29 @@ export function useCustomerPortal() {
       headers: {
         Authorization: `Bearer ${session.access_token}`,
       },
-      redirect: "manual",
     });
 
-    // If the Polar adapter returns a redirect, read the Location header and navigate.
-    if (res.status >= 300 && res.status < 400) {
-      const location = res.headers.get("location");
-      if (!location) {
-        throw new Error("Billing portal redirect missing location header.");
-      }
-      window.location.assign(location);
-      return;
-    }
-
-    // Otherwise, it's likely an error JSON.
     const text = await res.text();
-    try {
-      const data = JSON.parse(text) as { error?: string };
-      if (data?.error) throw new Error(data.error);
-    } catch {
-      // ignore JSON parse errors
+
+    if (!res.ok) {
+      try {
+        const data = JSON.parse(text) as { error?: string };
+        if (data?.error) throw new Error(data.error);
+      } catch {
+        // ignore JSON parse errors
+      }
+
+      throw new Error(
+        "Failed to open billing portal. Please try again (or contact support if it persists).",
+      );
     }
 
-    throw new Error(
-      "Failed to open billing portal. Please try again (or contact support if it persists).",
-    );
+    const data = JSON.parse(text) as { url?: string; error?: string };
+    if (data?.error) throw new Error(data.error);
+    if (!data?.url) throw new Error("Billing portal URL missing.");
+
+    window.open(data.url, "_blank", "noopener,noreferrer");
+    return;
   };
 
   return { openCustomerPortal };
