@@ -87,7 +87,11 @@ serve(async (req) => {
     console.log("Using Polar API:", polarApiBase);
 
     // Create customer portal session via Polar API
-    const portalResponse = await fetch(`${polarApiBase}/v1/customer-portal/sessions`, {
+    // Docs: POST /v1/customer-sessions
+    const origin = req.headers.get("origin") ?? "";
+    const returnUrl = origin ? `${origin}/settings` : undefined;
+
+    const portalResponse = await fetch(`${polarApiBase}/v1/customer-sessions`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${polarAccessToken}`,
@@ -95,23 +99,37 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         customer_id: billing.polar_customer_id,
+        ...(returnUrl ? { return_url: returnUrl } : {}),
       }),
     });
 
     if (!portalResponse.ok) {
       const errorText = await portalResponse.text();
       console.error("Polar API error:", portalResponse.status, errorText);
-      return new Response(JSON.stringify({ error: "Failed to create portal session" }), {
+      return new Response(JSON.stringify({
+        error: "Failed to create portal session",
+        status: portalResponse.status,
+      }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const portalData = await portalResponse.json();
+    const url = portalData?.customer_portal_url;
+
+    if (!url) {
+      console.error("Polar response missing customer_portal_url:", portalData);
+      return new Response(JSON.stringify({ error: "Billing portal unavailable" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     console.log("Portal session created successfully");
 
     // Return the portal URL
-    return new Response(JSON.stringify({ url: portalData.customer_portal_url }), {
+    return new Response(JSON.stringify({ url }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
