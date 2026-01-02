@@ -907,6 +907,7 @@ export type Database = {
           team_name: string
         }[]
       }
+      admin_leave_team: { Args: { p_team_id: string }; Returns: boolean }
       atomic_increment_daily_counter: {
         Args: { p_counter_type: string; p_user_id: string }
         Returns: boolean
@@ -926,6 +927,7 @@ export type Database = {
         Returns: boolean
       }
       can_create_board: { Args: { p_user_id: string }; Returns: boolean }
+      can_delete_team: { Args: { p_team_id: string }; Returns: boolean }
       can_send_message: {
         Args: { p_message_size_bytes?: number; p_user_id: string }
         Returns: boolean
@@ -951,6 +953,10 @@ export type Database = {
       delete_team: { Args: { p_team_id: string }; Returns: boolean }
       delete_team_invitation: {
         Args: { p_invitation_id: string }
+        Returns: boolean
+      }
+      delete_team_with_options: {
+        Args: { p_team_id: string; p_transfer_boards?: boolean }
         Returns: boolean
       }
       get_block_incoming_connections: {
