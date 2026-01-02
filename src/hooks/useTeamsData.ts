@@ -248,27 +248,38 @@ export function useUpdateTeam() {
 }
 
 // ============================================
-// DELETE TEAM
+// DELETE TEAM WITH OPTIONS
 // ============================================
 
 export function useDeleteTeam() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (teamId: string) => {
-      const { error } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', teamId);
+    mutationFn: async ({ teamId, transferBoards = false }: { teamId: string; transferBoards?: boolean }) => {
+      const { data, error } = await supabase
+        .rpc('delete_team_with_options', { 
+          p_team_id: teamId,
+          p_transfer_boards: transferBoards 
+        });
       
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, { transferBoards }) => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
-      toast.success('Team deleted');
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      toast.success(transferBoards 
+        ? 'Team deleted, boards transferred to personal' 
+        : 'Team and all boards deleted'
+      );
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete team');
+      const message = error.message || 'Failed to delete team';
+      if (message.includes('NOT_AUTHORIZED')) {
+        toast.error('Only team owner or admin can delete the team');
+      } else {
+        toast.error(message);
+      }
     },
   });
 }
@@ -375,7 +386,7 @@ export function useAcceptInvitation() {
 }
 
 // ============================================
-// UPDATE MEMBER ROLE
+// UPDATE MEMBER ROLE (via RPC for proper permissions)
 // ============================================
 
 export function useUpdateMemberRole() {
@@ -391,25 +402,45 @@ export function useUpdateMemberRole() {
       teamId: string; 
       role: TeamRole;
     }) => {
-      const { error } = await supabase
+      // First get the user_id from the member record
+      const { data: member, error: fetchError } = await supabase
         .from('team_members')
-        .update({ role })
-        .eq('id', memberId);
+        .select('user_id')
+        .eq('id', memberId)
+        .single();
+      
+      if (fetchError || !member) throw new Error('Member not found');
+      
+      // Use the RPC for proper permission checks
+      const { data, error } = await supabase
+        .rpc('update_team_member_role', { 
+          p_team_id: teamId, 
+          p_member_user_id: member.user_id, 
+          p_new_role: role 
+        });
       
       if (error) throw error;
+      return data;
     },
     onSuccess: (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: ['team-members', teamId] });
       toast.success('Member role updated');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update role');
+      const message = error.message || 'Failed to update role';
+      if (message.includes('NOT_AUTHORIZED')) {
+        toast.error('Only owner can modify admin roles');
+      } else if (message.includes('CANNOT_MODIFY_OWNER')) {
+        toast.error('Cannot modify owner role');
+      } else {
+        toast.error(message);
+      }
     },
   });
 }
 
 // ============================================
-// REMOVE MEMBER
+// REMOVE MEMBER (via RPC for proper permissions)
 // ============================================
 
 export function useRemoveMember() {
@@ -417,12 +448,24 @@ export function useRemoveMember() {
   
   return useMutation({
     mutationFn: async ({ memberId, teamId }: { memberId: string; teamId: string }) => {
-      const { error } = await supabase
+      // First get the user_id from the member record
+      const { data: member, error: fetchError } = await supabase
         .from('team_members')
-        .delete()
-        .eq('id', memberId);
+        .select('user_id')
+        .eq('id', memberId)
+        .single();
+      
+      if (fetchError || !member) throw new Error('Member not found');
+      
+      // Use the RPC for proper permission checks
+      const { data, error } = await supabase
+        .rpc('remove_team_member', { 
+          p_team_id: teamId, 
+          p_member_user_id: member.user_id 
+        });
       
       if (error) throw error;
+      return data;
     },
     onSuccess: (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: ['team-members', teamId] });
@@ -430,37 +473,46 @@ export function useRemoveMember() {
       toast.success('Member removed');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to remove member');
+      const message = error.message || 'Failed to remove member';
+      if (message.includes('NOT_AUTHORIZED')) {
+        toast.error('Only owner can remove admins');
+      } else if (message.includes('CANNOT_REMOVE_OWNER')) {
+        toast.error('Cannot remove team owner');
+      } else {
+        toast.error(message);
+      }
     },
   });
 }
 
 // ============================================
-// LEAVE TEAM
+// LEAVE TEAM (with proper admin checks)
 // ============================================
 
 export function useLeaveTeam() {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async (teamId: string) => {
-      if (!user) throw new Error('Not authenticated');
-      
-      const { error } = await supabase
-        .from('team_members')
-        .delete()
-        .eq('team_id', teamId)
-        .eq('user_id', user.id);
+      const { data, error } = await supabase
+        .rpc('admin_leave_team', { p_team_id: teamId });
       
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       toast.success('Left team');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to leave team');
+      const message = error.message || 'Failed to leave team';
+      if (message.includes('OWNER_CANNOT_LEAVE')) {
+        toast.error('Owner cannot leave. Transfer ownership first.');
+      } else if (message.includes('ADMIN_REQUIRED')) {
+        toast.error('Assign another admin before leaving');
+      } else {
+        toast.error(message);
+      }
     },
   });
 }

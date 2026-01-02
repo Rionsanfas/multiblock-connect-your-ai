@@ -11,7 +11,6 @@ import {
   LogOut,
   Loader2,
   Mail,
-  Check,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -57,6 +56,7 @@ import {
   useLeaveTeam,
   TeamRole,
 } from '@/hooks/useTeamsData';
+import { TeamDeleteDialog } from './TeamDeleteDialog';
 
 const ROLE_ICONS = {
   owner: Crown,
@@ -92,6 +92,7 @@ export function TeamSettings() {
   const [teamName, setTeamName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<TeamRole>('member');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Initialize team name when loaded
   if (team && !teamName && teamName !== team.name) {
@@ -140,13 +141,16 @@ export function TeamSettings() {
     toast.success('Invite link copied to clipboard');
   };
 
-  const handleDeleteTeam = () => {
-    deleteTeam.mutate(teamId, {
-      onSuccess: () => {
-        switchToPersonal();
-        navigate('/dashboard');
-      },
-    });
+  const handleDeleteTeam = (transferBoards: boolean) => {
+    deleteTeam.mutate(
+      { teamId, transferBoards },
+      {
+        onSuccess: () => {
+          switchToPersonal();
+          navigate('/dashboard');
+        },
+      }
+    );
   };
 
   const handleLeaveTeam = () => {
@@ -432,6 +436,7 @@ export function TeamSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Leave Team - for non-owners */}
           {!isTeamOwner && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -458,33 +463,26 @@ export function TeamSettings() {
             </AlertDialog>
           )}
 
-          {isTeamOwner && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" className="w-full justify-start border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Team
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-border/30">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Team?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. All team boards, blocks, and data 
-                    will be permanently deleted. All members will lose access.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={handleDeleteTeam}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete Team
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          {/* Delete Team - for owners and admins */}
+          {canManageTeam && (
+            <>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Team
+              </Button>
+
+              <TeamDeleteDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+                teamName={team?.name || 'team'}
+                onConfirm={handleDeleteTeam}
+                isPending={deleteTeam.isPending}
+              />
+            </>
           )}
         </CardContent>
       </Card>

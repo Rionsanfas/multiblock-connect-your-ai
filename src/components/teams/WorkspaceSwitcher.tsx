@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronsUpDown, Plus, Users, User, Home } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,6 +20,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useTeamContext } from '@/contexts/TeamContext';
 import { CreateTeamDialog } from './CreateTeamDialog';
 import { toast } from 'sonner';
+
+import userIcon from '@/assets/user-icon.png';
+import groupIcon from '@/assets/group-icon.png';
 
 const MAX_TEAMS_PER_USER = 2;
 
@@ -65,7 +68,7 @@ export function WorkspaceSwitcher({ collapsed = false }: WorkspaceSwitcherProps)
 
   const canCreateMoreTeams = teams.length < MAX_TEAMS_PER_USER;
 
-  // 3D button style - always use collapsed/icon style
+  // 3D button style - show person or team icon based on workspace
   return (
     <>
       <Popover open={open} onOpenChange={setOpen}>
@@ -75,7 +78,11 @@ export function WorkspaceSwitcher({ collapsed = false }: WorkspaceSwitcherProps)
             size="icon"
             className="h-10 w-10 rounded-xl bg-secondary/50 hover:bg-secondary/70 border border-border/50 shadow-[0_4px_12px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] hover:shadow-[0_6px_16px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]"
           >
-            <Home className="h-4 w-4 text-foreground/80" />
+            <img 
+              src={isPersonalWorkspace ? userIcon : groupIcon} 
+              alt={isPersonalWorkspace ? 'Personal' : 'Team'} 
+              className="h-5 w-5 invert opacity-80"
+            />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-72 p-0 bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl" align="end">
@@ -135,7 +142,7 @@ function WorkspaceList({
           >
             <div className="flex items-center gap-3 w-full">
               <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-secondary to-secondary/50 flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] border border-border/30">
-                <User className="h-4 w-4 text-foreground/80" />
+                <img src={userIcon} alt="Personal" className="h-4 w-4 invert opacity-80" />
               </div>
               <span className="flex-1 font-medium">Personal</span>
               {isPersonalWorkspace && (
