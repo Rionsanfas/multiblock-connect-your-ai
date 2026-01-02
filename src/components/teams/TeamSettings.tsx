@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -70,16 +71,31 @@ const ROLE_LABELS = {
   member: 'Member',
 };
 
-export function TeamSettings() {
+interface TeamSettingsProps {
+  teamIdOverride?: string;
+}
+
+export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
   const navigate = useNavigate();
-  const { currentWorkspace, isTeamOwner, canManageTeam, switchToPersonal } = useTeamContext();
+  const { currentWorkspace, isTeamOwner: contextIsTeamOwner, canManageTeam: contextCanManageTeam, switchToPersonal } = useTeamContext();
   
-  const teamId = currentWorkspace.teamId;
+  // Use override if provided, otherwise fall back to context
+  const teamId = teamIdOverride || currentWorkspace.teamId;
   
   const { data: team, isLoading: teamLoading } = useTeam(teamId);
   const { data: members = [], isLoading: membersLoading } = useTeamMembers(teamId);
   const { data: invitations = [] } = useTeamInvitations(teamId);
   const { data: limits } = useTeamLimits(teamId);
+  
+  // Determine permissions based on actual membership from API
+  const { user } = useAuth();
+  const currentUserMember = members.find(m => m.user_id === user?.id);
+  const isTeamOwner = teamIdOverride 
+    ? currentUserMember?.role === 'owner' 
+    : contextIsTeamOwner;
+  const canManageTeam = teamIdOverride 
+    ? currentUserMember?.role === 'owner' || currentUserMember?.role === 'admin'
+    : contextCanManageTeam;
   
   const updateTeam = useUpdateTeam();
   const deleteTeam = useDeleteTeam();

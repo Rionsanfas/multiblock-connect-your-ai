@@ -7,6 +7,7 @@ import {
   Settings,
   ChevronLeft,
   Users,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -18,6 +19,8 @@ import {
 } from "@/components/ui/tooltip";
 import { WorkspaceSwitcher } from "@/components/teams/WorkspaceSwitcher";
 import { useTeamContext } from "@/contexts/TeamContext";
+import { useInboxCount } from "@/hooks/useInboxCount";
+import { Badge } from "@/components/ui/badge";
 
 const navItems = [
   { icon: Layers, label: "Boards", href: "/dashboard", showAlways: true },
@@ -31,6 +34,7 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { user } = useCurrentUser();
+  const { count: inboxCount } = useInboxCount();
 
   return (
     <aside
@@ -133,6 +137,73 @@ export function AppSidebar() {
           return NavItem;
         })}
       </nav>
+
+      {/* Bottom section - Inbox */}
+      <div className="px-3 pb-4 mt-auto">
+        {(() => {
+          const isActive = location.pathname === '/inbox';
+          const InboxNavItem = (
+            <Link
+              to="/inbox"
+              className={cn(
+                "sidebar-nav-item group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 overflow-hidden",
+                isActive
+                  ? "bg-secondary/60 text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/30",
+                collapsed && "justify-center px-3"
+              )}
+            >
+              <span
+                className={cn(
+                  "sidebar-indicator absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full transition-all duration-500 ease-out",
+                  isActive
+                    ? "bg-gradient-to-b from-[hsl(var(--accent))] via-[hsl(var(--glow-warm))] to-[hsl(var(--accent))] opacity-100 shadow-[0_0_12px_hsl(var(--accent)/0.6)]"
+                    : "bg-transparent opacity-0 group-hover:opacity-40 group-hover:bg-[hsl(var(--accent)/0.5)]"
+                )}
+              />
+              <div className={cn("icon-3d p-1.5 rounded-lg relative", isActive && "icon-3d-active")}>
+                <Inbox className={cn("h-4 w-4 flex-shrink-0 transition-all duration-200 text-foreground/90", isActive && "text-foreground drop-shadow-[0_0_6px_hsl(0_0%_100%/0.5)]")} />
+                {inboxCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-4 min-w-[16px] px-1 text-[10px] font-bold flex items-center justify-center"
+                  >
+                    {inboxCount}
+                  </Badge>
+                )}
+              </div>
+              {!collapsed && (
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-sm font-medium">Inbox</span>
+                  {inboxCount > 0 && (
+                    <Badge variant="destructive" className="h-5 min-w-[20px] px-1.5 text-xs font-bold">
+                      {inboxCount}
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </Link>
+          );
+
+          if (collapsed) {
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>{InboxNavItem}</TooltipTrigger>
+                <TooltipContent side="right" className="rounded-xl flex items-center gap-2">
+                  Inbox
+                  {inboxCount > 0 && (
+                    <Badge variant="destructive" className="h-5 min-w-[20px] px-1.5 text-xs font-bold">
+                      {inboxCount}
+                    </Badge>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return InboxNavItem;
+        })()}
+      </div>
     </aside>
   );
 }

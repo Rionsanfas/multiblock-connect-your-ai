@@ -949,6 +949,10 @@ export type Database = {
         }
         Returns: string
       }
+      decline_team_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: boolean
+      }
       decrement_ltd_seats: { Args: never; Returns: number }
       delete_team: { Args: { p_team_id: string }; Returns: boolean }
       delete_team_invitation: {
@@ -1060,6 +1064,21 @@ export type Database = {
           storage_gb: number
           total_boards: number
           total_storage_gb: number
+        }[]
+      }
+      get_user_pending_invitations: {
+        Args: never
+        Returns: {
+          created_at: string
+          expires_at: string
+          invitation_id: string
+          invited_by_email: string
+          invited_by_name: string
+          role: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          team_name: string
+          team_slug: string
+          token: string
         }[]
       }
       get_user_role: {

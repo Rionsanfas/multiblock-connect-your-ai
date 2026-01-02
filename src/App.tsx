@@ -16,6 +16,7 @@ import ApiKeys from "./pages/ApiKeys";
 import Settings from "./pages/Settings";
 import TeamSettingsPage from "./pages/TeamSettingsPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
+import InboxPage from "./pages/Inbox";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import RefundPolicy from "./pages/RefundPolicy";
@@ -112,6 +113,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <TeamSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/team/settings/:teamId"
+        element={
+          <ProtectedRoute>
+            <TeamSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inbox"
+        element={
+          <ProtectedRoute>
+            <InboxPage />
           </ProtectedRoute>
         }
       />

@@ -285,11 +285,10 @@ export function useDeleteTeam() {
 }
 
 // ============================================
-// CREATE INVITATION
+// CREATE INVITATION (via RPC for proper permissions)
 // ============================================
 
 export function useCreateInvitation() {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -302,34 +301,37 @@ export function useCreateInvitation() {
       email: string; 
       role: TeamRole;
     }) => {
-      if (!user) throw new Error('Not authenticated');
-      
       const { data, error } = await supabase
-        .from('team_invitations')
-        .insert({
-          team_id: teamId,
-          email,
-          role,
-          invited_by: user.id,
-        })
-        .select()
-        .single();
+        .rpc('create_team_invitation', {
+          p_team_id: teamId,
+          p_email: email,
+          p_role: role,
+        });
       
       if (error) throw error;
-      return data as TeamInvitation;
+      return data;
     },
     onSuccess: (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: ['team-invitations', teamId] });
-      toast.success('Invitation created');
+      toast.success('Invitation sent');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create invitation');
+      const message = error.message || 'Failed to create invitation';
+      if (message.includes('SEAT_LIMIT_REACHED')) {
+        toast.error('Team seat limit reached');
+      } else if (message.includes('INVITATION_ALREADY_PENDING')) {
+        toast.error('Invitation already pending for this email');
+      } else if (message.includes('NOT_AUTHORIZED')) {
+        toast.error('Only owner or admin can invite');
+      } else {
+        toast.error(message);
+      }
     },
   });
 }
 
 // ============================================
-// DELETE INVITATION
+// DELETE INVITATION (via RPC for proper permissions)
 // ============================================
 
 export function useDeleteInvitation() {
@@ -337,12 +339,11 @@ export function useDeleteInvitation() {
   
   return useMutation({
     mutationFn: async ({ invitationId, teamId }: { invitationId: string; teamId: string }) => {
-      const { error } = await supabase
-        .from('team_invitations')
-        .delete()
-        .eq('id', invitationId);
+      const { data, error } = await supabase
+        .rpc('delete_team_invitation', { p_invitation_id: invitationId });
       
       if (error) throw error;
+      return data;
     },
     onSuccess: (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: ['team-invitations', teamId] });
@@ -540,6 +541,66 @@ export function useTransferBoardToTeam() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to transfer board');
+    },
+  });
+}
+
+// ============================================
+// PENDING INVITATIONS FOR CURRENT USER (Inbox)
+// ============================================
+
+export interface PendingInvitation {
+  invitation_id: string;
+  team_id: string;
+  team_name: string;
+  team_slug: string;
+  role: TeamRole;
+  invited_by_email: string;
+  invited_by_name: string | null;
+  token: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export function useUserPendingInvitations() {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['user-pending-invitations', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .rpc('get_user_pending_invitations');
+      
+      if (error) throw error;
+      return (data || []) as PendingInvitation[];
+    },
+    enabled: !!user,
+    staleTime: 1000 * 30, // 30 seconds - check for new invitations frequently
+    refetchInterval: 1000 * 60, // Refetch every minute
+  });
+}
+
+// ============================================
+// DECLINE INVITATION
+// ============================================
+
+export function useDeclineInvitation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (invitationId: string) => {
+      const { data, error } = await supabase
+        .rpc('decline_team_invitation', { p_invitation_id: invitationId });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-pending-invitations'] });
+      toast.success('Invitation declined');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to decline invitation');
     },
   });
 }
