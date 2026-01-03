@@ -1191,6 +1191,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_team_name: {
+        Args: { p_name: string; p_team_id: string }
+        Returns: boolean
+      }
       update_user_grace_status: {
         Args: { p_user_id: string }
         Returns: undefined

@@ -229,20 +229,27 @@ export function useUpdateTeam() {
   
   return useMutation({
     mutationFn: async ({ teamId, name }: { teamId: string; name: string }) => {
-      const { error } = await supabase
-        .from('teams')
-        .update({ name })
-        .eq('id', teamId);
+      // Use RPC function for proper permission checks (RLS blocks direct updates)
+      const { data, error } = await supabase
+        .rpc('update_team_name', { p_team_id: teamId, p_name: name });
       
       if (error) throw error;
+      return data;
     },
     onSuccess: (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       queryClient.invalidateQueries({ queryKey: ['team', teamId] });
-      toast.success('Team updated');
+      toast.success('Team name updated');
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update team');
+      const message = error.message || 'Failed to update team';
+      if (message.includes('NOT_AUTHORIZED')) {
+        toast.error('Only the team owner can rename the team');
+      } else if (message.includes('INVALID_TEAM_NAME')) {
+        toast.error('Team name must be at least 2 characters');
+      } else {
+        toast.error(message);
+      }
     },
   });
 }
