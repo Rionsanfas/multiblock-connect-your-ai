@@ -19,6 +19,7 @@ export interface Board {
   id: string;
   title: string;
   user_id: string;
+  team_id?: string | null;
   metadata: {
     description?: string;
     thumbnail?: string;
