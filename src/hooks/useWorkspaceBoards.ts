@@ -21,6 +21,7 @@ function transformBoard(board: SupabaseBoard): LegacyBoard {
     id: board.id,
     title: board.name,
     user_id: board.user_id,
+    team_id: board.team_id,
     metadata: {
       description: board.description || undefined,
     },

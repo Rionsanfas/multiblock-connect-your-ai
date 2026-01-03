@@ -92,7 +92,14 @@ export default function Dashboard() {
     setIsCreating(true);
     
     try {
-      console.log('[Dashboard] Creating board...');
+      // Determine team context - CRITICAL: propagate team_id correctly
+      const teamId = currentWorkspace.type === 'team' ? currentWorkspace.teamId : null;
+      
+      console.log('[Dashboard] Creating board...', { 
+        isTeam: currentWorkspace.type === 'team',
+        teamId,
+        teamName: currentWorkspace.teamName 
+      });
       
       // Create optimistic board for immediate navigation
       const optimisticId = crypto.randomUUID();
@@ -100,7 +107,8 @@ export default function Dashboard() {
       // Navigate immediately for instant feel
       navigate(`/board/${optimisticId}`, { replace: true });
       
-      const board = await boardsDb.create({ name: "Untitled Board" });
+      // Pass team_id to board creation - enforced at DB level
+      const board = await boardsDb.create({ name: "Untitled Board" }, teamId);
       
       // Verify returned board has valid data
       if (!board?.id || !board?.user_id) {
@@ -113,6 +121,7 @@ export default function Dashboard() {
       console.log('[Dashboard] Board created successfully:', { 
         id: board.id, 
         user_id: board.user_id,
+        team_id: board.team_id,
         name: board.name 
       });
       
@@ -126,7 +135,7 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['user-board-count'] });
       queryClient.invalidateQueries({ queryKey: ['workspace-boards'] });
       
-      toast.success("Board created");
+      toast.success(teamId ? `Board created in ${currentWorkspace.teamName}` : "Board created");
     } catch (error) {
       console.error('[Dashboard] Board creation failed:', error);
       toast.error(error instanceof Error ? error.message : "Failed to create board");

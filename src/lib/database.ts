@@ -455,21 +455,32 @@ export const boardsDb = {
     return data as Board | null;
   },
 
-  async create(board: Omit<BoardInsert, 'user_id'>): Promise<Board> {
+  /**
+   * Create a new board
+   * @param board - Board data (name, etc.)
+   * @param teamId - Optional team ID. If provided, creates a team board. Otherwise personal.
+   */
+  async create(board: Omit<BoardInsert, 'user_id'>, teamId?: string | null): Promise<Board> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       devError('[boardsDb.create] No authenticated user');
       throw new Error('Not authenticated');
     }
 
-    devLog('[boardsDb.create] Creating board for user:', user.id);
+    devLog('[boardsDb.create] Creating board for user:', user.id, 'teamId:', teamId || 'personal');
 
     // Client-side check is done via usePlanEnforcement.enforceCreateBoard()
     // Server-side RLS will also protect against unauthorized inserts
 
+    const insertData: BoardInsert = {
+      ...board,
+      user_id: user.id,
+      team_id: teamId || null, // Explicitly set team_id
+    };
+
     const { data, error } = await supabase
       .from('boards')
-      .insert({ ...board, user_id: user.id })
+      .insert(insertData)
       .select()
       .single();
 
@@ -478,7 +489,7 @@ export const boardsDb = {
       throw error;
     }
     
-    devLog('[boardsDb.create] Board created:', data.id);
+    devLog('[boardsDb.create] Board created:', data.id, 'team_id:', data.team_id);
     return data as Board;
   },
 
