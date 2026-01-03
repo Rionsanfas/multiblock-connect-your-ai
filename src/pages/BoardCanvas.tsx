@@ -239,16 +239,16 @@ export default function BoardCanvas() {
     return (
       <DashboardLayout hideSidebar>
         <div className="flex h-full">
-          <div className="w-64 border-r border-border/20 p-4 space-y-3">
-            <div className="h-8 w-32 rounded bg-muted/50 animate-pulse" />
+          <div className="hidden sm:block w-48 md:w-56 lg:w-64 border-r border-border/20 p-3 sm:p-4 space-y-2 sm:space-y-3 shrink-0">
+            <div className="h-6 sm:h-8 w-24 sm:w-32 rounded bg-muted/50 animate-pulse" />
             <SkeletonCard variant="block" />
             <SkeletonCard variant="block" />
             <SkeletonCard variant="block" />
           </div>
-          <div className="flex-1 p-8">
-            <div className="grid grid-cols-3 gap-6">
-              <SkeletonCard variant="block" className="h-40" />
-              <SkeletonCard variant="block" className="h-40" />
+          <div className="flex-1 p-4 sm:p-6 md:p-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <SkeletonCard variant="block" className="h-32 sm:h-40" />
+              <SkeletonCard variant="block" className="h-32 sm:h-40" />
             </div>
           </div>
         </div>
@@ -278,16 +278,16 @@ export default function BoardCanvas() {
     return (
       <DashboardLayout hideSidebar>
         <div className="flex h-full">
-          <div className="w-64 border-r border-border/20 p-4 space-y-3">
-            <div className="h-8 w-32 rounded bg-muted/50 animate-pulse" />
+          <div className="hidden sm:block w-48 md:w-56 lg:w-64 border-r border-border/20 p-3 sm:p-4 space-y-2 sm:space-y-3 shrink-0">
+            <div className="h-6 sm:h-8 w-24 sm:w-32 rounded bg-muted/50 animate-pulse" />
             <SkeletonCard variant="block" />
             <SkeletonCard variant="block" />
             <SkeletonCard variant="block" />
           </div>
-          <div className="flex-1 p-8">
-            <div className="grid grid-cols-3 gap-6">
-              <SkeletonCard variant="block" className="h-40" />
-              <SkeletonCard variant="block" className="h-40" />
+          <div className="flex-1 p-4 sm:p-6 md:p-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <SkeletonCard variant="block" className="h-32 sm:h-40" />
+              <SkeletonCard variant="block" className="h-32 sm:h-40" />
             </div>
           </div>
         </div>
