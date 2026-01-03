@@ -101,20 +101,13 @@ export default function Dashboard() {
         teamName: currentWorkspace.teamName 
       });
       
-      // Create optimistic board for immediate navigation
-      const optimisticId = crypto.randomUUID();
-      
-      // Navigate immediately for instant feel
-      navigate(`/board/${optimisticId}`, { replace: true });
-      
-      // Pass team_id to board creation - enforced at DB level
+      // Create board first, THEN navigate (avoids broken optimistic ID)
       const board = await boardsDb.create({ name: "Untitled Board" }, teamId);
       
       // Verify returned board has valid data
       if (!board?.id || !board?.user_id) {
         console.error('[Dashboard] Board creation returned invalid data:', board);
         toast.error('Board creation failed');
-        navigate('/dashboard', { replace: true });
         return;
       }
       
@@ -125,21 +118,19 @@ export default function Dashboard() {
         name: board.name 
       });
       
-      // Navigate to actual board (replace optimistic route)
-      if (board.id !== optimisticId) {
-        navigate(`/board/${board.id}`, { replace: true });
-      }
+      // Optimistic cache update - add to list immediately
+      queryClient.setQueryData(['workspace-boards', currentWorkspace.type, currentWorkspace.teamId, authUser.id], (old: unknown) => {
+        const arr = Array.isArray(old) ? old : [];
+        return [board, ...arr];
+      });
       
-      // Invalidate boards query in background
-      queryClient.invalidateQueries({ queryKey: ['user-boards'] });
-      queryClient.invalidateQueries({ queryKey: ['user-board-count'] });
-      queryClient.invalidateQueries({ queryKey: ['workspace-boards'] });
+      // Navigate to actual board
+      navigate(`/board/${board.id}`);
       
       toast.success(teamId ? `Board created in ${currentWorkspace.teamName}` : "Board created");
     } catch (error) {
       console.error('[Dashboard] Board creation failed:', error);
       toast.error(error instanceof Error ? error.message : "Failed to create board");
-      navigate('/dashboard', { replace: true });
     } finally {
       setIsCreating(false);
     }
