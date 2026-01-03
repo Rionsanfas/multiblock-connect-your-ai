@@ -37,6 +37,7 @@ export function BlockCard({
 }: BlockCardProps) {
   const [isDragging, setIsDragging] = useState(false);
   const hasDraggedRef = useRef(false);
+  const dragEndTimeRef = useRef(0); // Track when drag ended to prevent click
   const activePointerIdRef = useRef<number | null>(null);
   const dragElementRef = useRef<HTMLElement | null>(null);
   const didFinalizeDragRef = useRef(false);
@@ -108,10 +109,17 @@ export function BlockCard({
     onSelect();
   };
 
-  const handleClick = () => {
-    if (!hasDraggedRef.current && !isResizing) {
-      openBlockChat(block.id);
+  // Separate click handler - only fires if no drag occurred
+  const handleClick = (e: React.MouseEvent) => {
+    // CRITICAL: Block click if any dragging occurred recently (within 100ms)
+    // This handles the race condition where click fires after pointer up
+    const timeSinceDragEnd = Date.now() - dragEndTimeRef.current;
+    if (hasDraggedRef.current || isResizing || timeSinceDragEnd < 100) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
     }
+    openBlockChat(block.id);
   };
 
   const handleResizeStart = (e: React.MouseEvent, corner: string) => {
@@ -189,7 +197,10 @@ export function BlockCard({
       if (didFinalizeDragRef.current) return;
       didFinalizeDragRef.current = true;
 
+      // Record drag end time BEFORE resetting hasDraggedRef
+      // This prevents click from firing after drag
       if (hasDraggedRef.current) {
+        dragEndTimeRef.current = Date.now();
         persistBlockPosition(block.id, blockPositionRef.current);
       }
 
@@ -334,7 +345,12 @@ export function BlockCard({
             touchAction: 'none',
           }}
           onPointerDown={handlePointerDown}
-          onClick={handleClick}
+          onClick={(e) => {
+            // Only open if no drag occurred - use setTimeout to check after pointer up
+            if (!hasDraggedRef.current && !isResizing) {
+              handleClick(e);
+            }
+          }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => {
             if (!isResizing) setIsHovered(false);

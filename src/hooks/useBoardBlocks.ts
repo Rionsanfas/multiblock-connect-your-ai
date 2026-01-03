@@ -64,7 +64,8 @@ export function useBlockActions(boardId: string) {
   const canModify = !!user?.id && !!boardId;
 
   /**
-   * Create a block via Supabase with optimistic UI
+   * Create a block via Supabase with OPTIMISTIC UI
+   * Block appears immediately, then syncs with server
    */
   const createBlock = useCallback(async (data: Partial<Block>): Promise<Block | null> => {
     if (!canModify) {
@@ -93,7 +94,34 @@ export function useBlockActions(boardId: string) {
     
     const supabaseProvider = providerMap[provider] || 'openai';
 
-    devLog('[useBlockActions.createBlock] Creating block...');
+    // Create optimistic block for immediate UI
+    const optimisticId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const optimisticBlock = {
+      id: optimisticId,
+      board_id: boardId,
+      user_id: user!.id,
+      title: data.title || 'New Block',
+      model_id: data.model_id || '',
+      provider: supabaseProvider,
+      system_prompt: data.system_prompt || 'You are a helpful assistant.',
+      position_x: data.position?.x || 100,
+      position_y: data.position?.y || 100,
+      width: 400,
+      height: 300,
+      is_collapsed: false,
+      color: null,
+      created_at: now,
+      updated_at: now,
+    };
+
+    devLog('[useBlockActions.createBlock] Optimistic create:', optimisticId);
+
+    // Optimistic update - add to cache immediately
+    queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
+      const arr = Array.isArray(old) ? old : [];
+      return [...arr, optimisticBlock];
+    });
 
     try {
       // INSERT into Supabase - returns full row
@@ -111,8 +139,11 @@ export function useBlockActions(boardId: string) {
 
       devLog('[useBlockActions.createBlock] Insert succeeded:', block.id);
 
-      // Invalidate query cache to trigger re-fetch
-      await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
+      // Replace optimistic block with real block in cache
+      queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.map((b: any) => b.id === optimisticId ? block : b);
+      });
 
       // Return the block from Supabase
       return {
@@ -129,12 +160,17 @@ export function useBlockActions(boardId: string) {
       };
     } catch (error) {
       devError('[useBlockActions.createBlock] Failed:', error);
+      // Rollback optimistic update
+      queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.filter((b: any) => b.id !== optimisticId);
+      });
       throw error;
     }
   }, [boardId, canModify, user, enforceCreateBlock, queryClient]);
 
   /**
-   * Update a block via Supabase
+   * Update a block via Supabase with optimistic UI
    */
   const updateBlock = useCallback(async (blockId: string, updates: Partial<Block>) => {
     if (!canModify) {
@@ -143,16 +179,39 @@ export function useBlockActions(boardId: string) {
 
     devLog('[useBlockActions.updateBlock] Updating:', blockId);
 
-    await blocksDb.update(blockId, {
-      title: updates.title,
-      system_prompt: updates.system_prompt,
-      model_id: updates.model_id,
-      position_x: updates.position?.x,
-      position_y: updates.position?.y,
+    // Get current cache for rollback
+    const previousBlocks = queryClient.getQueryData(['board-blocks', boardId]);
+
+    // Optimistic update - apply changes immediately
+    queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
+      const arr = Array.isArray(old) ? old : [];
+      return arr.map((b: any) => {
+        if (b?.id !== blockId) return b;
+        return {
+          ...b,
+          title: updates.title ?? b.title,
+          system_prompt: updates.system_prompt ?? b.system_prompt,
+          model_id: updates.model_id ?? b.model_id,
+          position_x: updates.position?.x ?? b.position_x,
+          position_y: updates.position?.y ?? b.position_y,
+          updated_at: new Date().toISOString(),
+        };
+      });
     });
 
-    // Invalidate cache
-    await queryClient.invalidateQueries({ queryKey: ['board-blocks', boardId] });
+    try {
+      await blocksDb.update(blockId, {
+        title: updates.title,
+        system_prompt: updates.system_prompt,
+        model_id: updates.model_id,
+        position_x: updates.position?.x,
+        position_y: updates.position?.y,
+      });
+    } catch (error) {
+      // Rollback on failure
+      queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
+      throw error;
+    }
   }, [boardId, canModify, queryClient]);
 
   /**
