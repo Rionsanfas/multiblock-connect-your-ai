@@ -20,21 +20,25 @@ import {
 import { WorkspaceSwitcher } from "@/components/teams/WorkspaceSwitcher";
 import { useTeamContext } from "@/contexts/TeamContext";
 import { useInboxCount } from "@/hooks/useInboxCount";
+import { useTeamAccess } from "@/hooks/useTeamAccess";
 import { Badge } from "@/components/ui/badge";
-
-const navItems = [
-  { icon: Layers, label: "Boards", href: "/dashboard", showAlways: true },
-  { icon: Key, label: "API Keys", href: "/settings/keys", showAlways: true },
-  { icon: Users, label: "Team Settings", href: "/team/settings", showAlways: true },
-  { icon: CreditCard, label: "Pricing", href: "/pricing", showForFreePlanOnly: true },
-  { icon: Settings, label: "Settings", href: "/settings", showAlways: true },
-];
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { user } = useCurrentUser();
   const { count: inboxCount } = useInboxCount();
+  const { hasTeamAccess, isLoading: teamAccessLoading } = useTeamAccess();
+
+  // Build nav items dynamically based on access
+  const navItems = [
+    { icon: Layers, label: "Boards", href: "/dashboard", show: true },
+    { icon: Key, label: "API Keys", href: "/settings/keys", show: true },
+    // Only show Team Settings if user has team access
+    { icon: Users, label: "Team Settings", href: "/team/settings", show: hasTeamAccess && !teamAccessLoading },
+    { icon: CreditCard, label: "Pricing", href: "/pricing", show: user?.plan?.toLowerCase() === 'free' },
+    { icon: Settings, label: "Settings", href: "/settings", show: true },
+  ];
 
   return (
     <aside
@@ -86,13 +90,7 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-2 space-y-1">
-        {navItems.map((item) => {
-          // Show based on plan conditions
-          const isFreePlan = user?.plan?.toLowerCase() === 'free';
-          
-          if (item.showForFreePlanOnly && !isFreePlan) return null;
-          if (!item.showAlways && !item.showForFreePlanOnly) return null;
-          
+        {navItems.filter(item => item.show).map((item) => {
           const isActive = location.pathname === item.href;
           const NavItem = (
             <Link

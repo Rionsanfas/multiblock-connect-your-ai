@@ -385,10 +385,29 @@ export function useAcceptInvitation() {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['user-pending-invitations'] });
       toast.success(`Joined ${result.team_name}`);
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to accept invitation');
+      const message = error.message;
+      
+      // Provide user-friendly error messages
+      if (message.includes('EMAIL_MISMATCH')) {
+        toast.error('This invitation was sent to a different email address');
+      } else if (message.includes('INVITATION_EXPIRED')) {
+        toast.error('This invitation has expired');
+      } else if (message.includes('INVITATION_ALREADY_ACCEPTED')) {
+        toast.error('This invitation has already been used');
+      } else if (message.includes('INVITATION_NOT_FOUND')) {
+        toast.error('Invitation not found or already used');
+      } else if (message.includes('SEAT_LIMIT_REACHED')) {
+        toast.error('Team has reached its seat limit');
+      } else if (message.includes('ALREADY_MEMBER')) {
+        // This is actually a success case
+        toast.success('You are already a member of this team');
+      } else {
+        toast.error(message || 'Failed to accept invitation');
+      }
     },
   });
 }

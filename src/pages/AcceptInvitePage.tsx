@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, CheckCircle, XCircle, Users } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Users, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAcceptInvitation } from '@/hooks/useTeamsData';
 import { useAuth } from '@/hooks/useAuth';
+import { useTeamContext } from '@/contexts/TeamContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface InvitationInfo {
@@ -18,11 +19,13 @@ export default function AcceptInvitePage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
+  const { switchToTeam } = useTeamContext();
   const acceptInvitation = useAcceptInvitation();
   
   const [invitationInfo, setInvitationInfo] = useState<InvitationInfo | null>(null);
   const [loadingInfo, setLoadingInfo] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [emailMismatch, setEmailMismatch] = useState(false);
 
   // Fetch invitation info
   useEffect(() => {
@@ -69,6 +72,11 @@ export default function AcceptInvitePage() {
           email: data.email,
           expires_at: data.expires_at,
         });
+
+        // Check email mismatch if user is logged in
+        if (user?.email && user.email.toLowerCase() !== data.email.toLowerCase()) {
+          setEmailMismatch(true);
+        }
       } catch {
         setError('Failed to load invitation');
       } finally {
@@ -77,13 +85,17 @@ export default function AcceptInvitePage() {
     }
 
     fetchInvitation();
-  }, [token]);
+  }, [token, user?.email]);
 
   const handleAccept = async () => {
     if (!token) return;
     
     try {
-      await acceptInvitation.mutateAsync(token);
+      const result = await acceptInvitation.mutateAsync(token);
+      // Switch to the joined team
+      if (result.team_id) {
+        switchToTeam(result.team_id);
+      }
       navigate('/dashboard');
     } catch {
       // Error handled in mutation
@@ -196,11 +208,25 @@ export default function AcceptInvitePage() {
             <p className="text-sm text-muted-foreground mb-1">Invited email</p>
             <p className="font-medium">{invitationInfo?.email}</p>
           </div>
+
+          {/* Email mismatch warning */}
+          {emailMismatch && (
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-yellow-500 text-sm">Email Mismatch</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  This invitation was sent to <strong>{invitationInfo?.email}</strong>, but you're logged in as <strong>{user?.email}</strong>.
+                  You need to sign in with the invited email to accept.
+                </p>
+              </div>
+            </div>
+          )}
           
           <Button 
             className="w-full" 
             onClick={handleAccept}
-            disabled={acceptInvitation.isPending}
+            disabled={acceptInvitation.isPending || emailMismatch}
           >
             {acceptInvitation.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

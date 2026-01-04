@@ -9,8 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBilling } from "@/hooks/useBilling";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
+import { usePasswordManagement } from "@/hooks/usePasswordManagement";
+import { useDeleteAccount } from "@/hooks/useAccountDeletion";
+import { useUserTeams } from "@/hooks/useTeamsData";
 import { toast } from "sonner";
-import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera, CreditCard, LogOut } from "lucide-react";
+import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera, CreditCard, LogOut, Lock, Loader2, AlertTriangle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -18,6 +21,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BillingSection } from "@/components/billing/BillingSection";
 import { useAuth } from "@/hooks/useAuth";
 import { ADDONS, formatStorage as formatStorageUtil } from "@/config/plans";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Settings() {
   const { user: authUser, isAuthenticated } = useAuth();
@@ -65,10 +79,6 @@ export default function Settings() {
     toast.success("Cookie preferences saved");
   };
 
-  const handleDeleteAccount = () => {
-    toast.error("Account deletion requires confirmation via email");
-  };
-
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 max-w-4xl mx-auto">
@@ -90,6 +100,10 @@ export default function Settings() {
             <TabsTrigger value="profile" className="gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm">
               <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 icon-3d" />
               <span className="hidden xs:inline">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm">
+              <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 icon-3d" />
+              <span className="hidden xs:inline">Security</span>
             </TabsTrigger>
             <TabsTrigger value="cookies" className="gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm">
               <Cookie className="h-3.5 w-3.5 sm:h-4 sm:w-4 icon-3d" />
@@ -178,6 +192,11 @@ export default function Settings() {
                 <Button onClick={handleProfileSave} className="btn-3d-primary">Save Changes</Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Security Tab - Password Management */}
+          <TabsContent value="security">
+            <SecuritySection userEmail={authUser?.email || ""} />
           </TabsContent>
 
           <TabsContent value="cookies">
@@ -288,41 +307,205 @@ export default function Settings() {
                 </CardContent>
               </Card>
 
-              <Card className="settings-card-3d border-red-500/20 bg-red-500/5">
-                <CardHeader>
-                  <CardTitle className="text-red-400 flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                      <Trash2 className="h-4 w-4" />
-                    </div>
-                    Danger Zone
-                  </CardTitle>
-                  <CardDescription>
-                    Irreversible actions for your account
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Delete Account</p>
-                      <p className="text-sm text-muted-foreground">
-                        Permanently delete your account and all data
-                      </p>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      onClick={handleDeleteAccount}
-                      className="border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400"
-                    >
-                      Delete Account
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Danger Zone - Account Deletion */}
+              <DangerZoneSection />
             </div>
           </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+}
+
+// Security Section Component
+function SecuritySection({ userEmail }: { userEmail: string }) {
+  const { isLoading, sendPasswordResetEmail, updatePassword } = usePasswordManagement();
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    
+    const result = await updatePassword(newPassword);
+    if (result.success) {
+      setNewPassword('');
+      setConfirmPassword('');
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!userEmail) {
+      toast.error('No email associated with this account');
+      return;
+    }
+    await sendPasswordResetEmail(userEmail);
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card className="settings-card-3d">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3">
+            <div className="key-icon-3d p-2.5 rounded-xl">
+              <Lock className="h-4 w-4" />
+            </div>
+            Change Password
+          </CardTitle>
+          <CardDescription>Update your account password</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="new-password">New Password</Label>
+            <Input
+              id="new-password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              className="bg-secondary/30 border-border/30"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirm Password</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              className="bg-secondary/30 border-border/30"
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleChangePassword} 
+              disabled={isLoading || !newPassword || !confirmPassword}
+              className="btn-3d-primary"
+            >
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Update Password
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleForgotPassword}
+              disabled={isLoading}
+            >
+              Send Reset Email
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Danger Zone Section
+function DangerZoneSection() {
+  const deleteAccount = useDeleteAccount();
+  const { data: teams = [] } = useUserTeams();
+  const [confirmText, setConfirmText] = useState('');
+  
+  const ownedTeams = teams.filter(t => t.is_owner);
+  const hasOwnedTeams = ownedTeams.length > 0;
+
+  return (
+    <Card className="settings-card-3d border-red-500/20 bg-red-500/5">
+      <CardHeader>
+        <CardTitle className="text-red-400 flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20">
+            <Trash2 className="h-4 w-4" />
+          </div>
+          Danger Zone
+        </CardTitle>
+        <CardDescription>
+          Irreversible actions for your account
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {hasOwnedTeams && (
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+            <AlertTriangle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-yellow-500">Teams require attention</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                You own {ownedTeams.length} team(s). You must transfer ownership or delete these teams before deleting your account:
+              </p>
+              <ul className="mt-2 space-y-1">
+                {ownedTeams.map(team => (
+                  <li key={team.team_id} className="text-sm">
+                    <Link 
+                      to={`/team/settings/${team.team_id}`}
+                      className="text-primary hover:underline"
+                    >
+                      {team.team_name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium">Delete Account</p>
+            <p className="text-sm text-muted-foreground">
+              Permanently delete your account and all data
+            </p>
+          </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                disabled={hasOwnedTeams}
+                className="border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400"
+              >
+                Delete Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-border/30">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-red-400">Delete Account?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account
+                  and all associated data including boards, blocks, messages, and API keys.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2 py-4">
+                <Label htmlFor="confirm-delete">Type "DELETE" to confirm</Label>
+                <Input
+                  id="confirm-delete"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="bg-secondary/30 border-border/30"
+                />
+              </div>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setConfirmText('')}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteAccount.mutate()}
+                  disabled={confirmText !== 'DELETE' || deleteAccount.isPending}
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
+                  {deleteAccount.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  Delete Account
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -415,70 +598,40 @@ function PlanUsageSection() {
                 <HardDrive className="h-4 w-4 text-primary" />
                 <span className="font-medium text-sm">Storage</span>
               </div>
-              <Progress 
-                value={storagePercentage} 
-                className={`h-2 mb-2 ${isStorageNearLimit ? '[&>div]:bg-amber-500' : ''}`}
-              />
+              <Progress value={storagePercentage} className="h-2 mb-2" />
               <p className="text-xs text-muted-foreground">
                 {formatStorage(storageUsedMb)} of {formatStorage(storageLimitMb)} used
               </p>
-              {isStorageNearLimit && (
-                <p className="text-xs text-amber-500 mt-1">Approaching storage limit</p>
-              )}
             </GlassCard>
           </div>
         </CardContent>
       </Card>
 
-      {/* Board Add-ons */}
+      {/* Available Add-ons */}
       <Card className="bg-card/80 backdrop-blur-xl border-border/50">
         <CardHeader>
-          <CardTitle>Board Add-ons</CardTitle>
-          <CardDescription>Expand your workspace with extra boards and storage</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            Power-ups
+          </CardTitle>
+          <CardDescription>Expand your workspace capabilities</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {ADDONS.filter(a => a.is_active).slice(0, 4).map((addon) => (
-              <GlassCard key={addon.id} variant="hover" className="p-4 text-center">
-                <div className="text-2xl font-bold text-primary mb-1">+{addon.extra_boards}</div>
-                <div className="text-xs text-muted-foreground mb-2">boards</div>
-                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-3">
-                  <HardDrive className="h-3 w-3" />
-                  +{formatStorageUtil(addon.extra_storage_mb)}
+          <div className="grid gap-4">
+            {ADDONS.map((addon) => (
+              <GlassCard key={addon.id} className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{addon.name}</p>
+                    <p className="text-sm text-muted-foreground">{addon.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatPrice(addon.price_cents)}</p>
+                    <p className="text-xs text-muted-foreground">one-time</p>
+                  </div>
                 </div>
-                <div className="text-lg font-bold mb-2">{formatPrice(addon.price_cents)}</div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full text-xs"
-                  onClick={() => {
-                    if (addon.checkout_url) {
-                      window.open(addon.checkout_url, '_blank');
-                    } else {
-                      toast.info("Add-on checkout coming soon");
-                    }
-                  }}
-                >
-                  Add
-                </Button>
               </GlassCard>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Storage Info */}
-      <Card className="bg-muted/30 border-border/50">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <HardDrive className="h-5 w-5 text-muted-foreground mt-0.5" />
-            <div>
-              <p className="font-medium text-sm mb-1">About Storage</p>
-              <p className="text-xs text-muted-foreground">
-                Your storage quota covers all your data including messages, block configurations, 
-                system prompts, and any files you upload. Storage usage is calculated in real-time.
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>

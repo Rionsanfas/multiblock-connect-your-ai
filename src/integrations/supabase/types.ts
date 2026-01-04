@@ -963,6 +963,13 @@ export type Database = {
         Args: { p_team_id: string; p_transfer_boards?: boolean }
         Returns: boolean
       }
+      delete_user_account: {
+        Args: never
+        Returns: {
+          error_message: string
+          success: boolean
+        }[]
+      }
       get_block_incoming_connections: {
         Args: { p_block_id: string }
         Returns: {

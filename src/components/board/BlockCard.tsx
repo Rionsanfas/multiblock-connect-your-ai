@@ -111,10 +111,10 @@ export function BlockCard({
 
   // Separate click handler - only fires if no drag occurred
   const handleClick = (e: React.MouseEvent) => {
-    // CRITICAL: Block click if any dragging occurred recently (within 100ms)
+    // CRITICAL: Block click if any dragging occurred recently (within 200ms)
     // This handles the race condition where click fires after pointer up
     const timeSinceDragEnd = Date.now() - dragEndTimeRef.current;
-    if (hasDraggedRef.current || isResizing || timeSinceDragEnd < 100) {
+    if (timeSinceDragEnd < 200 || isDragging || isResizing) {
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -345,12 +345,7 @@ export function BlockCard({
             touchAction: 'none',
           }}
           onPointerDown={handlePointerDown}
-          onClick={(e) => {
-            // Only open if no drag occurred - use setTimeout to check after pointer up
-            if (!hasDraggedRef.current && !isResizing) {
-              handleClick(e);
-            }
-          }}
+          onClick={handleClick}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => {
             if (!isResizing) setIsHovered(false);
