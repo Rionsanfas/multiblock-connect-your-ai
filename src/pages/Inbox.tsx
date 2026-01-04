@@ -7,6 +7,7 @@ import { Inbox as InboxIcon, Check, X, Users, Loader2, Crown, Shield, User } fro
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { useTeamContext } from '@/contexts/TeamContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ROLE_ICONS = {
   owner: Crown,
@@ -16,18 +17,26 @@ const ROLE_ICONS = {
 
 export default function InboxPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { switchToTeam } = useTeamContext();
   const { data: invitations = [], isLoading } = useUserPendingInvitations();
   const acceptInvitation = useAcceptInvitation();
   const declineInvitation = useDeclineInvitation();
 
   const handleAccept = async (token: string, teamId: string) => {
-    acceptInvitation.mutate(token, {
-      onSuccess: () => {
-        switchToTeam(teamId);
-        navigate('/dashboard');
-      },
-    });
+    try {
+      const result = await acceptInvitation.mutateAsync(token);
+      // Invalidate teams query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      
+      // Switch to the joined team if successful
+      if (result.team_id) {
+        switchToTeam(result.team_id);
+      }
+      navigate('/dashboard');
+    } catch {
+      // Error is handled in the mutation's onError
+    }
   };
 
   const handleDecline = (invitationId: string) => {

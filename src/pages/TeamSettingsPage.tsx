@@ -3,28 +3,38 @@ import { TeamSettings } from '@/components/teams/TeamSettings';
 import { useParams, Navigate } from 'react-router-dom';
 import { useTeamContext } from '@/contexts/TeamContext';
 import { useUserTeams } from '@/hooks/useTeamsData';
+import { useTeamAccess } from '@/hooks/useTeamAccess';
 import { Loader2 } from 'lucide-react';
 
 export default function TeamSettingsPage() {
   const { teamId: paramTeamId } = useParams();
   const { currentWorkspace, isTeamWorkspace } = useTeamContext();
-  const { data: teams = [], isLoading } = useUserTeams();
+  const { data: teams = [], isLoading: teamsLoading } = useUserTeams();
+  const { hasTeamAccess, isLoading: accessLoading } = useTeamAccess();
   
   // Priority: URL param > current workspace context
   const effectiveTeamId = paramTeamId || (isTeamWorkspace ? currentWorkspace.teamId : null);
   
-  // If no team in URL and not in team workspace, show team selector
+  const isLoading = teamsLoading || accessLoading;
+
+  // If loading, show spinner
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // If user doesn't have team access, redirect to dashboard
+  if (!hasTeamAccess) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // If no team in URL and not in team workspace, show team selector or redirect
   if (!effectiveTeamId) {
-    if (isLoading) {
-      return (
-        <DashboardLayout>
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </DashboardLayout>
-      );
-    }
-    
     if (teams.length === 0) {
       return (
         <DashboardLayout>

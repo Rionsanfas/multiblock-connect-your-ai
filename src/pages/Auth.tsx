@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,11 +12,21 @@ import { z } from "zod";
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 
+type AuthMode = 'signin' | 'signup' | 'forgot-password' | 'reset-password';
+
 export default function Auth() {
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<'signin' | 'signup'>(searchParams.get('signup') ? 'signup' : 'signin');
+  const isReset = searchParams.get('reset') === 'true';
+  
+  const [mode, setMode] = useState<AuthMode>(() => {
+    if (isReset) return 'reset-password';
+    if (searchParams.get('signup')) return 'signup';
+    return 'signin';
+  });
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +36,7 @@ export default function Auth() {
   const [phase, setPhase] = useState(0);
   
   const navigate = useNavigate();
-  const { signIn, signUp, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { signIn, signUp, resetPassword, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Intro animation sequence
   useEffect(() => {
@@ -61,11 +71,13 @@ export default function Auth() {
       }
     }
     
-    try {
-      passwordSchema.parse(password);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.password = e.errors[0].message;
+    if (mode !== 'forgot-password') {
+      try {
+        passwordSchema.parse(password);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.password = e.errors[0].message;
+        }
       }
     }
     
@@ -86,7 +98,15 @@ export default function Auth() {
     setErrors({});
     
     try {
-      if (mode === 'signup') {
+      if (mode === 'forgot-password') {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast.error(error.message);
+        } else {
+          toast.success("Password reset email sent! Check your inbox.");
+          setMode('signin');
+        }
+      } else if (mode === 'signup') {
         const { error } = await signUp(email, password, fullName);
         if (error) {
           if (error.message.includes('already registered')) {
@@ -153,6 +173,24 @@ export default function Auth() {
     opacity: phase >= 4 ? 1 : 0,
     transform: phase >= 4 ? 'translateY(0)' : 'translateY(10px)',
     transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 100ms',
+  };
+
+  const getTitle = () => {
+    switch (mode) {
+      case 'signup': return 'Create your account';
+      case 'forgot-password': return 'Reset your password';
+      case 'reset-password': return 'Set new password';
+      default: return 'Welcome back';
+    }
+  };
+
+  const getSubtitle = () => {
+    switch (mode) {
+      case 'signup': return 'Start building with AI-powered blocks';
+      case 'forgot-password': return 'Enter your email to receive a reset link';
+      case 'reset-password': return 'Enter your new password below';
+      default: return 'Sign in to continue to your workspace';
+    }
   };
 
   return (
@@ -241,16 +279,14 @@ export default function Auth() {
                 MultiBlock
               </Link>
               <h1 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">
-                {mode === 'signup' ? 'Create your account' : 'Welcome back'}
+                {getTitle()}
               </h1>
               <p className="text-muted-foreground text-xs sm:text-sm">
-                {mode === 'signup' 
-                  ? 'Start building with AI-powered blocks' 
-                  : 'Sign in to continue to your workspace'}
+                {getSubtitle()}
               </p>
             </div>
 
-              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {mode === 'signup' && (
                 <div className="space-y-1.5 sm:space-y-2" style={formFieldStyle(0)}>
                   <Label htmlFor="fullName" className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -287,31 +323,46 @@ export default function Auth() {
                 )}
               </div>
               
-              <div className="space-y-1.5 sm:space-y-2" style={formFieldStyle(mode === 'signup' ? 100 : 50)}>
-                <Label htmlFor="password" className="text-xs text-muted-foreground uppercase tracking-wider">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pr-11 h-10 sm:h-12 text-sm sm:text-base bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
-                  />
+              {mode !== 'forgot-password' && (
+                <div className="space-y-1.5 sm:space-y-2" style={formFieldStyle(mode === 'signup' ? 100 : 50)}>
+                  <Label htmlFor="password" className="text-xs text-muted-foreground uppercase tracking-wider">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pr-11 h-10 sm:h-12 text-sm sm:text-base bg-secondary/30 border-border/50 rounded-xl focus:border-foreground/50 focus:ring-foreground/20 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-destructive">{errors.password}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Forgot password link - only show on signin */}
+              {mode === 'signin' && (
+                <div className="text-right" style={formFieldStyle(100)}>
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setMode('forgot-password')}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    Forgot password?
                   </button>
                 </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password}</p>
-                )}
-              </div>
+              )}
 
               {/* Divider for signup */}
               {mode === 'signup' && (
@@ -332,7 +383,10 @@ export default function Auth() {
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <>
-                      {mode === 'signup' ? 'Create Account' : 'Sign In'}
+                      {mode === 'signup' && 'Create Account'}
+                      {mode === 'signin' && 'Sign In'}
+                      {mode === 'forgot-password' && 'Send Reset Link'}
+                      {mode === 'reset-password' && 'Update Password'}
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
@@ -341,7 +395,7 @@ export default function Auth() {
             </form>
 
             <div className="mt-6 text-center" style={footerStyle}>
-              {mode === 'signin' ? (
+              {mode === 'signin' && (
                 <p className="text-sm text-muted-foreground">
                   Don't have an account?{" "}
                   <button 
@@ -351,7 +405,8 @@ export default function Auth() {
                     Sign up
                   </button>
                 </p>
-              ) : (
+              )}
+              {mode === 'signup' && (
                 <p className="text-sm text-muted-foreground">
                   Already have an account?{" "}
                   <button 
@@ -361,6 +416,15 @@ export default function Auth() {
                     Sign in
                   </button>
                 </p>
+              )}
+              {mode === 'forgot-password' && (
+                <button 
+                  onClick={() => setMode('signin')} 
+                  className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mx-auto transition-colors"
+                >
+                  <ArrowLeft className="h-3 w-3" />
+                  Back to sign in
+                </button>
               )}
             </div>
 
