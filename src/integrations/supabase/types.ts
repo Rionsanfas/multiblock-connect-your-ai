@@ -921,6 +921,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      can_access_block: { Args: { p_block_id: string }; Returns: boolean }
+      can_access_block_messages: {
+        Args: { p_block_id: string }
+        Returns: boolean
+      }
       can_add_api_key: { Args: { p_user_id: string }; Returns: boolean }
       can_create_block: {
         Args: { p_board_id: string; p_user_id: string }
@@ -1181,6 +1186,7 @@ export type Database = {
         Returns: boolean
       }
       reset_daily_usage: { Args: never; Returns: undefined }
+      shares_team_with: { Args: { target_user_id: string }; Returns: boolean }
       team_can_add_member: { Args: { p_team_id: string }; Returns: boolean }
       transfer_board_to_team: {
         Args: { p_board_id: string; p_team_id: string }
