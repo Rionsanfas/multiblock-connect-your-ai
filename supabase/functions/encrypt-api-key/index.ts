@@ -163,7 +163,7 @@ serve(async (req) => {
       });
     }
 
-    const { action, provider, api_key, key_id } = await req.json();
+    const { action, provider, api_key, key_id, team_id } = await req.json();
 
     if (action === "encrypt") {
       // Encrypt and store a new API key
@@ -177,21 +177,67 @@ serve(async (req) => {
       const encryptedKey = await encrypt(api_key, ENCRYPTION_KEY);
       const keyHint = getKeyHint(api_key);
 
+      // Prepare the upsert data
+      const keyData: Record<string, unknown> = {
+        user_id: user.id,
+        provider,
+        api_key_encrypted: encryptedKey,
+        key_hint: keyHint,
+        is_valid: true,
+        last_validated_at: new Date().toISOString(),
+      };
+
+      // If team_id is provided, this is a team key
+      if (team_id) {
+        keyData.team_id = team_id;
+      }
+
       // Upsert the encrypted key
-      const { data, error } = await supabase
-        .from("api_keys")
-        .upsert({
-          user_id: user.id,
-          provider,
-          api_key_encrypted: encryptedKey,
-          key_hint: keyHint,
-          is_valid: true,
-          last_validated_at: new Date().toISOString(),
-        }, {
-          onConflict: "user_id,provider",
-        })
-        .select("id, provider, key_hint, is_valid, created_at")
-        .single();
+      // For team keys, conflict on (team_id, provider)
+      // For personal keys, conflict on (user_id, provider) where team_id IS NULL
+      let query;
+      if (team_id) {
+        // For team keys - check if key exists for this team + provider
+        const { data: existingKey } = await supabase
+          .from("api_keys")
+          .select("id")
+          .eq("team_id", team_id)
+          .eq("provider", provider)
+          .single();
+
+        if (existingKey) {
+          // Update existing team key
+          query = supabase
+            .from("api_keys")
+            .update({
+              api_key_encrypted: encryptedKey,
+              key_hint: keyHint,
+              is_valid: true,
+              last_validated_at: new Date().toISOString(),
+            })
+            .eq("id", existingKey.id)
+            .select("id, provider, key_hint, is_valid, created_at, team_id")
+            .single();
+        } else {
+          // Insert new team key
+          query = supabase
+            .from("api_keys")
+            .insert(keyData)
+            .select("id, provider, key_hint, is_valid, created_at, team_id")
+            .single();
+        }
+      } else {
+        // For personal keys - use upsert with conflict on user_id + provider
+        query = supabase
+          .from("api_keys")
+          .upsert(keyData, {
+            onConflict: "user_id,provider",
+          })
+          .select("id, provider, key_hint, is_valid, created_at, team_id")
+          .single();
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error storing API key:", error);
@@ -201,7 +247,7 @@ serve(async (req) => {
         });
       }
 
-      console.log(`[encrypt-api-key] Stored AES-256-GCM encrypted key for provider: ${provider}, user: ${user.id}`);
+      console.log(`[encrypt-api-key] Stored AES-256-GCM encrypted key for provider: ${provider}, user: ${user.id}${team_id ? `, team: ${team_id}` : ''}`);
 
       return new Response(JSON.stringify({ success: true, data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -227,13 +273,28 @@ serve(async (req) => {
         });
       }
 
+      // First check if the key exists and user has permission
+      const { data: keyInfo, error: fetchError } = await supabase
+        .from("api_keys")
+        .select("id, user_id, team_id")
+        .eq("id", key_id)
+        .single();
+
+      if (fetchError || !keyInfo) {
+        return new Response(JSON.stringify({ error: "API key not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // RLS will handle the actual permission check, but we log what's happening
       const { error } = await supabase
         .from("api_keys")
         .delete()
-        .eq("id", key_id)
-        .eq("user_id", user.id);
+        .eq("id", key_id);
 
       if (error) {
+        console.error("Error deleting API key:", error);
         return new Response(JSON.stringify({ error: "Failed to delete API key" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

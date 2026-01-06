@@ -23,6 +23,7 @@ export type Database = {
           key_hint: string | null
           last_validated_at: string | null
           provider: Database["public"]["Enums"]["llm_provider"]
+          team_id: string | null
           updated_at: string
           user_id: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           key_hint?: string | null
           last_validated_at?: string | null
           provider: Database["public"]["Enums"]["llm_provider"]
+          team_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -45,10 +47,18 @@ export type Database = {
           key_hint?: string | null
           last_validated_at?: string | null
           provider?: Database["public"]["Enums"]["llm_provider"]
+          team_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "api_keys_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "api_keys_user_id_fkey"
             columns: ["user_id"]
@@ -843,6 +853,7 @@ export type Database = {
           key_hint: string | null
           last_validated_at: string | null
           provider: Database["public"]["Enums"]["llm_provider"] | null
+          team_id: string | null
           updated_at: string | null
           user_id: string | null
         }
@@ -853,6 +864,7 @@ export type Database = {
           key_hint?: string | null
           last_validated_at?: string | null
           provider?: Database["public"]["Enums"]["llm_provider"] | null
+          team_id?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -863,10 +875,18 @@ export type Database = {
           key_hint?: string | null
           last_validated_at?: string | null
           provider?: Database["public"]["Enums"]["llm_provider"] | null
+          team_id?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "api_keys_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "api_keys_user_id_fkey"
             columns: ["user_id"]
@@ -933,6 +953,7 @@ export type Database = {
       }
       can_create_board: { Args: { p_user_id: string }; Returns: boolean }
       can_delete_team: { Args: { p_team_id: string }; Returns: boolean }
+      can_manage_team_api_key: { Args: { p_team_id: string }; Returns: boolean }
       can_send_message: {
         Args: { p_message_size_bytes?: number; p_user_id: string }
         Returns: boolean
@@ -945,6 +966,7 @@ export type Database = {
         Args: { p_file_size_bytes?: number; p_user_id: string }
         Returns: boolean
       }
+      can_view_team_api_key: { Args: { p_team_id: string }; Returns: boolean }
       create_team: { Args: { p_name: string; p_slug: string }; Returns: string }
       create_team_invitation: {
         Args: {
@@ -1028,6 +1050,15 @@ export type Database = {
         Returns: {
           remaining_seats: number
           total_seats: number
+        }[]
+      }
+      get_team_api_key: {
+        Args: {
+          p_provider: Database["public"]["Enums"]["llm_provider"]
+          p_team_id: string
+        }
+        Returns: {
+          api_key_encrypted: string
         }[]
       }
       get_team_limits: {

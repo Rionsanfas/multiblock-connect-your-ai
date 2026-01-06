@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Key, Eye, EyeOff, Trash2, Check, X, Loader2, Shield, ExternalLink, AlertCircle } from "lucide-react";
+import { Plus, Key, Eye, EyeOff, Trash2, Check, X, Loader2, Shield, ExternalLink, AlertCircle, Users } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import { toast } from "sonner";
-import type { LLMProvider, ApiKeyDisplay } from "@/types/database.types";
+import type { LLMProvider } from "@/types/database.types";
+import type { ApiKeyWithTeam } from "@/services/apiKeyService";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useTeamContext } from "@/contexts/TeamContext";
 
 // Supported providers that match Supabase llm_provider enum
 const SUPPORTED_PROVIDERS: { id: LLMProvider; name: string; color: string; apiKeyUrl: string }[] = [
@@ -30,6 +32,7 @@ export default function ApiKeys() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isTeamWorkspace, currentTeamId, currentTeam, canManageTeam } = useTeamContext();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -42,20 +45,22 @@ export default function ApiKeys() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ valid: boolean; error?: string } | null>(null);
 
-  // Fetch API keys from Supabase
+  // Fetch API keys based on current workspace
   const { data: userKeys = [], isLoading: keysLoading, error: keysError } = useQuery({
-    queryKey: ['api-keys'],
-    queryFn: () => api.keys.list(),
+    queryKey: ['api-keys', isTeamWorkspace ? currentTeamId : 'personal'],
+    queryFn: () => isTeamWorkspace && currentTeamId 
+      ? api.keys.listTeamKeys(currentTeamId) 
+      : api.keys.list(),
     enabled: isAuthenticated,
   });
 
   // Mutation to add/update API key
   const addKeyMutation = useMutation({
     mutationFn: ({ provider, apiKey }: { provider: LLMProvider; apiKey: string }) => 
-      api.keys.upsert(provider, apiKey),
+      api.keys.upsert(provider, apiKey, isTeamWorkspace ? currentTeamId : null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['api-keys'] });
-      toast.success("API key saved successfully");
+      toast.success(isTeamWorkspace ? "Team API key saved successfully" : "API key saved successfully");
       setIsAddModalOpen(false);
       setNewKey({ provider: "", key: "" });
       setTestResult(null);
@@ -135,18 +140,35 @@ export default function ApiKeys() {
     );
   }
 
+  // Check if user can add/delete keys in current workspace
+  const canManageKeys = isTeamWorkspace ? canManageTeam : true;
+
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold">API Keys</h1>
-            <p className="text-sm text-muted-foreground">Manage your AI provider API keys (BYOK)</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold">API Keys</h1>
+              {isTeamWorkspace && currentTeam && (
+                <Badge variant="secondary" className="gap-1">
+                  <Users className="h-3 w-3" />
+                  {currentTeam.team_name}
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {isTeamWorkspace 
+                ? "Team API keys are shared with all team members" 
+                : "Manage your personal AI provider API keys (BYOK)"}
+            </p>
           </div>
-          <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            Add Key
-          </Button>
+          {canManageKeys && (
+            <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl w-full sm:w-auto">
+              <Plus className="h-4 w-4" />
+              Add Key
+            </Button>
+          )}
         </div>
 
         {/* Security Notice */}
@@ -155,7 +177,11 @@ export default function ApiKeys() {
             <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
             <div className="text-xs sm:text-sm">
               <span className="font-medium">Your keys are stored securely</span>
-              <span className="text-muted-foreground ml-1 sm:ml-2 hidden sm:inline">Keys are encrypted in our database</span>
+              <span className="text-muted-foreground ml-1 sm:ml-2 hidden sm:inline">
+                {isTeamWorkspace 
+                  ? "Team keys are encrypted and accessible to all team members"
+                  : "Keys are encrypted in our database"}
+              </span>
             </div>
           </div>
         </GlassCard>
@@ -175,19 +201,22 @@ export default function ApiKeys() {
         {userKeys.length === 0 ? (
           <EmptyState
             icon={Key}
-            title="No API keys configured"
-            description="Add your AI provider API keys to start using the app with your own accounts"
-            action={
+            title={isTeamWorkspace ? "No team API keys configured" : "No API keys configured"}
+            description={isTeamWorkspace 
+              ? "Add team API keys that will be shared with all team members"
+              : "Add your AI provider API keys to start using the app with your own accounts"}
+            action={canManageKeys ? (
               <Button onClick={() => setIsAddModalOpen(true)} className="gap-2 btn-3d-shiny text-foreground font-medium rounded-xl">
                 <Plus className="h-4 w-4" />
                 Add Your First Key
               </Button>
-            }
+            ) : undefined}
           />
         ) : (
           <div className="space-y-3 sm:space-y-4">
-            {userKeys.map((key: ApiKeyDisplay) => {
+            {(userKeys as ApiKeyWithTeam[]).map((key) => {
               const providerInfo = getProviderInfo(key.provider);
+              const isTeamKey = !!key.team_id;
               return (
                 <GlassCard key={key.id} variant="soft" className="p-3 sm:p-5 rounded-xl sm:rounded-2xl">
                   <div className="flex items-center justify-between gap-3">
@@ -204,6 +233,12 @@ export default function ApiKeys() {
                           {key.is_valid === false && (
                             <Badge variant="destructive" className="text-xs">Invalid</Badge>
                           )}
+                          {isTeamKey && (
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Users className="h-3 w-3" />
+                              Team
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 text-xs text-muted-foreground mt-0.5 sm:mt-1">
                           <span className="font-mono">{showKeys[key.id] ? key.key_hint : "••••••"}</span>
@@ -218,13 +253,15 @@ export default function ApiKeys() {
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setDeleteId(key.id)}
-                      disabled={deleteKeyMutation.isPending}
-                      className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105 disabled:opacity-50 flex-shrink-0"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {canManageKeys && (
+                      <button
+                        onClick={() => setDeleteId(key.id)}
+                        disabled={deleteKeyMutation.isPending}
+                        className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105 disabled:opacity-50 flex-shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </GlassCard>
               );
@@ -236,6 +273,11 @@ export default function ApiKeys() {
       {/* Add Key Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="bg-card/95 backdrop-blur-xl border-border/20 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              {isTeamWorkspace ? "Add Team API Key" : "Add API Key"}
+            </DialogTitle>
+          </DialogHeader>
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Add API Key</DialogTitle>
           </DialogHeader>

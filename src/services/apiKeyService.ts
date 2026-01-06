@@ -10,31 +10,68 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { LLMProvider, ApiKeyDisplay } from '@/types/database.types';
 
+export interface ApiKeyWithTeam extends ApiKeyDisplay {
+  team_id: string | null;
+}
+
 export const apiKeyService = {
   /**
-   * List all API keys for the current user
+   * List all API keys for the current user (personal keys only)
    * Returns display-safe data (no raw keys)
    */
-  async list(): Promise<ApiKeyDisplay[]> {
+  async list(): Promise<ApiKeyWithTeam[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return [];
 
     // Use the safe view that excludes the encrypted column
     const { data, error } = await supabase
       .from('api_keys_safe')
-      .select('id, provider, key_hint, is_valid, last_validated_at, created_at')
-      .eq('user_id', user.id);
+      .select('id, provider, key_hint, is_valid, last_validated_at, created_at, team_id')
+      .eq('user_id', user.id)
+      .is('team_id', null);
 
     if (error) throw error;
-    return (data || []) as ApiKeyDisplay[];
+    return (data || []) as ApiKeyWithTeam[];
+  },
+
+  /**
+   * List all API keys for a specific team
+   */
+  async listTeamKeys(teamId: string): Promise<ApiKeyWithTeam[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('api_keys_safe')
+      .select('id, provider, key_hint, is_valid, last_validated_at, created_at, team_id')
+      .eq('team_id', teamId);
+
+    if (error) throw error;
+    return (data || []) as ApiKeyWithTeam[];
+  },
+
+  /**
+   * List all visible API keys (personal + team keys user has access to)
+   */
+  async listAll(): Promise<ApiKeyWithTeam[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from('api_keys_safe')
+      .select('id, provider, key_hint, is_valid, last_validated_at, created_at, team_id');
+
+    if (error) throw error;
+    return (data || []) as ApiKeyWithTeam[];
   },
 
   /**
    * Add or update an API key using server-side encryption
+   * If teamId is provided, the key belongs to that team
    */
-  async upsert(provider: LLMProvider, apiKey: string): Promise<ApiKeyDisplay> {
+  async upsert(provider: LLMProvider, apiKey: string, teamId?: string | null): Promise<ApiKeyDisplay> {
     const { data, error } = await supabase.functions.invoke('encrypt-api-key', {
-      body: { action: 'encrypt', provider, api_key: apiKey },
+      body: { action: 'encrypt', provider, api_key: apiKey, team_id: teamId || null },
     });
 
     if (error) {
@@ -46,7 +83,7 @@ export const apiKeyService = {
       throw new Error(data?.error || 'Failed to save API key');
     }
 
-    console.log('[apiKeyService.upsert] Key saved for provider:', provider);
+    console.log('[apiKeyService.upsert] Key saved for provider:', provider, teamId ? `(team: ${teamId})` : '(personal)');
     return data.data as ApiKeyDisplay;
   },
 
