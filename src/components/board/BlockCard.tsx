@@ -82,6 +82,8 @@ export function BlockCard({
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest(".no-drag")) return;
     if (isResizing) return;
+    // Ignore right-click and middle-click
+    if (e.button !== 0) return;
 
     e.stopPropagation();
     e.preventDefault();
@@ -111,10 +113,10 @@ export function BlockCard({
 
   // Separate click handler - only fires if no drag occurred
   const handleClick = (e: React.MouseEvent) => {
-    // CRITICAL: Block click if any dragging occurred recently (within 200ms)
+    // CRITICAL: Block click if any dragging occurred recently (within 300ms)
     // This handles the race condition where click fires after pointer up
     const timeSinceDragEnd = Date.now() - dragEndTimeRef.current;
-    if (timeSinceDragEnd < 200 || isDragging || isResizing) {
+    if (timeSinceDragEnd < 300 || isDragging || isResizing || hasDraggedRef.current) {
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -220,23 +222,27 @@ export function BlockCard({
     const onPointerMove = (e: PointerEvent) => {
       if (pointerId == null || e.pointerId !== pointerId) return;
       if (isResizing) return;
+      if (didFinalizeDragRef.current) return;
 
       // Prevent page scroll on touch/trackpad while dragging
       e.preventDefault();
 
       const dx = Math.abs(e.clientX - startPos.current.x);
       const dy = Math.abs(e.clientY - startPos.current.y);
-      if (dx > 3 || dy > 3) {
+      // Use a 5px threshold before considering it a drag
+      if (dx > 5 || dy > 5) {
         hasDraggedRef.current = true;
       }
+
+      // Only move if we've exceeded the drag threshold
+      if (!hasDraggedRef.current) return;
 
       const newX = e.clientX / zoom - dragOffset.current.x;
       const newY = e.clientY / zoom - dragOffset.current.y;
       blockPositionRef.current = { x: newX, y: newY };
 
-      requestAnimationFrame(() => {
-        updateBlockPosition(block.id, { x: newX, y: newY });
-      });
+      // Use direct DOM update for smoother dragging, then sync to store
+      updateBlockPosition(block.id, { x: newX, y: newY });
     };
 
     const onPointerUp = (e: PointerEvent) => {
@@ -334,9 +340,8 @@ export function BlockCard({
         <div
           className={cn(
             "block-card absolute select-none",
-            isDragging ? "cursor-grabbing z-50" : "cursor-move",
-            isResizing && "z-50",
-            !isDragging && !isResizing && "transition-[left,top] duration-75 ease-out"
+            isDragging ? "cursor-grabbing z-50" : "cursor-grab",
+            isResizing && "z-50"
           )}
           style={{
             left: block.position.x,
