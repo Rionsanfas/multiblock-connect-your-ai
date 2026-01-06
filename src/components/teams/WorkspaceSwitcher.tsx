@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/command';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useTeamContext } from '@/contexts/TeamContext';
+import { useTeamAccess } from '@/hooks/useTeamAccess';
 import { CreateTeamDialog } from './CreateTeamDialog';
 import { toast } from 'sonner';
 
@@ -42,6 +43,17 @@ export function WorkspaceSwitcher({ collapsed = false }: WorkspaceSwitcherProps)
     switchToTeam,
     isPersonalWorkspace,
   } = useTeamContext();
+
+  const { hasTeamAccess, isLoading: teamAccessLoading } = useTeamAccess();
+
+  // Don't render the switcher if user doesn't have team access
+  if (teamAccessLoading) {
+    return null; // Loading state - don't show anything
+  }
+
+  if (!hasTeamAccess) {
+    return null; // No team access - hide switcher completely
+  }
 
   const currentLabel = isPersonalWorkspace 
     ? 'Personal' 

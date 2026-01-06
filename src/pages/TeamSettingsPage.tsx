@@ -4,6 +4,7 @@ import { useParams, Navigate } from 'react-router-dom';
 import { useTeamContext } from '@/contexts/TeamContext';
 import { useUserTeams } from '@/hooks/useTeamsData';
 import { useTeamAccess } from '@/hooks/useTeamAccess';
+import { useTeamSettingsRefresh } from '@/hooks/usePageRefresh';
 import { Loader2 } from 'lucide-react';
 
 export default function TeamSettingsPage() {
@@ -11,6 +12,9 @@ export default function TeamSettingsPage() {
   const { currentWorkspace, isTeamWorkspace } = useTeamContext();
   const { data: teams = [], isLoading: teamsLoading } = useUserTeams();
   const { hasTeamAccess, isLoading: accessLoading } = useTeamAccess();
+  
+  // Refresh data on page mount
+  useTeamSettingsRefresh();
   
   // Priority: URL param > current workspace context
   const effectiveTeamId = paramTeamId || (isTeamWorkspace ? currentWorkspace.teamId : null);

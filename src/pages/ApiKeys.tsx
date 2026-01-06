@@ -18,6 +18,7 @@ import type { ApiKeyWithTeam } from "@/services/apiKeyService";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useTeamContext } from "@/contexts/TeamContext";
+import { useApiKeysRefresh } from "@/hooks/usePageRefresh";
 
 // Supported providers that match Supabase llm_provider enum
 const SUPPORTED_PROVIDERS: { id: LLMProvider; name: string; color: string; apiKeyUrl: string }[] = [
@@ -33,6 +34,9 @@ export default function ApiKeys() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isTeamWorkspace, currentTeamId, currentTeam, canManageTeam } = useTeamContext();
+  
+  // Refresh data on page mount
+  useApiKeysRefresh();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -52,6 +56,8 @@ export default function ApiKeys() {
       ? api.keys.listTeamKeys(currentTeamId) 
       : api.keys.list(),
     enabled: isAuthenticated,
+    staleTime: 1000 * 10, // 10 seconds - ensure fresh data
+    refetchOnMount: 'always',
   });
 
   // Mutation to add/update API key

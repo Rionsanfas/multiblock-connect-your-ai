@@ -2,6 +2,8 @@
  * Workspace-aware board hooks
  * 
  * Fetches boards based on current workspace context (personal or team)
+ * 
+ * IMPORTANT: No aggressive caching - data must always be fresh on context switch
  */
 
 import { useMemo } from 'react';
@@ -32,23 +34,37 @@ function transformBoard(board: SupabaseBoard): LegacyBoard {
 
 /**
  * Get boards for the current workspace (personal or team)
+ * 
+ * Key behavior:
+ * - Refetches on workspace change (queryKey includes workspace info)
+ * - No stale time caching - always validates freshness
+ * - Filters strictly by workspace type
  */
 export function useWorkspaceBoards(): LegacyBoard[] {
   const { user: authUser, isAuthenticated } = useAuth();
   const { currentWorkspace, isTeamWorkspace } = useTeamContext();
 
   const { data: boards = [] } = useQuery({
+    // CRITICAL: queryKey must include all workspace context to trigger refetch
     queryKey: ['workspace-boards', currentWorkspace.type, currentWorkspace.teamId, authUser?.id],
     queryFn: async () => {
       if (isTeamWorkspace && currentWorkspace.teamId) {
-        return boardsDb.getForTeam(currentWorkspace.teamId);
+        // Team workspace: fetch ONLY team boards
+        const teamBoards = await boardsDb.getForTeam(currentWorkspace.teamId);
+        return teamBoards;
       }
-      return boardsDb.getAll();
+      // Personal workspace: fetch ONLY personal boards (no team_id)
+      const allBoards = await boardsDb.getAll();
+      // Filter to only personal boards (team_id is null)
+      return allBoards.filter(b => !b.team_id);
     },
     enabled: isAuthenticated && !!authUser?.id,
-    staleTime: 1000 * 60 * 2, // 2 minutes - reduce refetches
-    gcTime: 1000 * 60 * 10, // 10 minutes cache
-    refetchOnWindowFocus: false,
+    // SHORT stale time - data should be validated frequently
+    staleTime: 1000 * 10, // 10 seconds
+    gcTime: 1000 * 60 * 2, // 2 minutes cache
+    // Refetch on mount to ensure fresh data on navigation
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   return useMemo(() => boards.map(transformBoard), [boards]);
@@ -62,9 +78,14 @@ export function usePersonalBoards(): LegacyBoard[] {
 
   const { data: boards = [] } = useQuery({
     queryKey: ['personal-boards', authUser?.id],
-    queryFn: () => boardsDb.getAll(),
+    queryFn: async () => {
+      const allBoards = await boardsDb.getAll();
+      // Filter to only personal boards
+      return allBoards.filter(b => !b.team_id);
+    },
     enabled: isAuthenticated && !!authUser?.id,
-    staleTime: 30 * 1000,
+    staleTime: 1000 * 10, // 10 seconds
+    refetchOnMount: 'always',
   });
 
   return useMemo(() => boards.map(transformBoard), [boards]);
@@ -81,10 +102,12 @@ export function useBoardTransfer() {
       return boardsDb.transferToTeam(boardId, teamId);
     },
     onSuccess: () => {
-      // Invalidate all board-related queries
+      // Invalidate all board-related queries - force complete refresh
       queryClient.invalidateQueries({ queryKey: ['workspace-boards'] });
       queryClient.invalidateQueries({ queryKey: ['personal-boards'] });
       queryClient.invalidateQueries({ queryKey: ['user-boards'] });
+      // Remove from cache to force refetch
+      queryClient.removeQueries({ queryKey: ['workspace-boards'] });
       toast.success('Board transferred to team');
     },
     onError: (error: Error) => {
