@@ -107,17 +107,29 @@ export const api = {
   
   // API Keys endpoints - Using secure encryption service
   keys: {
-    // GET /api/keys - List all API keys for current user (display only, no raw keys)
+    // GET /api/keys - List all personal API keys for current user (display only, no raw keys)
     list: async () => {
       // Import dynamically to avoid circular deps
       const { apiKeyService } = await import('@/services/apiKeyService');
       return apiKeyService.list();
     },
     
-    // POST /api/keys - Add/update an API key via encrypted edge function
-    upsert: async (provider: LLMProvider, apiKey: string) => {
+    // GET /api/keys/team/:teamId - List all API keys for a team
+    listTeamKeys: async (teamId: string) => {
       const { apiKeyService } = await import('@/services/apiKeyService');
-      return apiKeyService.upsert(provider, apiKey);
+      return apiKeyService.listTeamKeys(teamId);
+    },
+    
+    // GET /api/keys/all - List all visible API keys (personal + team)
+    listAll: async () => {
+      const { apiKeyService } = await import('@/services/apiKeyService');
+      return apiKeyService.listAll();
+    },
+    
+    // POST /api/keys - Add/update an API key via encrypted edge function
+    upsert: async (provider: LLMProvider, apiKey: string, teamId?: string | null) => {
+      const { apiKeyService } = await import('@/services/apiKeyService');
+      return apiKeyService.upsert(provider, apiKey, teamId);
     },
     
     // DELETE /api/keys/:id - Delete via encrypted edge function
