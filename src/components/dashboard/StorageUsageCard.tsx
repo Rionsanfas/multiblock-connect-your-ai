@@ -6,11 +6,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useBilling } from "@/hooks/useBilling";
 
 interface StorageUsageCardProps {
   usedMb: number;
-  limitMb?: number;
+  limitMb: number;
+  isUnlimited?: boolean;
 }
 
 // Helper to format storage
@@ -22,16 +22,7 @@ const formatStorage = (mb: number): string => {
   return `${mb.toFixed(1)} MB`;
 };
 
-export function StorageUsageCard({ usedMb, limitMb: propLimitMb }: StorageUsageCardProps) {
-  const { data: billing } = useBilling();
-  
-  // Get storage from billing (includes addons) - total_storage_gb
-  const isActive = billing?.subscription_status === 'active' || billing?.is_lifetime;
-  const isFree = !isActive || billing?.active_plan === 'free';
-  const storageGb = isFree ? 0.1 : (billing?.total_storage_gb ?? 1);
-  const limitMb = storageGb === -1 ? -1 : (storageGb * 1024) || propLimitMb || 100;
-  
-  const isUnlimited = limitMb === -1;
+export function StorageUsageCard({ usedMb, limitMb, isUnlimited = false }: StorageUsageCardProps) {
   const percentage = isUnlimited ? 0 : Math.min((usedMb / limitMb) * 100, 100);
   const isNearLimit = !isUnlimited && percentage >= 80;
   const isAtLimit = !isUnlimited && percentage >= 95;

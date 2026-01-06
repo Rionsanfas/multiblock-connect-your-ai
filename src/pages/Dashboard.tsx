@@ -10,8 +10,9 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SkeletonCard, SkeletonGrid } from "@/components/ui/skeleton-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAppStore } from "@/store/useAppStore";
-import { useCurrentUser, useUserStats } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useWorkspaceBoards } from "@/hooks/useWorkspaceBoards";
+import { useWorkspaceStats } from "@/hooks/useWorkspaceStats";
 import { useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { usePlanEnforcement } from "@/hooks/usePlanLimits";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,10 +37,10 @@ export default function Dashboard() {
   const { blocks } = useAppStore();
   const { user: authUser, isLoading: authLoading, isAuthenticated } = useAuth();
   const { user, isLoading: userLoading } = useCurrentUser();
-  const { isPersonalWorkspace, currentWorkspace } = useTeamContext();
+  const { isPersonalWorkspace, currentWorkspace, isTeamWorkspace } = useTeamContext();
   const { hasTeamAccess, isLoading: teamAccessLoading } = useTeamAccess();
   const userBoards = useWorkspaceBoards();
-  const stats = useUserStats();
+  const workspaceStats = useWorkspaceStats();
   const { enforceCreateBoard, canCreateBoard, boardsRemaining, isFree } = usePlanEnforcement();
   const { refreshSubscription } = useUserSubscription();
   const { refreshEntitlements } = useEntitlements();
@@ -217,7 +218,7 @@ export default function Dashboard() {
   }
 
   // User data loading - show skeleton
-  if (userLoading || !stats) {
+  if (userLoading || workspaceStats.isLoading) {
     return (
       <DashboardLayout>
         <div className="flex h-full">
@@ -253,10 +254,19 @@ export default function Dashboard() {
 
           {/* Usage Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <PlanUsageCard boardsUsed={stats.boardsUsed} />
+            <PlanUsageCard 
+              boardsUsed={workspaceStats.boardsUsed}
+              boardsLimit={workspaceStats.boardsLimit}
+              isUnlimitedBoards={workspaceStats.isUnlimitedBoards}
+              seatsUsed={workspaceStats.seatsUsed}
+              seatsLimit={workspaceStats.seatsLimit}
+              workspaceName={workspaceStats.workspaceName}
+              isTeamWorkspace={isTeamWorkspace}
+            />
             <StorageUsageCard
-              usedMb={stats.storageUsedMb}
-              limitMb={stats.storageLimitMb}
+              usedMb={workspaceStats.storageUsedMb}
+              limitMb={workspaceStats.storageLimitMb}
+              isUnlimited={workspaceStats.isUnlimitedStorage}
             />
             <GlassCard className="flex flex-col justify-center items-center p-4 sm:p-6">
               <Button 

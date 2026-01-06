@@ -1,4 +1,4 @@
-import { LayoutGrid, Users, Crown, ArrowRight, Sparkles, Infinity } from "lucide-react";
+import { LayoutGrid, Users, Crown, ArrowRight, Sparkles, Infinity, Building2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +20,23 @@ const PLAN_DISPLAY_NAMES: Record<string, string> = {
 
 interface PlanUsageCardProps {
   boardsUsed: number;
+  boardsLimit: number;
+  isUnlimitedBoards?: boolean;
+  seatsUsed?: number;
+  seatsLimit?: number;
+  workspaceName?: string;
+  isTeamWorkspace?: boolean;
 }
 
-export function PlanUsageCard({ boardsUsed }: PlanUsageCardProps) {
+export function PlanUsageCard({ 
+  boardsUsed, 
+  boardsLimit,
+  isUnlimitedBoards = false,
+  seatsUsed = 1,
+  seatsLimit = 1,
+  workspaceName,
+  isTeamWorkspace = false,
+}: PlanUsageCardProps) {
   const { data: billing, isLoading } = useBilling();
   
   // Get plan data from billing (user_billing table)
@@ -32,12 +46,7 @@ export function PlanUsageCard({ boardsUsed }: PlanUsageCardProps) {
   const isLifetime = billing?.is_lifetime ?? false;
   const isFree = !isActive || activePlan === 'free';
   
-  // Board limits from billing
-  const boardsLimit = isFree ? 1 : (billing?.total_boards ?? 1);
-  const seatsLimit = billing?.seats ?? 1;
-  const seatsUsed = 1;
-  
-  const boardPercentage = boardsLimit > 0 && boardsLimit !== -1 
+  const boardPercentage = !isUnlimitedBoards && boardsLimit > 0 
     ? Math.min(boardsUsed / boardsLimit * 100, 100) 
     : 0;
   const seatPercentage = seatsLimit > 1 
@@ -57,9 +66,20 @@ export function PlanUsageCard({ boardsUsed }: PlanUsageCardProps) {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <div className="dashboard-icon-box">
-            <Crown className="h-4 w-4 text-foreground" />
+            {isTeamWorkspace ? (
+              <Building2 className="h-4 w-4 text-foreground" />
+            ) : (
+              <Crown className="h-4 w-4 text-foreground" />
+            )}
           </div>
-          <span className="font-semibold text-center text-sm">{planName}</span>
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm">{planName}</span>
+            {workspaceName && (
+              <span className="text-[10px] text-muted-foreground">
+                {workspaceName} workspace
+              </span>
+            )}
+          </div>
           {isLifetime && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 gap-1">
               <Sparkles className="h-3 w-3" />
@@ -95,10 +115,10 @@ export function PlanUsageCard({ boardsUsed }: PlanUsageCardProps) {
             <span className="font-medium">Boards</span>
           </div>
           <span className="font-semibold tabular-nums">
-            {boardsUsed} / {boardsLimit === -1 ? <Infinity className="inline h-3 w-3" /> : boardsLimit}
+            {boardsUsed} / {isUnlimitedBoards ? <Infinity className="inline h-3 w-3" /> : boardsLimit}
           </span>
         </div>
-        {boardsLimit !== -1 && <Progress value={boardPercentage} className="h-1.5" />}
+        {!isUnlimitedBoards && <Progress value={boardPercentage} className="h-1.5" />}
       </div>
 
       {/* Seats Usage (for team plans) */}
