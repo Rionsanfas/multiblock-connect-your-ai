@@ -22,11 +22,15 @@ import { LtdScarcityBadge } from "@/components/pricing/LtdScarcityBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useLtdInventory } from "@/hooks/useLtdInventory";
+import { usePricingRefresh } from "@/hooks/usePageRefresh";
 
 export default function Pricing() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { soldOut, totalSeats, remainingSeats } = useLtdInventory();
+
+  // Refresh pricing data on page mount
+  usePricingRefresh();
 
   // Get plans by category
   const freePlan = getFreePlan();

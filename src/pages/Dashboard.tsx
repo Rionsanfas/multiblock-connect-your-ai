@@ -16,9 +16,11 @@ import { useBoardUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { usePlanEnforcement } from "@/hooks/usePlanLimits";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTeamContext } from "@/contexts/TeamContext";
+import { useTeamAccess } from "@/hooks/useTeamAccess";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useEntitlements } from "@/hooks/useEntitlements";
+import { useDashboardRefresh } from "@/hooks/usePageRefresh";
 import { boardsDb } from "@/lib/database";
 import { toast } from "sonner";
 import type { Board } from "@/types";
@@ -35,11 +37,15 @@ export default function Dashboard() {
   const { user: authUser, isLoading: authLoading, isAuthenticated } = useAuth();
   const { user, isLoading: userLoading } = useCurrentUser();
   const { isPersonalWorkspace, currentWorkspace } = useTeamContext();
+  const { hasTeamAccess, isLoading: teamAccessLoading } = useTeamAccess();
   const userBoards = useWorkspaceBoards();
   const stats = useUserStats();
   const { enforceCreateBoard, canCreateBoard, boardsRemaining, isFree } = usePlanEnforcement();
   const { refreshSubscription } = useUserSubscription();
   const { refreshEntitlements } = useEntitlements();
+  
+  // Refresh data on page mount
+  useDashboardRefresh();
   
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -233,7 +239,7 @@ export default function Dashboard() {
       <div className="flex h-full">
       {/* Main Content */}
         <div className="flex-1 p-4 sm:p-6 overflow-auto">
-          {/* Header with Workspace Switcher */}
+          {/* Header with Workspace Switcher - only show switcher if user has team access */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold">
@@ -241,6 +247,7 @@ export default function Dashboard() {
               </h1>
               <p className="text-sm text-muted-foreground">{userBoards.length} boards</p>
             </div>
+            {/* WorkspaceSwitcher handles its own visibility based on hasTeamAccess */}
             <WorkspaceSwitcher />
           </div>
 

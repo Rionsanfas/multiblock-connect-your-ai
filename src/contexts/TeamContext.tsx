@@ -1,9 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useUserTeams, TeamWithStats } from '@/hooks/useTeamsData';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ============================================
 // WORKSPACE CONTEXT
 // Tracks which workspace (personal or team) is active
+// Forces data refresh on workspace switch
 // ============================================
 
 export type WorkspaceType = 'personal' | 'team';
@@ -27,6 +29,9 @@ interface TeamContextValue {
   switchToPersonal: () => void;
   switchToTeam: (teamId: string) => void;
   
+  // Force refresh all workspace data
+  refreshWorkspaceData: () => void;
+  
   // Convenience getters
   isPersonalWorkspace: boolean;
   isTeamWorkspace: boolean;
@@ -41,6 +46,7 @@ const TeamContext = createContext<TeamContextValue | undefined>(undefined);
 const WORKSPACE_STORAGE_KEY = 'app-current-workspace';
 
 export function TeamProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const { data: teams = [], isLoading: teamsLoading } = useUserTeams();
   
   const [currentWorkspace, setCurrentWorkspace] = useState<WorkspaceContext>(() => {
@@ -55,6 +61,19 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     }
     return { type: 'personal', teamId: null, teamName: null, teamRole: null };
   });
+
+  // Invalidate all workspace-related queries
+  const invalidateWorkspaceQueries = useCallback(() => {
+    // Clear all workspace-dependent data
+    queryClient.invalidateQueries({ queryKey: ['workspace-boards'] });
+    queryClient.invalidateQueries({ queryKey: ['personal-boards'] });
+    queryClient.invalidateQueries({ queryKey: ['user-boards'] });
+    queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+    queryClient.invalidateQueries({ queryKey: ['team-api-keys'] });
+    
+    // Force refetch by removing from cache
+    queryClient.removeQueries({ queryKey: ['workspace-boards'] });
+  }, [queryClient]);
 
   // Persist workspace selection
   useEffect(() => {
@@ -73,22 +92,29 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           teamName: null, 
           teamRole: null 
         });
+        invalidateWorkspaceQueries();
       }
     }
-  }, [teams, currentWorkspace]);
+  }, [teams, currentWorkspace, invalidateWorkspaceQueries]);
 
-  const switchToPersonal = () => {
+  const switchToPersonal = useCallback(() => {
+    // Clear queries BEFORE switching to ensure fresh data
+    invalidateWorkspaceQueries();
+    
     setCurrentWorkspace({ 
       type: 'personal', 
       teamId: null, 
       teamName: null, 
       teamRole: null 
     });
-  };
+  }, [invalidateWorkspaceQueries]);
 
-  const switchToTeam = (teamId: string) => {
+  const switchToTeam = useCallback((teamId: string) => {
     const team = teams.find(t => t.team_id === teamId);
     if (team) {
+      // Clear queries BEFORE switching to ensure fresh data
+      invalidateWorkspaceQueries();
+      
       setCurrentWorkspace({
         type: 'team',
         teamId: team.team_id,
@@ -96,7 +122,11 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         teamRole: team.user_role,
       });
     }
-  };
+  }, [teams, invalidateWorkspaceQueries]);
+
+  const refreshWorkspaceData = useCallback(() => {
+    invalidateWorkspaceQueries();
+  }, [invalidateWorkspaceQueries]);
 
   const currentTeam = currentWorkspace.teamId 
     ? teams.find(t => t.team_id === currentWorkspace.teamId) || null
@@ -108,6 +138,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     teamsLoading,
     switchToPersonal,
     switchToTeam,
+    refreshWorkspaceData,
     isPersonalWorkspace: currentWorkspace.type === 'personal',
     isTeamWorkspace: currentWorkspace.type === 'team',
     currentTeam,
