@@ -19,6 +19,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useTeamContext } from "@/contexts/TeamContext";
 import { useApiKeysRefresh } from "@/hooks/usePageRefresh";
+import { ApiKeyAccessRequestButton } from "@/components/apikeys/ApiKeyAccessRequestButton";
+import { PendingAccessRequests } from "@/components/apikeys/PendingAccessRequests";
 
 // Supported providers that match Supabase llm_provider enum
 const SUPPORTED_PROVIDERS: { id: LLMProvider; name: string; color: string; apiKeyUrl: string }[] = [
@@ -192,6 +194,13 @@ export default function ApiKeys() {
           </div>
         </GlassCard>
 
+        {/* Pending Access Requests (for team admins/owners) */}
+        {isTeamWorkspace && currentTeamId && canManageTeam && (
+          <div className="mb-6">
+            <PendingAccessRequests teamId={currentTeamId} />
+          </div>
+        )}
+
         {/* Error State */}
         {keysError && (
           <GlassCard variant="soft" className="p-4 rounded-xl mb-6 border-destructive/20">
@@ -259,15 +268,25 @@ export default function ApiKeys() {
                         </div>
                       </div>
                     </div>
-                    {canManageKeys && (
-                      <button
-                        onClick={() => setDeleteId(key.id)}
-                        disabled={deleteKeyMutation.isPending}
-                        className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105 disabled:opacity-50 flex-shrink-0"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Access Request Button for team keys (non-admins) */}
+                      {isTeamKey && !canManageTeam && currentTeamId && (
+                        <ApiKeyAccessRequestButton
+                          teamId={currentTeamId}
+                          apiKeyId={key.id}
+                          providerName={providerInfo.name}
+                        />
+                      )}
+                      {canManageKeys && (
+                        <button
+                          onClick={() => setDeleteId(key.id)}
+                          disabled={deleteKeyMutation.isPending}
+                          className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </GlassCard>
               );
