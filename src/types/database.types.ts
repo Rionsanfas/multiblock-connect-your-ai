@@ -8,7 +8,7 @@
 // ENUMS
 // ============================================
 
-export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek';
+export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek' | 'mistral' | 'cohere' | 'groq' | 'together' | 'perplexity';
 
 export type AppRole = 'user' | 'admin' | 'super_admin';
 
@@ -572,6 +572,11 @@ export const PROVIDER_INFO: Record<LLMProvider, { name: string; icon: string; co
   google: { name: 'Google', icon: '🔵', color: '#4285f4' },
   xai: { name: 'xAI', icon: '⚫', color: '#000000' },
   deepseek: { name: 'DeepSeek', icon: '🟣', color: '#7c3aed' },
+  mistral: { name: 'Mistral', icon: '🟡', color: '#f59e0b' },
+  cohere: { name: 'Cohere', icon: '🟣', color: '#a855f7' },
+  groq: { name: 'Groq', icon: '🟢', color: '#22c55e' },
+  together: { name: 'Together.ai', icon: '🔵', color: '#3b82f6' },
+  perplexity: { name: 'Perplexity', icon: '🔵', color: '#06b6d4' },
 };
 
 export const TIER_INFO: Record<SubscriptionTier, { name: string; color: string }> = {

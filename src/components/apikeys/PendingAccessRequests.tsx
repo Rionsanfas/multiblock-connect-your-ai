@@ -16,6 +16,11 @@ const PROVIDER_COLORS: Record<LLMProvider, string> = {
   google: 'hsl(217 90% 60%)',
   xai: 'hsl(0 0% 70%)',
   deepseek: 'hsl(200 80% 50%)',
+  mistral: 'hsl(35 90% 55%)',
+  cohere: 'hsl(280 70% 55%)',
+  groq: 'hsl(160 70% 45%)',
+  together: 'hsl(220 80% 55%)',
+  perplexity: 'hsl(180 70% 45%)',
 };
 
 interface PendingAccessRequestsProps {
