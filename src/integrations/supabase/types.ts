@@ -1360,7 +1360,17 @@ export type Database = {
         | "exceeded_storage"
         | "exceeded_both"
         | "expired"
-      llm_provider: "openai" | "anthropic" | "google" | "xai" | "deepseek"
+      llm_provider:
+        | "openai"
+        | "anthropic"
+        | "google"
+        | "xai"
+        | "deepseek"
+        | "mistral"
+        | "cohere"
+        | "groq"
+        | "together"
+        | "perplexity"
       subscription_status:
         | "active"
         | "canceled"
@@ -1506,7 +1516,18 @@ export const Constants = {
         "exceeded_both",
         "expired",
       ],
-      llm_provider: ["openai", "anthropic", "google", "xai", "deepseek"],
+      llm_provider: [
+        "openai",
+        "anthropic",
+        "google",
+        "xai",
+        "deepseek",
+        "mistral",
+        "cohere",
+        "groq",
+        "together",
+        "perplexity",
+      ],
       subscription_status: [
         "active",
         "canceled",

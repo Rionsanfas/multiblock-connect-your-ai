@@ -2,7 +2,7 @@
 // This is the SINGLE SOURCE OF TRUTH for all models and providers
 
 // Provider type matches Supabase llm_provider enum
-export type Provider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek';
+export type Provider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek' | 'mistral' | 'cohere' | 'groq' | 'together' | 'perplexity';
 
 export interface ProviderInfo {
   id: Provider;
@@ -73,6 +73,46 @@ export const PROVIDERS: Record<Provider, ProviderInfo> = {
     website: 'https://deepseek.com',
     apiKeyUrl: 'https://platform.deepseek.com/api_keys',
     description: 'DeepSeek AI models',
+  },
+  mistral: {
+    id: 'mistral',
+    name: 'Mistral',
+    color: 'hsl(35 90% 55%)',
+    website: 'https://mistral.ai',
+    apiKeyUrl: 'https://console.mistral.ai/api-keys',
+    description: 'Mistral AI models',
+  },
+  cohere: {
+    id: 'cohere',
+    name: 'Cohere',
+    color: 'hsl(280 70% 55%)',
+    website: 'https://cohere.com',
+    apiKeyUrl: 'https://dashboard.cohere.com/api-keys',
+    description: 'Cohere language models',
+  },
+  groq: {
+    id: 'groq',
+    name: 'Groq',
+    color: 'hsl(160 70% 45%)',
+    website: 'https://groq.com',
+    apiKeyUrl: 'https://console.groq.com/keys',
+    description: 'Ultra-fast inference with Groq',
+  },
+  together: {
+    id: 'together',
+    name: 'Together.ai',
+    color: 'hsl(220 80% 55%)',
+    website: 'https://together.ai',
+    apiKeyUrl: 'https://api.together.ai/settings/api-keys',
+    description: 'Open-source models on Together',
+  },
+  perplexity: {
+    id: 'perplexity',
+    name: 'Perplexity',
+    color: 'hsl(180 70% 45%)',
+    website: 'https://perplexity.ai',
+    apiKeyUrl: 'https://www.perplexity.ai/settings/api',
+    description: 'AI-powered search and answers',
   },
 };
 
