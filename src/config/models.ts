@@ -55,7 +55,7 @@ export const PROVIDERS: Record<Provider, ProviderInfo> = {
     name: 'Google',
     color: 'hsl(217 90% 60%)',
     website: 'https://ai.google',
-    apiKeyUrl: 'https://aistudio.google.com/apikey',
+    apiKeyUrl: 'https://aistudio.google.com/app/apikey',
     description: 'Gemini and PaLM models',
   },
   xai: {
