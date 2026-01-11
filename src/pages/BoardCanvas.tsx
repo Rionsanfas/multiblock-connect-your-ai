@@ -232,9 +232,9 @@ export default function BoardCanvas() {
     };
   };
 
-  // === STATE HANDLING ===
+  // === STATE HANDLING - Optimized for perceived speed ===
 
-  // 1. Auth loading - show skeleton
+  // 1. Auth loading - show skeleton only on initial load
   if (authLoading) {
     return (
       <DashboardLayout hideSidebar>
@@ -258,7 +258,6 @@ export default function BoardCanvas() {
 
   // 2. Not authenticated - redirect to auth
   if (!isAuthenticated || !user) {
-    // Use effect for navigation to avoid render-phase side effects
     return (
       <DashboardLayout hideSidebar>
         <div className="flex items-center justify-center h-full">
@@ -273,8 +272,9 @@ export default function BoardCanvas() {
     );
   }
 
-  // 3. Board loading - show skeleton
-  if (boardLoading) {
+  // 3. Board loading - show skeleton ONLY if we don't have cached data
+  // If we have a board from cache, render it immediately (stale-while-revalidate)
+  if (boardLoading && !board) {
     return (
       <DashboardLayout hideSidebar>
         <div className="flex h-full">

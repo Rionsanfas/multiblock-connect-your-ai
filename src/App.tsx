@@ -26,11 +26,18 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 1 minute - data stays fresh
-      gcTime: 1000 * 60 * 10, // 10 minutes - cache retention
+      staleTime: 1000 * 60 * 2, // 2 minutes - longer stale time for perceived speed
+      gcTime: 1000 * 60 * 15, // 15 minutes - longer cache retention
       refetchOnWindowFocus: false, // Disable auto-refetch on focus
-      refetchOnMount: false, // Use cached data on mount
-      retry: 1, // Reduce retry attempts
+      refetchOnMount: true, // Refetch only if stale
+      refetchOnReconnect: false, // Don't refetch on reconnect
+      retry: 1, // Reduce retry attempts for faster failure
+      retryDelay: 500, // Faster retry
+      networkMode: 'offlineFirst', // Use cache first, then network
+    },
+    mutations: {
+      retry: 1,
+      retryDelay: 500,
     },
   },
 });

@@ -25,9 +25,12 @@ export function useBoardBlocks(boardId: string | undefined) {
       return blocks;
     },
     enabled: !authLoading && !!user?.id && !!boardId,
-    staleTime: 1000 * 60, // 1 minute - reduce refetches
-    gcTime: 1000 * 60 * 5, // 5 minutes cache
+    staleTime: 1000 * 60 * 2, // 2 minutes - longer stale time for fast nav
+    gcTime: 1000 * 60 * 10, // 10 minutes cache
     refetchOnWindowFocus: false, // Don't refetch on focus
+    refetchOnMount: true, // Only fetch if stale
+    // Keep previous data during refetch (prevents flash)
+    placeholderData: (previousData) => previousData,
   });
 
   // Transform to legacy format and sort

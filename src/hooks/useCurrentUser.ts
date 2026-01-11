@@ -61,18 +61,21 @@ export function useCurrentUser(): CurrentUserState {
     queryKey: ['user-subscription', authUser?.id],
     queryFn: () => subscriptionsDb.getCurrent(),
     enabled: !!authUser,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 15, // 15 minutes cache
+    staleTime: 1000 * 60 * 10, // 10 minutes - subscription rarely changes
+    gcTime: 1000 * 60 * 30, // 30 minutes cache
     refetchOnWindowFocus: false,
+    // Keep previous data for instant rendering
+    placeholderData: (previousData) => previousData,
   });
 
   const { data: boardCount = 0, isLoading: boardsLoading } = useQuery({
     queryKey: ['user-board-count', authUser?.id],
     queryFn: () => boardsDb.getCount(),
     enabled: !!authUser,
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 15, // 15 minutes cache
     refetchOnWindowFocus: false,
+    placeholderData: (previousData) => previousData,
   });
 
   const legacyUser = useMemo((): LegacyUser | null => {
@@ -175,9 +178,11 @@ export function useUserBoard(boardId: string | undefined): UseUserBoardResult {
       return result;
     },
     enabled: !authLoading && isAuthenticated && !!authUser?.id && !!boardId,
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes cache
+    staleTime: 1000 * 60 * 5, // 5 minutes - board data rarely changes
+    gcTime: 1000 * 60 * 15, // 15 minutes cache
     refetchOnWindowFocus: false,
+    // Keep previous board data during navigation
+    placeholderData: (previousData) => previousData,
   });
   
   // Memoize the transformed board to ensure stable reference

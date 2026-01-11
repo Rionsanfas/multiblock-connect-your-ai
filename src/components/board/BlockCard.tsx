@@ -107,7 +107,9 @@ export function BlockCard({
       // ignore
     }
 
+    // Set dragging state IMMEDIATELY for instant visual feedback
     setIsDragging(true);
+    // Select after drag state is set to ensure visual order
     onSelect();
   };
 
@@ -229,8 +231,8 @@ export function BlockCard({
 
       const dx = Math.abs(e.clientX - startPos.current.x);
       const dy = Math.abs(e.clientY - startPos.current.y);
-      // Use a 5px threshold before considering it a drag
-      if (dx > 5 || dy > 5) {
+      // Use a 3px threshold for more responsive drag initiation
+      if (dx > 3 || dy > 3) {
         hasDraggedRef.current = true;
       }
 
@@ -241,8 +243,10 @@ export function BlockCard({
       const newY = e.clientY / zoom - dragOffset.current.y;
       blockPositionRef.current = { x: newX, y: newY };
 
-      // Use direct DOM update for smoother dragging, then sync to store
-      updateBlockPosition(block.id, { x: newX, y: newY });
+      // Batch DOM updates with requestAnimationFrame for smoother 60fps dragging
+      requestAnimationFrame(() => {
+        updateBlockPosition(block.id, { x: newX, y: newY });
+      });
     };
 
     const onPointerUp = (e: PointerEvent) => {
