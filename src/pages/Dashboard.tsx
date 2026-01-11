@@ -22,7 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { useDashboardRefresh } from "@/hooks/usePageRefresh";
-import { boardsDb } from "@/lib/database";
+import { boardsDb, blocksDb } from "@/lib/database";
 import { toast } from "sonner";
 import type { Board } from "@/types";
 import { StorageUsageCard } from "@/components/dashboard/StorageUsageCard";
@@ -185,8 +185,11 @@ export default function Dashboard() {
 
   const getBlockCount = (boardId: string) => blocks.filter((b) => b.board_id === boardId).length;
 
-  // Auth loading state - show skeleton
-  if (authLoading) {
+  // Combine loading states - only show skeleton on initial load, not on refetch
+  const isInitialLoading = authLoading || (!user && userLoading);
+  
+  // Auth loading state - show skeleton only on first load
+  if (isInitialLoading) {
     return (
       <DashboardLayout>
         <div className="flex h-full">
@@ -217,23 +220,8 @@ export default function Dashboard() {
     );
   }
 
-  // User data loading - show skeleton
-  if (userLoading || workspaceStats.isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex h-full">
-          <div className="flex-1 p-6 overflow-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <SkeletonCard variant="usage" />
-              <SkeletonCard variant="usage" />
-              <SkeletonCard variant="usage" />
-            </div>
-            <SkeletonGrid count={6} variant="board" />
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  // Render immediately with data - don't wait for stats loading
+  // Stats will populate as they load (progressive enhancement)
 
   return (
     <DashboardLayout>
@@ -371,7 +359,7 @@ export default function Dashboard() {
   );
 }
 
-// Wrapper component that includes usage data
+// Wrapper component that includes usage data and prefetching
 function BoardCardWithUsage(props: {
   board: Board;
   blockCount: number;
@@ -382,7 +370,25 @@ function BoardCardWithUsage(props: {
   onTransfer?: () => void;
 }) {
   const boardUsage = useBoardUsage(props.board.id);
-  return <BoardCard {...props} usage={boardUsage} />;
+  const queryClient = useQueryClient();
+  
+  // Prefetch board data on hover for instant navigation
+  const handleMouseEnter = () => {
+    // Prefetch the board data
+    queryClient.prefetchQuery({
+      queryKey: ['board', props.board.id],
+      queryFn: () => boardsDb.getById(props.board.id),
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+    // Prefetch block data
+    queryClient.prefetchQuery({
+      queryKey: ['board-blocks', props.board.id],
+      queryFn: () => blocksDb.getForBoard(props.board.id),
+      staleTime: 1000 * 60 * 2, // 2 minutes
+    });
+  };
+  
+  return <BoardCard {...props} usage={boardUsage} onMouseEnter={handleMouseEnter} />;
 }
 
 function BoardCard({
@@ -394,6 +400,7 @@ function BoardCard({
   onDelete,
   onTransfer,
   usage,
+  onMouseEnter,
 }: {
   board: Board;
   blockCount: number;
@@ -403,12 +410,14 @@ function BoardCard({
   onDelete: () => void;
   onTransfer?: () => void;
   usage?: { message_count: number; total_bytes: number } | null;
+  onMouseEnter?: () => void;
 }) {
   return (
     <GlassCard
       variant="hover"
       className={`cursor-pointer group ${viewMode === "list" ? "flex items-center justify-between p-4" : "p-5"}`}
       onClick={onOpen}
+      onMouseEnter={onMouseEnter}
     >
       <div className={viewMode === "list" ? "flex items-center gap-4" : ""}>
         <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">

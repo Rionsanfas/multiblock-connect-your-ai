@@ -59,12 +59,14 @@ export function useWorkspaceBoards(): LegacyBoard[] {
       return allBoards.filter(b => !b.team_id);
     },
     enabled: isAuthenticated && !!authUser?.id,
-    // SHORT stale time - data should be validated frequently
-    staleTime: 1000 * 10, // 10 seconds
-    gcTime: 1000 * 60 * 2, // 2 minutes cache
-    // Refetch on mount to ensure fresh data on navigation
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    // Longer stale time for perceived speed - data stays fresh in cache
+    staleTime: 1000 * 30, // 30 seconds - prevents refetch on every navigation
+    gcTime: 1000 * 60 * 5, // 5 minutes cache
+    // Only refetch if data is actually stale (not on every mount)
+    refetchOnMount: true, // Will only fetch if stale
+    refetchOnWindowFocus: false, // Disable aggressive refetch
+    // Keep previous data while fetching new data (prevents flash)
+    placeholderData: (previousData) => previousData,
   });
 
   return useMemo(() => boards.map(transformBoard), [boards]);

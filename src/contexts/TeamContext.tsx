@@ -62,17 +62,27 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     return { type: 'personal', teamId: null, teamName: null, teamRole: null };
   });
 
-  // Invalidate all workspace-related queries
+  // Invalidate workspace queries with optimistic approach
   const invalidateWorkspaceQueries = useCallback(() => {
-    // Clear all workspace-dependent data
-    queryClient.invalidateQueries({ queryKey: ['workspace-boards'] });
-    queryClient.invalidateQueries({ queryKey: ['personal-boards'] });
-    queryClient.invalidateQueries({ queryKey: ['user-boards'] });
-    queryClient.invalidateQueries({ queryKey: ['api-keys'] });
-    queryClient.invalidateQueries({ queryKey: ['team-api-keys'] });
-    
-    // Force refetch by removing from cache
-    queryClient.removeQueries({ queryKey: ['workspace-boards'] });
+    // Mark queries as stale but don't force immediate refetch
+    // This allows the new workspace data to load in background
+    queryClient.invalidateQueries({ 
+      queryKey: ['workspace-boards'],
+      refetchType: 'active', // Only refetch if currently being observed
+    });
+    queryClient.invalidateQueries({ 
+      queryKey: ['personal-boards'],
+      refetchType: 'none', // Don't refetch - will be fresh on next access
+    });
+    queryClient.invalidateQueries({ 
+      queryKey: ['api-keys'],
+      refetchType: 'none',
+    });
+    queryClient.invalidateQueries({ 
+      queryKey: ['team-api-keys'],
+      refetchType: 'none',
+    });
+    // Don't remove queries - keep cache for instant back-navigation
   }, [queryClient]);
 
   // Persist workspace selection

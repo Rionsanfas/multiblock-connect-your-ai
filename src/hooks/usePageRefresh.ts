@@ -1,11 +1,11 @@
 /**
- * usePageRefresh - Invalidates relevant queries on page mount
+ * usePageRefresh - Smart query refresh on page mount
  * 
- * This hook ensures fresh data is loaded when navigating to a page.
- * Prevents stale state issues across navigation.
+ * Optimized to only invalidate stale data, not refetch everything.
+ * Uses soft invalidation to mark as stale without blocking UI.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 
@@ -18,39 +18,61 @@ interface PageRefreshConfig {
    * Optional: Only invalidate if this condition is true
    */
   enabled?: boolean;
+  /**
+   * Soft invalidation - marks stale but doesn't force refetch (default: true)
+   * This prevents blocking the UI while data refreshes in background
+   */
+  soft?: boolean;
 }
 
 /**
  * Invalidates specified queries when the page mounts
- * Use this to ensure fresh data on navigation
+ * Optimized: Only runs once per mount, not on every route change
  */
 export function usePageRefresh(config: PageRefreshConfig) {
   const queryClient = useQueryClient();
-  const location = useLocation();
-  const { queryKeys, enabled = true } = config;
+  const { queryKeys, enabled = true, soft = true } = config;
+  const hasRefreshed = useRef(false);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || hasRefreshed.current) return;
+    hasRefreshed.current = true;
 
-    // Invalidate all specified queries
+    // Use background invalidation to avoid blocking
     queryKeys.forEach((queryKey) => {
-      queryClient.invalidateQueries({ queryKey });
+      if (soft) {
+        // Mark as stale without triggering immediate refetch
+        // Data will refetch on next access or window focus
+        queryClient.invalidateQueries({ 
+          queryKey,
+          refetchType: 'none', // Don't refetch immediately
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey });
+      }
     });
-  }, [location.pathname, queryClient, enabled]); // Re-run on route change
+  }, [queryClient, enabled]);
+  
+  // Reset on unmount so next mount refreshes
+  useEffect(() => {
+    return () => {
+      hasRefreshed.current = false;
+    };
+  }, []);
 }
 
 /**
  * Pre-configured page refresh for Dashboard
+ * Soft invalidation - data refreshes in background
  */
 export function useDashboardRefresh() {
   usePageRefresh({
     queryKeys: [
       ['workspace-boards'],
-      ['user-boards'],
       ['user-subscription'],
       ['user-entitlements'],
-      ['user-board-count'],
     ],
+    soft: true, // Background refresh - no blocking
   });
 }
 
@@ -63,6 +85,7 @@ export function useApiKeysRefresh() {
       ['api-keys'],
       ['team-api-keys'],
     ],
+    soft: true,
   });
 }
 
@@ -76,6 +99,7 @@ export function useTeamSettingsRefresh() {
       ['team-invitations'],
       ['user-teams'],
     ],
+    soft: true,
   });
 }
 
@@ -89,5 +113,6 @@ export function usePricingRefresh() {
       ['user-entitlements'],
       ['ltd-inventory'],
     ],
+    soft: true,
   });
 }
