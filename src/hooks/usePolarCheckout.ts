@@ -6,7 +6,7 @@
  * On success: closes modal, refetches data, redirects to dashboard
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -78,10 +78,16 @@ export function usePolarCheckout(options: UsePolarCheckoutOptions = {}) {
   const [error, setError] = useState<Error | null>(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const isCheckoutOpenRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Load Polar script on mount
   useEffect(() => {
     loadPolarScript();
+    return () => {
+      // Cleanup abort controller on unmount
+      abortControllerRef.current?.abort();
+    };
   }, []);
 
   // Refetch all billing-related queries
@@ -101,6 +107,7 @@ export function usePolarCheckout(options: UsePolarCheckoutOptions = {}) {
   // Handle successful checkout
   const handleSuccess = useCallback(async () => {
     console.log('[usePolarCheckout] Checkout successful!');
+    isCheckoutOpenRef.current = false;
     
     // Wait a moment for webhook to process
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -116,14 +123,28 @@ export function usePolarCheckout(options: UsePolarCheckoutOptions = {}) {
     // Call custom success handler
     options.onSuccess?.();
     
+    // Reset loading state
+    setIsLoading(false);
+    
     // Redirect to dashboard
     navigate('/dashboard?checkout=success');
   }, [refetchBillingData, navigate, options]);
 
   // Create checkout session and open embed modal
   const openCheckout = useCallback(async (planKey: string, isAddon = false) => {
+    // Prevent multiple simultaneous checkouts
+    if (isLoading || isCheckoutOpenRef.current) {
+      console.log('[usePolarCheckout] Checkout already in progress, ignoring');
+      return;
+    }
+
+    // Set loading immediately for instant feedback
     setIsLoading(true);
     setError(null);
+    
+    // Cancel any previous request
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
 
     try {
       console.log('[usePolarCheckout] Creating checkout for:', planKey, 'isAddon:', isAddon);
@@ -156,6 +177,9 @@ export function usePolarCheckout(options: UsePolarCheckoutOptions = {}) {
       // Ensure Polar script is loaded
       await loadPolarScript();
 
+      // Mark checkout as open
+      isCheckoutOpenRef.current = true;
+
       // Open Polar embed checkout
       const Polar = (window as any).Polar;
       if (Polar && typeof Polar.Checkout?.open === 'function') {
@@ -170,36 +194,55 @@ export function usePolarCheckout(options: UsePolarCheckoutOptions = {}) {
           },
           onClose: () => {
             console.log('[usePolarCheckout] Polar modal closed');
+            isCheckoutOpenRef.current = false;
             setIsLoading(false);
           },
         });
+        
+        // Keep loading state while modal is open - don't reset in finally
       } else {
         // Fallback: open in new tab
         console.log('[usePolarCheckout] Polar.Checkout.open not available, using window.open');
-        window.open(data.checkout_url, '_blank');
+        const newWindow = window.open(data.checkout_url, '_blank');
         
-        // Set up message listener for success
-        const messageHandler = (event: MessageEvent) => {
-          if (event.origin.includes('polar.sh')) {
-            if (event.data?.type === 'checkout:success' || event.data?.status === 'succeeded') {
-              window.removeEventListener('message', messageHandler);
-              handleSuccess();
+        if (newWindow) {
+          // Set up message listener for success
+          const messageHandler = (event: MessageEvent) => {
+            if (event.origin.includes('polar.sh')) {
+              if (event.data?.type === 'checkout:success' || event.data?.status === 'succeeded') {
+                window.removeEventListener('message', messageHandler);
+                handleSuccess();
+              }
             }
-          }
-        };
-        window.addEventListener('message', messageHandler);
+          };
+          window.addEventListener('message', messageHandler);
+          
+          // Reset loading after a short delay since we opened a new tab
+          setTimeout(() => {
+            isCheckoutOpenRef.current = false;
+            setIsLoading(false);
+          }, 1000);
+        } else {
+          // Popup blocked
+          isCheckoutOpenRef.current = false;
+          setIsLoading(false);
+          toast.error('Popup blocked', { 
+            description: 'Please allow popups and try again' 
+          });
+        }
       }
 
     } catch (err) {
       console.error('[usePolarCheckout] Error:', err);
       const error = err instanceof Error ? err : new Error('Checkout failed');
       setError(error);
+      isCheckoutOpenRef.current = false;
+      setIsLoading(false);
       toast.error('Checkout failed', { description: error.message });
       options.onError?.(error);
-    } finally {
-      setIsLoading(false);
     }
-  }, [handleSuccess, options]);
+    // Note: No finally block - loading state is managed by modal callbacks
+  }, [isLoading, handleSuccess, options]);
 
   return {
     openCheckout,

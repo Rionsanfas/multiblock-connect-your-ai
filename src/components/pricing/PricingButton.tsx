@@ -9,11 +9,11 @@
  */
 
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
 import { PlanConfig, comparePlanTiers, PlanTier } from '@/config/plans';
 import { PolarCheckoutButton } from './PolarCheckoutButton';
+import { Spinner } from '@/components/ui/spinner';
 
 interface PricingButtonProps {
   plan: PlanConfig;
@@ -31,7 +31,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   
   // Button styles based on variant and state
   const getButtonClass = (disabled: boolean = false) => {
-    const base = 'w-full rounded-full font-medium transition-all duration-500 ease-out py-3 px-6 text-center inline-block cursor-pointer';
+    const base = 'w-full rounded-full font-medium transition-all duration-500 ease-out py-3 px-6 text-center inline-flex items-center justify-center relative overflow-hidden';
     
     if (disabled) {
       return `${base} bg-muted text-muted-foreground cursor-not-allowed opacity-60`;
@@ -44,11 +44,11 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     return `${base} border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5`;
   };
   
-  // Loading state
+  // Loading state - show spinner centered in button
   if (isLoading && isAuthenticated) {
     return (
-      <button className={`${getButtonClass(true)} ${className}`} disabled>
-        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+      <button className={`${getButtonClass(true)} ${className}`} disabled aria-busy="true">
+        <Spinner size="sm" className="text-muted-foreground" />
       </button>
     );
   }
@@ -57,7 +57,10 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   if (!isAuthenticated) {
     return (
       <button
-        onClick={() => navigate('/auth')}
+        onClick={(e) => {
+          e.preventDefault();
+          navigate('/auth');
+        }}
         className={`${getButtonClass()} ${className}`}
       >
         Get Started
@@ -69,7 +72,10 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   if (plan.tier === 'free') {
     return (
       <button
-        onClick={() => navigate('/dashboard')}
+        onClick={(e) => {
+          e.preventDefault();
+          navigate('/dashboard');
+        }}
         className={`${getButtonClass()} ${className}`}
       >
         Get Started
@@ -83,6 +89,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
       <a
         href="mailto:sales@multiblock.ai?subject=Enterprise%20Plan%20Inquiry"
         className={`${getButtonClass()} ${className}`}
+        onClick={(e) => e.stopPropagation()}
       >
         Contact Sales
       </a>
