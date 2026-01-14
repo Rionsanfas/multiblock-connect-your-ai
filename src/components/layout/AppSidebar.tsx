@@ -22,6 +22,7 @@ import { useTeamContext } from "@/contexts/TeamContext";
 import { useInboxCount } from "@/hooks/useInboxCount";
 import { useTeamAccess } from "@/hooks/useTeamAccess";
 import { Badge } from "@/components/ui/badge";
+import logoImage from "@/assets/logo.png";
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -47,15 +48,22 @@ export function AppSidebar() {
         collapsed ? "w-[72px]" : "w-52 lg:w-60"
       )}
     >
-      {/* Dashboard Title */}
+      {/* Logo & Title */}
       <div className={cn("p-5 pb-2", collapsed && "px-3")}>
         <div className={cn("flex items-center justify-between", collapsed && "justify-center")}>
-          {!collapsed && (
-            <h1 className="text-lg font-semibold text-foreground tracking-tight">Dashboard</h1>
+          {!collapsed ? (
+            <Link to="/dashboard" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+              <img src={logoImage} alt="Multiblock" className="h-7 w-7 object-contain" loading="eager" />
+              <h1 className="text-lg font-semibold text-foreground tracking-tight">MultiBlock</h1>
+            </Link>
+          ) : (
+            <Link to="/dashboard" className="hover:opacity-90 transition-opacity mb-2">
+              <img src={logoImage} alt="Multiblock" className="h-7 w-7 object-contain" loading="eager" />
+            </Link>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-all duration-200"
+            className={cn("p-2 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-all duration-200", collapsed && "mt-2")}
           >
             <ChevronLeft className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", collapsed && "rotate-180")} />
           </button>

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import logoImage from "@/assets/logo.png";
 
 /* Real X (Twitter) Logo SVG */
 const XLogo = () => (
@@ -28,14 +29,15 @@ const Footer = () => {
         >
           {/* Logo & Copyright - order changes on mobile */}
           <div className="flex flex-col items-center md:items-start gap-2 order-3 md:order-1">
-            <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+              <img src={logoImage} alt="Multiblock" className="h-6 w-6 object-contain" loading="eager" />
               <span 
                 className="font-semibold text-foreground"
                 style={{ fontSize: "clamp(0.875rem, 0.8rem + 0.25vw, 1rem)" }}
               >
                 Multiblock
               </span>
-            </div>
+            </Link>
             <p 
               className="text-muted-foreground text-center md:text-left"
               style={{ fontSize: "clamp(0.75rem, 0.7rem + 0.15vw, 0.875rem)" }}
