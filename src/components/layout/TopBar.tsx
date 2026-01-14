@@ -8,7 +8,6 @@ import {
   Check,
   Pencil,
   HelpCircle,
-  Home,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppStore } from "@/store/useAppStore";
 import { toast } from "sonner";
 import { MODEL_PROVIDERS } from "@/types";
+import logoImage from "@/assets/logo.png";
 
 interface TopBarProps {
   boardId?: string;
@@ -74,12 +74,12 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
           </button>
         )}
 
-        {/* Home link */}
+        {/* Logo link */}
         <Link
-          to="/"
-          className="key-icon-3d p-2.5 rounded-xl"
+          to="/dashboard"
+          className="hover:opacity-90 transition-opacity"
         >
-          <Home className="h-4 w-4" />
+          <img src={logoImage} alt="Multiblock" className="h-7 w-7 object-contain" loading="eager" />
         </Link>
 
         {showBoardControls && boardTitle && (

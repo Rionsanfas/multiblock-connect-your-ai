@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
+import logoImage from "@/assets/logo.png";
 
 // Validation schemas
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -274,9 +275,10 @@ export default function Auth() {
             <div className="text-center mb-6 sm:mb-8" style={headerStyle}>
               <Link 
                 to="/" 
-                className="inline-block text-lg sm:text-xl font-bold text-foreground hover:text-accent transition-colors mb-4 sm:mb-6"
+                className="inline-flex items-center justify-center gap-2 mb-4 sm:mb-6 hover:opacity-90 transition-opacity"
               >
-                MultiBlock
+                <img src={logoImage} alt="Multiblock" className="h-10 w-10 object-contain" loading="eager" />
+                <span className="text-lg sm:text-xl font-bold text-foreground">MultiBlock</span>
               </Link>
               <h1 className="text-xl sm:text-2xl font-bold mb-2 text-foreground">
                 {getTitle()}

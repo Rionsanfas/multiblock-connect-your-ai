@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
+import logoImage from "@/assets/logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,9 +42,10 @@ const Navbar = () => {
       >
         {/* Logo */}
         <Link 
-          to="/" 
-          className="flex items-center px-3 py-2 rounded-full hover:bg-secondary/50 transition-colors"
+          to={isAuthenticated ? "/dashboard" : "/"} 
+          className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-secondary/50 transition-colors"
         >
+          <img src={logoImage} alt="Multiblock" className="h-6 w-6 object-contain" loading="eager" />
           <span className="font-semibold text-foreground text-sm">
             MultiBlock
           </span>
@@ -102,7 +104,8 @@ const Navbar = () => {
             : "bg-transparent border border-transparent shadow-none"
         )}
       >
-        <Link to="/" className="flex items-center">
+        <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2">
+          <img src={logoImage} alt="Multiblock" className="h-5 w-5 object-contain" loading="eager" />
           <span className="font-semibold text-foreground text-sm">MultiBlock</span>
         </Link>
 
