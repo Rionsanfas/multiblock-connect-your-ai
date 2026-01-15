@@ -1,20 +1,8 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/ui/Logo";
-
-// Memoized to prevent re-renders
-const NavbarLogo = memo(function NavbarLogo({ isAuthenticated, size }: { isAuthenticated: boolean; size: "sm" | "md" | "lg" }) {
-  return (
-    <Logo 
-      href={isAuthenticated ? "/dashboard" : "/"} 
-      size={size}
-      className="px-2 py-1.5 rounded-full hover:bg-secondary/50 transition-colors"
-    />
-  );
-});
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,7 +40,14 @@ const Navbar = () => {
         style={{ padding: "8px 12px" }}
       >
         {/* Logo */}
-        <NavbarLogo isAuthenticated={isAuthenticated} size="lg" />
+        <Link 
+          to="/" 
+          className="flex items-center px-3 py-2 rounded-full hover:bg-secondary/50 transition-colors"
+        >
+          <span className="font-semibold text-foreground text-sm">
+            MultiBlock
+          </span>
+        </Link>
 
         {/* Nav Links */}
         <div className="flex items-center">
@@ -107,7 +102,9 @@ const Navbar = () => {
             : "bg-transparent border border-transparent shadow-none"
         )}
       >
-        <NavbarLogo isAuthenticated={isAuthenticated} size="sm" />
+        <Link to="/" className="flex items-center">
+          <span className="font-semibold text-foreground text-sm">MultiBlock</span>
+        </Link>
 
         <button
           className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground"

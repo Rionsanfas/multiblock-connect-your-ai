@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Layers,
@@ -22,19 +22,6 @@ import { useTeamContext } from "@/contexts/TeamContext";
 import { useInboxCount } from "@/hooks/useInboxCount";
 import { useTeamAccess } from "@/hooks/useTeamAccess";
 import { Badge } from "@/components/ui/badge";
-import { Logo } from "@/components/ui/Logo";
-
-// Memoized logo to prevent re-renders on route changes
-const SidebarLogo = memo(function SidebarLogo({ collapsed }: { collapsed: boolean }) {
-  if (collapsed) {
-    return (
-      <Logo href="/dashboard" size="lg" iconOnly className="hover:opacity-90 transition-opacity mb-2" />
-    );
-  }
-  return (
-    <Logo href="/dashboard" size="xl" className="hover:opacity-90 transition-opacity" />
-  );
-});
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -60,13 +47,15 @@ export function AppSidebar() {
         collapsed ? "w-[72px]" : "w-52 lg:w-60"
       )}
     >
-      {/* Logo & Title */}
+      {/* Dashboard Title */}
       <div className={cn("p-5 pb-2", collapsed && "px-3")}>
         <div className={cn("flex items-center justify-between", collapsed && "justify-center")}>
-          <SidebarLogo collapsed={collapsed} />
+          {!collapsed && (
+            <h1 className="text-lg font-semibold text-foreground tracking-tight">Dashboard</h1>
+          )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className={cn("p-2 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-all duration-200", collapsed && "mt-2")}
+            className="p-2 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-all duration-200"
           >
             <ChevronLeft className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", collapsed && "rotate-180")} />
           </button>
