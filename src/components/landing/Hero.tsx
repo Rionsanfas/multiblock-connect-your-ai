@@ -48,16 +48,22 @@ const Hero = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-center gap-6 sm:gap-8 lg:gap-10">
           {/* Left: Text Content */}
           <div className="text-center lg:text-left order-2 lg:order-1">
-            {/* Headline with shadow effect */}
+            {/* Headline with enhanced shadow/glow effect */}
             <h1 
-              className="font-bold leading-tight text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-3 sm:mb-4"
+              className="font-extrabold leading-[1.1] tracking-tight text-wrap-balance text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl mb-4 sm:mb-5"
               style={mainStyle}
             >
               <span 
                 className="block"
                 style={{
                   color: 'hsl(0 0% 100%)',
-                  textShadow: '0 2px 20px hsl(0 0% 100% / 0.35), 0 4px 40px hsl(0 0% 100% / 0.25), 0 8px 80px hsl(0 0% 100% / 0.15), 0 0 120px hsl(0 0% 100% / 0.1)',
+                  textShadow: `
+                    0 0 10px hsl(0 0% 100% / 0.6),
+                    0 0 30px hsl(0 0% 100% / 0.4),
+                    0 0 60px hsl(0 0% 100% / 0.25),
+                    0 0 100px hsl(0 0% 100% / 0.15),
+                    0 4px 20px hsl(0 0% 0% / 0.5)
+                  `,
                 }}
               >
                 One Workspace.
@@ -65,12 +71,16 @@ const Hero = () => {
               <span 
                 className="block"
                 style={{
-                  background: 'linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 65%) 100%)',
+                  background: 'linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 55%) 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                  textShadow: 'none',
-                  filter: 'drop-shadow(0 2px 15px hsl(0 0% 100% / 0.3)) drop-shadow(0 4px 30px hsl(0 0% 100% / 0.2)) drop-shadow(0 8px 50px hsl(0 0% 100% / 0.1))',
+                  filter: `
+                    drop-shadow(0 0 8px hsl(0 0% 100% / 0.5))
+                    drop-shadow(0 0 25px hsl(0 0% 100% / 0.35))
+                    drop-shadow(0 0 50px hsl(0 0% 100% / 0.2))
+                    drop-shadow(0 4px 15px hsl(0 0% 0% / 0.4))
+                  `,
                 }}
               >
                 Every AI Model.
