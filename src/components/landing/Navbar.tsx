@@ -1,9 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
-import logoImage from "@/assets/logo.png";
+import { Logo } from "@/components/ui/Logo";
+
+// Memoized to prevent re-renders
+const NavbarLogo = memo(function NavbarLogo({ isAuthenticated, size }: { isAuthenticated: boolean; size: "sm" | "md" }) {
+  return (
+    <Logo 
+      href={isAuthenticated ? "/dashboard" : "/"} 
+      size={size}
+      className="px-2 py-1.5 rounded-full hover:bg-secondary/50 transition-colors"
+    />
+  );
+});
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,15 +52,7 @@ const Navbar = () => {
         style={{ padding: "8px 12px" }}
       >
         {/* Logo */}
-        <Link 
-          to={isAuthenticated ? "/dashboard" : "/"} 
-          className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-secondary/50 transition-colors"
-        >
-          <img src={logoImage} alt="Multiblock" className="h-6 w-6 object-contain" loading="eager" />
-          <span className="font-semibold text-foreground text-sm">
-            MultiBlock
-          </span>
-        </Link>
+        <NavbarLogo isAuthenticated={isAuthenticated} size="md" />
 
         {/* Nav Links */}
         <div className="flex items-center">
@@ -104,10 +107,7 @@ const Navbar = () => {
             : "bg-transparent border border-transparent shadow-none"
         )}
       >
-        <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-2">
-          <img src={logoImage} alt="Multiblock" className="h-5 w-5 object-contain" loading="eager" />
-          <span className="font-semibold text-foreground text-sm">MultiBlock</span>
-        </Link>
+        <NavbarLogo isAuthenticated={isAuthenticated} size="sm" />
 
         <button
           className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground"

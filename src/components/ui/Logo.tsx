@@ -1,37 +1,45 @@
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { memo } from "react";
 import logoImage from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   showText?: boolean;
   iconOnly?: boolean;
+  href?: string;
 }
 
-export function Logo({ className, size = "md", showText = true, iconOnly = false }: LogoProps) {
-  const { user } = useAuth();
+// Memoized to prevent re-renders on route changes
+export const Logo = memo(function Logo({ 
+  className, 
+  size = "md", 
+  showText = true, 
+  iconOnly = false,
+  href = "/"
+}: LogoProps) {
   
+  // Increased sizes for better visibility
   const sizeClasses = {
-    sm: "h-6 w-6",
-    md: "h-8 w-8",
-    lg: "h-10 w-10",
+    sm: "h-7 w-7",
+    md: "h-9 w-9",
+    lg: "h-11 w-11",
+    xl: "h-14 w-14",
   };
 
   const textSizeClasses = {
     sm: "text-sm",
-    md: "text-base",
-    lg: "text-lg",
+    md: "text-lg",
+    lg: "text-xl",
+    xl: "text-2xl",
   };
-
-  const destination = user ? "/dashboard" : "/";
 
   return (
     <Link 
-      to={destination} 
+      to={href} 
       className={cn(
-        "flex items-center gap-2 transition-opacity hover:opacity-90",
+        "flex items-center gap-2.5 transition-opacity hover:opacity-90",
         className
       )}
     >
@@ -43,11 +51,12 @@ export function Logo({ className, size = "md", showText = true, iconOnly = false
           "object-contain flex-shrink-0"
         )}
         loading="eager"
-        decoding="async"
+        decoding="sync"
+        fetchPriority="high"
       />
       {showText && !iconOnly && (
         <span className={cn(
-          "font-semibold text-foreground",
+          "font-semibold text-foreground tracking-tight",
           textSizeClasses[size]
         )}>
           MultiBlock
@@ -55,4 +64,4 @@ export function Logo({ className, size = "md", showText = true, iconOnly = false
       )}
     </Link>
   );
-}
+});
