@@ -28,11 +28,11 @@ import { Logo } from "@/components/ui/Logo";
 const SidebarLogo = memo(function SidebarLogo({ collapsed }: { collapsed: boolean }) {
   if (collapsed) {
     return (
-      <Logo href="/dashboard" size="md" iconOnly className="hover:opacity-90 transition-opacity mb-2" />
+      <Logo href="/dashboard" size="lg" iconOnly className="hover:opacity-90 transition-opacity mb-2" />
     );
   }
   return (
-    <Logo href="/dashboard" size="lg" className="hover:opacity-90 transition-opacity" />
+    <Logo href="/dashboard" size="xl" className="hover:opacity-90 transition-opacity" />
   );
 });
 
