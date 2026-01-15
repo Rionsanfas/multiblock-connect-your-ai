@@ -17,6 +17,7 @@ interface AuthContextValue {
   isLoading: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
 }
@@ -148,6 +149,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      
+      if (error) {
+        // Handle common OAuth errors
+        if (error.message.includes('popup')) {
+          return { error: new Error('Popup was blocked. Please allow popups and try again.') };
+        }
+        return { error: new Error(error.message) };
+      }
+      
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error('Google sign in failed') };
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -178,9 +202,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
-  }), [user, session, isLoading, signUp, signIn, signOut, resetPassword]);
+  }), [user, session, isLoading, signUp, signIn, signInWithGoogle, signOut, resetPassword]);
 
   return (
     <AuthContext.Provider value={value}>

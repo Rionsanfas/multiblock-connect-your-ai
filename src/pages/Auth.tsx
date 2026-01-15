@@ -8,6 +8,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
 
+// Google icon SVG component
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+    <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+  </svg>
+);
+
 // Validation schemas
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -30,13 +40,14 @@ export default function Auth() {
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
   
   // Intro animation state
   const [phase, setPhase] = useState(0);
   
   const navigate = useNavigate();
-  const { signIn, signUp, resetPassword, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { signIn, signUp, signInWithGoogle, resetPassword, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Intro animation sequence
   useEffect(() => {
@@ -131,6 +142,23 @@ export default function Auth() {
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    if (isGoogleLoading || isLoading) return;
+    
+    setIsGoogleLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast.error(error.message);
+        setIsGoogleLoading(false);
+      }
+      // Don't set loading to false on success - the redirect will handle cleanup
+    } catch (error) {
+      toast.error("Failed to sign in with Google. Please try again.");
+      setIsGoogleLoading(false);
     }
   };
 
@@ -286,6 +314,40 @@ export default function Auth() {
               </p>
             </div>
 
+            {/* Google Sign In Button - only show for signin/signup modes */}
+            {(mode === 'signin' || mode === 'signup') && (
+              <div style={formFieldStyle(0)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading || isLoading}
+                  className="w-full h-10 sm:h-12 rounded-xl gap-3 bg-white hover:bg-gray-50 text-gray-700 border-border/50 font-medium text-sm transition-all"
+                >
+                  {isGoogleLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <GoogleIcon />
+                      Continue with Google
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Divider */}
+            {(mode === 'signin' || mode === 'signup') && (
+              <div className="relative py-2" style={formFieldStyle(50)}>
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border/30" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-2 bg-transparent text-muted-foreground">or continue with email</span>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               {mode === 'signup' && (
                 <div className="space-y-1.5 sm:space-y-2" style={formFieldStyle(0)}>
@@ -364,14 +426,6 @@ export default function Auth() {
                 </div>
               )}
 
-              {/* Divider for signup */}
-              {mode === 'signup' && (
-                <div className="relative py-2" style={formFieldStyle(150)}>
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border/30" />
-                  </div>
-                </div>
-              )}
               
               <div style={buttonStyle}>
                 <Button 
