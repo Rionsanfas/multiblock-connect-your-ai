@@ -10,17 +10,30 @@ const corsHeaders = {
  * CANONICAL PLAN MAPPING
  * Maps Polar checkout URLs/product names to our internal plan IDs
  * 
- * Plan ID format:
- * - 00000000-0000-0000-0000-000000000010 = Starter (Individual) Annual
- * - 00000000-0000-0000-0000-000000000011 = Pro (Individual) Annual
- * - 00000000-0000-0000-0000-000000000020 = Starter (Team) Annual
- * - 00000000-0000-0000-0000-000000000021 = Pro (Team) Annual
- * - 00000000-0000-0000-0000-000000000030 = LTD Starter (Individual)
- * - 00000000-0000-0000-0000-000000000031 = LTD Pro (Individual)
- * - 00000000-0000-0000-0000-000000000040 = LTD Starter (Team)
- * - 00000000-0000-0000-0000-000000000041 = LTD Pro (Team)
+ * PRICING (Single source of truth):
  * 
- * Add-ons (100-104) - stackable
+ * Individual Yearly:
+ * - Starter: $99.99/year - 50 boards, unlimited blocks, 2 GB, 1 seat
+ * - Pro: $149.99/year - 100 boards, unlimited blocks, 4 GB, 1 seat
+ * 
+ * Team Yearly:
+ * - Starter: $199.99/year - 50 boards, unlimited blocks, 5 GB, 10 seats
+ * - Pro: $299.99/year - 100 boards, unlimited blocks, 6 GB, 20 seats
+ * 
+ * Individual Lifetime:
+ * - LTD Starter: $499.99 - 50 boards, unlimited blocks, 6 GB, 1 seat
+ * - LTD Pro: $699.99 - 150 boards, unlimited blocks, 7 GB, 1 seat
+ * 
+ * Team Lifetime:
+ * - LTD Starter Team: $799.99 - 150 boards, unlimited blocks, 8 GB, 10 seats
+ * - LTD Pro Team: $999.99 - 200 boards, unlimited blocks, 9 GB, 15 seats
+ * 
+ * Add-ons (stackable):
+ * - +1 GB: $14.99 (+1 GB, +10 boards)
+ * - +2 GB: $19.99 (+2 GB, +20 boards)
+ * - +4 GB: $24.99 (+4 GB, +50 boards)
+ * - +5 GB: $29.99 (+5 GB, +60 boards)
+ * - +10 GB: $49.99 (+10 GB, +120 boards)
  */
 
 interface PlanConfig {

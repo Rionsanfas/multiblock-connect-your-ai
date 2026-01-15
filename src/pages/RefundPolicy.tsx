@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+
 export default function RefundPolicy() {
   return (
     <div className="min-h-screen bg-background liquid-bg">
@@ -51,8 +52,8 @@ export default function RefundPolicy() {
                 <h2 className="text-xl font-semibold text-foreground mb-3">2. How to Request a Refund</h2>
                 <p className="text-muted-foreground leading-relaxed mb-4">
                   To request a refund, please email us at{" "}
-                  <a href="mailto:support@multiblockconnect.com" className="text-primary hover:underline">
-                    support@multiblockconnect.com
+                  <a href="mailto:support@multiblock.space" className="text-primary hover:underline">
+                    support@multiblock.space
                   </a>{" "}
                   with the following information:
                 </p>
@@ -63,7 +64,7 @@ export default function RefundPolicy() {
                   </li>
                   <li>
                     <strong className="text-foreground">Plan purchased:</strong> The name of the subscription plan you
-                    purchased (e.g., Pro $99/year, Team $129/year).
+                    purchased (e.g., Starter $99.99/year, Pro $149.99/year, Team Starter $199.99/year, Team Pro $299.99/year).
                   </li>
                   <li>
                     <strong className="text-foreground">Account email:</strong> The email address associated with your
@@ -75,8 +76,16 @@ export default function RefundPolicy() {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">3. Yearly Subscriptions</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Refunds are only applicable to yearly subscription plans (Pro and Team plans). Refund requests must be
-                  submitted within 7 days of the original purchase date.
+                  Refunds are only applicable to yearly subscription plans:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 mt-3">
+                  <li>Individual Starter: $99.99/year</li>
+                  <li>Individual Pro: $149.99/year</li>
+                  <li>Team Starter: $199.99/year</li>
+                  <li>Team Pro: $299.99/year</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  Refund requests must be submitted within 7 days of the original purchase date.
                 </p>
               </section>
 
@@ -84,8 +93,16 @@ export default function RefundPolicy() {
                 <h2 className="text-xl font-semibold text-foreground mb-3">4. Lifetime Deal (LTD) Purchases</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   <strong className="text-foreground">LTD purchases are final and non-refundable.</strong> Due to the
-                  discounted nature of lifetime deals, we are unable to process refunds for these purchases. Please
-                  carefully review the features and limitations before purchasing an LTD offer.
+                  discounted nature of lifetime deals, we are unable to process refunds for these purchases:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 mt-3">
+                  <li>LTD Starter (Individual): $499.99</li>
+                  <li>LTD Pro (Individual): $699.99</li>
+                  <li>LTD Starter Team: $799.99</li>
+                  <li>LTD Pro Team: $999.99</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  Please carefully review the features and limitations before purchasing an LTD offer.
                 </p>
               </section>
 
@@ -94,7 +111,7 @@ export default function RefundPolicy() {
                 <p className="text-muted-foreground leading-relaxed">
                   After a refund is processed, your stored data (boards, blocks, messages, and files) will remain in
                   your account until you choose to delete it. Your account will be downgraded to the Free plan, and
-                  storage limits will apply accordingly. Data exceeding Free plan limits may become inaccessible until
+                  storage limits will apply accordingly (100 MB storage, 1 board, 3 blocks per board). Data exceeding Free plan limits may become inaccessible until
                   you upgrade or delete excess data.
                 </p>
               </section>
@@ -118,19 +135,26 @@ export default function RefundPolicy() {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">7. Refund Processing</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Approved refunds will be issued to your original payment method. Please allow 2-7 business days for
-                  the refund to appear in your account, depending on your payment provider.
+                  Approved refunds will be issued to your{" "}
                   <strong className="text-foreground">original payment method</strong>. Please allow 5-10 business days
                   for the refund to appear in your account, depending on your payment provider.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">8. Board Add-ons</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">8. Storage Add-ons</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Board add-on purchases are non-refundable once activated. If you have purchased board add-ons and
-                  request a subscription refund, the add-ons will be forfeited and cannot be transferred to another
-                  account.
+                  Storage add-on purchases are non-refundable once activated:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2 mt-3">
+                  <li>+1 GB Add-On: $14.99</li>
+                  <li>+2 GB Add-On: $19.99</li>
+                  <li>+4 GB Add-On: $24.99</li>
+                  <li>+5 GB Add-On: $29.99</li>
+                  <li>+10 GB Add-On: $49.99</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  If you have purchased storage add-ons and request a subscription refund, the add-ons will be forfeited and cannot be transferred to another account.
                 </p>
               </section>
 
@@ -138,8 +162,8 @@ export default function RefundPolicy() {
                 <h2 className="text-xl font-semibold text-foreground mb-3">9. Contact Us</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   If you have any questions about our refund policy, please contact us at{" "}
-                  <a href="mailto:support@multiblockconnect.com" className="text-primary hover:underline">
-                    support@multiblockconnect.com
+                  <a href="mailto:support@multiblock.space" className="text-primary hover:underline">
+                    support@multiblock.space
                   </a>
                 </p>
               </section>

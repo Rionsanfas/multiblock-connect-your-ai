@@ -2,6 +2,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Link } from "react-router-dom";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+
 export default function TermsOfService() {
   return <div className="min-h-screen bg-background liquid-bg">
       <div className="noise-overlay" />
@@ -81,9 +82,11 @@ export default function TermsOfService() {
                   Your storage quota covers messages, blocks, and uploaded files. Storage limits vary by plan:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li><strong className="text-foreground">Free:</strong> 100 MB</li>
-                  <li><strong className="text-foreground">Pro Plans:</strong> 5 GB - 10 GB</li>
-                  <li><strong className="text-foreground">Team Plans:</strong> 20 GB - 30 GB</li>
+                  <li><strong className="text-foreground">Free:</strong> 100 MB, 1 board, 3 blocks per board</li>
+                  <li><strong className="text-foreground">Individual Yearly:</strong> 2 GB - 4 GB storage, 50-100 boards</li>
+                  <li><strong className="text-foreground">Team Yearly:</strong> 5 GB - 6 GB storage, 50-100 boards, up to 20 seats</li>
+                  <li><strong className="text-foreground">Individual Lifetime:</strong> 6 GB - 7 GB storage, 50-150 boards</li>
+                  <li><strong className="text-foreground">Team Lifetime:</strong> 8 GB - 9 GB storage, 150-200 boards, up to 15 seats</li>
                 </ul>
                 <p className="text-muted-foreground leading-relaxed mt-3">
                   If you exceed your storage limit, you may be unable to create new content until you upgrade or delete existing data.
@@ -97,8 +100,7 @@ export default function TermsOfService() {
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
                   <li><strong className="text-foreground">Free:</strong> 1 board, 3 blocks per board</li>
-                  <li><strong className="text-foreground">Pro Plans:</strong> 50-100 boards, unlimited blocks</li>
-                  <li><strong className="text-foreground">Team Plans:</strong> 50-100 boards, unlimited blocks</li>
+                  <li><strong className="text-foreground">Paid Plans:</strong> 50-200 boards depending on plan, unlimited blocks</li>
                 </ul>
                 <p className="text-muted-foreground leading-relaxed mt-3">
                   Board add-ons are available to increase your board limit without changing your plan. Add-ons are tied to your account and include additional storage.
@@ -108,9 +110,13 @@ export default function TermsOfService() {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">8. Subscriptions & Billing</h2>
                 <p className="text-muted-foreground leading-relaxed mb-3">
-                  <strong className="text-foreground">Yearly Plans:</strong> All paid plans are billed annually. Your subscription will automatically renew at the end of each billing period unless cancelled.
+                  <strong className="text-foreground">Yearly Plans:</strong> All paid subscription plans are billed annually. Your subscription will automatically renew at the end of each billing period unless cancelled.
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Individual Starter: $99.99/year</li>
+                  <li>Individual Pro: $149.99/year</li>
+                  <li>Team Starter: $199.99/year</li>
+                  <li>Team Pro: $299.99/year</li>
                   <li>Prices are subject to change with 30 days notice</li>
                   <li>You are responsible for all applicable taxes</li>
                   <li>Downgrades take effect at the end of your current billing period</li>
@@ -124,6 +130,10 @@ export default function TermsOfService() {
               <section>
                 <h2 className="text-xl font-semibold text-foreground mb-3">9. Lifetime Deal (LTD) Offers</h2>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>LTD Starter (Individual): $499.99 one-time - 50 boards, 6 GB storage</li>
+                  <li>LTD Pro (Individual): $699.99 one-time - 150 boards, 7 GB storage</li>
+                  <li>LTD Starter Team: $799.99 one-time - 150 boards, 8 GB storage, up to 10 seats</li>
+                  <li>LTD Pro Team: $999.99 one-time - 200 boards, 9 GB storage, up to 15 seats</li>
                   <li>LTD purchases provide lifetime access to specified features</li>
                   <li>LTD offers are final and non-refundable</li>
                   <li>Features included in LTD offers are determined at time of purchase</li>
@@ -138,6 +148,10 @@ export default function TermsOfService() {
                   Team plans include a specified number of seats:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>Team Starter: Up to 10 seats</li>
+                  <li>Team Pro: Up to 20 seats</li>
+                  <li>LTD Starter Team: Up to 10 seats</li>
+                  <li>LTD Pro Team: Up to 15 seats</li>
                   <li>Each seat can be assigned to one user at a time</li>
                   <li>Seat transfers are allowed but limited to reasonable frequency</li>
                   <li>All team members are bound by these Terms</li>
@@ -147,7 +161,24 @@ export default function TermsOfService() {
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">11. Intellectual Property</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">11. Storage Add-ons</h2>
+                <p className="text-muted-foreground leading-relaxed mb-3">
+                  Storage add-ons can be purchased to expand your limits:
+                </p>
+                <ul className="list-disc list-inside text-muted-foreground space-y-2">
+                  <li>+1 GB Add-On: $14.99 (+1 GB storage, +10 boards)</li>
+                  <li>+2 GB Add-On: $19.99 (+2 GB storage, +20 boards)</li>
+                  <li>+4 GB Add-On: $24.99 (+4 GB storage, +50 boards)</li>
+                  <li>+5 GB Add-On: $29.99 (+5 GB storage, +60 boards)</li>
+                  <li>+10 GB Add-On: $49.99 (+10 GB storage, +120 boards)</li>
+                </ul>
+                <p className="text-muted-foreground leading-relaxed mt-3">
+                  Add-ons are stackable and apply on top of any paid plan.
+                </p>
+              </section>
+
+              <section>
+                <h2 className="text-xl font-semibold text-foreground mb-3">12. Intellectual Property</h2>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
                   <li>We retain all rights to the Multiblock platform, software, and branding</li>
                   <li>You retain ownership of content you create using our services</li>
@@ -157,7 +188,7 @@ export default function TermsOfService() {
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">12. Limitation of Liability</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">13. Limitation of Liability</h2>
                 <p className="text-muted-foreground leading-relaxed mb-3">
                   To the maximum extent permitted by law, Multiblock shall not be liable for:
                 </p>
@@ -174,7 +205,7 @@ export default function TermsOfService() {
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">13. Termination</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">14. Termination</h2>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
                   <li>You may terminate your account at any time through account settings</li>
                   <li>We may suspend or terminate accounts for violations of these Terms</li>
@@ -185,25 +216,25 @@ export default function TermsOfService() {
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">14. Governing Law</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">15. Governing Law</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   These Terms are governed by the laws of Saudi Arabia. Any disputes shall be resolved in the courts of Saudi Arabia, and you consent to the exclusive jurisdiction of such courts.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">15. Changes to These Terms</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">16. Changes to These Terms</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   We may modify these Terms at any time. Material changes will be communicated via email or in-app notification at least 30 days before taking effect. Continued use of our services after changes take effect constitutes acceptance of the updated Terms.
                 </p>
               </section>
 
               <section>
-                <h2 className="text-xl font-semibold text-foreground mb-3">16. Contact</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-3">17. Contact</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   For questions about these Terms, please contact us at{" "}
-                  <a href="mailto:support@multiblockconnect.com" className="text-primary hover:underline">
-                    support@multiblockconnect.com
+                  <a href="mailto:support@multiblock.space" className="text-primary hover:underline">
+                    support@multiblock.space
                   </a>
                 </p>
               </section>
