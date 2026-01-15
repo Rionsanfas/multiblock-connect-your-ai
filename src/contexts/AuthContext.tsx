@@ -103,9 +103,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [syncUserToStore]);
 
+  // Helper to get the correct redirect URL (production vs preview)
+  const getRedirectUrl = useCallback((path: string = '/dashboard') => {
+    const origin = window.location.origin;
+    // If we're on the production domain, use it; otherwise use current origin
+    if (origin.includes('multiblock.space')) {
+      return `https://multiblock.space${path}`;
+    }
+    // For Lovable preview
+    return `${origin}${path}`;
+  }, []);
+
   const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     try {
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      const redirectUrl = getRedirectUrl('/dashboard');
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -124,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       return { error: err instanceof Error ? err : new Error('Sign up failed') };
     }
-  }, []);
+  }, [getRedirectUrl]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     try {
@@ -151,10 +162,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     try {
+      const redirectUrl = getRedirectUrl('/dashboard');
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: redirectUrl,
         },
       });
       
@@ -170,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       return { error: err instanceof Error ? err : new Error('Google sign in failed') };
     }
-  }, []);
+  }, [getRedirectUrl]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
