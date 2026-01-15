@@ -20,16 +20,16 @@ export const Logo = memo(function Logo({
   href = "/"
 }: LogoProps) {
   
-  // Increased sizes for better visibility
+  // Significantly increased sizes for better visibility
   const sizeClasses = {
-    sm: "h-7 w-7",
-    md: "h-9 w-9",
-    lg: "h-11 w-11",
-    xl: "h-14 w-14",
+    sm: "h-8 w-8",
+    md: "h-10 w-10",
+    lg: "h-12 w-12",
+    xl: "h-16 w-16",
   };
 
   const textSizeClasses = {
-    sm: "text-sm",
+    sm: "text-base",
     md: "text-lg",
     lg: "text-xl",
     xl: "text-2xl",

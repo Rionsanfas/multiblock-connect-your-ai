@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 
 // Memoized to prevent re-renders
-const NavbarLogo = memo(function NavbarLogo({ isAuthenticated, size }: { isAuthenticated: boolean; size: "sm" | "md" }) {
+const NavbarLogo = memo(function NavbarLogo({ isAuthenticated, size }: { isAuthenticated: boolean; size: "sm" | "md" | "lg" }) {
   return (
     <Logo 
       href={isAuthenticated ? "/dashboard" : "/"} 
@@ -52,7 +52,7 @@ const Navbar = () => {
         style={{ padding: "8px 12px" }}
       >
         {/* Logo */}
-        <NavbarLogo isAuthenticated={isAuthenticated} size="md" />
+        <NavbarLogo isAuthenticated={isAuthenticated} size="lg" />
 
         {/* Nav Links */}
         <div className="flex items-center">
