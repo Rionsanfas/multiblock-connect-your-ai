@@ -2,6 +2,7 @@ import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { Link } from "react-router-dom";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+
 export default function PrivacyPolicy() {
   return <div className="min-h-screen bg-background liquid-bg">
       <div className="noise-overlay" />
@@ -161,8 +162,8 @@ export default function PrivacyPolicy() {
                 </ul>
                 <p className="text-muted-foreground leading-relaxed mt-3">
                   To exercise these rights, contact us at{" "}
-                  <a href="mailto:support@multiblockconnect.com" className="text-primary hover:underline">
-                    support@multiblockconnect.com
+                  <a href="mailto:support@multiblock.space" className="text-primary hover:underline">
+                    support@multiblock.space
                   </a>
                 </p>
               </section>
@@ -181,7 +182,7 @@ export default function PrivacyPolicy() {
                 <h2 className="text-xl font-semibold text-foreground mb-3">10. Third-Party Services</h2>
                 <p className="text-muted-foreground mb-3">We may share data with:</p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li><strong className="text-foreground">Payment processors:</strong> Stripe, Polar for billing</li>
+                  <li><strong className="text-foreground">Payment processors:</strong> Polar for billing</li>
                   <li><strong className="text-foreground">Analytics providers:</strong> For service improvement</li>
                   <li><strong className="text-foreground">AI providers:</strong> Via your own API keys</li>
                   <li><strong className="text-foreground">Legal authorities:</strong> If required by law</li>
@@ -224,8 +225,8 @@ export default function PrivacyPolicy() {
                 <h2 className="text-xl font-semibold text-foreground mb-3">14. Contact Us</h2>
                 <p className="text-muted-foreground leading-relaxed">
                   If you have questions about this Privacy Policy or our data practices, please contact us at:{" "}
-                  <a href="mailto:support@multiblockconnect.com" className="text-primary hover:underline">
-                    support@multiblockconnect.com
+                  <a href="mailto:support@multiblock.space" className="text-primary hover:underline">
+                    support@multiblock.space
                   </a>
                 </p>
               </section>

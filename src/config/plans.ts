@@ -1,8 +1,10 @@
 /**
  * Pricing Plans Configuration
  * 
- * EXACT plan data with correct Polar embed checkout URLs
- * Categories: Individual Annual, Team Annual, Lifetime Deals, Add-ons
+ * CANONICAL PLAN DATA - Single source of truth
+ * All plans, prices, limits, and features MUST match this file exactly.
+ * 
+ * Support email: support@multiblock.space
  */
 
 import type { PlanCapabilities } from '@/types';
@@ -131,7 +133,7 @@ const FREE_PLAN: PlanConfig = {
 
 /**
  * ============================================
- * INDIVIDUAL ANNUAL PLANS
+ * INDIVIDUAL YEARLY PLANS
  * ============================================
  */
 const INDIVIDUAL_STARTER_ANNUAL: PlanConfig = {
@@ -201,7 +203,7 @@ const INDIVIDUAL_PRO_ANNUAL: PlanConfig = {
 
 /**
  * ============================================
- * TEAM ANNUAL PLANS
+ * TEAM YEARLY PLANS
  * ============================================
  */
 const TEAM_STARTER_ANNUAL: PlanConfig = {
@@ -210,7 +212,7 @@ const TEAM_STARTER_ANNUAL: PlanConfig = {
   tier: 'starter',
   category: 'team',
   description: 'For small teams getting started',
-  price_cents: 12999, // $129.99/year
+  price_cents: 19999, // $199.99/year
   billing_period: 'yearly',
   boards: 50,
   blocks_per_board: 'unlimited',
@@ -241,7 +243,7 @@ const TEAM_PRO_ANNUAL: PlanConfig = {
   tier: 'pro',
   category: 'team',
   description: 'For growing teams',
-  price_cents: 17999, // $179.99/year
+  price_cents: 29999, // $299.99/year
   billing_period: 'yearly',
   boards: 100,
   blocks_per_board: 'unlimited',
@@ -280,7 +282,7 @@ const LTD_STARTER_INDIVIDUAL: PlanConfig = {
   tier: 'starter',
   category: 'lifetime',
   description: 'Lifetime access for individuals',
-  price_cents: 39999, // $399.99
+  price_cents: 49999, // $499.99
   billing_period: 'lifetime',
   boards: 50,
   blocks_per_board: 'unlimited',
@@ -311,7 +313,7 @@ const LTD_PRO_INDIVIDUAL: PlanConfig = {
   tier: 'pro',
   category: 'lifetime',
   description: 'Lifetime Pro for individuals',
-  price_cents: 49999, // $499.99
+  price_cents: 69999, // $699.99
   billing_period: 'lifetime',
   boards: 150,
   blocks_per_board: 'unlimited',
@@ -350,7 +352,7 @@ const LTD_STARTER_TEAM: PlanConfig = {
   tier: 'starter',
   category: 'lifetime',
   description: 'Lifetime access for teams',
-  price_cents: 42999, // $429.99
+  price_cents: 79999, // $799.99
   billing_period: 'lifetime',
   boards: 150,
   blocks_per_board: 'unlimited',
@@ -445,7 +447,7 @@ const ENTERPRISE_PLAN: PlanConfig = {
 
 /**
  * ============================================
- * ADD-ONS (STACKABLE) - Correct URLs
+ * STORAGE ADD-ONS (STACKABLE)
  * ============================================
  */
 export const ADDONS: AddonConfig[] = [
@@ -473,7 +475,7 @@ export const ADDONS: AddonConfig[] = [
     id: 'addon-4gb',
     name: '+4 GB Add-On',
     description: '+4 GB storage + 50 boards',
-    price_cents: 2999, // $29.99
+    price_cents: 2499, // $24.99
     extra_boards: 50,
     extra_storage_mb: 4096, // 4 GB
     checkout_url: 'https://buy.polar.sh/polar_cl_1Oj5sYbfwJyVjmzPXnnjnlr9YS2TVCQd7OsyG1IzSMj',
@@ -483,7 +485,7 @@ export const ADDONS: AddonConfig[] = [
     id: 'addon-5gb',
     name: '+5 GB Add-On',
     description: '+5 GB storage + 60 boards',
-    price_cents: 3499, // $34.99
+    price_cents: 2999, // $29.99
     extra_boards: 60,
     extra_storage_mb: 5120, // 5 GB
     checkout_url: 'https://buy.polar.sh/polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT',
@@ -493,7 +495,7 @@ export const ADDONS: AddonConfig[] = [
     id: 'addon-10gb',
     name: '+10 GB Add-On',
     description: '+10 GB storage + 120 boards',
-    price_cents: 5999, // $59.99
+    price_cents: 4999, // $49.99
     extra_boards: 120,
     extra_storage_mb: 10240, // 10 GB
     checkout_url: 'https://buy.polar.sh/polar_cl_JCkbiUFVssy28q7auRRSmERW2XUwIhqt2JnrY2yCy9b',
