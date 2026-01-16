@@ -4,6 +4,7 @@ import { IconButton } from "@/components/ui/icon-button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { BlockTransferDialog } from "./BlockTransferDialog";
 import { useAppStore } from "@/store/useAppStore";
 import { useDragStore } from "@/store/useDragStore";
@@ -52,6 +53,7 @@ export function BlockCard({
   const [isHovered, setIsHovered] = useState(false);
   const [isConnectionZoneHovered, setIsConnectionZoneHovered] = useState(false);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [size, setSize] = useState({
     width: block.config?.width || DEFAULT_WIDTH,
     height: block.config?.height || DEFAULT_HEIGHT,
@@ -351,13 +353,20 @@ export function BlockCard({
     setIsRunning(false);
   };
 
-  const handleDeleteBlock = async () => {
-    try {
-      await deleteBlock(block.id);
-      toast.success("Block deleted");
-    } catch (e) {
+  const handleRequestDeleteBlock = () => {
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleConfirmDeleteBlock = () => {
+    // Instant UX: user action is the source of truth.
+    setConfirmDeleteOpen(false);
+    toast.success("Block deleted", {
+      description: "All connected links were deleted too.",
+    });
+
+    deleteBlock(block.id).catch((e) => {
       toast.error(e instanceof Error ? e.message : "Failed to delete block");
-    }
+    });
   };
 
   // Bracket configuration - symmetric spacing
@@ -577,7 +586,7 @@ export function BlockCard({
                     Copy/Move to Board
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleDeleteBlock} className="text-destructive rounded-lg text-sm">
+                  <DropdownMenuItem onClick={handleRequestDeleteBlock} className="text-destructive rounded-lg text-sm">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </DropdownMenuItem>
@@ -648,7 +657,7 @@ export function BlockCard({
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem
-          onClick={handleDeleteBlock}
+          onClick={handleRequestDeleteBlock}
           className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm text-red-400 focus:text-red-400 focus:bg-red-500/10"
         >
           <Trash2 className="h-4 w-4" />
@@ -661,6 +670,17 @@ export function BlockCard({
         onOpenChange={setShowTransferDialog}
         blockId={block.id}
         currentBoardId={block.board_id}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title="Delete block?"
+        description="This will permanently delete this block and ALL connected links (incoming and outgoing)."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleConfirmDeleteBlock}
       />
     </ContextMenu>
   );

@@ -19,16 +19,19 @@ interface BlockPosition {
 interface BlockPositionsState {
   // Map of blockId -> current position
   positions: Record<string, BlockPosition>;
-  
+
   // Set a block's position (called during drag)
   setPosition: (blockId: string, position: BlockPosition) => void;
-  
+
   // Initialize positions from cache (called on mount or cache update)
   initializePositions: (blocks: Array<{ id: string; position: BlockPosition }>) => void;
-  
+
   // Get a block's position (returns from store if exists)
   getPosition: (blockId: string) => BlockPosition | undefined;
-  
+
+  // Remove a single block's position (e.g. on block delete)
+  removePosition: (blockId: string) => void;
+
   // Clear all positions (called on unmount)
   clearPositions: () => void;
 }
@@ -57,6 +60,14 @@ export const useBlockPositions = create<BlockPositionsState>((set, get) => ({
     return get().positions[blockId];
   },
 
+  removePosition: (blockId) => {
+    set((state) => {
+      if (!state.positions[blockId]) return state;
+      const { [blockId]: _removed, ...rest } = state.positions;
+      return { positions: rest };
+    });
+  },
+
   clearPositions: () => {
     set({ positions: {} });
   },
@@ -75,4 +86,9 @@ export function setBlockPosition(blockId: string, position: BlockPosition): void
       [blockId]: position,
     },
   }));
+}
+
+// Non-reactive remover for use outside React (e.g. optimistic deletes)
+export function removeBlockPosition(blockId: string): void {
+  useBlockPositions.getState().removePosition(blockId);
 }
