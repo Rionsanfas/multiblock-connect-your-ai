@@ -58,16 +58,21 @@ function transformConnection(c: BlockConnection): Connection {
  */
 export function useBoardConnections(boardId: string | undefined) {
   const { user, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+
+  const queryKey = ['board-connections', boardId] as const;
 
   const { data: connections = [], isLoading } = useQuery({
-    queryKey: ['board-connections', boardId],
+    queryKey,
     queryFn: async () => {
       if (!boardId) return [];
-      // CRITICAL: Never refetch during drag operations
+
+      // CRITICAL: never *change* the connections list during drag.
+      // Returning [] here causes lines to disappear mid-drag.
       if (getDragState().isDragging) {
-        console.log('[useBoardConnections] Skipping refetch - drag in progress');
-        return [];
+        return (queryClient.getQueryData<Connection[]>(queryKey) ?? []);
       }
+
       console.log('[useBoardConnections] Fetching connections for board:', boardId);
       const conns = await connectionsDb.getForBoard(boardId);
       console.log('[useBoardConnections] Fetched:', conns.length, 'connections');
@@ -251,17 +256,13 @@ export function useConnectionActions(boardId: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const boardConnectionsKey = ['board-connections', boardId] as const;
+
   const createMutation = useMutation({
     mutationFn: async ({ from_block, to_block }: { from_block: string; to_block: string }) => {
       // Prevent self-connections
       if (from_block === to_block) {
         throw new Error('Cannot create self-connection');
-      }
-
-      // Check if connection already exists
-      const exists = await connectionsDb.exists(from_block, to_block);
-      if (exists) {
-        throw new Error('Connection already exists');
       }
 
       console.log('[useConnectionActions] Creating connection:', from_block, '->', to_block);
@@ -270,39 +271,132 @@ export function useConnectionActions(boardId: string) {
         target_block_id: to_block,
       });
     },
-    onSuccess: (_, { to_block }) => {
-      queryClient.invalidateQueries({ queryKey: ['board-connections', boardId] });
-      queryClient.invalidateQueries({ queryKey: ['block-incoming-connections', to_block] });
-      queryClient.invalidateQueries({ queryKey: ['block-incoming-context', to_block] });
+    onMutate: async ({ from_block, to_block }) => {
+      // CRITICAL: cancel any in-flight connection fetch so it can't overwrite optimistic state: 
+      // "drag only ends on mouse-up".
+      await queryClient.cancelQueries({ queryKey: boardConnectionsKey });
+
+      const previous = (queryClient.getQueryData<Connection[]>(boardConnectionsKey) ?? []);
+
+      // If we already have this connection locally, do nothing (idempotent UX).
+      if (previous.some((c) => c.from_block === from_block && c.to_block === to_block)) {
+        return { previous, optimisticId: null as string | null, from_block, to_block };
+      }
+
+      const optimisticId = `temp-${crypto.randomUUID()}`;
+      const optimistic: Connection = {
+        id: optimisticId,
+        from_block,
+        to_block,
+        label: null,
+        enabled: true,
+        context_type: 'full',
+        created_at: new Date().toISOString(),
+      };
+
+      // Optimistically insert into the board list (this is what fixes flicker).
+      queryClient.setQueryData<Connection[]>(boardConnectionsKey, [...previous, optimistic]);
+
+      // Also update per-block connection lists if they exist in cache (no refetch required).
+      queryClient.setQueryData<Connection[]>(['block-incoming-connections', to_block], (old) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.some((c) => c.from_block === from_block && c.to_block === to_block)
+          ? arr
+          : [...arr, optimistic];
+      });
+      queryClient.setQueryData<Connection[]>(['block-outgoing-connections', from_block], (old) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.some((c) => c.from_block === from_block && c.to_block === to_block)
+          ? arr
+          : [...arr, optimistic];
+      });
+
+      return { previous, optimisticId, from_block, to_block };
+    },
+    onError: (error, _vars, ctx) => {
+      console.error('[useConnectionActions] Create failed:', error);
+
+      if (!ctx) return;
+
+      // Rollback board list
+      queryClient.setQueryData(boardConnectionsKey, ctx.previous);
+
+      // Rollback incoming/outgoing lists by removing the optimistic connection only
+      if (ctx.optimisticId) {
+        queryClient.setQueryData(['block-incoming-connections', ctx.to_block], (old: unknown) => {
+          const arr = Array.isArray(old) ? old : [];
+          return arr.filter((c: any) => c?.id !== ctx.optimisticId);
+        });
+        queryClient.setQueryData(['block-outgoing-connections', ctx.from_block], (old: unknown) => {
+          const arr = Array.isArray(old) ? old : [];
+          return arr.filter((c: any) => c?.id !== ctx.optimisticId);
+        });
+      }
+    },
+    onSuccess: (createdRow, _vars, ctx) => {
+      // If we no-oped due to local duplicate, nothing to reconcile.
+      if (!ctx?.optimisticId) return;
+
+      const real = transformConnection(createdRow);
+
+      // Replace optimistic entry with the real one (stable mount).
+      queryClient.setQueryData<Connection[]>(boardConnectionsKey, (old) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.map((c) => (c.id === ctx.optimisticId ? real : c));
+      });
+
+      queryClient.setQueryData<Connection[]>(['block-incoming-connections', ctx.to_block], (old) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.map((c) => (c.id === ctx.optimisticId ? real : c));
+      });
+      queryClient.setQueryData<Connection[]>(['block-outgoing-connections', ctx.from_block], (old) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.map((c) => (c.id === ctx.optimisticId ? real : c));
+      });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async ({ connectionId, targetBlockId }: { connectionId: string; targetBlockId: string }) => {
+    mutationFn: async ({ connectionId }: { connectionId: string }) => {
       console.log('[useConnectionActions] Deleting connection:', connectionId);
       await connectionsDb.delete(connectionId);
-      return targetBlockId;
+      return connectionId;
     },
-    onSuccess: (targetBlockId) => {
-      queryClient.invalidateQueries({ queryKey: ['board-connections', boardId] });
-      queryClient.invalidateQueries({ queryKey: ['block-incoming-connections', targetBlockId] });
-      queryClient.invalidateQueries({ queryKey: ['block-incoming-context', targetBlockId] });
+    onMutate: async ({ connectionId }) => {
+      await queryClient.cancelQueries({ queryKey: boardConnectionsKey });
+      const previous = (queryClient.getQueryData<Connection[]>(boardConnectionsKey) ?? []);
+
+      queryClient.setQueryData<Connection[]>(boardConnectionsKey, (old) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.filter((c) => c.id !== connectionId);
+      });
+
+      return { previous, connectionId };
+    },
+    onError: (error, _vars, ctx) => {
+      console.error('[useConnectionActions] Delete failed:', error);
+      if (!ctx) return;
+      queryClient.setQueryData(boardConnectionsKey, ctx.previous);
     },
   });
 
-  const create = useCallback((
-    fromBlockId: string,
-    toBlockId: string,
-  ): void => {
+  const create = useCallback((fromBlockId: string, toBlockId: string): void => {
     if (!user) {
       console.error('Connection creation denied: not authenticated');
       return;
     }
-    createMutation.mutate({ from_block: fromBlockId, to_block: toBlockId });
-  }, [user, createMutation]);
 
-  const remove = useCallback((connectionId: string, targetBlockId?: string): void => {
-    deleteMutation.mutate({ connectionId, targetBlockId: targetBlockId || '' });
+    // Fast client-side de-dupe (prevents create→rollback flicker).
+    const existing = queryClient.getQueryData<Connection[]>(boardConnectionsKey) ?? [];
+    if (existing.some((c) => c.from_block === fromBlockId && c.to_block === toBlockId)) {
+      return;
+    }
+
+    createMutation.mutate({ from_block: fromBlockId, to_block: toBlockId });
+  }, [user, createMutation, queryClient, boardConnectionsKey]);
+
+  const remove = useCallback((connectionId: string): void => {
+    deleteMutation.mutate({ connectionId });
   }, [deleteMutation]);
 
   return {

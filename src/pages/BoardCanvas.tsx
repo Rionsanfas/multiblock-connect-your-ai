@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { BlockCard } from "@/components/board/BlockCard";
 import { ConnectionLine } from "@/components/board/ConnectionLine";
@@ -25,6 +26,8 @@ const DEFAULT_BLOCK_HEIGHT = 160;
 export default function BoardCanvas() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
@@ -37,17 +40,23 @@ export default function BoardCanvas() {
   // Global drag store for connection line dragging
   const startDrag = useDragStore((s) => s.startDrag);
   const endDrag = useDragStore((s) => s.endDrag);
-  const isConnectionDragging = useRef(false);
+
+  // Keep latest pan/zoom in refs so window listeners never depend on React render.
+  const panOffsetRef = useRef(panOffset);
+  const zoomRef = useRef(1);
+  useEffect(() => {
+    panOffsetRef.current = panOffset;
+  }, [panOffset]);
 
   // Auth gating - ABSOLUTE: no operations until auth resolved
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
-  
+
   // Board fetch - only enabled when auth is resolved and user exists
   const { board, isLoading: boardLoading, error: boardError, isForbidden } = useUserBoard(
     // Only pass boardId when auth is fully resolved
     !authLoading && isAuthenticated && user?.id ? id : undefined
   );
-  
+
   // Blocks - only fetch when we have a valid board
   const boardBlocks = useBoardBlocks(board?.id);
   const { createBlock } = useBlockActions(board?.id || '');
@@ -65,15 +74,65 @@ export default function BoardCanvas() {
     chatBlockId,
   } = useAppStore();
 
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
+
+  // CRITICAL: connection dragging must be window-scoped, never canvas-scoped.
+  // Otherwise leaving the canvas ends the drag mid-mouse-down.
+  useEffect(() => {
+    if (!connectingFrom) return;
+
+    let raf = 0;
+    let latest: { x: number; y: number } | null = null;
+
+    const updateMousePos = () => {
+      raf = 0;
+      if (!latest) return;
+      setMousePos(latest);
+      latest = null;
+    };
+
+    const onMove = (e: MouseEvent) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      latest = {
+        x: (e.clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
+        y: (e.clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
+      };
+
+      if (!raf) raf = window.requestAnimationFrame(updateMousePos);
+    };
+
+    const onUp = () => {
+      // If a block handled the drop, it will already have cleared connectingFrom.
+      endDrag();
+      setConnectingFrom(null);
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [connectingFrom, endDrag]);
+
   const handleCenterView = useCallback(() => {
     if (boardBlocks.length === 0) {
       toast.info("No blocks to center on");
       return;
     }
-    
+
     // Calculate bounding box of all blocks
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    boardBlocks.forEach(block => {
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
+    boardBlocks.forEach((block) => {
       const width = DEFAULT_BLOCK_WIDTH;
       const height = DEFAULT_BLOCK_HEIGHT;
       minX = Math.min(minX, block.position.x);
@@ -81,19 +140,19 @@ export default function BoardCanvas() {
       maxX = Math.max(maxX, block.position.x + width);
       maxY = Math.max(maxY, block.position.y + height);
     });
-    
+
     // Calculate center of all blocks
     const centerX = (minX + maxX) / 2;
     const centerY = (minY + maxY) / 2;
-    
+
     // Get canvas dimensions
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
-    
+
     // Calculate pan offset to center the blocks
-    const newPanX = (rect.width / 2) - (centerX * zoom);
-    const newPanY = (rect.height / 2) - (centerY * zoom);
-    
+    const newPanX = rect.width / 2 - centerX * zoom;
+    const newPanY = rect.height / 2 - centerY * zoom;
+
     setPanOffset({ x: newPanX, y: newPanY });
   }, [boardBlocks, zoom]);
 
@@ -105,7 +164,7 @@ export default function BoardCanvas() {
       boardIdRef.current = board.id;
       setCurrentBoard(board);
     }
-    
+
     // Cleanup on unmount
     return () => {
       boardIdRef.current = null;
@@ -113,19 +172,28 @@ export default function BoardCanvas() {
     };
   }, [board?.id, setCurrentBoard]);
 
-  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    // Only enable panning on canvas background, not on blocks
-    if (target === canvasRef.current || target.classList.contains('board-canvas-bg') || target.closest('.canvas-inner')) {
-      if (e.button === 0 && !target.closest('.block-card')) {
-        // Set global drag lock for panning
-        startDrag('pan');
-        setIsPanning(true);
-        setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
-        selectBlock(null);
+  const handleCanvasMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Only enable panning on canvas background, not on blocks
+      if (target === canvasRef.current || target.classList.contains('board-canvas-bg') || target.closest('.canvas-inner')) {
+        if (e.button === 0 && !target.closest('.block-card')) {
+          // Cancel any in-flight queries before starting an interaction
+          if (board?.id) {
+            queryClient.cancelQueries({ queryKey: ['board-blocks', board.id] });
+            queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
+          }
+
+          // Set global drag lock for panning
+          startDrag('pan');
+          setIsPanning(true);
+          setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+          selectBlock(null);
+        }
       }
-    }
-  }, [panOffset.x, panOffset.y, selectBlock, startDrag]);
+    },
+    [board?.id, panOffset.x, panOffset.y, queryClient, selectBlock, startDrag]
+  );
 
   const handleCanvasDoubleClick = async (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -181,59 +249,53 @@ export default function BoardCanvas() {
     }
   };
 
-  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-    if (isPanning) {
-      // Direct state update for panning - no React interference
-      setPanOffset({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    }
-    if (connectingFrom && isConnectionDragging.current) {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (rect) {
-        setMousePos({
-          x: (e.clientX - rect.left - panOffset.x) / zoom,
-          y: (e.clientY - rect.top - panOffset.y) / zoom,
+  const handleCanvasMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (isPanning) {
+        // Direct state update for panning - no React interference
+        setPanOffset({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
         });
       }
-    }
-  }, [isPanning, dragStart, connectingFrom, panOffset, zoom]);
+    },
+    [isPanning, dragStart]
+  );
 
   const handleCanvasMouseUp = useCallback(() => {
     if (isPanning) {
       endDrag();
       setIsPanning(false);
     }
-    if (connectingFrom) {
-      isConnectionDragging.current = false;
-      endDrag();
-      setConnectingFrom(null);
-    }
-  }, [isPanning, connectingFrom, endDrag]);
+  }, [isPanning, endDrag]);
 
-  const handleStartConnection = useCallback((blockId: string) => {
-    // Set global drag lock for connection drawing
-    startDrag('connection', blockId);
-    isConnectionDragging.current = true;
-    setConnectingFrom(blockId);
-  }, [startDrag]);
+  const handleStartConnection = useCallback(
+    (blockId: string) => {
+      // Cancel any in-flight queries so they can't replace the connection list mid-drag.
+      if (board?.id) {
+        queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
+      }
 
-  const handleEndConnection = useCallback((toBlockId: string) => {
-    if (connectingFrom && connectingFrom !== toBlockId) {
-      const exists = boardConnections.some(
-        (c) => c.from_block === connectingFrom && c.to_block === toBlockId
-      );
-      if (!exists) {
-        // Use Supabase-backed connection creation
+      // Set global drag lock for connection drawing
+      startDrag('connection', blockId);
+      setConnectingFrom(blockId);
+    },
+    [board?.id, queryClient, startDrag]
+  );
+
+  const handleEndConnection = useCallback(
+    (toBlockId: string) => {
+      if (connectingFrom && connectingFrom !== toBlockId) {
+        // Create is fully optimistic; it will keep the line mounted and later swap IDs.
         createConnection(connectingFrom, toBlockId);
         toast.success("Connection created");
       }
-    }
-    isConnectionDragging.current = false;
-    endDrag();
-    setConnectingFrom(null);
-  }, [connectingFrom, boardConnections, createConnection, endDrag]);
+
+      endDrag();
+      setConnectingFrom(null);
+    },
+    [connectingFrom, createConnection, endDrag]
+  );
 
   const handleConnectionContextMenu = (connectionId: string) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -370,24 +432,25 @@ export default function BoardCanvas() {
         <BlocksSidebar boardId={board.id} onCenterView={handleCenterView} />
 
         <ContextMenu>
-          <ContextMenuTrigger>
-            <div
-              ref={canvasRef}
-              className={cn(
-                "flex-1 relative overflow-hidden board-canvas-bg rounded-2xl",
-                isPanning ? "cursor-grabbing" : "cursor-grab"
-              )}
-              style={{
-                // CRITICAL: Clip all children to prevent visual overflow
-                clipPath: "inset(0 round 16px)",
-              }}
-              onMouseDown={handleCanvasMouseDown}
-              onMouseMove={handleCanvasMouseMove}
-              onMouseUp={handleCanvasMouseUp}
-              onMouseLeave={handleCanvasMouseUp}
-              onDoubleClick={handleCanvasDoubleClick}
-              onContextMenu={handleContextMenu}
-            >
+            <ContextMenuTrigger>
+              <div
+                ref={canvasRef}
+                className={cn(
+                  "flex-1 relative overflow-hidden board-canvas-bg rounded-2xl",
+                  isPanning ? "cursor-grabbing" : "cursor-grab"
+                )}
+                style={{
+                  // CRITICAL: Clip all children to prevent visual overflow
+                  clipPath: "inset(0 round 16px)",
+                }}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseUp={handleCanvasMouseUp}
+                // IMPORTANT: do NOT end connection-drag on mouse-leave; connection drag is window-scoped.
+                onMouseLeave={handleCanvasMouseUp}
+                onDoubleClick={handleCanvasDoubleClick}
+                onContextMenu={handleContextMenu}
+              >
               <div
                 className="canvas-inner origin-top-left"
                 style={{
