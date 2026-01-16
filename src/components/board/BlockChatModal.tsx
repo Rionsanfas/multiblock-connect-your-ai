@@ -32,7 +32,7 @@ import { useBlockIncomingContext } from "@/hooks/useBlockConnections";
 import { useBlock } from "@/hooks/useBlockData";
 import { useBoardBlocks } from "@/hooks/useBoardBlocks";
 import { blocksDb, messagesDb } from "@/lib/database";
-import { getModelConfig, PROVIDERS, type Provider } from "@/types";
+import { getModelConfig, PROVIDERS, type Provider } from "@/config/models";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";

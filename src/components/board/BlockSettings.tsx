@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppStore } from "@/store/useAppStore";
-import { MODEL_CONFIGS, PROVIDERS } from "@/types";
+import { MODEL_CONFIGS, PROVIDERS, getChatModels } from "@/config/models";
 
 interface BlockSettingsProps {
   blockId: string;
@@ -21,11 +21,13 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
 
   if (!block) return null;
 
-  const allModels = MODEL_CONFIGS.map((m) => ({
+  // Only show chat models for block settings
+  const allModels = getChatModels().map((m) => ({
     provider: m.provider,
     model: m.id,
     providerName: PROVIDERS[m.provider].name,
     modelName: m.name,
+    type: m.type,
   }));
 
   const handleTitleSave = () => {

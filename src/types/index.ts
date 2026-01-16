@@ -342,27 +342,47 @@ export interface LtdOffer {
 export const MODEL_PROVIDERS = {
   openai: {
     name: 'OpenAI',
-    models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+    models: ['gpt-5.2', 'gpt-5', 'gpt-4o', 'gpt-4o-mini'],
     color: 'hsl(142 70% 45%)',
   },
   anthropic: {
     name: 'Anthropic',
-    models: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
+    models: ['claude-opus-4.5', 'claude-sonnet-4.5', 'claude-haiku-4.5'],
     color: 'hsl(24 90% 55%)',
   },
   google: {
     name: 'Google',
-    models: ['gemini-pro', 'gemini-pro-vision'],
+    models: ['gemini-3-pro', 'gemini-3-flash', 'gemini-2.5-pro'],
     color: 'hsl(217 90% 60%)',
-  },
-  perplexity: {
-    name: 'Perplexity',
-    models: ['pplx-7b-online', 'pplx-70b-online'],
-    color: 'hsl(280 70% 60%)',
   },
   xai: {
     name: 'xAI',
-    models: ['grok-2', 'grok-3'],
+    models: ['grok-4.1-fast', 'grok-4-fast-reasoning'],
     color: 'hsl(0 0% 70%)',
+  },
+  deepseek: {
+    name: 'DeepSeek',
+    models: ['deepseek-v3.2', 'deepseek-v3.1'],
+    color: 'hsl(200 80% 50%)',
+  },
+  mistral: {
+    name: 'Mistral',
+    models: ['mistral-large-3', 'mistral-medium-3.1'],
+    color: 'hsl(35 90% 55%)',
+  },
+  cohere: {
+    name: 'Cohere',
+    models: ['command-a-03-2025', 'command-r-plus-08-2024'],
+    color: 'hsl(280 70% 55%)',
+  },
+  together: {
+    name: 'Together.ai',
+    models: ['llama-3.3-70b-instruct-turbo', 'llama-4-maverick-17bx128e'],
+    color: 'hsl(220 80% 55%)',
+  },
+  perplexity: {
+    name: 'Perplexity',
+    models: ['sonar-large-online', 'pplx-70b'],
+    color: 'hsl(180 70% 45%)',
   },
 } as const;

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/store/useAppStore";
-import { MODEL_CONFIGS, PROVIDERS, type Provider } from "@/types";
+import { getChatModels, PROVIDERS, type Provider, type ModelConfig } from "@/config/models";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +31,7 @@ export function TextSelectionPopover({
 }: TextSelectionPopoverProps) {
   const [isOpen, setIsOpen] = useState(true);
   const [title, setTitle] = useState("");
-  const [selectedModel, setSelectedModel] = useState("gpt-4o");
+  const [selectedModel, setSelectedModel] = useState("gpt-5");
   
   const { createBlockFromSelection, closeBlockChat } = useAppStore();
 
@@ -60,12 +60,13 @@ export function TextSelectionPopover({
     }
   };
 
-  // Group models by provider
-  const modelsByProvider = MODEL_CONFIGS.reduce((acc, model) => {
+  // Group chat models by provider
+  const chatModels = getChatModels();
+  const modelsByProvider = chatModels.reduce((acc, model) => {
     if (!acc[model.provider]) acc[model.provider] = [];
     acc[model.provider].push(model);
     return acc;
-  }, {} as Record<Provider, typeof MODEL_CONFIGS>);
+  }, {} as Record<Provider, ModelConfig[]>);
 
   // Truncate display text
   const displayText = selectedText.length > 100 
