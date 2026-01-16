@@ -22,18 +22,16 @@ import { useApiKeysRefresh } from "@/hooks/usePageRefresh";
 import { ApiKeyAccessRequestButton } from "@/components/apikeys/ApiKeyAccessRequestButton";
 import { PendingAccessRequests } from "@/components/apikeys/PendingAccessRequests";
 
-// Supported providers that match Supabase llm_provider enum
-const SUPPORTED_PROVIDERS: { id: LLMProvider; name: string; color: string; apiKeyUrl: string }[] = [
-  { id: 'openai', name: 'OpenAI', color: 'hsl(142 70% 45%)', apiKeyUrl: 'https://platform.openai.com/api-keys' },
-  { id: 'anthropic', name: 'Anthropic', color: 'hsl(24 90% 55%)', apiKeyUrl: 'https://console.anthropic.com/settings/keys' },
-  { id: 'google', name: 'Google', color: 'hsl(217 90% 60%)', apiKeyUrl: 'https://aistudio.google.com/apikey' },
-  { id: 'xai', name: 'xAI', color: 'hsl(0 0% 70%)', apiKeyUrl: 'https://console.x.ai' },
-  { id: 'deepseek', name: 'DeepSeek', color: 'hsl(200 80% 50%)', apiKeyUrl: 'https://platform.deepseek.com/api_keys' },
-  { id: 'mistral', name: 'Mistral', color: 'hsl(35 90% 55%)', apiKeyUrl: 'https://console.mistral.ai/api-keys' },
-  { id: 'cohere', name: 'Cohere', color: 'hsl(280 70% 55%)', apiKeyUrl: 'https://dashboard.cohere.com/api-keys' },
-  { id: 'together', name: 'Together.ai', color: 'hsl(220 80% 55%)', apiKeyUrl: 'https://api.together.ai/settings/api-keys' },
-  { id: 'perplexity', name: 'Perplexity', color: 'hsl(180 70% 45%)', apiKeyUrl: 'https://www.perplexity.ai/settings/api' },
-];
+// Use canonical provider config from models.ts - SINGLE SOURCE OF TRUTH
+import { PROVIDERS, type Provider } from '@/config/models';
+
+// Derive supported providers from the canonical config
+const SUPPORTED_PROVIDERS: { id: LLMProvider; name: string; color: string; apiKeyUrl: string }[] = (Object.values(PROVIDERS) as { id: Provider; name: string; color: string; apiKeyUrl: string }[]).map(p => ({
+  id: p.id as LLMProvider,
+  name: p.name,
+  color: p.color,
+  apiKeyUrl: p.apiKeyUrl,
+}));
 
 export default function ApiKeys() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();

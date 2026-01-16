@@ -9,6 +9,7 @@ import {
   Pencil,
   HelpCircle,
   Home,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +18,10 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppStore } from "@/store/useAppStore";
+import { useBlockActions } from "@/hooks/useBoardBlocks";
+import { useConfiguredProviders } from "@/hooks/useApiKeys";
+import { getChatModels, PROVIDERS, getModelConfig } from "@/config/models";
 import { toast } from "sonner";
-import { getChatModels, PROVIDERS } from "@/config/models";
 
 interface TopBarProps {
   boardId?: string;
@@ -32,13 +35,17 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
   const [title, setTitle] = useState(boardTitle || "");
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [blockTitle, setBlockTitle] = useState("");
+  const [switchingBlockId, setSwitchingBlockId] = useState<string | null>(null);
+  
   const {
     updateBoard,
     zoom,
     setZoom,
     blocks,
-    updateBlock,
   } = useAppStore();
+
+  const { updateBlock } = useBlockActions(boardId || '');
+  const configuredProviders = useConfiguredProviders();
 
   const boardBlocks = boardId ? blocks.filter((b) => b.board_id === boardId) : [];
 
@@ -47,6 +54,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
     model: m.id,
     name: PROVIDERS[m.provider].name,
     modelName: m.name,
+    hasKey: configuredProviders.includes(m.provider),
   }));
 
   const handleTitleSave = () => {
@@ -57,11 +65,53 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
     setIsEditing(false);
   };
 
-  const handleBlockTitleSave = (blockId: string) => {
+  const handleBlockTitleSave = async (blockId: string) => {
     if (blockTitle.trim()) {
-      updateBlock(blockId, { title: blockTitle.trim() });
+      try {
+        await updateBlock(blockId, { title: blockTitle.trim() });
+        toast.success("Block title updated");
+      } catch {
+        toast.error("Failed to update title");
+      }
     }
     setEditingBlockId(null);
+  };
+
+  const handleModelChange = async (blockId: string, newModelId: string) => {
+    const newModel = getModelConfig(newModelId);
+    if (!newModel) {
+      toast.error("Invalid model selected");
+      return;
+    }
+    
+    // Check if user has API key for this provider
+    if (!configuredProviders.includes(newModel.provider)) {
+      toast.error(`Add an API key for ${PROVIDERS[newModel.provider].name} first`, {
+        action: {
+          label: "Add Key",
+          onClick: () => window.open(PROVIDERS[newModel.provider].apiKeyUrl, '_blank'),
+        },
+      });
+      return;
+    }
+    
+    setSwitchingBlockId(blockId);
+    try {
+      await updateBlock(blockId, { model_id: newModelId });
+      toast.success(`Switched to ${newModel.name}`);
+    } catch {
+      toast.error("Failed to switch model");
+    } finally {
+      setSwitchingBlockId(null);
+    }
+  };
+
+  const handleSystemPromptChange = async (blockId: string, value: string) => {
+    try {
+      await updateBlock(blockId, { system_prompt: value });
+    } catch {
+      toast.error("Failed to update system prompt");
+    }
   };
 
   return (
@@ -189,7 +239,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                             <div className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/40 hover:bg-secondary/60 transition-colors cursor-pointer">
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate">{block.title}</p>
-                                <p className="text-xs text-muted-foreground truncate">{block.model_id}</p>
+                                <p className="text-xs text-muted-foreground truncate">{block.model_id || 'No model selected'}</p>
                               </div>
                               <span className="key-icon-3d p-1.5 rounded-lg ml-2">
                                 <Settings className="h-3.5 w-3.5" />
@@ -231,17 +281,31 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                               <Label className="text-xs text-muted-foreground">Model</Label>
                               <Select
                                 value={block.model_id}
-                                onValueChange={(value) => updateBlock(block.id, { model_id: value })}
+                                onValueChange={(value) => handleModelChange(block.id, value)}
+                                disabled={switchingBlockId === block.id}
                               >
                                 <SelectTrigger className="bg-secondary/40 rounded-lg border-border/20 h-9">
-                                  <SelectValue />
+                                  {switchingBlockId === block.id ? (
+                                    <div className="flex items-center gap-2">
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      <span className="text-xs">Switching...</span>
+                                    </div>
+                                  ) : (
+                                    <SelectValue placeholder="Select model" />
+                                  )}
                                 </SelectTrigger>
-                                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-lg">
-                                  {allModels.map(({ model, name, modelName }) => (
-                                    <SelectItem key={model} value={model} className="rounded-md">
+                                <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-lg max-h-60">
+                                  {allModels.map(({ model, name, modelName, hasKey }) => (
+                                    <SelectItem 
+                                      key={model} 
+                                      value={model} 
+                                      className="rounded-md"
+                                      disabled={!hasKey}
+                                    >
                                       <span className="flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground">{name}</span>
-                                        {modelName}
+                                        <span className={!hasKey ? "opacity-50" : ""}>{modelName}</span>
+                                        {!hasKey && <span className="text-xs text-destructive">(No key)</span>}
                                       </span>
                                     </SelectItem>
                                   ))}
@@ -254,7 +318,7 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                               <Label className="text-xs text-muted-foreground">System Prompt</Label>
                               <Textarea
                                 value={block.system_prompt}
-                                onChange={(e) => updateBlock(block.id, { system_prompt: e.target.value })}
+                                onChange={(e) => handleSystemPromptChange(block.id, e.target.value)}
                                 className="bg-secondary/40 min-h-[80px] resize-none rounded-lg border-border/20 text-sm"
                                 placeholder="You are a helpful assistant..."
                               />

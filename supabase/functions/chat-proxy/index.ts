@@ -251,7 +251,25 @@ serve(async (req) => {
 
     // Regular chat completion
     if (!provider || !model_id || !messages) {
-      return new Response(JSON.stringify({ error: "provider, model_id, and messages are required" }), {
+      console.error("[chat-proxy] Missing required fields:", { provider: !!provider, model_id: !!model_id, messages: !!messages });
+      return new Response(JSON.stringify({ 
+        error: `Missing required fields: ${[
+          !provider && 'provider',
+          !model_id && 'model_id', 
+          !messages && 'messages'
+        ].filter(Boolean).join(', ')}`
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate provider is supported
+    if (!PROVIDER_ENDPOINTS[provider]) {
+      console.error("[chat-proxy] Unsupported provider:", provider);
+      return new Response(JSON.stringify({ 
+        error: `Unsupported provider: ${provider}. Supported providers: ${Object.keys(PROVIDER_ENDPOINTS).join(', ')}`
+      }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -260,7 +278,10 @@ serve(async (req) => {
     // Get decrypted API key (server-side only - never exposed to frontend)
     const apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: `No valid API key for ${provider}` }), {
+      console.error("[chat-proxy] No API key found for provider:", provider, "user:", user.id);
+      return new Response(JSON.stringify({ 
+        error: `No valid API key found for ${provider}. Please add your API key in Settings > API Keys.`
+      }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -371,15 +392,34 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[chat-proxy] Provider error: ${response.status}`, errorText);
+      console.error(`[chat-proxy] Provider ${provider} error: ${response.status}`, errorText);
       
-      let errorMessage = `Provider error (${response.status})`;
+      let errorMessage = `${provider} API error (${response.status})`;
+      let errorDetails = '';
+      
       try {
         const errorJson = JSON.parse(errorText);
         errorMessage = errorJson.error?.message || errorJson.message || errorMessage;
+        errorDetails = errorJson.error?.type || '';
       } catch {}
 
-      return new Response(JSON.stringify({ error: errorMessage }), {
+      // Provide user-friendly error messages for common cases
+      if (response.status === 401 || response.status === 403) {
+        errorMessage = `Invalid or expired API key for ${provider}. Please update your key in Settings > API Keys.`;
+      } else if (response.status === 429) {
+        errorMessage = `Rate limit exceeded for ${provider}. Please wait a moment and try again.`;
+      } else if (response.status === 404) {
+        errorMessage = `Model "${model_id}" not found for ${provider}. It may not be available or the name is incorrect.`;
+      } else if (response.status === 400) {
+        errorMessage = `Invalid request to ${provider}: ${errorMessage}`;
+      }
+
+      return new Response(JSON.stringify({ 
+        error: errorMessage,
+        details: errorDetails,
+        status: response.status,
+        provider 
+      }), {
         status: response.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

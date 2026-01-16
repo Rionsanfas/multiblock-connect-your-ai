@@ -311,6 +311,12 @@ class ChatService {
     config?: { temperature?: number; maxTokens?: number },
     attachments?: ChatAttachment[]
   ): Promise<void> {
+    // Pre-flight validation
+    if (!modelId) {
+      callbacks.onError('No model selected. Please choose a model first.');
+      return;
+    }
+
     const hasImages = attachments?.some(a => a.type.startsWith('image/')) || false;
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     const messageContent = typeof lastUserMessage?.content === 'string' 
@@ -328,11 +334,18 @@ class ChatService {
     }
 
     if (!modelConfig) {
-      callbacks.onError(`Unknown model: ${modelId}`);
+      callbacks.onError(`Model "${modelId}" is not recognized. Please select a valid model.`);
       return;
     }
 
     const provider = modelConfig.provider;
+    
+    // Validate provider is supported
+    if (!provider) {
+      callbacks.onError(`Could not determine provider for model "${modelId}".`);
+      return;
+    }
+    
     const providerModelId = getProviderModelId(resolvedModelId, provider);
 
     // Handle image generation separately
@@ -386,13 +399,32 @@ class ChatService {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        let errorMessage = errorData.error || `API request failed (${response.status})`;
+        let errorMessage = `Request failed (${response.status})`;
+        
+        try {
+          const errorData = await response.json();
+          // Use the detailed error from the proxy
+          errorMessage = errorData.error || errorMessage;
+          
+          // Log additional details for debugging
+          if (errorData.details) {
+            console.error('[ChatService] Error details:', errorData.details);
+          }
+        } catch {
+          // If we can't parse JSON, try to get text
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText.substring(0, 200); // Limit length
+            }
+          } catch {}
+        }
 
+        // Handle specific HTTP status codes with user-friendly messages
         if (response.status === 401) {
-          errorMessage = 'Not authenticated. Please log in again.';
+          errorMessage = 'Authentication failed. Please log in again.';
         } else if (response.status === 400 && errorMessage.includes('No valid API key')) {
-          errorMessage = `No valid API key for ${provider}. Please add your API key in Settings > API Keys.`;
+          // This is already a good message from the proxy
         }
 
         callbacks.onError(errorMessage);
@@ -457,13 +489,17 @@ class ChatService {
           return;
         }
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          callbacks.onError('Network error - check your internet connection');
+          callbacks.onError('Network error - please check your internet connection and try again.');
+        } else if (error.message.includes('timeout')) {
+          callbacks.onError('Request timed out. The server may be busy, please try again.');
         } else {
           callbacks.onError(`Error: ${error.message}`);
         }
       } else {
-        callbacks.onError('An unexpected error occurred');
+        callbacks.onError('An unexpected error occurred. Please try again.');
       }
+      
+      console.error('[ChatService] Stream error:', error);
     } finally {
       this.abortController = null;
     }
