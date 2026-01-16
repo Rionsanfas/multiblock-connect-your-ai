@@ -22,13 +22,22 @@ import type { BlockConnection } from '@/types/database.types';
 const MAX_CONTEXT_CHARS = 8000;
 const MAX_MESSAGES_PER_SOURCE = 20;
 
+// Tracks optimistic connections that the user deleted before the create mutation finished.
+// When the create eventually succeeds, we immediately delete the server row to prevent "ghost" re-appears.
+const cancelledOptimisticConnectionIds = new Set<string>();
+
 export type ConnectionContextType = 'full' | 'summary';
 
 /**
  * Transformed connection for UI use
+ *
+ * IMPORTANT: `id` is the UI-stable identifier used as the React key.
+ * For confirmed connections, `server_id` is the real Supabase row id.
+ * During optimistic create, `server_id` is undefined until confirmation.
  */
 export interface Connection {
   id: string;
+  server_id?: string;
   from_block: string;
   to_block: string;
   label?: string | null;
@@ -44,6 +53,7 @@ export interface Connection {
 function transformConnection(c: BlockConnection): Connection {
   return {
     id: c.id,
+    server_id: c.id,
     from_block: c.source_block_id,
     to_block: c.target_block_id,
     label: c.label,
@@ -73,10 +83,48 @@ export function useBoardConnections(boardId: string | undefined) {
         return (queryClient.getQueryData<Connection[]>(queryKey) ?? []);
       }
 
+      const existing = (queryClient.getQueryData<Connection[]>(queryKey) ?? []);
+
       console.log('[useBoardConnections] Fetching connections for board:', boardId);
       const conns = await connectionsDb.getForBoard(boardId);
       console.log('[useBoardConnections] Fetched:', conns.length, 'connections');
-      return conns.map(transformConnection);
+
+      const server = conns.map(transformConnection);
+
+      // Merge server data INTO the existing cache so React keys remain stable.
+      // This prevents: optimistic create -> confirm -> key change -> flicker/remount.
+      if (existing.length === 0) return server;
+
+      const existingByServerId = new Map<string, Connection>();
+      for (const c of existing) {
+        if (c.server_id) existingByServerId.set(c.server_id, c);
+      }
+
+      const merged: Connection[] = [];
+
+      for (const s of server) {
+        const prev = s.server_id ? existingByServerId.get(s.server_id) : undefined;
+        if (prev) {
+          merged.push({
+            ...prev,
+            ...s,
+            // Preserve UI id (React key)
+            id: prev.id,
+            server_id: s.server_id,
+          });
+        } else {
+          merged.push(s);
+        }
+      }
+
+      // Keep optimistic (unconfirmed) connections that the server doesn't know about yet.
+      for (const c of existing) {
+        if (!c.server_id && !cancelledOptimisticConnectionIds.has(c.id)) {
+          merged.push(c);
+        }
+      }
+
+      return merged;
     },
     enabled: !authLoading && !!user?.id && !!boardId,
     staleTime: 1000 * 60 * 5, // 5 minutes - longer to prevent refetch interruptions
@@ -286,6 +334,7 @@ export function useConnectionActions(boardId: string) {
       const optimisticId = `temp-${crypto.randomUUID()}`;
       const optimistic: Connection = {
         id: optimisticId,
+        server_id: undefined,
         from_block,
         to_block,
         label: null,
@@ -333,50 +382,113 @@ export function useConnectionActions(boardId: string) {
         });
       }
     },
-    onSuccess: (createdRow, _vars, ctx) => {
+    onSuccess: async (createdRow, _vars, ctx) => {
       // If we no-oped due to local duplicate, nothing to reconcile.
       if (!ctx?.optimisticId) return;
 
-      const real = transformConnection(createdRow);
+      // If the user deleted the optimistic connection before the server replied,
+      // immediately delete the newly-created row to prevent "ghost" reappears.
+      if (cancelledOptimisticConnectionIds.has(ctx.optimisticId)) {
+        cancelledOptimisticConnectionIds.delete(ctx.optimisticId);
+        try {
+          await connectionsDb.delete(createdRow.id);
+        } catch (e) {
+          console.warn('[useConnectionActions] Failed to cleanup cancelled connection:', e);
+        }
+        return;
+      }
 
-      // Replace optimistic entry with the real one (stable mount).
+      // IMPORTANT: keep the optimistic `id` stable (React key), only attach `server_id`.
       queryClient.setQueryData<Connection[]>(boardConnectionsKey, (old) => {
         const arr = Array.isArray(old) ? old : [];
-        return arr.map((c) => (c.id === ctx.optimisticId ? real : c));
+        return arr.map((c) =>
+          c.id === ctx.optimisticId
+            ? {
+                ...c,
+                server_id: createdRow.id,
+                label: createdRow.label,
+                created_at: createdRow.created_at,
+              }
+            : c
+        );
       });
 
       queryClient.setQueryData<Connection[]>(['block-incoming-connections', ctx.to_block], (old) => {
         const arr = Array.isArray(old) ? old : [];
-        return arr.map((c) => (c.id === ctx.optimisticId ? real : c));
+        return arr.map((c) =>
+          c.id === ctx.optimisticId
+            ? {
+                ...c,
+                server_id: createdRow.id,
+                label: createdRow.label,
+                created_at: createdRow.created_at,
+              }
+            : c
+        );
       });
       queryClient.setQueryData<Connection[]>(['block-outgoing-connections', ctx.from_block], (old) => {
         const arr = Array.isArray(old) ? old : [];
-        return arr.map((c) => (c.id === ctx.optimisticId ? real : c));
+        return arr.map((c) =>
+          c.id === ctx.optimisticId
+            ? {
+                ...c,
+                server_id: createdRow.id,
+                label: createdRow.label,
+                created_at: createdRow.created_at,
+              }
+            : c
+        );
       });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async ({ connectionId }: { connectionId: string }) => {
-      console.log('[useConnectionActions] Deleting connection:', connectionId);
-      await connectionsDb.delete(connectionId);
-      return connectionId;
+    mutationFn: async ({ serverId }: { connectionId: string; serverId: string }) => {
+      console.log('[useConnectionActions] Deleting connection (server):', serverId);
+      await connectionsDb.delete(serverId);
+      return serverId;
     },
     onMutate: async ({ connectionId }) => {
       await queryClient.cancelQueries({ queryKey: boardConnectionsKey });
       const previous = (queryClient.getQueryData<Connection[]>(boardConnectionsKey) ?? []);
+      const removed = previous.find((c) => c.id === connectionId);
 
       queryClient.setQueryData<Connection[]>(boardConnectionsKey, (old) => {
         const arr = Array.isArray(old) ? old : [];
         return arr.filter((c) => c.id !== connectionId);
       });
 
-      return { previous, connectionId };
+      if (removed) {
+        queryClient.setQueryData<Connection[]>(['block-incoming-connections', removed.to_block], (old) => {
+          const arr = Array.isArray(old) ? old : [];
+          return arr.filter((c) => c.id !== connectionId);
+        });
+        queryClient.setQueryData<Connection[]>(['block-outgoing-connections', removed.from_block], (old) => {
+          const arr = Array.isArray(old) ? old : [];
+          return arr.filter((c) => c.id !== connectionId);
+        });
+      }
+
+      return { previous, removed };
     },
     onError: (error, _vars, ctx) => {
       console.error('[useConnectionActions] Delete failed:', error);
       if (!ctx) return;
+
+      // Restore board list
       queryClient.setQueryData(boardConnectionsKey, ctx.previous);
+
+      // Best-effort restore per-block lists (only if we know what we removed)
+      if (ctx.removed) {
+        queryClient.setQueryData<Connection[]>(['block-incoming-connections', ctx.removed.to_block], (old) => {
+          const arr = Array.isArray(old) ? old : [];
+          return arr.some((c) => c.id === ctx.removed!.id) ? arr : [...arr, ctx.removed!];
+        });
+        queryClient.setQueryData<Connection[]>(['block-outgoing-connections', ctx.removed.from_block], (old) => {
+          const arr = Array.isArray(old) ? old : [];
+          return arr.some((c) => c.id === ctx.removed!.id) ? arr : [...arr, ctx.removed!];
+        });
+      }
     },
   });
 
@@ -396,8 +508,29 @@ export function useConnectionActions(boardId: string) {
   }, [user, createMutation, queryClient, boardConnectionsKey]);
 
   const remove = useCallback((connectionId: string): void => {
-    deleteMutation.mutate({ connectionId });
-  }, [deleteMutation]);
+    const existing = queryClient.getQueryData<Connection[]>(boardConnectionsKey) ?? [];
+    const conn = existing.find((c) => c.id === connectionId);
+    if (!conn) return;
+
+    // If this is still optimistic (no server_id), treat delete as a cancellation.
+    if (!conn.server_id) {
+      cancelledOptimisticConnectionIds.add(conn.id);
+
+      queryClient.setQueryData<Connection[]>(boardConnectionsKey, existing.filter((c) => c.id !== conn.id));
+      queryClient.setQueryData<Connection[]>(['block-incoming-connections', conn.to_block], (old) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.filter((c) => c.id !== conn.id);
+      });
+      queryClient.setQueryData<Connection[]>(['block-outgoing-connections', conn.from_block], (old) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.filter((c) => c.id !== conn.id);
+      });
+
+      return;
+    }
+
+    deleteMutation.mutate({ connectionId: conn.id, serverId: conn.server_id });
+  }, [deleteMutation, queryClient, boardConnectionsKey]);
 
   return {
     create,
