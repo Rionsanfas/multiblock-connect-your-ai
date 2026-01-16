@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -11,6 +11,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } 
 import { SkeletonCard } from "@/components/ui/skeleton-card";
 import { useAppStore } from "@/store/useAppStore";
 import { useDragStore } from "@/store/useDragStore";
+import { useBlockPositions } from "@/store/useBlockPositions";
 import { useUserBoard } from "@/hooks/useCurrentUser";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { useBoardConnections, useConnectionActions } from "@/hooks/useBlockConnections";
@@ -302,16 +303,35 @@ export default function BoardCanvas() {
     setConnectionContextMenu({ connectionId, x: e.clientX, y: e.clientY });
   };
 
-  const getBlockCenter = (blockId: string) => {
+  // Real-time position store for smooth connection line updates during drag
+  const blockPositions = useBlockPositions((s) => s.positions);
+  
+  // Initialize position store when blocks load or change
+  useEffect(() => {
+    if (boardBlocks.length > 0) {
+      useBlockPositions.getState().initializePositions(boardBlocks);
+    }
+  }, [boardBlocks]);
+
+  // Get block center - uses position store for real-time drag sync
+  const getBlockCenter = useCallback((blockId: string) => {
+    // First check position store (updated during drag)
+    const storePos = blockPositions[blockId];
+    if (storePos) {
+      return {
+        x: storePos.x + DEFAULT_BLOCK_WIDTH / 2,
+        y: storePos.y + DEFAULT_BLOCK_HEIGHT / 2,
+      };
+    }
+    
+    // Fallback to block from query cache
     const block = boardBlocks.find((b) => b.id === blockId);
     if (!block) return { x: 0, y: 0 };
-    const width = DEFAULT_BLOCK_WIDTH;
-    const height = DEFAULT_BLOCK_HEIGHT;
     return {
-      x: block.position.x + width / 2,
-      y: block.position.y + height / 2,
+      x: block.position.x + DEFAULT_BLOCK_WIDTH / 2,
+      y: block.position.y + DEFAULT_BLOCK_HEIGHT / 2,
     };
-  };
+  }, [blockPositions, boardBlocks]);
 
   // === STATE HANDLING - Optimized for perceived speed ===
 

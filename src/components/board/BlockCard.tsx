@@ -7,6 +7,7 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator,
 import { BlockTransferDialog } from "./BlockTransferDialog";
 import { useAppStore } from "@/store/useAppStore";
 import { useDragStore } from "@/store/useDragStore";
+import { setBlockPosition } from "@/store/useBlockPositions";
 import { useBlockActions } from "@/hooks/useBoardBlocks";
 import { getModelConfig } from "@/types";
 import { api } from "@/api";
@@ -264,10 +265,13 @@ export function BlockCard({
       const newY = e.clientY / zoom - dragOffset.current.y;
       blockPositionRef.current = { x: newX, y: newY };
 
-      // CRITICAL: Direct DOM update via requestAnimationFrame
-      // This bypasses React entirely for maximum smoothness
+      // CRITICAL: Update both the position store (for connection lines) and cache
+      // Both happen in same RAF loop for perfect sync
       requestAnimationFrame(() => {
         if (isDraggingRef.current) {
+          // Update position store FIRST - connection lines subscribe to this
+          setBlockPosition(block.id, { x: newX, y: newY });
+          // Then update cache for block rendering
           updateBlockPosition(block.id, { x: newX, y: newY });
         }
       });
