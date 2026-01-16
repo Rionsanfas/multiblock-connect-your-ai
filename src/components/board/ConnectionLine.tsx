@@ -94,9 +94,12 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
     onContextMenu?.(e);
   };
 
-  // Softer, more elegant colors
-  const lineColor = isSelected ? "hsl(45, 70%, 60%)" : "hsl(0, 0%, 75%)";
-  const shadowColor = isSelected ? "hsl(45, 60%, 35%)" : "hsl(0, 0%, 50%)";
+  // Use semantic design tokens (CSS variables from index.css)
+  // Selected: accent gold, Unselected: muted-foreground gray
+  const lineColor = isSelected ? "hsl(var(--accent))" : "hsl(var(--muted-foreground))";
+  const shadowColor = isSelected ? "hsl(var(--accent) / 0.5)" : "hsl(var(--muted-foreground) / 0.5)";
+  const highlightColor = "hsl(var(--foreground) / 0.3)";
+  const textColor = "hsl(var(--muted-foreground))";
 
   return (
     <g
@@ -125,7 +128,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
         <path
           d={path}
           fill="none"
-          stroke="hsl(45, 80%, 55%)"
+          stroke="hsl(var(--accent))"
           strokeWidth="10"
           strokeOpacity="0.25"
           strokeLinecap="round"
@@ -162,9 +165,8 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
       <path
         d={path}
         fill="none"
-        stroke="hsl(0, 0%, 100%)"
+        stroke={highlightColor}
         strokeWidth="1"
-        strokeOpacity="0.3"
         strokeLinecap="round"
         strokeLinejoin="round"
         transform="translate(-0.3, -0.3)"
@@ -176,7 +178,7 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
           x={(from.x + to.x) / 2}
           y={(from.y + to.y) / 2 - 20}
           textAnchor="middle"
-          fill="hsl(0, 0%, 60%)"
+          fill={textColor}
           fontSize="11"
           fontFamily="system-ui"
           opacity="0.8"
@@ -189,14 +191,14 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
       <g className="transition-all duration-200">
         <circle cx={to.x} cy={to.y} r="5" fill={shadowColor} fillOpacity="0.2" transform="translate(0, 1)" />
         <circle cx={to.x} cy={to.y} r="4" fill={lineColor} fillOpacity="0.9" />
-        <circle cx={to.x - 0.5} cy={to.y - 0.5} r="1.5" fill="hsl(0, 0%, 100%)" fillOpacity="0.5" />
+        <circle cx={to.x - 0.5} cy={to.y - 0.5} r="1.5" fill={highlightColor} />
       </g>
 
       {/* Soft start point dot */}
       <g className="transition-all duration-200">
         <circle cx={from.x} cy={from.y} r="4" fill={shadowColor} fillOpacity="0.2" transform="translate(0, 1)" />
         <circle cx={from.x} cy={from.y} r="3" fill={lineColor} fillOpacity="0.9" />
-        <circle cx={from.x - 0.3} cy={from.y - 0.3} r="1" fill="hsl(0, 0%, 100%)" fillOpacity="0.5" />
+        <circle cx={from.x - 0.3} cy={from.y - 0.3} r="1" fill={highlightColor} />
       </g>
     </g>
   );
