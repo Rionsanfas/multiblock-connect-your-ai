@@ -9,9 +9,13 @@ import {
   getModelConfig, 
   getProviderInfo,
   getModelsByProvider,
+  getChatModels,
+  getImageModels,
+  getVideoModels,
   type ModelConfig, 
   type Provider, 
-  type ProviderInfo 
+  type ProviderInfo,
+  type ModelType
 } from '@/config/models';
 
 /**
@@ -36,6 +40,27 @@ export function useAvailableModels(): ModelConfig[] {
 }
 
 /**
+ * Get chat models only
+ */
+export function useChatModels(): ModelConfig[] {
+  return useMemo(() => getChatModels(), []);
+}
+
+/**
+ * Get image generation models
+ */
+export function useImageModels(): ModelConfig[] {
+  return useMemo(() => getImageModels(), []);
+}
+
+/**
+ * Get video generation models
+ */
+export function useVideoModels(): ModelConfig[] {
+  return useMemo(() => getVideoModels(), []);
+}
+
+/**
  * Get models grouped by provider
  */
 export function useModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
@@ -48,12 +73,36 @@ export function useModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
       deepseek: [],
       mistral: [],
       cohere: [],
-      groq: [],
       together: [],
       perplexity: [],
     };
 
     MODEL_CONFIGS.forEach((model) => {
+      grouped[model.provider].push(model);
+    });
+
+    return grouped;
+  }, []);
+}
+
+/**
+ * Get chat models grouped by provider
+ */
+export function useChatModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
+  return useMemo(() => {
+    const grouped: Record<Provider, ModelConfig[]> = {
+      openai: [],
+      anthropic: [],
+      google: [],
+      xai: [],
+      deepseek: [],
+      mistral: [],
+      cohere: [],
+      together: [],
+      perplexity: [],
+    };
+
+    getChatModels().forEach((model) => {
       grouped[model.provider].push(model);
     });
 
@@ -137,6 +186,32 @@ export function getQualityBadge(quality: ModelConfig['quality']): { label: strin
 }
 
 /**
+ * Get model type label with color
+ */
+export function getModelTypeBadge(type: ModelType): { label: string; color: string } {
+  switch (type) {
+    case 'chat':
+      return { label: 'Chat', color: 'hsl(142 70% 45%)' };
+    case 'image':
+      return { label: 'Image', color: 'hsl(280 70% 55%)' };
+    case 'video':
+      return { label: 'Video', color: 'hsl(24 90% 55%)' };
+    case 'audio':
+      return { label: 'Audio', color: 'hsl(200 80% 50%)' };
+    case 'embedding':
+      return { label: 'Embedding', color: 'hsl(45 90% 50%)' };
+    case 'code':
+      return { label: 'Code', color: 'hsl(217 90% 60%)' };
+    case 'rerank':
+      return { label: 'Rerank', color: 'hsl(180 70% 45%)' };
+    case 'vision':
+      return { label: 'Vision', color: 'hsl(35 90% 55%)' };
+    default:
+      return { label: type, color: 'hsl(var(--muted-foreground))' };
+  }
+}
+
+/**
  * Check if a model supports a specific feature
  */
 export function useModelCapabilities(modelId: string | undefined) {
@@ -145,8 +220,12 @@ export function useModelCapabilities(modelId: string | undefined) {
       return {
         supportsVision: false,
         supportsFunctions: false,
+        supportsImageGeneration: false,
+        supportsVideoGeneration: false,
+        supportsAudio: false,
         contextWindow: 0,
         maxOutput: 0,
+        type: 'chat' as ModelType,
       };
     }
 
@@ -155,16 +234,24 @@ export function useModelCapabilities(modelId: string | undefined) {
       return {
         supportsVision: false,
         supportsFunctions: false,
+        supportsImageGeneration: false,
+        supportsVideoGeneration: false,
+        supportsAudio: false,
         contextWindow: 0,
         maxOutput: 0,
+        type: 'chat' as ModelType,
       };
     }
 
     return {
       supportsVision: model.supports_vision,
       supportsFunctions: model.supports_functions,
+      supportsImageGeneration: model.supports_image_generation,
+      supportsVideoGeneration: model.supports_video_generation,
+      supportsAudio: model.supports_audio,
       contextWindow: model.context_window,
       maxOutput: model.max_output_tokens,
+      type: model.type,
     };
   }, [modelId]);
 }
