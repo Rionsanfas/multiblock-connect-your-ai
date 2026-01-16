@@ -48,35 +48,110 @@ export interface MessageMeta {
 const getProviderModelId = (modelId: string, provider: Provider): string => {
   const mappings: Record<string, string> = {
     // OpenAI
+    'gpt-5.2': 'gpt-5.2',
+    'gpt-5.2-pro': 'gpt-5.2-pro',
     'gpt-5': 'gpt-5',
     'gpt-5-mini': 'gpt-5-mini',
-    'gpt-4.1': 'gpt-4.1',
+    'gpt-5-nano': 'gpt-5-nano',
     'gpt-4o': 'gpt-4o',
     'gpt-4o-mini': 'gpt-4o-mini',
     'gpt-4-turbo': 'gpt-4-turbo',
-    'gpt-image-1': 'gpt-image-1',
-    'dall-e-3': 'dall-e-3',
-    'o1-preview': 'o1-preview',
-    'o1-mini': 'o1-mini',
+    'o3-pro': 'o3-pro',
+    'o3-deep-research': 'o3-deep-research',
+    'gpt-image-1.5': 'gpt-image-1',
+    'sora-2': 'sora-2',
+    'sora-2-pro': 'sora-2-pro',
+    'gpt-4o-audio': 'gpt-4o-audio-preview',
+    'whisper': 'whisper-1',
+    
     // Anthropic
-    'claude-3.5-sonnet': 'claude-3-5-sonnet-20241022',
-    'claude-3.5-haiku': 'claude-3-5-haiku-20241022',
-    'claude-3-opus': 'claude-3-opus-20240229',
-    'claude-3-sonnet': 'claude-3-sonnet-20240229',
-    'claude-3-haiku': 'claude-3-haiku-20240307',
+    'claude-opus-4.5': 'claude-opus-4-5-20250115',
+    'claude-sonnet-4.5': 'claude-sonnet-4-5-20250115',
+    'claude-haiku-4.5': 'claude-haiku-4-5-20250115',
+    'claude-opus-4.1': 'claude-opus-4-1-20250101',
+    'claude-sonnet-4': 'claude-sonnet-4-20250101',
+    
     // Google
+    'gemini-3-pro': 'gemini-3-pro',
+    'gemini-3-flash': 'gemini-3-flash',
+    'gemini-3-nano': 'gemini-3-nano',
     'gemini-2.5-pro': 'gemini-2.5-pro',
     'gemini-2.5-flash': 'gemini-2.5-flash',
-    'gemini-2.0-flash': 'gemini-2.0-flash',
-    'gemini-1.5-pro': 'gemini-1.5-pro',
-    'gemini-1.5-flash': 'gemini-1.5-flash',
+    'gemini-live-2.5-flash': 'gemini-live-2.5-flash',
+    'imagen-4.0-ultra': 'imagen-4.0-ultra',
+    'imagen-3': 'imagen-3',
+    'veo-3.1': 'veo-3.1',
+    'veo-3.1-fast': 'veo-3.1-fast',
+    
     // xAI
-    'grok-3': 'grok-3',
-    'grok-2': 'grok-2',
-    'grok-vision': 'grok-vision-beta',
+    'grok-4.1-fast': 'grok-4.1-fast',
+    'grok-4.1-fast-reasoning': 'grok-4.1-fast-reasoning',
+    'grok-4.1-fast-non-reasoning': 'grok-4.1-fast-non-reasoning',
+    'grok-4-fast-reasoning': 'grok-4-fast-reasoning',
+    'grok-4-fast-non-reasoning': 'grok-4-fast-non-reasoning',
+    'grok-4.0709': 'grok-4.0709',
+    'grok-code-fast-1': 'grok-code-fast-1',
+    
     // DeepSeek
-    'deepseek-chat': 'deepseek-chat',
-    'deepseek-coder': 'deepseek-coder',
+    'deepseek-v3.2': 'deepseek-chat',
+    'deepseek-v3.2-speciale': 'deepseek-chat',
+    'deepseek-v3.1': 'deepseek-chat',
+    
+    // Mistral
+    'mistral-large-3': 'mistral-large-latest',
+    'mistral-medium-3.1': 'mistral-medium-latest',
+    'mistral-small-3.2': 'mistral-small-latest',
+    'ministral-3-14b': 'ministral-3b-latest',
+    'ministral-3-8b': 'ministral-8b-latest',
+    'ministral-3-3b': 'ministral-3b-latest',
+    'magistral-medium-1.2': 'magistral-medium-latest',
+    'magistral-small-1.2': 'magistral-small-latest',
+    'mistral-nemo-12b': 'open-mistral-nemo',
+    'pixtral-large': 'pixtral-large-latest',
+    'codestral': 'codestral-latest',
+    'voxtral-small': 'voxtral-small-latest',
+    'voxtral-mini': 'voxtral-mini-latest',
+    'mistral-embed': 'mistral-embed',
+    
+    // Cohere
+    'command-a-03-2025': 'command-a-03-2025',
+    'command-a-reasoning-08-2025': 'command-a-reasoning-08-2025',
+    'command-r-plus-08-2024': 'command-r-plus-08-2024',
+    'command-a-vision-07-2025': 'command-a-vision-07-2025',
+    'c4ai-aya-vision-32b': 'c4ai-aya-vision-32b',
+    'embed-v4.0': 'embed-v4.0',
+    'embed-english-v3.0': 'embed-english-v3.0',
+    'embed-multilingual-v3.0': 'embed-multilingual-v3.0',
+    'rerank-v4.0-pro': 'rerank-v4.0',
+    'c4ai-aya-expanse-32b': 'c4ai-aya-expanse-32b',
+    
+    // Together.ai
+    'llama-3.3-70b-instruct-turbo': 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    'llama-4-maverick-17bx128e': 'meta-llama/Llama-4-Maverick-17Bx128E',
+    'llama-4-scout-17bx16e': 'meta-llama/Llama-4-Scout-17Bx16E',
+    'qwen3-235b-a22b-instruct': 'Qwen/Qwen3-235B-A22B-Instruct',
+    'deepseek-v3.1-together': 'deepseek-ai/DeepSeek-V3.1',
+    'flux-schnell-turbo': 'black-forest-labs/FLUX.1-schnell-Turbo',
+    'flux-1-dev': 'black-forest-labs/FLUX.1-dev',
+    'flux-1.1-pro': 'black-forest-labs/FLUX.1.1-pro',
+    'flux-1-kontext-pro': 'black-forest-labs/FLUX.1-Kontext-pro',
+    'flux-2-pro': 'black-forest-labs/FLUX.2-pro',
+    'imagen-4.0-ultra-together': 'google/imagen-4.0-ultra',
+    'veo-3.0': 'google/veo-3.0',
+    'veo-3.0-fast-audio': 'google/veo-3.0-fast-audio',
+    'kling-2.1-pro': 'kuaishou/kling-2.1-pro',
+    'sora-2-pro-together': 'openai/sora-2-pro',
+    
+    // Perplexity
+    'sonar-large-online': 'sonar-pro',
+    'pplx-70b': 'llama-3.1-sonar-large-128k-online',
+    'gpt-5.1-pplx': 'gpt-5.1',
+    'claude-sonnet-4.5-pplx': 'claude-sonnet-4.5',
+    'claude-opus-4.1-thinking-pplx': 'claude-opus-4.1-thinking',
+    'gemini-3-pro-pplx': 'gemini-3-pro',
+    'grok-4.1-pplx': 'grok-4.1',
+    'kimi-k2-pplx': 'kimi-k2',
+    'o3-pro-pplx': 'o3-pro',
   };
   return mappings[modelId] || modelId;
 };
@@ -260,9 +335,15 @@ class ChatService {
     const provider = modelConfig.provider;
     const providerModelId = getProviderModelId(resolvedModelId, provider);
 
-    // Handle image generation separately (still needs direct call for now)
+    // Handle image generation separately
     if (modelConfig.supports_image_generation) {
       await this.handleImageGeneration(modelConfig, messageContent, callbacks);
+      return;
+    }
+
+    // Handle video generation separately
+    if (modelConfig.supports_video_generation) {
+      await this.handleVideoGeneration(modelConfig, messageContent, callbacks);
       return;
     }
 
@@ -448,6 +529,66 @@ class ChatService {
     }
   }
 
+  /**
+   * Handle video generation requests via proxy
+   */
+  private async handleVideoGeneration(
+    model: ModelConfig,
+    prompt: string,
+    callbacks: StreamCallbacks
+  ): Promise<void> {
+    const startTime = Date.now();
+    
+    try {
+      callbacks.onChunk('Generating video... This may take a few minutes.\n\n');
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        callbacks.onError('Not authenticated. Please log in.');
+        return;
+      }
+
+      // Call video generation through proxy
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-proxy`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            provider: model.provider,
+            model_id: model.id,
+            action: 'video_generation',
+            prompt,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        callbacks.onError(errorData.error || `Video generation failed (${response.status})`);
+        return;
+      }
+
+      const data = await response.json();
+      const videoUrl = data.video_url;
+
+      if (videoUrl) {
+        const fullResponse = `🎬 [Video Generated](${videoUrl})\n\n*Video generated based on your prompt.*`;
+        callbacks.onComplete(fullResponse, {
+          model: model.id,
+          latency_ms: Date.now() - startTime,
+        });
+      } else {
+        callbacks.onError('No video was generated');
+      }
+    } catch (error) {
+      callbacks.onError(error instanceof Error ? error.message : 'Video generation failed');
+    }
+  }
+
   private formatMessagesWithAttachments(
     messages: ChatMessage[],
     attachments: ChatAttachment[] | undefined,
@@ -498,18 +639,23 @@ class ChatService {
     });
   }
 
-  private extractContent(parsed: any, provider: Provider): string {
-    switch (provider) {
-      case 'anthropic':
-        if (parsed.type === 'content_block_delta') {
-          return parsed.delta?.text || '';
-        }
-        return '';
-      case 'google':
-        return parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      default:
-        return parsed.choices?.[0]?.delta?.content || '';
+  /**
+   * Extract content from streaming response based on provider format
+   */
+  private extractContent(parsed: any, provider: Provider): string | null {
+    if (provider === 'anthropic') {
+      if (parsed.type === 'content_block_delta') {
+        return parsed.delta?.text || null;
+      }
+      return null;
     }
+    
+    if (provider === 'google') {
+      return parsed.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    }
+    
+    // OpenAI-compatible format (openai, xai, deepseek, mistral, together, perplexity)
+    return parsed.choices?.[0]?.delta?.content || null;
   }
 }
 

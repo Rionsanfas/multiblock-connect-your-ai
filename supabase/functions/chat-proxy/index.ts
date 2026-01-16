@@ -16,6 +16,10 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
   google: "https://generativelanguage.googleapis.com/v1beta/models",
   xai: "https://api.x.ai/v1/chat/completions",
   deepseek: "https://api.deepseek.com/v1/chat/completions",
+  mistral: "https://api.mistral.ai/v1/chat/completions",
+  cohere: "https://api.cohere.com/v2/chat",
+  together: "https://api.together.xyz/v1/chat/completions",
+  perplexity: "https://api.perplexity.ai/chat/completions",
 };
 
 // AES-256-GCM decryption
@@ -100,6 +104,19 @@ function formatMessagesForProvider(provider: string, messages: any[]): any {
       messages: nonSystemMessages,
     };
   }
+  
+  if (provider === "cohere") {
+    const systemMessage = messages.find(m => m.role === "system");
+    const nonSystemMessages = messages.filter(m => m.role !== "system");
+    return {
+      preamble: systemMessage?.content || "",
+      messages: nonSystemMessages.map((m: any) => ({
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: typeof m.content === "string" ? m.content : m.content[0]?.text || "",
+      })),
+    };
+  }
+  
   return { messages };
 }
 
@@ -159,19 +176,42 @@ serve(async (req) => {
 
       console.log(`[chat-proxy] Image generation for user ${user.id} via ${provider}`);
 
-      const imageResponse = await fetch("https://api.openai.com/v1/images/generations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: model_id === "dall-e-3" ? "dall-e-3" : "gpt-image-1",
-          prompt,
-          n: 1,
-          size: "1024x1024",
-        }),
-      });
+      let imageResponse;
+      
+      if (provider === "openai") {
+        imageResponse = await fetch("https://api.openai.com/v1/images/generations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: model_id.includes("dall-e") ? "dall-e-3" : "gpt-image-1",
+            prompt,
+            n: 1,
+            size: "1024x1024",
+          }),
+        });
+      } else if (provider === "together") {
+        imageResponse = await fetch("https://api.together.xyz/v1/images/generations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: model_id,
+            prompt,
+            n: 1,
+            size: "1024x1024",
+          }),
+        });
+      } else {
+        return new Response(JSON.stringify({ error: `Image generation not supported for ${provider}` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       if (!imageResponse.ok) {
         const errorData = await imageResponse.json().catch(() => ({}));
@@ -185,6 +225,26 @@ serve(async (req) => {
       const imageUrl = imageData.data?.[0]?.url;
 
       return new Response(JSON.stringify({ image_url: imageUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Handle video generation
+    if (action === "video_generation") {
+      if (!provider || !prompt) {
+        return new Response(JSON.stringify({ error: "provider and prompt are required for video generation" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Video generation is complex and provider-specific
+      // For now, return a placeholder response
+      return new Response(JSON.stringify({ 
+        error: "Video generation is currently being set up. Please check back later.",
+        video_url: null 
+      }), {
+        status: 501,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -236,6 +296,42 @@ serve(async (req) => {
           temperature: config?.temperature ?? 0.7,
           maxOutputTokens: config?.maxTokens || 4096,
         },
+      };
+    } else if (provider === "cohere") {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+      const formatted = formatMessagesForProvider(provider, messages);
+      requestBody = {
+        model: model_id,
+        preamble: formatted.preamble,
+        messages: formatted.messages,
+        stream,
+      };
+    } else if (provider === "mistral") {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+      requestBody = {
+        model: model_id,
+        messages,
+        stream,
+        temperature: config?.temperature ?? 0.7,
+        max_tokens: config?.maxTokens || 4096,
+      };
+    } else if (provider === "together") {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+      requestBody = {
+        model: model_id,
+        messages,
+        stream,
+        temperature: config?.temperature ?? 0.7,
+        max_tokens: config?.maxTokens || 4096,
+      };
+    } else if (provider === "perplexity") {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+      requestBody = {
+        model: model_id,
+        messages,
+        stream,
+        temperature: config?.temperature ?? 0.7,
+        max_tokens: config?.maxTokens || 4096,
       };
     } else {
       // OpenAI-compatible (openai, xai, deepseek)
