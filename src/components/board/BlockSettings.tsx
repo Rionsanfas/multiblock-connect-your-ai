@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Pencil, Check } from "lucide-react";
+import { X, Pencil, Check, Loader2 } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,17 +7,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppStore } from "@/store/useAppStore";
-import { MODEL_CONFIGS, PROVIDERS, getChatModels } from "@/config/models";
+import { useBlockActions } from "@/hooks/useBoardBlocks";
+import { getChatModels, PROVIDERS, getModelConfig } from "@/config/models";
+import { useConfiguredProviders } from "@/hooks/useApiKeys";
+import { toast } from "sonner";
 
 interface BlockSettingsProps {
   blockId: string;
 }
 
 export function BlockSettings({ blockId }: BlockSettingsProps) {
-  const { blocks, updateBlock, selectBlock } = useAppStore();
+  const { blocks, selectBlock } = useAppStore();
   const block = blocks.find((b) => b.id === blockId);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState(block?.title || "");
+  const [isSwitching, setIsSwitching] = useState(false);
+  
+  const { updateBlock } = useBlockActions(block?.board_id || '');
+  const configuredProviders = useConfiguredProviders();
 
   if (!block) return null;
 
@@ -28,13 +35,56 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
     providerName: PROVIDERS[m.provider].name,
     modelName: m.name,
     type: m.type,
+    hasKey: configuredProviders.includes(m.provider),
   }));
 
-  const handleTitleSave = () => {
+  const handleTitleSave = async () => {
     if (title.trim()) {
-      updateBlock(blockId, { title: title.trim() });
+      try {
+        await updateBlock(blockId, { title: title.trim() });
+        toast.success("Title updated");
+      } catch {
+        toast.error("Failed to update title");
+      }
     }
     setIsEditingTitle(false);
+  };
+
+  const handleModelChange = async (newModelId: string) => {
+    const newModel = getModelConfig(newModelId);
+    if (!newModel) {
+      toast.error("Invalid model selected");
+      return;
+    }
+    
+    // Check if user has API key for this provider
+    if (!configuredProviders.includes(newModel.provider)) {
+      toast.error(`Add an API key for ${PROVIDERS[newModel.provider].name} first`, {
+        action: {
+          label: "Add Key",
+          onClick: () => window.open(PROVIDERS[newModel.provider].apiKeyUrl, '_blank'),
+        },
+      });
+      return;
+    }
+    
+    setIsSwitching(true);
+    try {
+      await updateBlock(blockId, { model_id: newModelId });
+      toast.success(`Switched to ${newModel.name}`);
+    } catch {
+      toast.error("Failed to switch model");
+    } finally {
+      setIsSwitching(false);
+    }
+  };
+
+  const handleSystemPromptChange = async (value: string) => {
+    try {
+      await updateBlock(blockId, { system_prompt: value });
+    } catch {
+      toast.error("Failed to update system prompt");
+    }
   };
 
   return (
@@ -79,17 +129,31 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
           <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Model</Label>
           <Select
             value={block.model_id}
-            onValueChange={(value) => updateBlock(blockId, { model_id: value })}
+            onValueChange={handleModelChange}
+            disabled={isSwitching}
           >
             <SelectTrigger className="bg-secondary/40 rounded-xl border-border/20 h-11">
-              <SelectValue />
+              {isSwitching ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Switching...</span>
+                </div>
+              ) : (
+                <SelectValue />
+              )}
             </SelectTrigger>
-            <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
-              {allModels.map(({ provider, model, providerName, modelName }) => (
-                <SelectItem key={model} value={model} className="rounded-lg cursor-pointer">
+            <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl max-h-80">
+              {allModels.map(({ provider, model, providerName, modelName, hasKey }) => (
+                <SelectItem 
+                  key={model} 
+                  value={model} 
+                  className="rounded-lg cursor-pointer"
+                  disabled={!hasKey}
+                >
                   <span className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{providerName}</span>
-                    {modelName}
+                    <span className={!hasKey ? "opacity-50" : ""}>{modelName}</span>
+                    {!hasKey && <span className="text-xs text-destructive">(No key)</span>}
                   </span>
                 </SelectItem>
               ))}
@@ -102,7 +166,7 @@ export function BlockSettings({ blockId }: BlockSettingsProps) {
           <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">System Prompt</Label>
           <Textarea
             value={block.system_prompt}
-            onChange={(e) => updateBlock(blockId, { system_prompt: e.target.value })}
+            onChange={(e) => handleSystemPromptChange(e.target.value)}
             className="bg-secondary/40 min-h-[100px] resize-none rounded-xl border-border/20"
             placeholder="You are a helpful assistant..."
           />

@@ -70,6 +70,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(256); // Default 256px (w-64)
   const [isResizing, setIsResizing] = useState(false);
+  const [isSwitchingModel, setIsSwitchingModel] = useState(false);
   
   // References state
   const [pendingReferences, setPendingReferences] = useState<ChatReference[]>([]);
@@ -150,16 +151,59 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const getProviderHasKey = (provider: Provider) => userApiKeys.keys.some(k => k.provider === provider);
 
   const handleModelSwitch = async (newModelId: string) => {
-    const newModel = getModelConfig(newModelId);
-    if (!newModel || !getProviderHasKey(newModel.provider)) {
-      toast.error(`Add an API key for ${newModel ? PROVIDERS[newModel.provider].name : 'this provider'} first`);
+    // Prevent switching while already switching or while sending
+    if (isSwitchingModel || messageStatus !== 'idle') {
+      toast.error("Please wait for the current operation to complete");
       return;
     }
+    
+    const newModel = getModelConfig(newModelId);
+    if (!newModel) {
+      toast.error("Invalid model selected");
+      return;
+    }
+    
+    if (!getProviderHasKey(newModel.provider)) {
+      toast.error(`Add an API key for ${PROVIDERS[newModel.provider].name} first`, {
+        action: {
+          label: "Get Key",
+          onClick: () => window.open(PROVIDERS[newModel.provider].apiKeyUrl, '_blank'),
+        },
+      });
+      return;
+    }
+    
+    setIsSwitchingModel(true);
+    setErrorMessage(null);
+    
     try {
+      // Persist to Supabase immediately
       await blocksDb.update(blockId, { model_id: newModelId });
-      queryClient.invalidateQueries({ queryKey: ['block', blockId] });
+      
+      // Update React Query cache for this block
+      queryClient.setQueryData(['block', blockId], (old: any) => {
+        if (!old) return old;
+        return { ...old, model_id: newModelId };
+      });
+      
+      // Also update the board-blocks cache if available
+      const allCacheKeys = queryClient.getQueryCache().getAll();
+      for (const query of allCacheKeys) {
+        if (query.queryKey[0] === 'board-blocks') {
+          queryClient.setQueryData(query.queryKey, (old: any[]) => {
+            if (!Array.isArray(old)) return old;
+            return old.map(b => b.id === blockId ? { ...b, model_id: newModelId } : b);
+          });
+        }
+      }
+      
       toast.success(`Switched to ${newModel.name}`);
-    } catch { toast.error('Failed to switch model'); }
+    } catch (error) {
+      console.error('[BlockChatModal] Model switch failed:', error);
+      toast.error("Failed to switch model. Please try again.");
+    } finally {
+      setIsSwitchingModel(false);
+    }
   };
 
   const handleTitleSave = async () => {
@@ -174,10 +218,40 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
 
   const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[], references?: ChatReference[]) => {
+    // Block sending while model is switching
+    if (isSwitchingModel) {
+      toast.error("Please wait for model switch to complete");
+      return;
+    }
+    
     if (!content.trim() && (!references || references.length === 0) || messageStatus !== 'idle' || !block) return;
 
+    // Pre-flight validation: ensure we have a valid model
+    const activeModelId = block.model_id;
+    if (!activeModelId) {
+      setErrorMessage("Please select a model first");
+      toast.error("No model selected", { 
+        action: { label: "Select Model", onClick: () => {} }
+      });
+      return;
+    }
+    
+    const activeModelConfig = getModelConfig(activeModelId);
+    if (!activeModelConfig) {
+      setErrorMessage(`Invalid model: ${activeModelId}`);
+      toast.error("Selected model is not valid. Please choose another.");
+      return;
+    }
+    
+    // Validate API key exists for the provider
     if (!hasKeyForCurrentProvider) {
-      toast.error("No API key configured", { action: { label: "Add Key", onClick: () => navigate("/api-keys") } });
+      setErrorMessage(`No API key for ${PROVIDERS[activeModelConfig.provider].name}`);
+      toast.error("No API key configured", { 
+        action: { 
+          label: "Add Key", 
+          onClick: () => navigate("/api-keys") 
+        } 
+      });
       return;
     }
 
@@ -211,13 +285,14 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     const cacheMessages = (queryClient.getQueryData(['block-messages', blockId]) as any[] | undefined) ?? [];
     const history = chatService.buildConversationHistory(
       cacheMessages.map(m => toDisplayMessage(m)),
-      block.model_id,
+      activeModelId, // Use validated model ID
       block.system_prompt,
       undefined,
       connectedContext
     );
 
-    await chatService.streamChat(block.model_id, history, {
+    // Use the validated model ID for the request
+    await chatService.streamChat(activeModelId, history, {
       onChunk: (chunk) => setStreamingContent(prev => prev + chunk),
       onComplete: (response, meta) => {
         // 3) Convert streaming -> real assistant message instantly, then persist in background
@@ -225,13 +300,17 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
         setStreamingContent("");
         setMessageStatus('idle');
       },
-      onError: () => {
+      onError: (errorMsg) => {
         setMessageStatus('error');
-        setErrorMessage('Assistant failed. Please try again.');
+        // Surface the actual error message from chatService instead of generic
+        setErrorMessage(errorMsg || 'Assistant failed. Please try again.');
         setStreamingContent("");
+        
+        // Log for debugging
+        console.error('[BlockChatModal] Chat error:', errorMsg);
       },
     });
-  }, [block, blockId, hasKeyForCurrentProvider, incomingContext, messageStatus, navigate, persistMessage, queryClient]);
+  }, [block, blockId, hasKeyForCurrentProvider, incomingContext, isSwitchingModel, messageStatus, navigate, persistMessage, queryClient]);
 
   const handleStop = useCallback(() => {
     chatService.stopGeneration();
@@ -312,9 +391,22 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 <DialogTitle className="text-sm font-medium truncate">{block.title}</DialogTitle>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className={cn("hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg border border-border/20 h-auto text-xs sm:text-sm", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
-                      {currentModel ? <ProviderBadge provider={currentModel.provider} model={currentModel.name} /> : <span className="text-sm text-muted-foreground">Select Model</span>}
-                      {!hasKeyForCurrentProvider && <Lock className="h-3 w-3 text-destructive" />}
+                    <Button 
+                      variant="ghost" 
+                      disabled={isSwitchingModel}
+                      className={cn("hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg border border-border/20 h-auto text-xs sm:text-sm", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}
+                    >
+                      {isSwitchingModel ? (
+                        <>
+                          <Spinner className="h-3 w-3" />
+                          <span className="text-sm">Switching...</span>
+                        </>
+                      ) : currentModel ? (
+                        <ProviderBadge provider={currentModel.provider} model={currentModel.name} />
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Select Model</span>
+                      )}
+                      {!hasKeyForCurrentProvider && !isSwitchingModel && <Lock className="h-3 w-3 text-destructive" />}
                       <ChevronDown className="h-3 w-3 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -327,11 +419,34 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                         <div key={provider.id}>
                           <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
                             <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: provider.color }} /><span className="text-xs font-medium">{provider.name}</span></div>
-                            {hasKey ? <span className="flex items-center gap-1 text-[10px] text-green-500"><Zap className="h-2.5 w-2.5" />Connected</span> : <button onClick={(e) => { e.stopPropagation(); window.open(provider.apiKeyUrl, '_blank'); }} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"><ExternalLink className="h-2.5 w-2.5" />Get Key</button>}
+                            {hasKey ? (
+                              <span className="flex items-center gap-1 text-[10px] text-green-500">
+                                <Zap className="h-2.5 w-2.5" />Connected
+                              </span>
+                            ) : (
+                              <button 
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  window.open(provider.apiKeyUrl, '_blank', 'noopener,noreferrer'); 
+                                }} 
+                                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                              >
+                                <ExternalLink className="h-2.5 w-2.5" />Get Key
+                              </button>
+                            )}
                           </DropdownMenuLabel>
                           {models.map((model) => (
-                            <DropdownMenuItem key={model.id} disabled={!hasKey} className={cn("mx-1 rounded-md", !hasKey && "opacity-50", block.model_id === model.id && "bg-primary/10")} onClick={() => hasKey && handleModelSwitch(model.id)}>
-                              <span className="flex items-center gap-2 w-full"><span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} /><span className="text-sm truncate flex-1">{model.name}</span>{block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}</span>
+                            <DropdownMenuItem 
+                              key={model.id} 
+                              disabled={!hasKey || isSwitchingModel} 
+                              className={cn("mx-1 rounded-md", !hasKey && "opacity-50", block.model_id === model.id && "bg-primary/10")} 
+                              onClick={() => hasKey && !isSwitchingModel && handleModelSwitch(model.id)}
+                            >
+                              <span className="flex items-center gap-2 w-full">
+                                <span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} />
+                                <span className="text-sm truncate flex-1">{model.name}</span>
+                                {block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}
+                              </span>
                             </DropdownMenuItem>
                           ))}
                           <DropdownMenuSeparator className="my-1" />
