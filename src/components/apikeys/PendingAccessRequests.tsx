@@ -18,7 +18,6 @@ const PROVIDER_COLORS: Record<LLMProvider, string> = {
   deepseek: 'hsl(200 80% 50%)',
   mistral: 'hsl(35 90% 55%)',
   cohere: 'hsl(280 70% 55%)',
-  groq: 'hsl(160 70% 45%)',
   together: 'hsl(220 80% 55%)',
   perplexity: 'hsl(180 70% 45%)',
 };

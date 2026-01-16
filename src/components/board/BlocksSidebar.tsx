@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ModelSelector } from "./ModelSelector";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
-import { MODEL_CONFIGS, type Provider } from "@/types";
+import { getChatModels, type Provider } from "@/config/models";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 interface BlocksSidebarProps {
@@ -37,7 +37,8 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
   };
 
   const handleModelSelect = async (modelId: string) => {
-    const model = MODEL_CONFIGS.find((m) => m.id === modelId);
+    const chatModels = getChatModels();
+    const model = chatModels.find((m) => m.id === modelId);
     
     // Show toast IMMEDIATELY (optimistic) - don't wait for DB
     toast.success(`Created block with ${model?.name}`);

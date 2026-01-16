@@ -5,7 +5,7 @@ import { apiKeysDb } from '@/lib/database';
 import type { LLMProvider, ApiKeyDisplay } from '@/types/database.types';
 
 // Supported providers that match Supabase llm_provider enum
-export const SUPPORTED_PROVIDERS: LLMProvider[] = ['openai', 'anthropic', 'google', 'xai', 'deepseek', 'mistral', 'cohere', 'groq', 'together', 'perplexity'];
+export const SUPPORTED_PROVIDERS: LLMProvider[] = ['openai', 'anthropic', 'google', 'xai', 'deepseek', 'mistral', 'cohere', 'together', 'perplexity'];
 
 /**
  * Get all API keys for the current user from Supabase
@@ -38,7 +38,6 @@ export function useApiKeysByProvider(): Record<LLMProvider, ApiKeyDisplay[]> {
       deepseek: [],
       mistral: [],
       cohere: [],
-      groq: [],
       together: [],
       perplexity: [],
     };

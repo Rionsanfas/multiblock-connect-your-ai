@@ -29,6 +29,10 @@ const SUPPORTED_PROVIDERS: { id: LLMProvider; name: string; color: string; apiKe
   { id: 'google', name: 'Google', color: 'hsl(217 90% 60%)', apiKeyUrl: 'https://aistudio.google.com/apikey' },
   { id: 'xai', name: 'xAI', color: 'hsl(0 0% 70%)', apiKeyUrl: 'https://console.x.ai' },
   { id: 'deepseek', name: 'DeepSeek', color: 'hsl(200 80% 50%)', apiKeyUrl: 'https://platform.deepseek.com/api_keys' },
+  { id: 'mistral', name: 'Mistral', color: 'hsl(35 90% 55%)', apiKeyUrl: 'https://console.mistral.ai/api-keys' },
+  { id: 'cohere', name: 'Cohere', color: 'hsl(280 70% 55%)', apiKeyUrl: 'https://dashboard.cohere.com/api-keys' },
+  { id: 'together', name: 'Together.ai', color: 'hsl(220 80% 55%)', apiKeyUrl: 'https://api.together.ai/settings/api-keys' },
+  { id: 'perplexity', name: 'Perplexity', color: 'hsl(180 70% 45%)', apiKeyUrl: 'https://www.perplexity.ai/settings/api' },
 ];
 
 export default function ApiKeys() {

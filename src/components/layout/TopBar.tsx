@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppStore } from "@/store/useAppStore";
 import { toast } from "sonner";
-import { MODEL_PROVIDERS } from "@/types";
+import { getChatModels, PROVIDERS } from "@/config/models";
 
 interface TopBarProps {
   boardId?: string;
@@ -42,9 +42,12 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
 
   const boardBlocks = boardId ? blocks.filter((b) => b.board_id === boardId) : [];
 
-  const allModels = Object.entries(MODEL_PROVIDERS).flatMap(([provider, info]) =>
-    info.models.map((model) => ({ provider, model, name: info.name }))
-  );
+  const allModels = getChatModels().map((m) => ({
+    provider: m.provider,
+    model: m.id,
+    name: PROVIDERS[m.provider].name,
+    modelName: m.name,
+  }));
 
   const handleTitleSave = () => {
     if (boardId && title.trim()) {
@@ -234,11 +237,11 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-lg">
-                                  {allModels.map(({ provider, model, name }) => (
+                                  {allModels.map(({ model, name, modelName }) => (
                                     <SelectItem key={model} value={model} className="rounded-md">
                                       <span className="flex items-center gap-2">
                                         <span className="text-xs text-muted-foreground">{name}</span>
-                                        {model}
+                                        {modelName}
                                       </span>
                                     </SelectItem>
                                   ))}

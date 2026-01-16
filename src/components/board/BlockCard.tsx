@@ -10,7 +10,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { useDragStore } from "@/store/useDragStore";
 import { setBlockPosition } from "@/store/useBlockPositions";
 import { useBlockActions } from "@/hooks/useBoardBlocks";
-import { getModelConfig } from "@/types";
+import { getModelConfig } from "@/config/models";
 import { api } from "@/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
