@@ -9,6 +9,7 @@ import { ConnectionContextMenu } from "@/components/board/ConnectionContextMenu"
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { SkeletonCard } from "@/components/ui/skeleton-card";
 import { useAppStore } from "@/store/useAppStore";
+import { useDragStore } from "@/store/useDragStore";
 import { useUserBoard } from "@/hooks/useCurrentUser";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { useBoardConnections, useConnectionActions } from "@/hooks/useBlockConnections";
@@ -32,6 +33,11 @@ export default function BoardCanvas() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [connectionContextMenu, setConnectionContextMenu] = useState<{ connectionId: string; x: number; y: number } | null>(null);
+
+  // Global drag store for connection line dragging
+  const startDrag = useDragStore((s) => s.startDrag);
+  const endDrag = useDragStore((s) => s.endDrag);
+  const isConnectionDragging = useRef(false);
 
   // Auth gating - ABSOLUTE: no operations until auth resolved
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
@@ -107,17 +113,19 @@ export default function BoardCanvas() {
     };
   }, [board?.id, setCurrentBoard]);
 
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     // Only enable panning on canvas background, not on blocks
     if (target === canvasRef.current || target.classList.contains('board-canvas-bg') || target.closest('.canvas-inner')) {
       if (e.button === 0 && !target.closest('.block-card')) {
+        // Set global drag lock for panning
+        startDrag('pan');
         setIsPanning(true);
         setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
         selectBlock(null);
       }
     }
-  };
+  }, [panOffset.x, panOffset.y, selectBlock, startDrag]);
 
   const handleCanvasDoubleClick = async (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -175,12 +183,13 @@ export default function BoardCanvas() {
 
   const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
     if (isPanning) {
+      // Direct state update for panning - no React interference
       setPanOffset({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y,
       });
     }
-    if (connectingFrom) {
+    if (connectingFrom && isConnectionDragging.current) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (rect) {
         setMousePos({
@@ -191,18 +200,26 @@ export default function BoardCanvas() {
     }
   }, [isPanning, dragStart, connectingFrom, panOffset, zoom]);
 
-  const handleCanvasMouseUp = () => {
-    setIsPanning(false);
+  const handleCanvasMouseUp = useCallback(() => {
+    if (isPanning) {
+      endDrag();
+      setIsPanning(false);
+    }
     if (connectingFrom) {
+      isConnectionDragging.current = false;
+      endDrag();
       setConnectingFrom(null);
     }
-  };
+  }, [isPanning, connectingFrom, endDrag]);
 
-  const handleStartConnection = (blockId: string) => {
+  const handleStartConnection = useCallback((blockId: string) => {
+    // Set global drag lock for connection drawing
+    startDrag('connection', blockId);
+    isConnectionDragging.current = true;
     setConnectingFrom(blockId);
-  };
+  }, [startDrag]);
 
-  const handleEndConnection = (toBlockId: string) => {
+  const handleEndConnection = useCallback((toBlockId: string) => {
     if (connectingFrom && connectingFrom !== toBlockId) {
       const exists = boardConnections.some(
         (c) => c.from_block === connectingFrom && c.to_block === toBlockId
@@ -213,8 +230,10 @@ export default function BoardCanvas() {
         toast.success("Connection created");
       }
     }
+    isConnectionDragging.current = false;
+    endDrag();
     setConnectingFrom(null);
-  };
+  }, [connectingFrom, boardConnections, createConnection, endDrag]);
 
   const handleConnectionContextMenu = (connectionId: string) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -355,9 +374,13 @@ export default function BoardCanvas() {
             <div
               ref={canvasRef}
               className={cn(
-                "flex-1 relative overflow-hidden board-canvas-bg",
+                "flex-1 relative overflow-hidden board-canvas-bg rounded-2xl",
                 isPanning ? "cursor-grabbing" : "cursor-grab"
               )}
+              style={{
+                // CRITICAL: Clip all children to prevent visual overflow
+                clipPath: "inset(0 round 16px)",
+              }}
               onMouseDown={handleCanvasMouseDown}
               onMouseMove={handleCanvasMouseMove}
               onMouseUp={handleCanvasMouseUp}

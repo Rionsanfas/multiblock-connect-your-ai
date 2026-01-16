@@ -1,9 +1,10 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanEnforcement } from './usePlanLimits';
 import { blocksDb } from '@/lib/database';
 import { devLog, devError } from '@/lib/logger';
+import { getDragState } from '@/store/useDragStore';
 import type { Block } from '@/types';
 import type { LLMProvider } from '@/types/database.types';
 import { toast } from 'sonner';
@@ -19,18 +20,26 @@ export function useBoardBlocks(boardId: string | undefined) {
     queryKey: ['board-blocks', boardId],
     queryFn: async () => {
       if (!boardId) return [];
+      // CRITICAL: Never refetch during drag operations
+      if (getDragState().isDragging) {
+        devLog('[useBoardBlocks] Skipping refetch - drag in progress');
+        return [];
+      }
       devLog('[useBoardBlocks] Fetching blocks for board:', boardId);
       const blocks = await blocksDb.getForBoard(boardId);
       devLog('[useBoardBlocks] Fetched:', blocks.length, 'blocks');
       return blocks;
     },
     enabled: !authLoading && !!user?.id && !!boardId,
-    staleTime: 1000 * 60 * 2, // 2 minutes - longer stale time for fast nav
+    staleTime: 1000 * 60 * 5, // 5 minutes - longer to prevent refetch interruptions
     gcTime: 1000 * 60 * 10, // 10 minutes cache
     refetchOnWindowFocus: false, // Don't refetch on focus
-    refetchOnMount: true, // Only fetch if stale
+    refetchOnMount: false, // Don't refetch on mount - use cache
+    refetchOnReconnect: false, // Don't refetch on reconnect
     // Keep previous data during refetch (prevents flash)
     placeholderData: (previousData) => previousData,
+    // CRITICAL: Disable automatic refetching entirely - only manual invalidation
+    refetchInterval: false,
   });
 
   // Transform to legacy format and sort
@@ -290,11 +299,16 @@ export function useBlockActions(boardId: string) {
   /**
    * Update block position - optimistic UI first, then persist to Supabase
    * This is designed for drag operations where smooth UI is critical.
+   * 
+   * CRITICAL: Uses direct cache mutation without triggering React re-renders.
+   * The position is stored in the cache but React Query won't notify subscribers
+   * during drag because we use setQueryData without invalidation.
    */
   const updateBlockPosition = useCallback((blockId: string, position: { x: number; y: number }) => {
     if (!canModify) return;
 
-    // Optimistic update - update cache immediately for smooth drag
+    // CRITICAL: Direct cache mutation - no invalidation, no subscribers notified
+    // This prevents re-renders during drag
     queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
       const arr = Array.isArray(old) ? old : [];
       return arr.map((b: any) => 
