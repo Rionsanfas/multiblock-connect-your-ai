@@ -568,25 +568,30 @@ export function BlockCard({
               </h3>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <IconButton variant="ghost" size="sm" className="no-drag h-7 w-7 opacity-60 hover:opacity-100">
+                  <IconButton 
+                    variant="ghost" 
+                    size="sm" 
+                    className="no-drag h-7 w-7 opacity-60 hover:opacity-100"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <MoreHorizontal className="h-4 w-4" />
                   </IconButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
-                  <DropdownMenuItem onClick={() => openBlockChat(block.id)} className="rounded-lg text-sm">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openBlockChat(block.id); }} className="rounded-lg text-sm">
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Open Chat
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => duplicateBlock(block.id)} className="rounded-lg text-sm">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); duplicateBlock(block.id); }} className="rounded-lg text-sm">
                     <Copy className="h-4 w-4 mr-2" />
                     Duplicate
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowTransferDialog(true)} className="rounded-lg text-sm">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowTransferDialog(true); }} className="rounded-lg text-sm">
                     <Move className="h-4 w-4 mr-2" />
                     Copy/Move to Board
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleRequestDeleteBlock} className="text-destructive rounded-lg text-sm">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRequestDeleteBlock(); }} className="text-destructive rounded-lg text-sm">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
                   </DropdownMenuItem>
