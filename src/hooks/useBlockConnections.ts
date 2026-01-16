@@ -12,6 +12,7 @@ import { useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { connectionsDb, blocksDb, messagesDb } from '@/lib/database';
+import { getDragState } from '@/store/useDragStore';
 import type { Message, Block } from '@/types/database.types';
 import type { BlockConnection } from '@/types/database.types';
 
@@ -62,13 +63,22 @@ export function useBoardConnections(boardId: string | undefined) {
     queryKey: ['board-connections', boardId],
     queryFn: async () => {
       if (!boardId) return [];
+      // CRITICAL: Never refetch during drag operations
+      if (getDragState().isDragging) {
+        console.log('[useBoardConnections] Skipping refetch - drag in progress');
+        return [];
+      }
       console.log('[useBoardConnections] Fetching connections for board:', boardId);
       const conns = await connectionsDb.getForBoard(boardId);
       console.log('[useBoardConnections] Fetched:', conns.length, 'connections');
       return conns.map(transformConnection);
     },
     enabled: !authLoading && !!user?.id && !!boardId,
-    staleTime: 10 * 1000,
+    staleTime: 1000 * 60 * 5, // 5 minutes - longer to prevent refetch interruptions
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    placeholderData: (previousData) => previousData,
   });
 
   return { connections, isLoading };

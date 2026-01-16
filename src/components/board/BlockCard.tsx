@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical, Move, Settings } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { BlockTransferDialog } from "./BlockTransferDialog";
 import { useAppStore } from "@/store/useAppStore";
+import { useDragStore } from "@/store/useDragStore";
 import { useBlockActions } from "@/hooks/useBoardBlocks";
 import { getModelConfig } from "@/types";
 import { api } from "@/api";
@@ -35,12 +36,15 @@ export function BlockCard({
   onEndConnection,
   isConnecting,
 }: BlockCardProps) {
-  const [isDragging, setIsDragging] = useState(false);
+  // CRITICAL: Use refs for drag state to prevent re-renders during drag
+  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false); // Only for visual updates
   const hasDraggedRef = useRef(false);
-  const dragEndTimeRef = useRef(0); // Track when drag ended to prevent click
+  const dragEndTimeRef = useRef(0);
   const activePointerIdRef = useRef<number | null>(null);
   const dragElementRef = useRef<HTMLElement | null>(null);
   const didFinalizeDragRef = useRef(false);
+  
   const [isRunning, setIsRunning] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeCorner, setResizeCorner] = useState<string | null>(null);
@@ -56,6 +60,10 @@ export function BlockCard({
   const startSize = useRef({ width: 0, height: 0 });
   const startBlockPos = useRef({ x: 0, y: 0 });
   const blockPositionRef = useRef({ x: block.position.x, y: block.position.y });
+
+  // Global drag store for cross-component drag lock
+  const startDrag = useDragStore((s) => s.startDrag);
+  const endDrag = useDragStore((s) => s.endDrag);
 
   const { openBlockChat, messages, zoom } = useAppStore();
   const {
@@ -107,34 +115,40 @@ export function BlockCard({
       // ignore
     }
 
-    // Set dragging state IMMEDIATELY for instant visual feedback
+    // CRITICAL: Set global drag lock FIRST to prevent any state updates
+    startDrag('block', block.id);
+    isDraggingRef.current = true;
+    
+    // Set visual dragging state
     setIsDragging(true);
     // Select after drag state is set to ensure visual order
     onSelect();
   };
 
   // Separate click handler - only fires if no drag occurred
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
     // CRITICAL: Block click if any dragging occurred recently (within 300ms)
     // This handles the race condition where click fires after pointer up
     const timeSinceDragEnd = Date.now() - dragEndTimeRef.current;
-    if (timeSinceDragEnd < 300 || isDragging || isResizing || hasDraggedRef.current) {
+    if (timeSinceDragEnd < 300 || isDraggingRef.current || isResizing || hasDraggedRef.current) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
     openBlockChat(block.id);
-  };
+  }, [isResizing, openBlockChat, block.id]);
 
-  const handleResizeStart = (e: React.MouseEvent, corner: string) => {
+  const handleResizeStart = useCallback((e: React.MouseEvent, corner: string) => {
     e.stopPropagation();
     e.preventDefault();
+    // Set global drag lock for resize
+    startDrag('resize', block.id);
     setIsResizing(true);
     setResizeCorner(corner);
     startPos.current = { x: e.clientX, y: e.clientY };
     startSize.current = { width: size.width, height: size.height };
     startBlockPos.current = { x: block.position.x, y: block.position.y };
-  };
+  }, [startDrag, block.id, size.width, size.height, block.position.x, block.position.y]);
 
   const handleResizeMove = (e: MouseEvent) => {
     if (!isResizing || !resizeCorner) return;
@@ -182,13 +196,15 @@ export function BlockCard({
     });
   };
 
-  const handleResizeEnd = () => {
+  const handleResizeEnd = useCallback(() => {
     if (isResizing) {
+      // Release global drag lock
+      endDrag();
       updateBlock(block.id, { config: { ...block.config, width: size.width, height: size.height } });
     }
     setIsResizing(false);
     setResizeCorner(null);
-  };
+  }, [isResizing, endDrag, updateBlock, block.id, block.config, size.width, size.height]);
 
   // Pointer-driven drag listeners - attached only while dragging
   useEffect(() => {
@@ -210,6 +226,10 @@ export function BlockCard({
 
       hasDraggedRef.current = false;
       activePointerIdRef.current = null;
+      isDraggingRef.current = false;
+      
+      // CRITICAL: Release global drag lock AFTER persisting
+      endDrag();
       setIsDragging(false);
 
       if (dragEl && pointerId != null) {
@@ -225,6 +245,7 @@ export function BlockCard({
       if (pointerId == null || e.pointerId !== pointerId) return;
       if (isResizing) return;
       if (didFinalizeDragRef.current) return;
+      if (!isDraggingRef.current) return; // Check ref, not state
 
       // Prevent page scroll on touch/trackpad while dragging
       e.preventDefault();
@@ -243,9 +264,12 @@ export function BlockCard({
       const newY = e.clientY / zoom - dragOffset.current.y;
       blockPositionRef.current = { x: newX, y: newY };
 
-      // Batch DOM updates with requestAnimationFrame for smoother 60fps dragging
+      // CRITICAL: Direct DOM update via requestAnimationFrame
+      // This bypasses React entirely for maximum smoothness
       requestAnimationFrame(() => {
-        updateBlockPosition(block.id, { x: newX, y: newY });
+        if (isDraggingRef.current) {
+          updateBlockPosition(block.id, { x: newX, y: newY });
+        }
       });
     };
 
@@ -296,7 +320,7 @@ export function BlockCard({
       // Safety: if we unmount mid-drag, finalize once
       finalize();
     };
-  }, [isDragging, isResizing, zoom, block.id, updateBlockPosition, persistBlockPosition]);
+  }, [isDragging, isResizing, zoom, block.id, updateBlockPosition, persistBlockPosition, endDrag]);
 
   useEffect(() => {
     if (isResizing) {
