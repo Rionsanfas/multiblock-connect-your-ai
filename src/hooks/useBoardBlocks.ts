@@ -5,6 +5,8 @@ import { usePlanEnforcement } from './usePlanLimits';
 import { blocksDb } from '@/lib/database';
 import { devLog, devError } from '@/lib/logger';
 import { getDragState } from '@/store/useDragStore';
+import { getBlockPosition, removeBlockPosition } from '@/store/useBlockPositions';
+import type { Connection } from '@/hooks/useBlockConnections';
 import type { Block } from '@/types';
 import type { LLMProvider } from '@/types/database.types';
 import { toast } from 'sonner';
@@ -228,6 +230,9 @@ export function useBlockActions(boardId: string) {
 
   /**
    * Delete a block via Supabase with optimistic UI
+   *
+   * CRITICAL INVARIANT: No connection may exist without two valid blocks.
+   * Therefore block deletion must also remove ALL attached connections immediately.
    */
   const deleteBlock = useCallback(async (blockId: string) => {
     if (!canModify) {
@@ -236,33 +241,115 @@ export function useBlockActions(boardId: string) {
 
     devLog('[useBlockActions.deleteBlock] request', { boardId, blockId });
 
-    // Get current cache data for rollback
-    const previousBlocks = queryClient.getQueryData(['board-blocks', boardId]);
+    // Prevent in-flight queries from rehydrating deleted entities.
+    await queryClient.cancelQueries({ queryKey: ['board-blocks', boardId] });
+    await queryClient.cancelQueries({ queryKey: ['board-connections', boardId] });
 
-    // Optimistic update - remove from cache immediately
+    const boardConnectionsKey = ['board-connections', boardId] as const;
+
+    // Snapshot caches for rollback
+    const previousBlocks = queryClient.getQueryData(['board-blocks', boardId]);
+    const previousConnections = queryClient.getQueryData<Connection[]>(boardConnectionsKey);
+
+    // Snapshot per-block connection lists we might touch (for rollback)
+    const perBlockBackups: Array<{ key: readonly unknown[]; data: unknown }> = [];
+    const seenKeys = new Set<string>();
+    const backupKey = (key: readonly unknown[]) => JSON.stringify(key);
+
+    const connectionsToRemove = (previousConnections ?? []).filter(
+      (c) => c.from_block === blockId || c.to_block === blockId
+    );
+
+    for (const c of connectionsToRemove) {
+      const incomingKey = ['block-incoming-connections', c.to_block] as const;
+      const outgoingKey = ['block-outgoing-connections', c.from_block] as const;
+
+      const ik = backupKey(incomingKey);
+      if (!seenKeys.has(ik)) {
+        seenKeys.add(ik);
+        perBlockBackups.push({ key: incomingKey, data: queryClient.getQueryData(incomingKey) });
+      }
+
+      const ok = backupKey(outgoingKey);
+      if (!seenKeys.has(ok)) {
+        seenKeys.add(ok);
+        perBlockBackups.push({ key: outgoingKey, data: queryClient.getQueryData(outgoingKey) });
+      }
+    }
+
+    // Snapshot drag-position store for rollback safety (best-effort)
+    const previousPosition = getBlockPosition(blockId);
+
+    // === OPTIMISTIC: apply atomic cascade delete locally ===
+
+    // 1) Remove the block
     queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
       const arr = Array.isArray(old) ? old : [];
       return arr.filter((b: any) => b?.id !== blockId);
     });
+
+    // 2) Remove all connections attached to that block (board-level list)
+    queryClient.setQueryData<Connection[]>(boardConnectionsKey, (old) => {
+      const arr = Array.isArray(old) ? (old as Connection[]) : [];
+      return arr.filter((c) => c.from_block !== blockId && c.to_block !== blockId);
+    });
+
+    // 3) Remove those same connections from per-block caches (if present)
+    for (const c of connectionsToRemove) {
+      queryClient.setQueryData<Connection[]>(['block-incoming-connections', c.to_block], (old) => {
+        const arr = Array.isArray(old) ? (old as Connection[]) : [];
+        return arr.filter((x) => x.id !== c.id);
+      });
+      queryClient.setQueryData<Connection[]>(['block-outgoing-connections', c.from_block], (old) => {
+        const arr = Array.isArray(old) ? (old as Connection[]) : [];
+        return arr.filter((x) => x.id !== c.id);
+      });
+    }
+
+    // 4) Remove per-block queries for the deleted block itself
+    queryClient.removeQueries({ queryKey: ['block', blockId] });
+    queryClient.removeQueries({ queryKey: ['block-messages', blockId] });
+    queryClient.removeQueries({ queryKey: ['block-incoming-connections', blockId] });
+    queryClient.removeQueries({ queryKey: ['block-outgoing-connections', blockId] });
+    queryClient.removeQueries({ queryKey: ['block-incoming-context', blockId] });
+
+    // 5) Remove its position from the real-time drag store (prevents invisible endpoints)
+    removeBlockPosition(blockId);
 
     try {
       const result = await blocksDb.delete(blockId);
 
       if (!result.success) {
         devError('[useBlockActions.deleteBlock] failed', { boardId, blockId, error: result.error });
+
+        // Rollback everything we touched
         queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
+        queryClient.setQueryData(boardConnectionsKey, previousConnections);
+        for (const b of perBlockBackups) queryClient.setQueryData(b.key, b.data);
+
+        // Best-effort restore position
+        if (previousPosition) {
+          // restore via store init effect on next render; keep minimal here
+          // (no-op if blocks cache restore re-initializes positions)
+        }
+
         toast.error(result.error || 'Failed to delete block');
         throw new Error(result.error || 'Delete failed');
       }
 
       devLog('[useBlockActions.deleteBlock] success', { boardId, blockId, deletedId: result.deletedId });
-      // IMPORTANT: no refetch here; optimistic cache is the UI source of truth.
+      // IMPORTANT: no refetch here; optimistic caches are the UI source of truth.
     } catch (error) {
       devError('[useBlockActions.deleteBlock] error', { boardId, blockId });
+
+      // Rollback everything we touched
       queryClient.setQueryData(['board-blocks', boardId], previousBlocks);
+      queryClient.setQueryData(boardConnectionsKey, previousConnections);
+      for (const b of perBlockBackups) queryClient.setQueryData(b.key, b.data);
+
       throw error;
     }
-  }, [boardId, canModify, queryClient, user?.id]);
+  }, [boardId, canModify, queryClient]);
 
   /**
    * Duplicate a block

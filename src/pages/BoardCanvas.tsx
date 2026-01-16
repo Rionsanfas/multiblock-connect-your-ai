@@ -305,13 +305,20 @@ export default function BoardCanvas() {
 
   // Real-time position store for smooth connection line updates during drag
   const blockPositions = useBlockPositions((s) => s.positions);
-  
+
   // Initialize position store when blocks load or change
   useEffect(() => {
     if (boardBlocks.length > 0) {
       useBlockPositions.getState().initializePositions(boardBlocks);
     }
   }, [boardBlocks]);
+
+  // CRITICAL INVARIANT: do not render any connection whose endpoints don't exist.
+  // This prevents "ghost" lines after delete or during optimistic transitions.
+  const visibleConnections = useMemo(() => {
+    const ids = new Set(boardBlocks.map((b) => b.id));
+    return boardConnections.filter((c) => ids.has(c.from_block) && ids.has(c.to_block));
+  }, [boardBlocks, boardConnections]);
 
   // Get block center - uses position store for real-time drag sync
   const getBlockCenter = useCallback((blockId: string) => {
@@ -323,7 +330,7 @@ export default function BoardCanvas() {
         y: storePos.y + DEFAULT_BLOCK_HEIGHT / 2,
       };
     }
-    
+
     // Fallback to block from query cache
     const block = boardBlocks.find((b) => b.id === blockId);
     if (!block) return { x: 0, y: 0 };
@@ -481,7 +488,7 @@ export default function BoardCanvas() {
                 }}
               >
                 <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: "visible" }}>
-                  {boardConnections.map((conn) => {
+                  {visibleConnections.map((conn) => {
                     const from = getBlockCenter(conn.from_block);
                     const to = getBlockCenter(conn.to_block);
                     return (
