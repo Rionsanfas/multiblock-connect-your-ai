@@ -158,7 +158,8 @@ export function ConnectionLine({ from, to, connectionId, isDrawing, boardId, onC
             strokeLinecap="round"
             strokeLinejoin="round"
             filter={isHovered ? `url(#${glowFilterId})` : undefined}
-            className="transition-all duration-200"
+            // IMPORTANT: do NOT transition geometry ("d") during drags; only transition visual style.
+            className="transition-[stroke,stroke-opacity,filter] duration-200"
           />
           
           {/* Subtle highlight */}
