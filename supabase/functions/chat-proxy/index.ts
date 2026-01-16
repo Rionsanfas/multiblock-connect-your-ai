@@ -78,19 +78,49 @@ async function decrypt(encryptedBase64: string, keyString: string): Promise<stri
 }
 
 async function getDecryptedApiKey(supabase: any, userId: string, provider: string): Promise<string | null> {
-  const { data, error } = await supabase
+  // First try to get a personal key (team_id IS NULL)
+  let { data, error } = await supabase
     .from("api_keys")
-    .select("api_key_encrypted")
+    .select("api_key_encrypted, is_valid")
     .eq("user_id", userId)
     .eq("provider", provider)
-    .eq("is_valid", true)
+    .is("team_id", null)
     .maybeSingle();
 
-  if (error || !data?.api_key_encrypted) {
-    console.log(`[chat-proxy] No API key found for provider: ${provider}`);
+  // If no personal key, try to get a team key the user has access to
+  if (!data?.api_key_encrypted) {
+    const teamKeyResult = await supabase
+      .from("api_keys")
+      .select("api_key_encrypted, is_valid, team_id")
+      .eq("user_id", userId)
+      .eq("provider", provider)
+      .not("team_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+    
+    if (teamKeyResult.data?.api_key_encrypted) {
+      data = teamKeyResult.data;
+      error = teamKeyResult.error;
+    }
+  }
+
+  if (error) {
+    console.error(`[chat-proxy] Database error fetching API key for ${provider}:`, error.message);
     return null;
   }
 
+  if (!data?.api_key_encrypted) {
+    console.log(`[chat-proxy] No API key found for provider: ${provider}, user: ${userId}`);
+    return null;
+  }
+
+  // Check if key is marked as invalid
+  if (data.is_valid === false) {
+    console.log(`[chat-proxy] API key for ${provider} is marked as invalid`);
+    return null;
+  }
+
+  console.log(`[chat-proxy] Found valid API key for ${provider}`);
   return await decrypt(data.api_key_encrypted, ENCRYPTION_KEY);
 }
 
