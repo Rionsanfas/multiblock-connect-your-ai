@@ -9,7 +9,7 @@
  * - Branch to new block (create new block from selected text)
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent } from "react";
 import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2, AlertCircle, Maximize2, Minimize2, PanelLeftClose, PanelLeft, MessageSquare } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -68,9 +68,39 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [title, setTitle] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(256); // Default 256px (w-64)
+  const [isResizing, setIsResizing] = useState(false);
   
   // References state
   const [pendingReferences, setPendingReferences] = useState<ChatReference[]>([]);
+  
+  // Sidebar resize constants
+  const MIN_SIDEBAR_WIDTH = 180;
+  const MAX_SIDEBAR_WIDTH = 320;
+  
+  // Handle sidebar resize
+  const handleResizeStart = useCallback((e: ReactMouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
+    
+    const handleMouseMove = (moveEvent: globalThis.MouseEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const newWidth = Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, startWidth + delta));
+      setSidebarWidth(newWidth);
+    };
+    
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [sidebarWidth]);
   
   
   
@@ -265,21 +295,21 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
               : "max-w-2xl w-[95vw] sm:w-[90vw] h-[85vh] sm:h-[80vh] max-h-[700px]"
           )}
         >
-          <DialogHeader className="px-3 sm:px-5 py-3 sm:py-4 border-b border-border/20 flex-shrink-0">
+        <DialogHeader className="px-3 sm:px-4 py-2 sm:py-2.5 border-b border-border/20 flex-shrink-0">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 {/* Sidebar toggle - only show in fullscreen */}
                 {isFullscreen && (
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="p-2 rounded-lg flex-shrink-0"
+                    className="h-8 w-8 p-1.5 rounded-lg flex-shrink-0"
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                   >
                     {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
                   </Button>
                 )}
-                <DialogTitle className="text-sm sm:text-base font-medium truncate">{block.title}</DialogTitle>
+                <DialogTitle className="text-sm font-medium truncate">{block.title}</DialogTitle>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className={cn("hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg border border-border/20 h-auto text-xs sm:text-sm", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
@@ -313,9 +343,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 </DropdownMenu>
                 {blockUsage && <span className="text-xs text-muted-foreground">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Popover>
-                  <PopoverTrigger asChild><Button variant="ghost" size="icon" className="p-2 rounded-lg"><Settings className="h-4 w-4" /></Button></PopoverTrigger>
+                  <PopoverTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 p-1.5 rounded-lg"><Settings className="h-4 w-4" /></Button></PopoverTrigger>
                   <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl" side="bottom" align="end">
                     <div className="font-semibold text-sm">Block Settings</div>
                     <div className="space-y-2">
@@ -332,12 +362,12 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="p-2 rounded-lg"
+                  className="h-8 w-8 p-1.5 rounded-lg"
                   onClick={() => setIsFullscreen(!isFullscreen)}
                 >
                   {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </Button>
-                <Button variant="ghost" size="icon" className="p-2 rounded-lg" onClick={() => closeBlockChat()}><X className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 p-1.5 rounded-lg" onClick={() => closeBlockChat()}><X className="h-4 w-4" /></Button>
               </div>
             </div>
           </DialogHeader>
@@ -365,26 +395,38 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
             {/* Premium Sidebar with 3D glass effect and smooth animations */}
             {isFullscreen && (
               <aside 
+                style={{ width: isSidebarOpen ? sidebarWidth : 0 }}
                 className={cn(
-                  "chat-sidebar flex-shrink-0 flex flex-col",
+                  "chat-sidebar flex-shrink-0 flex flex-col relative",
                   "bg-gradient-to-b from-card/95 via-card/90 to-card/85",
                   "backdrop-blur-2xl border-r border-border/10",
-                  "transition-all duration-300 ease-out",
+                  "transition-[opacity,transform] duration-300 ease-out",
                   isSidebarOpen 
-                    ? "w-64 opacity-100 translate-x-0" 
-                    : "w-0 opacity-0 -translate-x-4 overflow-hidden"
+                    ? "opacity-100 translate-x-0" 
+                    : "opacity-0 -translate-x-4 overflow-hidden"
                 )}
               >
                 {/* Sidebar header with subtle depth */}
-                <div className="p-5 pb-3 border-b border-border/5">
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest">
+                <div className="p-4 pb-2 border-b border-border/5">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                     Board Chats
                   </h3>
                 </div>
                 
+                {/* Resize handle */}
+                <div
+                  onMouseDown={handleResizeStart}
+                  className={cn(
+                    "absolute top-0 right-0 w-1 h-full cursor-col-resize z-10",
+                    "transition-all duration-150",
+                    "hover:bg-primary/40 hover:shadow-[0_0_8px_2px_rgba(var(--primary),0.3)]",
+                    isResizing && "bg-primary/60 shadow-[0_0_12px_4px_rgba(var(--primary),0.4)]"
+                  )}
+                />
+                
                 {/* Navigation with premium styling */}
-                <ScrollArea className="flex-1 py-3">
-                  <nav className="px-3 space-y-1">
+                <ScrollArea className="flex-1 py-2">
+                  <nav className="px-2 space-y-0.5">
                     {boardBlocks.map((b) => {
                       const isActive = b.id === blockId;
                       const bModelConfig = b.model_id ? getModelConfig(b.model_id) : null;
@@ -393,8 +435,8 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                           key={b.id}
                           onClick={() => openBlockChat(b.id)}
                           className={cn(
-                            "chat-sidebar-item group relative flex items-center gap-3 w-full text-left",
-                            "px-4 py-3 rounded-xl transition-all duration-200",
+                            "chat-sidebar-item group relative flex items-center gap-2.5 w-full text-left",
+                            "px-3 py-2.5 rounded-lg transition-all duration-200",
                             isActive
                               ? "bg-secondary/80 text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
                               : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
@@ -405,15 +447,15 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                             className={cn(
                               "absolute right-0 top-1/2 -translate-y-1/2 w-[3px] rounded-l-full transition-all duration-300 ease-out",
                               isActive
-                                ? "h-10 bg-gradient-to-b from-amber-400 via-amber-300 to-amber-400 opacity-100 shadow-[0_0_16px_4px_rgba(251,191,36,0.4),-2px_0_8px_rgba(251,191,36,0.3)]"
-                                : "h-6 opacity-0 bg-amber-400/50 group-hover:opacity-50 group-hover:shadow-[0_0_8px_2px_rgba(251,191,36,0.2)]"
+                                ? "h-8 bg-gradient-to-b from-amber-400 via-amber-300 to-amber-400 opacity-100 shadow-[0_0_16px_4px_rgba(251,191,36,0.4),-2px_0_8px_rgba(251,191,36,0.3)]"
+                                : "h-5 opacity-0 bg-amber-400/50 group-hover:opacity-50 group-hover:shadow-[0_0_8px_2px_rgba(251,191,36,0.2)]"
                             )}
                           />
                           
                           {/* Icon with subtle 3D effect */}
                           <div 
                             className={cn(
-                              "p-2 rounded-lg transition-all duration-200",
+                              "p-1.5 rounded-md transition-all duration-200",
                               isActive 
                                 ? "bg-secondary/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_2px_4px_rgba(0,0,0,0.2)]" 
                                 : "bg-transparent group-hover:bg-secondary/30"
@@ -421,7 +463,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                           >
                             <MessageSquare 
                               className={cn(
-                                "h-4 w-4 transition-all duration-200",
+                                "h-3.5 w-3.5 transition-all duration-200",
                                 isActive 
                                   ? "text-foreground drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]" 
                                   : "text-muted-foreground group-hover:text-foreground"
