@@ -1,13 +1,13 @@
 /**
- * Block Data Hooks - Supabase-first block management
+ * Block Data Hooks - Supabase-first block management with optimistic UI
  * 
- * CRITICAL: All block data comes from Supabase.
+ * CRITICAL: Supports optimistic blocks that exist in cache before DB confirms.
  * This hook provides:
- * 1. Block fetching by ID from Supabase
+ * 1. Block fetching by ID - checks cache first for optimistic data
  * 2. Optimistic delete with proper verification
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { blocksDb } from '@/lib/database';
@@ -16,22 +16,46 @@ import { toast } from 'sonner';
 import type { Block } from '@/types/database.types';
 
 /**
- * Fetch a single block by ID from Supabase
+ * Fetch a single block by ID
+ * IMPORTANT: Checks board-blocks cache first for optimistic blocks
+ * This prevents "block not found" errors when opening newly created blocks
  */
 export function useBlock(blockId: string | undefined) {
   const { user, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
 
   return useQuery({
     queryKey: ['block', blockId],
     queryFn: async () => {
       if (!blockId) return null;
-      devLog('[useBlock] Fetching block:', blockId);
+      
+      // OPTIMIZATION: Check if block exists in any board-blocks cache (optimistic data)
+      // This prevents errors when opening a block before DB confirms creation
+      const allCacheKeys = queryClient.getQueryCache().getAll();
+      for (const query of allCacheKeys) {
+        if (query.queryKey[0] === 'board-blocks') {
+          const blocks = query.state.data as Block[] | undefined;
+          const cachedBlock = blocks?.find(b => b.id === blockId);
+          if (cachedBlock) {
+            devLog('[useBlock] Found optimistic block in cache:', blockId);
+            return cachedBlock;
+          }
+        }
+      }
+      
+      devLog('[useBlock] Fetching block from DB:', blockId);
       const block = await blocksDb.getById(blockId);
       devLog('[useBlock] Fetched block:', block?.id);
       return block;
     },
     enabled: !authLoading && !!user?.id && !!blockId,
     staleTime: 30 * 1000,
+    // Retry quickly for optimistic blocks that might not be in DB yet
+    retry: (failureCount, error) => {
+      // Only retry 2 times with short delay for potential race conditions
+      return failureCount < 2;
+    },
+    retryDelay: 500,
   });
 }
 
