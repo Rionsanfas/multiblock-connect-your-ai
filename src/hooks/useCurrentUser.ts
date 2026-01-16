@@ -9,7 +9,7 @@
 
 import { useMemo } from 'react';
 import { useAuth } from './useAuth';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { subscriptionsDb, boardsDb } from '@/lib/database';
 import type { Board as SupabaseBoard } from '@/types/database.types';
 import type { Board as LegacyBoard } from '@/types';
@@ -164,12 +164,29 @@ interface UseUserBoardResult {
  */
 export function useUserBoard(boardId: string | undefined): UseUserBoardResult {
   const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
   
   const { data: board, isLoading: queryLoading, error } = useQuery({
     queryKey: ['board', boardId],
     queryFn: async () => {
-      console.log('[useUserBoard] Fetching board:', boardId);
-      const result = await boardsDb.getById(boardId!);
+      if (!boardId) return null;
+      
+      // OPTIMIZATION: Check workspace-boards cache first for optimistic boards
+      // This enables instant navigation to newly created boards
+      const allCacheKeys = queryClient.getQueryCache().getAll();
+      for (const query of allCacheKeys) {
+        if (query.queryKey[0] === 'workspace-boards') {
+          const boards = query.state.data as any[] | undefined;
+          const cachedBoard = boards?.find(b => b.id === boardId);
+          if (cachedBoard) {
+            console.log('[useUserBoard] Found optimistic board in cache:', boardId);
+            return cachedBoard;
+          }
+        }
+      }
+      
+      console.log('[useUserBoard] Fetching board from DB:', boardId);
+      const result = await boardsDb.getById(boardId);
       console.log('[useUserBoard] Fetch result:', { 
         boardId, 
         found: !!result, 
@@ -183,6 +200,9 @@ export function useUserBoard(boardId: string | undefined): UseUserBoardResult {
     refetchOnWindowFocus: false,
     // Keep previous board data during navigation
     placeholderData: (previousData) => previousData,
+    // Quick retry for optimistic boards
+    retry: (failureCount) => failureCount < 2,
+    retryDelay: 500,
   });
   
   // Memoize the transformed board to ensure stable reference

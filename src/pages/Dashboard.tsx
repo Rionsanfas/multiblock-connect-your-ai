@@ -98,48 +98,74 @@ export default function Dashboard() {
     
     setIsCreating(true);
     
+    // Generate optimistic ID for instant navigation
+    const optimisticId = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const teamId = currentWorkspace.type === 'team' ? currentWorkspace.teamId : null;
+    
+    // Create optimistic board for instant UI
+    const optimisticBoard = {
+      id: optimisticId,
+      name: "Untitled Board",
+      user_id: authUser.id,
+      team_id: teamId,
+      description: null,
+      is_archived: false,
+      is_public: false,
+      canvas_position_x: 0,
+      canvas_position_y: 0,
+      canvas_zoom: 1,
+      created_at: now,
+      updated_at: now,
+    };
+    
+    // OPTIMISTIC: Add to cache immediately
+    queryClient.setQueryData(['workspace-boards', currentWorkspace.type, currentWorkspace.teamId, authUser.id], (old: unknown) => {
+      const arr = Array.isArray(old) ? old : [];
+      return [optimisticBoard, ...arr];
+    });
+    
+    // Show success toast IMMEDIATELY (optimistic)
+    toast.success(teamId ? `Board created in ${currentWorkspace.teamName}` : "Board created");
+    
+    // Navigate IMMEDIATELY with optimistic ID
+    navigate(`/board/${optimisticId}`);
+    setIsCreating(false);
+    
+    // Create in background and update cache with real ID
     try {
-      // Determine team context - CRITICAL: propagate team_id correctly
-      const teamId = currentWorkspace.type === 'team' ? currentWorkspace.teamId : null;
-      
-      console.log('[Dashboard] Creating board...', { 
-        isTeam: currentWorkspace.type === 'team',
-        teamId,
-        teamName: currentWorkspace.teamName 
-      });
-      
-      // Create board first, THEN navigate (avoids broken optimistic ID)
       const board = await boardsDb.create({ name: "Untitled Board" }, teamId);
       
-      // Verify returned board has valid data
       if (!board?.id || !board?.user_id) {
-        console.error('[Dashboard] Board creation returned invalid data:', board);
-        toast.error('Board creation failed');
-        return;
+        throw new Error('Board creation returned invalid data');
       }
       
-      console.log('[Dashboard] Board created successfully:', { 
-        id: board.id, 
-        user_id: board.user_id,
-        team_id: board.team_id,
-        name: board.name 
-      });
+      console.log('[Dashboard] Board created in DB:', board.id);
       
-      // Optimistic cache update - add to list immediately
+      // Replace optimistic board with real board in cache
       queryClient.setQueryData(['workspace-boards', currentWorkspace.type, currentWorkspace.teamId, authUser.id], (old: unknown) => {
         const arr = Array.isArray(old) ? old : [];
-        return [board, ...arr];
+        return arr.map((b: any) => b.id === optimisticId ? board : b);
       });
       
-      // Navigate to actual board
-      navigate(`/board/${board.id}`);
+      // Also cache the board directly for BoardCanvas
+      queryClient.setQueryData(['board', board.id], board);
       
-      toast.success(teamId ? `Board created in ${currentWorkspace.teamName}` : "Board created");
+      // If user is still on optimistic board, redirect to real board
+      if (window.location.pathname === `/board/${optimisticId}`) {
+        navigate(`/board/${board.id}`, { replace: true });
+      }
     } catch (error) {
       console.error('[Dashboard] Board creation failed:', error);
+      
+      // Rollback optimistic update
+      queryClient.setQueryData(['workspace-boards', currentWorkspace.type, currentWorkspace.teamId, authUser.id], (old: unknown) => {
+        const arr = Array.isArray(old) ? old : [];
+        return arr.filter((b: any) => b.id !== optimisticId);
+      });
+      
       toast.error(error instanceof Error ? error.message : "Failed to create board");
-    } finally {
-      setIsCreating(false);
+      navigate('/dashboard');
     }
   };
 

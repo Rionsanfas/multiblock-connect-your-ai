@@ -228,6 +228,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   const isRunning = messageStatus !== 'idle' && messageStatus !== 'error';
 
+  // Show brief loading state - optimistic blocks should load instantly from cache
   if (blockLoading) {
     return (
       <Dialog open onOpenChange={() => closeBlockChat()}>
@@ -238,7 +239,9 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
     );
   }
 
-  if (blockError || !block) {
+  // Only show error after loading completes and block genuinely not found
+  // This prevents false "not found" for optimistic blocks
+  if (!blockLoading && (blockError || !block)) {
     return (
       <Dialog open onOpenChange={() => closeBlockChat()}>
         <DialogContent className="max-w-2xl w-[90vw] h-[80vh] flex flex-col items-center justify-center rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl">

@@ -36,16 +36,25 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
     setShowModelSelector(true);
   };
 
-  const handleModelSelect = (modelId: string) => {
+  const handleModelSelect = async (modelId: string) => {
     const model = MODEL_CONFIGS.find((m) => m.id === modelId);
-    createBlock({
-      title: pendingBlockTitle || "New Block",
-      model_id: modelId,
-      system_prompt: `You are a helpful assistant powered by ${model?.name || "AI"}.`,
-      position: { x: 100 + boardBlocks.length * 50, y: 100 + boardBlocks.length * 50 },
-    });
+    
+    // Show toast IMMEDIATELY (optimistic) - don't wait for DB
     toast.success(`Created block with ${model?.name}`);
     setPendingBlockTitle(null);
+    
+    // Create block in background - UI already updated optimistically
+    try {
+      await createBlock({
+        title: pendingBlockTitle || "New Block",
+        model_id: modelId,
+        system_prompt: `You are a helpful assistant powered by ${model?.name || "AI"}.`,
+        position: { x: 100 + boardBlocks.length * 50, y: 100 + boardBlocks.length * 50 },
+      });
+    } catch (error) {
+      // Rollback toast on failure
+      toast.error('Failed to create block');
+    }
   };
 
   const handleAddApiKey = (provider: Provider) => {
