@@ -1,4 +1,4 @@
-import { Zap, Infinity, Clock } from "lucide-react";
+import { Zap, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,9 +46,8 @@ const Pricing = () => {
             <Tabs defaultValue="lifetime" className="w-full">
               <TabsList className="tabs-3d grid w-full max-w-2xl mx-auto grid-cols-3 mb-6 sm:mb-8">
                 <TabsTrigger value="lifetime" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                  <Infinity className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden xs:inline">Lifetime</span>
-                  <span className="xs:hidden">LTD</span>
+                  <span className="hidden xs:inline">Lifetime Deals</span>
+                  <span className="xs:hidden">Lifetime</span>
                 </TabsTrigger>
                 <TabsTrigger value="individual" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                   <Clock className="h-3 w-3 sm:h-4 sm:w-4" />

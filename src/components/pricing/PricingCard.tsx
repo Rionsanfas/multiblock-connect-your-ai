@@ -2,7 +2,7 @@
  * PricingCard - Reusable pricing card component
  */
 
-import { Check, Info, HardDrive, Users, LayoutGrid, Plus, MessageSquare, Infinity } from 'lucide-react';
+import { Info, HardDrive, Users, LayoutGrid, Plus, Infinity } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PlanConfig, formatPlanPrice, formatStorage, formatLimit } from '@/config/plans';
 import { PricingButton } from './PricingButton';
@@ -103,9 +103,9 @@ export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
         {/* Features */}
         <ul className="space-y-2 mb-6 flex-1">
           {plan.features.slice(0, 6).map((feature) => (
-            <li key={feature} className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-              <span>{feature}</span>
+            <li key={feature} className="flex items-start gap-2.5 text-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 mt-2 flex-shrink-0" />
+              <span className="text-muted-foreground">{feature}</span>
             </li>
           ))}
         </ul>

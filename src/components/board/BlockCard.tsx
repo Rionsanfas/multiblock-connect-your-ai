@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical, Move, Settings } from "lucide-react";
+import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical, Settings } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -577,23 +577,23 @@ export function BlockCard({
                     <MoreHorizontal className="h-4 w-4" />
                   </IconButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openBlockChat(block.id); }} className="rounded-lg text-sm">
-                    <MessageSquare className="h-4 w-4 mr-2" />
+                <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openBlockChat(block.id); }} className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm">
+                    <MessageSquare className="h-4 w-4" />
                     Open Chat
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); duplicateBlock(block.id); }} className="rounded-lg text-sm">
-                    <Copy className="h-4 w-4 mr-2" />
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSelect(); }} className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm">
+                    <Settings className="h-4 w-4" />
+                    Block Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); duplicateBlock(block.id); }} className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm">
+                    <Copy className="h-4 w-4" />
                     Duplicate
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setShowTransferDialog(true); }} className="rounded-lg text-sm">
-                    <Move className="h-4 w-4 mr-2" />
-                    Copy/Move to Board
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRequestDeleteBlock(); }} className="text-destructive rounded-lg text-sm">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRequestDeleteBlock(); }} className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm text-red-400 focus:text-red-400 focus:bg-red-500/10">
+                    <Trash2 className="h-4 w-4" />
+                    Delete Block
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -640,7 +640,7 @@ export function BlockCard({
         </div>
       </ContextMenuTrigger>
 
-      {/* Right-click context menu */}
+      {/* Right-click context menu - MUST match 3-dots menu exactly */}
       <ContextMenuContent className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <ContextMenuItem
           onClick={() => openBlockChat(block.id)}
