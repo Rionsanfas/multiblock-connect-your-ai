@@ -10,6 +10,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import Dashboard from "./pages/Dashboard";
 import BoardCanvas from "./pages/BoardCanvas";
 import Pricing from "./pages/Pricing";
@@ -81,6 +82,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/checkout" element={<Checkout />} />

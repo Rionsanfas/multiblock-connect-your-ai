@@ -168,11 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string, fullName?: string, keepLoggedIn: boolean = true) => {
     try {
-      const redirectUrl = getRedirectUrl('/dashboard');
-      
-      // If user doesn't want to stay logged in, we'll handle session cleanup on browser close
-      // by storing preference - Supabase will use localStorage by default
-      // The actual session expiry is handled by checking this preference on page load
+      const redirectUrl = getRedirectUrl('/auth/callback');
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -182,6 +178,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: fullName ? { full_name: fullName } : undefined,
         },
       });
+      
+      if (error) {
+        return { error: new Error(error.message) };
+      }
+      
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error('Sign up failed') };
+    }
+  }, [getRedirectUrl]);
       
       if (error) {
         return { error: new Error(error.message) };
@@ -218,7 +224,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = useCallback(async () => {
     try {
-      const redirectUrl = getRedirectUrl('/dashboard');
+      // Always go through the dedicated callback route for deterministic OAuth hydration.
+      const redirectUrl = getRedirectUrl('/auth/callback');
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
