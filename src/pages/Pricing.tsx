@@ -1,4 +1,4 @@
-import { Zap, Info, HardDrive, Infinity, Clock } from "lucide-react";
+import { Zap, Info, HardDrive, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -73,8 +73,8 @@ export default function Pricing() {
                   Teams
                 </TabsTrigger>
                 <TabsTrigger value="lifetime" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2 sm:py-2.5">
-                  <Infinity className="h-3 w-3 sm:h-4 sm:w-4 hidden xs:block" />
-                  Lifetime
+                  <span className="hidden xs:inline">Lifetime Deals</span>
+                  <span className="xs:hidden">Lifetime</span>
                 </TabsTrigger>
               </TabsList>
 

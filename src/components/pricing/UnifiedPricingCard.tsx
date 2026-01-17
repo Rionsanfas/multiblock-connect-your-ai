@@ -4,7 +4,7 @@
  * Shows only canonical features: Boards, Blocks, Storage, Seats, Access type
  */
 
-import { Check, LayoutGrid, Plus, HardDrive, Users, Infinity, Clock, AlertTriangle } from 'lucide-react';
+import { LayoutGrid, Plus, HardDrive, Users, Infinity, Clock, AlertTriangle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { PlanConfig, formatStorage, formatLimit } from '@/config/plans';

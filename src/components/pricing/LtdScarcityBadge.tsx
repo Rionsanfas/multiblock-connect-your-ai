@@ -1,4 +1,4 @@
-import { Infinity, AlertTriangle, Flame } from 'lucide-react';
+import { AlertTriangle, Flame } from 'lucide-react';
 import { useLtdInventory } from '@/hooks/useLtdInventory';
 
 interface LtdScarcityBadgeProps {
@@ -67,7 +67,6 @@ export function LtdScarcityBadge({ variant = 'full', className = '' }: LtdScarci
         <div className="relative bg-card/95 backdrop-blur-xl rounded-2xl px-6 py-4">
           {/* Header */}
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Infinity className={`h-5 w-5 ${soldOut ? 'text-muted-foreground' : 'text-accent'}`} />
             <span className={`text-sm font-semibold ${soldOut ? 'text-muted-foreground' : 'text-accent'}`}>
               Limited Lifetime Deals
             </span>
