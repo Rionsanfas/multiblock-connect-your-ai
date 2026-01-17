@@ -76,11 +76,21 @@ export const apiKeyService = {
 
     if (error) {
       console.error('[apiKeyService.upsert] Error:', error);
-      throw new Error(error.message || 'Failed to save API key');
+      // Parse limit exceeded errors for better UX
+      const errorMessage = error.message || 'Failed to save API key';
+      if (errorMessage.includes('LIMIT_EXCEEDED:API_KEY')) {
+        throw new Error('You have reached your API key limit. Upgrade your plan to add more keys.');
+      }
+      throw new Error(errorMessage);
     }
 
     if (!data?.success) {
-      throw new Error(data?.error || 'Failed to save API key');
+      const errorMsg = data?.error || 'Failed to save API key';
+      // Also check for limit errors in the response body
+      if (errorMsg.includes('LIMIT_EXCEEDED') || errorMsg.includes('Maximum API keys')) {
+        throw new Error('You have reached your API key limit. Upgrade your plan to add more keys.');
+      }
+      throw new Error(errorMsg);
     }
 
     console.log('[apiKeyService.upsert] Key saved for provider:', provider, teamId ? `(team: ${teamId})` : '(personal)');
