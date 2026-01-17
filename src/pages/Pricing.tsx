@@ -36,7 +36,7 @@ export default function Pricing() {
   const addons = getActiveAddons();
   return <TooltipProvider>
       <div className="min-h-screen liquid-bg">
-        <div className="noise-overlay" />
+        
         <Navbar />
         <main className="pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 md:pb-20 px-4 sm:px-6 relative z-10">
           <div className="max-w-7xl mx-auto">
