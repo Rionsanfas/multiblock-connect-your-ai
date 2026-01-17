@@ -1,21 +1,11 @@
-import { Zap, Info, HardDrive, Clock } from "lucide-react";
+import { Zap, Info, HardDrive, Infinity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { toast } from "sonner";
-import {
-  TooltipProvider,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  getFreePlan,
-  getIndividualAnnualPlans, 
-  getTeamAnnualPlans, 
-  getIndividualLifetimePlans,
-  getTeamLifetimePlans,
-  getActiveAddons,
-  formatStorage 
-} from "@/config/plans";
+import { getFreePlan, getIndividualAnnualPlans, getTeamAnnualPlans, getIndividualLifetimePlans, getTeamLifetimePlans, getActiveAddons, formatStorage } from "@/config/plans";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { AddonCard } from "@/components/pricing/AddonCard";
 import { LtdScarcityBadge } from "@/components/pricing/LtdScarcityBadge";
@@ -23,11 +13,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useLtdInventory } from "@/hooks/useLtdInventory";
 import { usePricingRefresh } from "@/hooks/usePageRefresh";
-
 export default function Pricing() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const { soldOut, totalSeats, remainingSeats } = useLtdInventory();
+  const {
+    isAuthenticated
+  } = useAuth();
+  const {
+    soldOut,
+    totalSeats,
+    remainingSeats
+  } = useLtdInventory();
 
   // Refresh pricing data on page mount
   usePricingRefresh();
@@ -39,9 +34,7 @@ export default function Pricing() {
   const individualLifetimePlans = getIndividualLifetimePlans();
   const teamLifetimePlans = getTeamLifetimePlans();
   const addons = getActiveAddons();
-
-  return (
-    <TooltipProvider>
+  return <TooltipProvider>
       <div className="min-h-screen liquid-bg">
         <div className="noise-overlay" />
         <Navbar />
@@ -65,16 +58,16 @@ export default function Pricing() {
             <Tabs defaultValue="individual" className="mb-8 sm:mb-10 md:mb-12">
               <TabsList className="tabs-3d grid w-full max-w-2xl mx-auto grid-cols-3 h-auto p-1">
                 <TabsTrigger value="individual" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2 sm:py-2.5">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 hidden xs:block" />
+                  
                   Individual
                 </TabsTrigger>
                 <TabsTrigger value="team" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2 sm:py-2.5">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 hidden xs:block" />
+                  
                   Teams
                 </TabsTrigger>
                 <TabsTrigger value="lifetime" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 py-2 sm:py-2.5">
-                  <span className="hidden xs:inline">Lifetime Deals</span>
-                  <span className="xs:hidden">Lifetime</span>
+                  <Infinity className="h-3 w-3 sm:h-4 sm:w-4 hidden xs:block" />
+                  Lifetime
                 </TabsTrigger>
               </TabsList>
 
@@ -85,9 +78,7 @@ export default function Pricing() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch">
                   <PricingCard plan={freePlan} />
-                  {individualAnnualPlans.map((plan) => (
-                    <PricingCard key={plan.id} plan={plan} />
-                  ))}
+                  {individualAnnualPlans.map(plan => <PricingCard key={plan.id} plan={plan} />)}
                 </div>
               </TabsContent>
 
@@ -97,9 +88,7 @@ export default function Pricing() {
                   <p className="text-sm sm:text-base text-muted-foreground">Annual plans for teams</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto items-stretch">
-                  {teamAnnualPlans.map((plan) => (
-                    <PricingCard key={plan.id} plan={plan} showSeats />
-                  ))}
+                  {teamAnnualPlans.map(plan => <PricingCard key={plan.id} plan={plan} showSeats />)}
                 </div>
               </TabsContent>
 
@@ -114,13 +103,11 @@ export default function Pricing() {
                 <div className="mb-8 sm:mb-10 md:mb-12">
                   <h3 className="text-lg sm:text-xl font-semibold text-center mb-4 sm:mb-6">Individual Lifetime Deals</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto items-stretch">
-                    {individualLifetimePlans.map((plan) => (
-                      <div key={plan.id} className="relative">
+                    {individualLifetimePlans.map(plan => <div key={plan.id} className="relative">
                         {/* LTD Glow Effect */}
                         <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
                         <PricingCard plan={plan} />
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
                 </div>
 
@@ -128,13 +115,11 @@ export default function Pricing() {
                 <div>
                   <h3 className="text-lg sm:text-xl font-semibold text-center mb-4 sm:mb-6">Team Lifetime Deals</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-4xl mx-auto items-stretch">
-                    {teamLifetimePlans.map((plan) => (
-                      <div key={plan.id} className="relative">
+                    {teamLifetimePlans.map(plan => <div key={plan.id} className="relative">
                         {/* LTD Glow Effect */}
                         <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
                         <PricingCard plan={plan} showSeats />
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
                 </div>
               </TabsContent>
@@ -152,9 +137,7 @@ export default function Pricing() {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 max-w-5xl mx-auto">
-                {addons.map((addon) => (
-                  <AddonCard key={addon.id} addon={addon} />
-                ))}
+                {addons.map(addon => <AddonCard key={addon.id} addon={addon} />)}
               </div>
             </div>
 
@@ -185,10 +168,7 @@ export default function Pricing() {
               <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
                 Need a custom solution for your organization?
               </p>
-              <a 
-                href="mailto:sales@multiblock.ai?subject=Enterprise%20Plan%20Inquiry"
-                className="text-sm sm:text-base text-accent hover:text-accent/80 font-medium transition-colors"
-              >
+              <a href="mailto:sales@multiblock.ai?subject=Enterprise%20Plan%20Inquiry" className="text-sm sm:text-base text-accent hover:text-accent/80 font-medium transition-colors">
                 Contact our sales team →
               </a>
             </div>
@@ -196,6 +176,5 @@ export default function Pricing() {
         </main>
         <Footer />
       </div>
-    </TooltipProvider>
-  );
+    </TooltipProvider>;
 }

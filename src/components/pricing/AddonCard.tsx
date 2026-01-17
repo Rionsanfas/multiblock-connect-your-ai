@@ -1,27 +1,21 @@
-/**
- * AddonCard - Card for displaying stackable add-ons
- * Uses server-side Polar checkout with embed modal
- */
-
-import { LayoutGrid } from 'lucide-react';
 import { AddonConfig, formatStorage } from '@/config/plans';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { PolarCheckoutButton } from './PolarCheckoutButton';
-
 interface AddonCardProps {
   addon: AddonConfig;
 }
-
-export function AddonCard({ addon }: AddonCardProps) {
+export function AddonCard({
+  addon
+}: AddonCardProps) {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const {
+    isAuthenticated
+  } = useAuth();
 
   // Button styles
   const buttonClass = 'w-full rounded-full font-medium transition-all duration-500 ease-out py-1.5 sm:py-2 px-3 sm:px-4 text-xs sm:text-sm text-center inline-block cursor-pointer border border-border/60 bg-card/50 text-foreground hover:bg-card/80 hover:border-border hover:-translate-y-0.5';
-
-  return (
-    <div className="premium-card-wrapper">
+  return <div className="premium-card-wrapper">
       <div className="premium-card-gradient" />
       <div className="premium-card-content p-3 sm:p-4 md:p-5 text-center">
         {/* Storage amount */}
@@ -32,7 +26,7 @@ export function AddonCard({ addon }: AddonCardProps) {
         
         {/* Boards */}
         <div className="flex items-center justify-center gap-1 text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 md:mb-4">
-          <LayoutGrid className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+          
           +{addon.extra_boards} boards
         </div>
 
@@ -42,23 +36,11 @@ export function AddonCard({ addon }: AddonCardProps) {
         </div>
 
         {/* Button - use server-side Polar checkout if authenticated */}
-        {isAuthenticated ? (
-          <PolarCheckoutButton
-            planKey={addon.id}
-            isAddon={true}
-            className={buttonClass}
-          >
+        {isAuthenticated ? <PolarCheckoutButton planKey={addon.id} isAddon={true} className={buttonClass}>
             Add
-          </PolarCheckoutButton>
-        ) : (
-          <button
-            onClick={() => navigate('/auth')}
-            className={buttonClass}
-          >
+          </PolarCheckoutButton> : <button onClick={() => navigate('/auth')} className={buttonClass}>
             Add
-          </button>
-        )}
+          </button>}
       </div>
-    </div>
-  );
+    </div>;
 }
