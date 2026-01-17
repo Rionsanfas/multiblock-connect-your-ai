@@ -303,13 +303,15 @@ class ChatService {
 
   /**
    * Stream chat completion via secure proxy - API keys never exposed to frontend
+   * @param boardId - The board ID to resolve the API key from (required for board-level key binding)
    */
   async streamChat(
     modelId: string,
     messages: ChatMessage[],
     callbacks: StreamCallbacks,
     config?: { temperature?: number; maxTokens?: number },
-    attachments?: ChatAttachment[]
+    attachments?: ChatAttachment[],
+    boardId?: string
   ): Promise<void> {
     // Pre-flight validation
     if (!modelId) {
@@ -393,6 +395,7 @@ class ChatService {
               maxTokens: config?.maxTokens ?? 2048,
             },
             stream: true,
+            board_id: boardId, // Pass board_id for board-level API key resolution
           }),
           signal: this.abortController.signal,
         }

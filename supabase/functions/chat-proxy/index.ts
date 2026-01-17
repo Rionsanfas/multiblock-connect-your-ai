@@ -77,6 +77,31 @@ async function decrypt(encryptedBase64: string, keyString: string): Promise<stri
   }
 }
 
+// Get API key for a board (first checks board's linked key, then falls back to user's keys)
+async function getApiKeyForBoard(supabase: any, boardId: string, provider: string): Promise<string | null> {
+  // First, check if the board has a linked API key
+  const { data: boardKey, error: boardKeyError } = await supabase
+    .rpc('get_board_api_key', { p_board_id: boardId });
+  
+  if (!boardKeyError && boardKey && boardKey.length > 0) {
+    const keyData = boardKey[0];
+    // Verify the key matches the requested provider
+    if (keyData.provider === provider && keyData.api_key_encrypted) {
+      if (keyData.is_valid === false) {
+        console.log(`[chat-proxy] Board's linked key for ${provider} is marked as invalid`);
+        return null;
+      }
+      console.log(`[chat-proxy] Using board's linked API key for ${provider}`);
+      return await decrypt(keyData.api_key_encrypted, ENCRYPTION_KEY);
+    }
+  }
+  
+  // No board-linked key found, return null - caller should handle
+  console.log(`[chat-proxy] No board-linked key for ${provider}, board: ${boardId}`);
+  return null;
+}
+
+// Legacy: Get API key from user's personal or team keys (for backwards compatibility)
 async function getDecryptedApiKey(supabase: any, userId: string, provider: string): Promise<string | null> {
   // First try to get a personal key (team_id IS NULL)
   let { data, error } = await supabase
@@ -185,7 +210,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { provider, model_id, messages, config, stream = true, action, prompt } = body;
+    const { provider, model_id, messages, config, stream = true, action, prompt, board_id } = body;
 
     // Handle image generation
     if (action === "image_generation") {
@@ -306,11 +331,23 @@ serve(async (req) => {
     }
 
     // Get decrypted API key (server-side only - never exposed to frontend)
-    const apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
+    // Priority: 1) Board's linked key, 2) User's personal/team keys (legacy fallback)
+    let apiKey: string | null = null;
+    
+    if (board_id) {
+      // Try to get the board's linked key first
+      apiKey = await getApiKeyForBoard(supabaseAdmin, board_id, provider);
+    }
+    
+    // Fallback to user's keys if no board-linked key found
     if (!apiKey) {
-      console.error("[chat-proxy] No API key found for provider:", provider, "user:", user.id);
+      apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
+    }
+    
+    if (!apiKey) {
+      console.error("[chat-proxy] No API key found for provider:", provider, "user:", user.id, "board:", board_id);
       return new Response(JSON.stringify({ 
-        error: `No valid API key found for ${provider}. Please add your API key in Settings > API Keys.`
+        error: `No valid API key found for ${provider}. Please select an API key for this board in Board Settings, or add your API key in Settings > API Keys.`
       }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
