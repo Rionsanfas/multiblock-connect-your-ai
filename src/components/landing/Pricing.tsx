@@ -1,31 +1,19 @@
-import { Zap, Clock } from "lucide-react";
+import { Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
-import { 
-  getFreePlan,
-  getIndividualAnnualPlans, 
-  getTeamAnnualPlans, 
-  getIndividualLifetimePlans,
-  getTeamLifetimePlans
-} from "@/config/plans";
+import { getFreePlan, getIndividualAnnualPlans, getTeamAnnualPlans, getIndividualLifetimePlans, getTeamLifetimePlans } from "@/config/plans";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { LtdScarcityBadge } from "@/components/pricing/LtdScarcityBadge";
-
 const Pricing = () => {
   const freePlan = getFreePlan();
   const individualAnnualPlans = getIndividualAnnualPlans();
   const teamAnnualPlans = getTeamAnnualPlans();
   const individualLifetimePlans = getIndividualLifetimePlans();
   const teamLifetimePlans = getTeamLifetimePlans();
-
-  return (
-    <TooltipProvider>
-      <section
-        id="pricing"
-        className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24"
-      >
+  return <TooltipProvider>
+      <section id="pricing" className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <AnimatedSection delay={0} className="text-center mb-6 sm:mb-8 md:mb-10">
@@ -50,11 +38,11 @@ const Pricing = () => {
                   <span className="xs:hidden">Lifetime</span>
                 </TabsTrigger>
                 <TabsTrigger value="individual" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                  
                   Individual
                 </TabsTrigger>
                 <TabsTrigger value="team" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                  
                   Teams
                 </TabsTrigger>
               </TabsList>
@@ -68,11 +56,9 @@ const Pricing = () => {
                   <AnimatedElement delay={0}>
                     <PricingCard plan={freePlan} />
                   </AnimatedElement>
-                  {individualAnnualPlans.map((plan, index) => (
-                    <AnimatedElement key={plan.id} delay={(index + 1) * 100}>
+                  {individualAnnualPlans.map((plan, index) => <AnimatedElement key={plan.id} delay={(index + 1) * 100}>
                       <PricingCard plan={plan} />
-                    </AnimatedElement>
-                  ))}
+                    </AnimatedElement>)}
                 </div>
               </TabsContent>
 
@@ -82,11 +68,9 @@ const Pricing = () => {
                   <p className="text-muted-foreground text-sm sm:text-base">Annual plans for teams</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto items-stretch">
-                  {teamAnnualPlans.map((plan, index) => (
-                    <AnimatedElement key={plan.id} delay={index * 100}>
+                  {teamAnnualPlans.map((plan, index) => <AnimatedElement key={plan.id} delay={index * 100}>
                       <PricingCard plan={plan} showSeats />
-                    </AnimatedElement>
-                  ))}
+                    </AnimatedElement>)}
                 </div>
               </TabsContent>
 
@@ -101,15 +85,13 @@ const Pricing = () => {
                 <div className="mb-8 sm:mb-10">
                   <h3 className="text-base sm:text-lg font-semibold text-center mb-4 sm:mb-6 text-muted-foreground">Individual Lifetime Deals</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto items-stretch">
-                    {individualLifetimePlans.map((plan, index) => (
-                      <AnimatedElement key={plan.id} delay={index * 100}>
+                    {individualLifetimePlans.map((plan, index) => <AnimatedElement key={plan.id} delay={index * 100}>
                         <div className="relative">
                           {/* LTD Glow Effect */}
                           <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
                           <PricingCard plan={plan} />
                         </div>
-                      </AnimatedElement>
-                    ))}
+                      </AnimatedElement>)}
                   </div>
                 </div>
 
@@ -117,15 +99,13 @@ const Pricing = () => {
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold text-center mb-4 sm:mb-6 text-muted-foreground">Team Lifetime Deals</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto items-stretch">
-                    {teamLifetimePlans.map((plan, index) => (
-                      <AnimatedElement key={plan.id} delay={index * 100}>
+                    {teamLifetimePlans.map((plan, index) => <AnimatedElement key={plan.id} delay={index * 100}>
                         <div className="relative">
                           {/* LTD Glow Effect */}
                           <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
                           <PricingCard plan={plan} showSeats />
                         </div>
-                      </AnimatedElement>
-                    ))}
+                      </AnimatedElement>)}
                   </div>
                 </div>
               </TabsContent>
@@ -137,17 +117,12 @@ const Pricing = () => {
             <p className="text-muted-foreground text-sm sm:text-base mb-3">
               Need add-ons or enterprise solutions?
             </p>
-            <Link
-              to="/pricing"
-              className="text-accent hover:text-accent/80 font-medium transition-colors min-h-[44px] inline-flex items-center text-sm sm:text-base"
-            >
+            <Link to="/pricing" className="text-accent hover:text-accent/80 font-medium transition-colors min-h-[44px] inline-flex items-center text-sm sm:text-base">
               View All Plans & Add-ons →
             </Link>
           </AnimatedSection>
         </div>
       </section>
-    </TooltipProvider>
-  );
+    </TooltipProvider>;
 };
-
 export default Pricing;
