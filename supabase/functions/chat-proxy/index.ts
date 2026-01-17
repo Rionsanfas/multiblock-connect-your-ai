@@ -102,14 +102,18 @@ async function getApiKeyForBoard(supabase: any, boardId: string, provider: strin
 }
 
 // Legacy: Get API key from user's personal or team keys (for backwards compatibility)
+// Now supports multiple keys per provider - picks the most recently created valid key
 async function getDecryptedApiKey(supabase: any, userId: string, provider: string): Promise<string | null> {
-  // First try to get a personal key (team_id IS NULL)
+  // First try to get a personal key (team_id IS NULL), prefer most recent
   let { data, error } = await supabase
     .from("api_keys")
     .select("api_key_encrypted, is_valid")
     .eq("user_id", userId)
     .eq("provider", provider)
     .is("team_id", null)
+    .eq("is_valid", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   // If no personal key, try to get a team key the user has access to
@@ -120,6 +124,8 @@ async function getDecryptedApiKey(supabase: any, userId: string, provider: strin
       .eq("user_id", userId)
       .eq("provider", provider)
       .not("team_id", "is", null)
+      .eq("is_valid", true)
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     
@@ -136,12 +142,6 @@ async function getDecryptedApiKey(supabase: any, userId: string, provider: strin
 
   if (!data?.api_key_encrypted) {
     console.log(`[chat-proxy] No API key found for provider: ${provider}, user: ${userId}`);
-    return null;
-  }
-
-  // Check if key is marked as invalid
-  if (data.is_valid === false) {
-    console.log(`[chat-proxy] API key for ${provider} is marked as invalid`);
     return null;
   }
 
