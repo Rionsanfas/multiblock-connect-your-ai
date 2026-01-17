@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, webhook-id, webhook-timestamp, webhook-signature',
+// Webhook endpoints are server-to-server - no CORS needed
+// Return minimal headers to prevent information leakage
+const responseHeaders = {
+  'Content-Type': 'text/plain',
 };
 
 /**
@@ -256,18 +257,43 @@ function extractCheckoutKey(data: any): string | null {
 /**
  * Verify Polar webhook signature using Web Crypto API
  * Polar uses Standard Webhooks format: https://www.standardwebhooks.com/
+ * 
+ * SECURITY: This function implements fail-closed behavior:
+ * - Missing secret → reject (forces configuration)
+ * - Missing headers → reject (prevents unsigned requests)
+ * - Invalid signature → reject (prevents forgery)
+ * - Verification error → reject (prevents bypasses)
  */
 async function verifySignature(payload: string, signature: string | null, webhookId: string | null, timestamp: string | null): Promise<boolean> {
   const secret = Deno.env.get('POLAR_WEBHOOK_SECRET');
+  
+  // SECURITY FIX #1: Fail-closed when secret is not configured
   if (!secret) {
-    console.warn('[polar-webhook] No POLAR_WEBHOOK_SECRET configured, skipping signature verification');
-    return true;
+    console.error('[polar-webhook] SECURITY: POLAR_WEBHOOK_SECRET not configured - rejecting request');
+    return false;
   }
   
+  // SECURITY FIX #2: Require all signature headers
   if (!signature || !webhookId || !timestamp) {
-    console.warn('[polar-webhook] Missing signature headers, webhook-id:', webhookId, 'webhook-timestamp:', timestamp, 'webhook-signature:', !!signature);
-    // Allow processing without signature for now (can be tightened later)
-    return true;
+    console.error('[polar-webhook] SECURITY: Missing required signature headers - rejecting request', {
+      hasSignature: !!signature,
+      hasWebhookId: !!webhookId,
+      hasTimestamp: !!timestamp
+    });
+    return false;
+  }
+  
+  // Check timestamp freshness (reject webhooks older than 5 minutes)
+  const webhookTime = parseInt(timestamp, 10);
+  const now = Math.floor(Date.now() / 1000);
+  const tolerance = 300; // 5 minutes
+  if (isNaN(webhookTime) || Math.abs(now - webhookTime) > tolerance) {
+    console.error('[polar-webhook] SECURITY: Webhook timestamp too old or invalid - rejecting request', {
+      webhookTime,
+      now,
+      difference: now - webhookTime
+    });
+    return false;
   }
   
   try {
@@ -288,7 +314,6 @@ async function verifySignature(payload: string, signature: string | null, webhoo
       secretBytes = arr.buffer;
     } catch {
       // Not base64, use raw secret as UTF-8 bytes
-      console.log('[polar-webhook] Using raw secret (not base64)');
       secretBytes = encoder.encode(secretKey).buffer;
     }
     
@@ -310,9 +335,6 @@ async function verifySignature(payload: string, signature: string | null, webhoo
     }
     expectedSig = btoa(expectedSig);
     
-    console.log('[polar-webhook] Expected signature:', expectedSig.substring(0, 20) + '...');
-    console.log('[polar-webhook] Received signature header:', signature.substring(0, 50) + '...');
-    
     // Signature format: v1,<signature> v1,<signature2> (space separated)
     const signatures = signature.split(' ').map(s => {
       const parts = s.split(',');
@@ -321,24 +343,25 @@ async function verifySignature(payload: string, signature: string | null, webhoo
     
     const isValid = signatures.some(s => s === expectedSig);
     
+    // SECURITY FIX #3: Reject invalid signatures
     if (!isValid) {
-      console.warn('[polar-webhook] Signature mismatch, but allowing for now (set to strict later)');
-      // TODO: Return false here once signature is verified working
-      return true;
+      console.error('[polar-webhook] SECURITY: Signature verification failed - rejecting request');
+      return false;
     }
     
     console.log('[polar-webhook] Signature verified successfully');
     return true;
   } catch (e) {
-    console.error('[polar-webhook] Signature verification error:', e);
-    // Allow processing even if signature verification fails for now
-    return true;
+    // SECURITY FIX #4: Fail-closed on verification errors
+    console.error('[polar-webhook] SECURITY: Signature verification error - rejecting request:', e);
+    return false;
   }
 }
 
 serve(async (req) => {
+  // Webhook endpoints don't need CORS - reject preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 405 });
   }
 
   console.log("========================================");
@@ -357,23 +380,23 @@ serve(async (req) => {
     }
   } catch (e: unknown) {
     console.error("[polar-webhook] BODY PARSE ERROR:", e instanceof Error ? e.message : String(e));
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   if (!body) {
     console.log("[polar-webhook] No body");
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
-  // Verify signature (optional based on config)
+  // Verify signature - REQUIRED for security
   const webhookId = req.headers.get('webhook-id');
   const webhookTimestamp = req.headers.get('webhook-timestamp');
   const webhookSignature = req.headers.get('webhook-signature');
   
   if (!await verifySignature(rawBody, webhookSignature, webhookId, webhookTimestamp)) {
-    console.error("[polar-webhook] Invalid signature");
-    // Still return 200 to prevent retries, but don't process
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    console.error("[polar-webhook] SECURITY: Signature verification failed - not processing");
+    // Return 200 to prevent retries, but don't process the request
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   const eventType = body.type;
@@ -396,7 +419,7 @@ serve(async (req) => {
 
   if (!supportedEvents.some(e => eventType?.includes(e.split('.')[0]))) {
     console.log("[polar-webhook] Skipping unsupported event:", eventType);
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   // Initialize Supabase
@@ -418,7 +441,7 @@ serve(async (req) => {
 
   if (!customerEmail) {
     console.error("[polar-webhook] No customer email found");
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   // Find user by email
@@ -430,7 +453,7 @@ serve(async (req) => {
 
   if (profileError || !profile) {
     console.error("[polar-webhook] Could not find profile for:", customerEmail, profileError);
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   const userId = profile.id;
@@ -493,7 +516,7 @@ serve(async (req) => {
       console.log("[polar-webhook] Add-on applied successfully");
     }
 
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   // Get plan config
@@ -502,7 +525,7 @@ serve(async (req) => {
   if (!planConfig) {
     console.warn("[polar-webhook] Unknown checkout key:", checkoutKey);
     // Try to extract from product name as fallback
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   console.log("[polar-webhook] Plan config:", planConfig);
@@ -527,7 +550,7 @@ serve(async (req) => {
       console.log("[polar-webhook] Subscription cancelled for user:", userId);
     }
 
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   // Calculate access_expires_at
@@ -600,14 +623,11 @@ serve(async (req) => {
 
   if (upsertError) {
     console.error("[polar-webhook] Upsert error:", upsertError);
-    return new Response("ok", { status: 200, headers: corsHeaders });
+    return new Response("ok", { status: 200, headers: responseHeaders });
   }
 
   console.log("[polar-webhook] SUCCESS - Billing updated:", upsertResult);
   console.log("========================================");
 
-  return new Response("ok", { 
-    status: 200, 
-    headers: { ...corsHeaders, 'Content-Type': 'text/plain' } 
-  });
+  return new Response("ok", { status: 200, headers: responseHeaders });
 });
