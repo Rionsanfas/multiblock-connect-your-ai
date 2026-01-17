@@ -45,7 +45,14 @@ export function DashboardLayout({
           boardTitle={boardTitle}
           showBoardControls={showBoardControls}
         />
-        <main className="flex-1 overflow-auto relative pb-16 md:pb-0">{children}</main>
+        <main
+          className={cn(
+            "flex-1 overflow-auto relative pb-16 md:pb-0",
+            showBoardControls ? "" : "mx-auto w-full max-w-[1440px]"
+          )}
+        >
+          {children}
+        </main>
         
         {/* Mobile Bottom Navigation */}
         {!hideSidebar && (
