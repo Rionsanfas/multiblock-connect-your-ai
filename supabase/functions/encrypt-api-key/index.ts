@@ -264,7 +264,19 @@ serve(async (req) => {
 
       if (error) {
         console.error("Error storing API key:", error);
-        return new Response(JSON.stringify({ error: "Failed to store API key" }), {
+        
+        // Check for limit exceeded error from database trigger
+        if (error.message?.includes('LIMIT_EXCEEDED:API_KEY')) {
+          return new Response(JSON.stringify({ 
+            success: false,
+            error: "You have reached your API key limit. Upgrade your plan to add more keys." 
+          }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        return new Response(JSON.stringify({ success: false, error: "Failed to store API key" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
