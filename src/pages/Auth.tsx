@@ -338,7 +338,7 @@ export default function Auth() {
 
               
               <div style={buttonStyle}>
-                <Button type="submit" className="w-full h-10 sm:h-12 rounded-xl gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm text-center" disabled={isLoading}>
+                <Button type="submit" className="w-full h-10 sm:h-12 rounded-xl gap-2 bg-primary text-primary-foreground hover:bg-primary/90 text-center text-base font-normal" disabled={isLoading}>
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>
                       {mode === 'signup' && 'Create Account'}
                       {mode === 'signin' && 'Sign In'}
