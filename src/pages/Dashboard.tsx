@@ -9,7 +9,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SkeletonCard, SkeletonGrid } from "@/components/ui/skeleton-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useAppStore } from "@/store/useAppStore";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useWorkspaceBoards } from "@/hooks/useWorkspaceBoards";
 import { useWorkspaceStats } from "@/hooks/useWorkspaceStats";
@@ -22,6 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { useEntitlements } from "@/hooks/useEntitlements";
 import { useDashboardRefresh } from "@/hooks/usePageRefresh";
+import { useBoardBlockCounts } from "@/hooks/useBoardBlockCounts";
 import { boardsDb, blocksDb } from "@/lib/database";
 import { toast } from "sonner";
 import type { Board } from "@/types";
@@ -34,7 +34,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
-  const { blocks } = useAppStore();
   const { user: authUser, isLoading: authLoading, isAuthenticated } = useAuth();
   const { user, isLoading: userLoading } = useCurrentUser();
   const { isPersonalWorkspace, currentWorkspace, isTeamWorkspace } = useTeamContext();
@@ -44,6 +43,7 @@ export default function Dashboard() {
   const { enforceCreateBoard, canCreateBoard, boardsRemaining, isFree } = usePlanEnforcement();
   const { refreshSubscription } = useUserSubscription();
   const { refreshEntitlements } = useEntitlements();
+  const { getBlockCount } = useBoardBlockCounts();
   
   // Refresh data on page mount
   useDashboardRefresh();
@@ -209,7 +209,7 @@ export default function Dashboard() {
     }
   };
 
-  const getBlockCount = (boardId: string) => blocks.filter((b) => b.board_id === boardId).length;
+  // Block counts now come from useBoardBlockCounts hook (fetches from DB)
 
   // Combine loading states - only show skeleton on initial load, not on refetch
   const isInitialLoading = authLoading || (!user && userLoading);
