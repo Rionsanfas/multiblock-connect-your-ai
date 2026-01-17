@@ -74,13 +74,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       queryKey: ['personal-boards'],
       refetchType: 'none', // Don't refetch - will be fresh on next access
     });
+    // Invalidate ALL api-keys queries (partial match includes all team-specific keys)
     queryClient.invalidateQueries({ 
       queryKey: ['api-keys'],
-      refetchType: 'none',
-    });
-    queryClient.invalidateQueries({ 
-      queryKey: ['team-api-keys'],
-      refetchType: 'none',
+      refetchType: 'active', // Refetch if currently being observed
     });
     // Don't remove queries - keep cache for instant back-navigation
   }, [queryClient]);

@@ -82,10 +82,9 @@ export function useDashboardRefresh() {
 export function useApiKeysRefresh() {
   usePageRefresh({
     queryKeys: [
-      ['api-keys'],
-      ['team-api-keys'],
+      ['api-keys'], // Partial match - will invalidate all api-keys queries
     ],
-    soft: true,
+    soft: false, // Force immediate refetch on page mount for fresh data
   });
 }
 
