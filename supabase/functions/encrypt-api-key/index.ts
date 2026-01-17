@@ -227,14 +227,37 @@ serve(async (req) => {
             .single();
         }
       } else {
-        // For personal keys - use upsert with conflict on user_id + provider
-        query = supabase
+        // For personal keys - check if key exists for this user + provider (with no team)
+        const { data: existingKey } = await supabase
           .from("api_keys")
-          .upsert(keyData, {
-            onConflict: "user_id,provider",
-          })
-          .select("id, provider, key_hint, is_valid, created_at, team_id")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("provider", provider)
+          .is("team_id", null)
           .single();
+
+        if (existingKey) {
+          // Update existing personal key
+          query = supabase
+            .from("api_keys")
+            .update({
+              api_key_encrypted: encryptedKey,
+              key_hint: keyHint,
+              is_valid: true,
+              last_validated_at: new Date().toISOString(),
+            })
+            .eq("id", existingKey.id)
+            .select("id, provider, key_hint, is_valid, created_at, team_id")
+            .single();
+        } else {
+          // Insert new personal key (explicitly set team_id to null)
+          keyData.team_id = null;
+          query = supabase
+            .from("api_keys")
+            .insert(keyData)
+            .select("id, provider, key_hint, is_valid, created_at, team_id")
+            .single();
+        }
       }
 
       const { data, error } = await query;
