@@ -15,8 +15,8 @@ interface AuthContextValue {
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string, keepLoggedIn?: boolean) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string, keepLoggedIn?: boolean) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -57,6 +57,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initRef.current = true;
 
     let mounted = true;
+
+    // Check if user opted out of persistent login - if so, clear session on fresh page load
+    const keepLoggedIn = localStorage.getItem('multiblock_keep_logged_in');
+    const isNewSession = !sessionStorage.getItem('multiblock_session_active');
+    
+    // If user didn't want to stay logged in AND this is a fresh browser session
+    if (keepLoggedIn === 'false' && isNewSession) {
+      console.log('[Auth] User opted out of persistent login, clearing session');
+      supabase.auth.signOut().then(() => {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      });
+      return;
+    }
+    
+    // Mark this browser session as active
+    sessionStorage.setItem('multiblock_session_active', 'true');
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
@@ -114,9 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return `${origin}${path}`;
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
+  const signUp = useCallback(async (email: string, password: string, fullName?: string, keepLoggedIn: boolean = true) => {
     try {
       const redirectUrl = getRedirectUrl('/dashboard');
+      
+      // If user doesn't want to stay logged in, we'll handle session cleanup on browser close
+      // by storing preference - Supabase will use localStorage by default
+      // The actual session expiry is handled by checking this preference on page load
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -137,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [getRedirectUrl]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string, keepLoggedIn: boolean = true) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
