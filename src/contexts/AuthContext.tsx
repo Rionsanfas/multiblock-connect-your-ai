@@ -58,18 +58,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true;
 
+    const url = new URL(window.location.href);
+    const hasOAuthCallback =
+      url.searchParams.has('code') ||
+      url.searchParams.has('error') ||
+      url.hash.includes('access_token=');
+
     /**
      * Session persistence logic:
-     * - By default, Supabase persists sessions in localStorage (survives browser restarts)
-     * - If user explicitly unchecked "Keep me logged in", we only clear on NEW browser sessions
-     * - A "new browser session" = browser was closed and reopened (sessionStorage is cleared)
+     * - Supabase persists sessions in localStorage (survives browser restarts)
+     * - If user explicitly unchecked "Keep me logged in", we clear ONLY on a fresh browser session
+     *
+     * IMPORTANT: never clear during an OAuth callback, otherwise the code exchange can be interrupted.
      */
     const keepLoggedIn = localStorage.getItem('multiblock_keep_logged_in');
     const isNewBrowserSession = !sessionStorage.getItem('multiblock_session_active');
-    
-    // Only clear session if user EXPLICITLY opted out AND this is a fresh browser session
-    // If keepLoggedIn is null (never set) or 'true', sessions persist normally
-    if (keepLoggedIn === 'false' && isNewBrowserSession) {
+
+    if (keepLoggedIn === 'false' && isNewBrowserSession && !hasOAuthCallback) {
       console.log('[Auth] User opted out of persistent login + new browser session, clearing');
       sessionStorage.setItem('multiblock_session_active', 'true');
       supabase.auth.signOut().then(() => {
@@ -79,12 +84,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return;
     }
-    
+
     // Mark this browser session as active (so we don't clear on tab close/reopen)
     sessionStorage.setItem('multiblock_session_active', 'true');
 
+    // If we just returned from OAuth, give Supabase a moment to exchange the code before we redirect.
+    // We'll still resolve instantly if we already have a session.
+    let oauthSafetyTimeout: number | undefined;
+    if (hasOAuthCallback) {
+      oauthSafetyTimeout = window.setTimeout(() => {
+        if (mounted) setIsLoading(false);
+      }, 6000);
+    }
+
     // Set up auth state listener FIRST (before checking session)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (!mounted) return;
 
       console.log('[Auth] onAuthStateChange:', {
@@ -97,6 +113,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       syncUserToStore(currentSession?.user ?? null);
+
+      // During OAuth redirect: do NOT "finish loading" on an empty INITIAL_SESSION,
+      // otherwise ProtectedRoute can redirect to /auth before the code exchange completes.
+      if (hasOAuthCallback && !currentSession) {
+        return;
+      }
+
+      // Clean callback params once we're signed in (prevents re-processing on refresh)
+      if (hasOAuthCallback && currentSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        try {
+          const clean = new URL(window.location.href);
+          clean.searchParams.delete('code');
+          clean.searchParams.delete('state');
+          clean.searchParams.delete('error');
+          clean.searchParams.delete('error_description');
+          window.history.replaceState({}, document.title, clean.pathname + clean.search + clean.hash);
+        } catch {
+          // ignore
+        }
+      }
+
       setIsLoading(false);
     });
 
@@ -116,7 +153,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(existingSession);
         setUser(existingSession?.user ?? null);
         syncUserToStore(existingSession?.user ?? null);
-        setIsLoading(false);
+
+        // Only resolve loading if:
+        // - we found a session, OR
+        // - this is not an OAuth callback (normal navigation)
+        if (existingSession || !hasOAuthCallback) {
+          setIsLoading(false);
+        }
       })
       .catch((error) => {
         console.error('[Auth] Session rehydration error:', error);
@@ -126,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (oauthSafetyTimeout) window.clearTimeout(oauthSafetyTimeout);
     };
   }, [syncUserToStore]);
 
