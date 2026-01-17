@@ -15,8 +15,8 @@ interface AuthContextValue {
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signUp: (email: string, password: string, fullName?: string, keepLoggedIn?: boolean) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string, keepLoggedIn?: boolean) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return `${origin}${path}`;
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string, fullName?: string, keepLoggedIn: boolean = true) => {
+  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     try {
       const redirectUrl = getRedirectUrl('/auth/callback');
       
@@ -188,18 +188,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: err instanceof Error ? err : new Error('Sign up failed') };
     }
   }, [getRedirectUrl]);
-      
-      if (error) {
-        return { error: new Error(error.message) };
-      }
-      
-      return { error: null };
-    } catch (err) {
-      return { error: err instanceof Error ? err : new Error('Sign up failed') };
-    }
-  }, [getRedirectUrl]);
 
-  const signIn = useCallback(async (email: string, password: string, keepLoggedIn: boolean = true) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
