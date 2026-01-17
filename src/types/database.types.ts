@@ -241,6 +241,7 @@ export interface Board {
   id: string;
   user_id: string;
   team_id: string | null;
+  api_key_id: string | null;
   name: string;
   description: string | null;
   is_archived: boolean;
@@ -255,6 +256,7 @@ export interface Board {
 export interface BoardInsert {
   user_id: string;
   team_id?: string | null;
+  api_key_id?: string | null;
   name?: string;
   description?: string | null;
   is_public?: boolean;
@@ -269,6 +271,7 @@ export interface BoardUpdate {
   is_archived?: boolean;
   is_public?: boolean;
   team_id?: string | null;
+  api_key_id?: string | null;
   canvas_zoom?: number;
   canvas_position_x?: number;
   canvas_position_y?: number;

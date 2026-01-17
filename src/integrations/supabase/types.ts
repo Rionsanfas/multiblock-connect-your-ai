@@ -263,6 +263,7 @@ export type Database = {
       }
       boards: {
         Row: {
+          api_key_id: string | null
           canvas_position_x: number | null
           canvas_position_y: number | null
           canvas_zoom: number | null
@@ -277,6 +278,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          api_key_id?: string | null
           canvas_position_x?: number | null
           canvas_position_y?: number | null
           canvas_zoom?: number | null
@@ -291,6 +293,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          api_key_id?: string | null
           canvas_position_x?: number | null
           canvas_position_y?: number | null
           canvas_zoom?: number | null
@@ -305,6 +308,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "boards_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boards_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys_safe"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "boards_team_id_fkey"
             columns: ["team_id"]
@@ -1072,6 +1089,18 @@ export type Database = {
           success: boolean
         }[]
       }
+      get_available_keys_for_board: {
+        Args: { p_board_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          is_valid: boolean
+          key_hint: string
+          provider: Database["public"]["Enums"]["llm_provider"]
+          team_id: string
+          user_id: string
+        }[]
+      }
       get_block_incoming_connections: {
         Args: { p_block_id: string }
         Returns: {
@@ -1080,6 +1109,14 @@ export type Database = {
           source_model_id: string
           source_provider: Database["public"]["Enums"]["llm_provider"]
           source_title: string
+        }[]
+      }
+      get_board_api_key: {
+        Args: { p_board_id: string }
+        Returns: {
+          api_key_encrypted: string
+          is_valid: boolean
+          provider: Database["public"]["Enums"]["llm_provider"]
         }[]
       }
       get_board_block_count: { Args: { p_board_id: string }; Returns: number }
