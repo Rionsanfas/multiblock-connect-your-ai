@@ -4,9 +4,13 @@ import { ArrowRight, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
+
+// Storage key for "keep me logged in" preference
+const KEEP_LOGGED_IN_KEY = 'multiblock_keep_logged_in';
 
 // Google icon SVG component
 const GoogleIcon = () => (
@@ -42,6 +46,11 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
+  const [keepLoggedIn, setKeepLoggedIn] = useState(() => {
+    // Default to true (most users expect persistent sessions)
+    const stored = localStorage.getItem(KEEP_LOGGED_IN_KEY);
+    return stored === null ? true : stored === 'true';
+  });
   
   // Intro animation state
   const [phase, setPhase] = useState(0);
@@ -118,7 +127,10 @@ export default function Auth() {
           setMode('signin');
         }
       } else if (mode === 'signup') {
-        const { error } = await signUp(email, password, fullName);
+        // Save preference before signup
+        localStorage.setItem(KEEP_LOGGED_IN_KEY, String(keepLoggedIn));
+        
+        const { error } = await signUp(email, password, fullName, keepLoggedIn);
         if (error) {
           if (error.message.includes('already registered')) {
             toast.error("This email is already registered. Please sign in instead.");
@@ -130,7 +142,10 @@ export default function Auth() {
           toast.success("Account created! Please check your email to confirm your account.");
         }
       } else {
-        const { error } = await signIn(email, password);
+        // Save preference before signin
+        localStorage.setItem(KEEP_LOGGED_IN_KEY, String(keepLoggedIn));
+        
+        const { error } = await signIn(email, password, keepLoggedIn);
         if (error) {
           toast.error(error.message);
         } else {
@@ -147,6 +162,9 @@ export default function Auth() {
 
   const handleGoogleSignIn = async () => {
     if (isGoogleLoading || isLoading) return;
+    
+    // Save preference before Google signin
+    localStorage.setItem(KEEP_LOGGED_IN_KEY, String(keepLoggedIn));
     
     setIsGoogleLoading(true);
     try {
@@ -413,16 +431,32 @@ export default function Auth() {
                 </div>
               )}
 
-              {/* Forgot password link - only show on signin */}
-              {mode === 'signin' && (
-                <div className="text-right" style={formFieldStyle(100)}>
-                  <button
-                    type="button"
-                    onClick={() => setMode('forgot-password')}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Forgot password?
-                  </button>
+              {/* Keep me logged in + Forgot password row - only show on signin/signup */}
+              {(mode === 'signin' || mode === 'signup') && (
+                <div className="flex items-center justify-between" style={formFieldStyle(mode === 'signup' ? 150 : 100)}>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="keepLoggedIn"
+                      checked={keepLoggedIn}
+                      onCheckedChange={(checked) => setKeepLoggedIn(checked === true)}
+                      className="h-4 w-4 border-border/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <Label 
+                      htmlFor="keepLoggedIn" 
+                      className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                    >
+                      Keep me logged in
+                    </Label>
+                  </div>
+                  {mode === 'signin' && (
+                    <button
+                      type="button"
+                      onClick={() => setMode('forgot-password')}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
                 </div>
               )}
 
