@@ -13,7 +13,7 @@ import { usePasswordManagement } from "@/hooks/usePasswordManagement";
 import { useDeleteAccount } from "@/hooks/useAccountDeletion";
 import { useUserTeams } from "@/hooks/useTeamsData";
 import { toast } from "sonner";
-import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera, CreditCard, LogOut, Lock, Loader2, AlertTriangle } from "lucide-react";
+import { User, Shield, Cookie, Trash2, Crown, HardDrive, LayoutGrid, Users, Camera, CreditCard, LogOut, Lock, Loader2, AlertTriangle, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { BillingSection } from "@/components/billing/BillingSection";
 import { useAuth } from "@/hooks/useAuth";
 import { ADDONS, formatStorage as formatStorageUtil } from "@/config/plans";
+import { PolarCheckoutButton } from "@/components/pricing/PolarCheckoutButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -518,9 +519,10 @@ const formatStorage = (mb: number): string => {
   return `${mb} MB`;
 };
 
-// Helper to format price
+// Helper to format price with cents
 const formatPrice = (cents: number): string => {
-  return `$${(cents / 100).toFixed(0)}`;
+  const dollars = cents / 100;
+  return dollars % 1 === 0 ? `$${dollars.toFixed(0)}` : `$${dollars.toFixed(2)}`;
 };
 
 function PlanUsageSection() {
@@ -618,17 +620,25 @@ function PlanUsageSection() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            {ADDONS.map((addon) => (
+            {ADDONS.filter(a => a.is_active).map((addon) => (
               <GlassCard key={addon.id} className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
                     <p className="font-medium">{addon.name}</p>
                     <p className="text-sm text-muted-foreground">{addon.description}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     <p className="font-semibold">{formatPrice(addon.price_cents)}</p>
                     <p className="text-xs text-muted-foreground">one-time</p>
                   </div>
+                  <PolarCheckoutButton 
+                    planKey={addon.id} 
+                    isAddon={true}
+                    className="flex-shrink-0"
+                  >
+                    <Zap className="h-4 w-4 mr-1.5" />
+                    Add
+                  </PolarCheckoutButton>
                 </div>
               </GlassCard>
             ))}
