@@ -58,13 +58,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true;
 
-    // Check if user opted out of persistent login - if so, clear session on fresh page load
+    /**
+     * Session persistence logic:
+     * - By default, Supabase persists sessions in localStorage (survives browser restarts)
+     * - If user explicitly unchecked "Keep me logged in", we only clear on NEW browser sessions
+     * - A "new browser session" = browser was closed and reopened (sessionStorage is cleared)
+     */
     const keepLoggedIn = localStorage.getItem('multiblock_keep_logged_in');
-    const isNewSession = !sessionStorage.getItem('multiblock_session_active');
+    const isNewBrowserSession = !sessionStorage.getItem('multiblock_session_active');
     
-    // If user didn't want to stay logged in AND this is a fresh browser session
-    if (keepLoggedIn === 'false' && isNewSession) {
-      console.log('[Auth] User opted out of persistent login, clearing session');
+    // Only clear session if user EXPLICITLY opted out AND this is a fresh browser session
+    // If keepLoggedIn is null (never set) or 'true', sessions persist normally
+    if (keepLoggedIn === 'false' && isNewBrowserSession) {
+      console.log('[Auth] User opted out of persistent login + new browser session, clearing');
+      sessionStorage.setItem('multiblock_session_active', 'true');
       supabase.auth.signOut().then(() => {
         if (mounted) {
           setIsLoading(false);
@@ -73,10 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    // Mark this browser session as active
+    // Mark this browser session as active (so we don't clear on tab close/reopen)
     sessionStorage.setItem('multiblock_session_active', 'true');
 
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST (before checking session)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (!mounted) return;
 
@@ -93,16 +100,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     });
 
-    // THEN check for existing session
-    console.log('[Auth] Checking existing session...');
+    // THEN check for existing session (rehydrate from localStorage)
+    console.log('[Auth] Rehydrating session from storage...');
     supabase.auth
       .getSession()
       .then(({ data: { session: existingSession } }) => {
         if (!mounted) return;
 
-        console.log('[Auth] getSession resolved:', {
+        console.log('[Auth] Session rehydrated:', {
           userId: existingSession?.user?.id ?? null,
           hasSession: !!existingSession,
+          expiresAt: existingSession?.expires_at,
         });
 
         setSession(existingSession);
@@ -111,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       })
       .catch((error) => {
-        console.error('[Auth] Initialization error:', error);
+        console.error('[Auth] Session rehydration error:', error);
         if (mounted) setIsLoading(false);
       });
 
