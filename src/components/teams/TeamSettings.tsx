@@ -1,19 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  Settings, 
-  Crown, 
-  Shield, 
-  User,
-  Copy,
-  Trash2,
-  LogOut,
-  Loader2,
-  Mail,
-  X,
-} from 'lucide-react';
+import { Users, Settings, Crown, Shield, User, Copy, Trash2, LogOut, Loader2, Mail, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,80 +11,60 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useTeamContext } from '@/contexts/TeamContext';
-import {
-  useTeam,
-  useTeamMembers,
-  useTeamInvitations,
-  useTeamLimits,
-  useUpdateTeam,
-  useDeleteTeam,
-  useCreateInvitation,
-  useDeleteInvitation,
-  useUpdateMemberRole,
-  useRemoveMember,
-  useLeaveTeam,
-  TeamRole,
-} from '@/hooks/useTeamsData';
+import { useTeam, useTeamMembers, useTeamInvitations, useTeamLimits, useUpdateTeam, useDeleteTeam, useCreateInvitation, useDeleteInvitation, useUpdateMemberRole, useRemoveMember, useLeaveTeam, TeamRole } from '@/hooks/useTeamsData';
 import { TeamDeleteDialog } from './TeamDeleteDialog';
-
 const ROLE_ICONS = {
   owner: Crown,
   admin: Shield,
-  member: User,
+  member: User
 };
-
 const ROLE_LABELS = {
   owner: 'Owner',
   admin: 'Admin',
-  member: 'Member',
+  member: 'Member'
 };
-
 interface TeamSettingsProps {
   teamIdOverride?: string;
 }
-
-export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
+export function TeamSettings({
+  teamIdOverride
+}: TeamSettingsProps = {}) {
   const navigate = useNavigate();
-  const { currentWorkspace, isTeamOwner: contextIsTeamOwner, canManageTeam: contextCanManageTeam, switchToPersonal } = useTeamContext();
-  
+  const {
+    currentWorkspace,
+    isTeamOwner: contextIsTeamOwner,
+    canManageTeam: contextCanManageTeam,
+    switchToPersonal
+  } = useTeamContext();
+
   // Use override if provided, otherwise fall back to context
   const teamId = teamIdOverride || currentWorkspace.teamId;
-  
-  const { data: team, isLoading: teamLoading } = useTeam(teamId);
-  const { data: members = [], isLoading: membersLoading } = useTeamMembers(teamId);
-  const { data: invitations = [] } = useTeamInvitations(teamId);
-  const { data: limits } = useTeamLimits(teamId);
-  
+  const {
+    data: team,
+    isLoading: teamLoading
+  } = useTeam(teamId);
+  const {
+    data: members = [],
+    isLoading: membersLoading
+  } = useTeamMembers(teamId);
+  const {
+    data: invitations = []
+  } = useTeamInvitations(teamId);
+  const {
+    data: limits
+  } = useTeamLimits(teamId);
+
   // Determine permissions based on actual membership from API
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const currentUserMember = members.find(m => m.user_id === user?.id);
-  const isTeamOwner = teamIdOverride 
-    ? currentUserMember?.role === 'owner' 
-    : contextIsTeamOwner;
-  const canManageTeam = teamIdOverride 
-    ? currentUserMember?.role === 'owner' || currentUserMember?.role === 'admin'
-    : contextCanManageTeam;
-  
+  const isTeamOwner = teamIdOverride ? currentUserMember?.role === 'owner' : contextIsTeamOwner;
+  const canManageTeam = teamIdOverride ? currentUserMember?.role === 'owner' || currentUserMember?.role === 'admin' : contextCanManageTeam;
   const updateTeam = useUpdateTeam();
   const deleteTeam = useDeleteTeam();
   const createInvitation = useCreateInvitation();
@@ -104,7 +72,6 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
   const updateMemberRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const leaveTeam = useLeaveTeam();
-
   const [teamName, setTeamName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<TeamRole>('member');
@@ -114,76 +81,63 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
   if (team && !teamName && teamName !== team.name) {
     setTeamName(team.name);
   }
-
   if (!teamId) {
-    return (
-      <div className="flex items-center justify-center h-64">
+    return <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Select a team to view settings</p>
-      </div>
-    );
+      </div>;
   }
-
   if (teamLoading || membersLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
+    return <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+      </div>;
   }
-
   const handleUpdateName = () => {
     if (team && teamName !== team.name && teamName.trim()) {
-      updateTeam.mutate({ teamId, name: teamName.trim() });
+      updateTeam.mutate({
+        teamId,
+        name: teamName.trim()
+      });
     }
   };
-
   const handleCreateInvitation = () => {
     if (!inviteEmail.trim()) return;
-    
-    createInvitation.mutate(
-      { teamId, email: inviteEmail.trim(), role: inviteRole },
-      {
-        onSuccess: () => {
-          setInviteEmail('');
-          setInviteRole('member');
-        },
+    createInvitation.mutate({
+      teamId,
+      email: inviteEmail.trim(),
+      role: inviteRole
+    }, {
+      onSuccess: () => {
+        setInviteEmail('');
+        setInviteRole('member');
       }
-    );
+    });
   };
-
   const handleCopyInviteLink = (token: string) => {
     const link = `${window.location.origin}/invite/${token}`;
     navigator.clipboard.writeText(link);
     toast.success('Invite link copied to clipboard');
   };
-
   const handleDeleteTeam = (transferBoards: boolean) => {
-    deleteTeam.mutate(
-      { teamId, transferBoards },
-      {
-        onSuccess: () => {
-          switchToPersonal();
-          navigate('/dashboard');
-        },
+    deleteTeam.mutate({
+      teamId,
+      transferBoards
+    }, {
+      onSuccess: () => {
+        switchToPersonal();
+        navigate('/dashboard');
       }
-    );
+    });
   };
-
   const handleLeaveTeam = () => {
     leaveTeam.mutate(teamId, {
       onSuccess: () => {
         switchToPersonal();
         navigate('/dashboard');
-      },
+      }
     });
   };
-
-  const seatUsagePercent = limits 
-    ? (limits.current_seats / limits.max_seats) * 100 
-    : 0;
-
-  return (
-    <div className="space-y-4 sm:space-y-6">
+  const seatUsagePercent = limits ? limits.current_seats / limits.max_seats * 100 : 0;
+  return <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Team Settings</h1>
@@ -207,29 +161,20 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
           <div className="grid gap-2">
             <Label htmlFor="team-name">Team Name</Label>
             <div className="flex gap-2">
-              <Input
-                id="team-name"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                disabled={!isTeamOwner}
-                className="bg-secondary/40 border-border/40 focus:border-primary/50"
-              />
-              {isTeamOwner && teamName !== team?.name && (
-                <Button onClick={handleUpdateName} disabled={updateTeam.isPending} className="btn-3d-primary">
+              <Input id="team-name" value={teamName} onChange={e => setTeamName(e.target.value)} disabled={!isTeamOwner} className="bg-secondary/40 border-border/40 focus:border-primary/50" />
+              {isTeamOwner && teamName !== team?.name && <Button onClick={handleUpdateName} disabled={updateTeam.isPending} className="btn-3d-primary">
                   Save
-                </Button>
-              )}
+                </Button>}
             </div>
           </div>
 
-          {limits && (
-            <div className="space-y-4 pt-4">
+          {limits && <div className="space-y-4 pt-4">
               <Separator className="bg-border/30" />
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="glass-card p-4 rounded-xl">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium flex items-center gap-2">
-                      <Users className="h-4 w-4 text-primary" />
+                      
                       Seats
                     </span>
                     <span className="text-sm text-muted-foreground">
@@ -241,26 +186,17 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
                 <div className="glass-card p-4 rounded-xl">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium flex items-center gap-2">
-                      <svg className="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="7" height="7" rx="1" />
-                        <rect x="14" y="3" width="7" height="7" rx="1" />
-                        <rect x="3" y="14" width="7" height="7" rx="1" />
-                        <rect x="14" y="14" width="7" height="7" rx="1" />
-                      </svg>
+                      
                       Boards
                     </span>
                     <span className="text-sm text-muted-foreground">
                       {limits.current_boards} / {limits.max_boards}
                     </span>
                   </div>
-                  <Progress 
-                    value={(limits.current_boards / limits.max_boards) * 100} 
-                    className="h-2" 
-                  />
+                  <Progress value={limits.current_boards / limits.max_boards * 100} className="h-2" />
                 </div>
               </div>
-            </div>
-          )}
+            </div>}
         </CardContent>
       </Card>
 
@@ -282,17 +218,10 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Invite Form */}
-          {canManageTeam && (
-            <div className="flex flex-col sm:flex-row gap-2 pb-4 border-b border-border/30">
-              <Input
-                placeholder="Email address"
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                className="flex-1 bg-secondary/40 border-border/40 focus:border-primary/50 text-sm"
-              />
+          {canManageTeam && <div className="flex flex-col sm:flex-row gap-2 pb-4 border-b border-border/30">
+              <Input placeholder="Email address" type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} className="flex-1 bg-secondary/40 border-border/40 focus:border-primary/50 text-sm" />
               <div className="flex gap-2">
-                <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as TeamRole)}>
+                <Select value={inviteRole} onValueChange={v => setInviteRole(v as TeamRole)}>
                   <SelectTrigger className="w-28 sm:w-32 bg-secondary/40 border-border/40 text-sm">
                     <SelectValue />
                   </SelectTrigger>
@@ -301,32 +230,18 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button 
-                  onClick={handleCreateInvitation}
-                  disabled={!inviteEmail.trim() || createInvitation.isPending}
-                  className="btn-3d-primary"
-                >
-                  {createInvitation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Mail className="h-4 w-4" />
-                  )}
+                <Button onClick={handleCreateInvitation} disabled={!inviteEmail.trim() || createInvitation.isPending} className="btn-3d-primary">
+                  {createInvitation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
                 </Button>
               </div>
-            </div>
-          )}
+            </div>}
 
           {/* Pending Invitations */}
-          {invitations.length > 0 && canManageTeam && (
-            <div className="space-y-2">
+          {invitations.length > 0 && canManageTeam && <div className="space-y-2">
               <h4 className="text-sm font-medium text-muted-foreground">
                 Pending Invitations
               </h4>
-              {invitations.map((invite) => (
-                <div
-                  key={invite.id}
-                  className="flex items-center justify-between p-3 rounded-xl glass-card"
-                >
+              {invitations.map(invite => <div key={invite.id} className="flex items-center justify-between p-3 rounded-xl glass-card">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8 ring-2 ring-background">
                       <AvatarFallback className="text-xs bg-secondary/50">
@@ -341,48 +256,29 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="key-icon-3d h-8 w-8"
-                      onClick={() => handleCopyInviteLink(invite.token)}
-                    >
+                    <Button variant="ghost" size="icon" className="key-icon-3d h-8 w-8" onClick={() => handleCopyInviteLink(invite.token)}>
                       <Copy className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="key-icon-3d h-8 w-8 hover:text-destructive"
-                      onClick={() => deleteInvitation.mutate({ 
-                        invitationId: invite.id, 
-                        teamId 
-                      })}
-                    >
+                    <Button variant="ghost" size="icon" className="key-icon-3d h-8 w-8 hover:text-destructive" onClick={() => deleteInvitation.mutate({
+                invitationId: invite.id,
+                teamId
+              })}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                </div>)}
+            </div>}
 
           {/* Members List */}
           <div className="space-y-2">
-            {members.map((member) => {
-              const RoleIcon = ROLE_ICONS[member.role];
-              const isOwner = member.role === 'owner';
-              
-              return (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-3 rounded-xl glass-card"
-                >
+            {members.map(member => {
+            const RoleIcon = ROLE_ICONS[member.role];
+            const isOwner = member.role === 'owner';
+            return <div key={member.id} className="flex items-center justify-between p-3 rounded-xl glass-card">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8 ring-2 ring-background">
                       <AvatarFallback className="text-xs bg-secondary/50">
-                        {(member.profile?.full_name || member.profile?.email || 'U')
-                          .charAt(0)
-                          .toUpperCase()}
+                        {(member.profile?.full_name || member.profile?.email || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
@@ -390,7 +286,7 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
                         {member.profile?.full_name || member.profile?.email || 'Unknown'}
                       </p>
                       <div className="flex items-center gap-1.5">
-                        <RoleIcon className="h-3 w-3 text-muted-foreground" />
+                        
                         <span className="text-xs text-muted-foreground capitalize">
                           {ROLE_LABELS[member.role]}
                         </span>
@@ -398,18 +294,12 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
                     </div>
                   </div>
 
-                  {canManageTeam && !isOwner && (
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={member.role}
-                        onValueChange={(role) => 
-                          updateMemberRole.mutate({ 
-                            memberId: member.id, 
-                            teamId, 
-                            role: role as TeamRole 
-                          })
-                        }
-                      >
+                  {canManageTeam && !isOwner && <div className="flex items-center gap-2">
+                      <Select value={member.role} onValueChange={role => updateMemberRole.mutate({
+                  memberId: member.id,
+                  teamId,
+                  role: role as TeamRole
+                })}>
                         <SelectTrigger className="w-28 h-8 bg-secondary/30 border-border/30">
                           <SelectValue />
                         </SelectTrigger>
@@ -418,22 +308,15 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
                           <SelectItem value="admin">Admin</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="key-icon-3d h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => removeMember.mutate({ 
-                          memberId: member.id, 
-                          teamId 
-                        })}
-                      >
+                      <Button variant="ghost" size="icon" className="key-icon-3d h-8 w-8 text-destructive hover:text-destructive" onClick={() => removeMember.mutate({
+                  memberId: member.id,
+                  teamId
+                })}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                    </div>}
+                </div>;
+          })}
           </div>
         </CardContent>
       </Card>
@@ -453,8 +336,7 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Leave Team - for non-owners */}
-          {!isTeamOwner && (
-            <AlertDialog>
+          {!isTeamOwner && <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" className="w-full justify-start border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400">
                   <LogOut className="mr-2 h-4 w-4" />
@@ -476,32 +358,18 @@ export function TeamSettings({ teamIdOverride }: TeamSettingsProps = {}) {
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
-            </AlertDialog>
-          )}
+            </AlertDialog>}
 
           {/* Delete Team - for owners and admins */}
-          {canManageTeam && (
-            <>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400"
-                onClick={() => setShowDeleteDialog(true)}
-              >
+          {canManageTeam && <>
+              <Button variant="outline" className="w-full justify-start border-red-500/20 bg-red-500/5 hover:bg-red-500/10 text-red-400" onClick={() => setShowDeleteDialog(true)}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete Team
               </Button>
 
-              <TeamDeleteDialog
-                open={showDeleteDialog}
-                onOpenChange={setShowDeleteDialog}
-                teamName={team?.name || 'team'}
-                onConfirm={handleDeleteTeam}
-                isPending={deleteTeam.isPending}
-              />
-            </>
-          )}
+              <TeamDeleteDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog} teamName={team?.name || 'team'} onConfirm={handleDeleteTeam} isPending={deleteTeam.isPending} />
+            </>}
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
