@@ -249,7 +249,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
       toast.error("No API key configured", { 
         action: { 
           label: "Add Key", 
-          onClick: () => navigate("/api-keys") 
+          onClick: () => navigate("/settings/keys") 
         } 
       });
       return;
@@ -460,7 +460,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                         </div>
                       );
                     })}
-                    <DropdownMenuItem className="mx-1 rounded-md text-primary" onClick={() => navigate("/api-keys")}><Zap className="h-3 w-3 mr-2" />Manage API Keys</DropdownMenuItem>
+                    <DropdownMenuItem className="mx-1 rounded-md text-primary" onClick={() => navigate("/settings/keys")}><Zap className="h-3 w-3 mr-2" />Manage API Keys</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 {blockUsage && <span className="text-xs text-muted-foreground">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
@@ -496,7 +496,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
           {!hasKeyForCurrentProvider && currentProvider && (
             <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
-              <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-sm"><Lock className="h-4 w-4 text-destructive" /><span>No API key for {PROVIDERS[currentProvider].name}</span></div><button onClick={() => navigate("/api-keys")} className="text-xs text-primary hover:underline">Add API Key</button></div>
+              <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-sm"><Lock className="h-4 w-4 text-destructive" /><span>No API key for {PROVIDERS[currentProvider].name}</span></div><button onClick={() => navigate("/settings/keys")} className="text-xs text-primary hover:underline">Add API Key</button></div>
             </div>
           )}
 

@@ -116,7 +116,7 @@ const FREE_PLAN: PlanConfig = {
   storage_mb: 100,
   seats: 1,
   messages_per_day: 50,
-  api_keys: 2,
+  api_keys: 3,
   features: [
     '1 board',
     '3 blocks per board',

@@ -27,7 +27,7 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
       toast.error("Please add an API key first", {
         action: {
           label: "Add Key",
-          onClick: () => navigate("/api-keys"),
+          onClick: () => navigate("/settings/keys"),
         },
       });
       return;
@@ -60,7 +60,7 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
 
   const handleAddApiKey = (provider: Provider) => {
     setShowModelSelector(false);
-    navigate("/api-keys");
+    navigate("/settings/keys");
   };
 
   return (

@@ -83,11 +83,11 @@ export function usePlanLimits() {
       // Seats
       seatsLimit: maxSeats,
       
-      // API key limits (default 2 for free, 10 for paid)
-      apiKeysLimit: isFree ? 2 : 10,
+      // API key limits (default 3 for free, 10 for paid)
+      apiKeysLimit: isFree ? 3 : 10,
       apiKeysUsed: apiKeyCount,
-      canAddApiKey: apiKeyCount < (isFree ? 2 : 10),
-      apiKeysRemaining: Math.max(0, (isFree ? 2 : 10) - apiKeyCount),
+      canAddApiKey: apiKeyCount < (isFree ? 3 : 10),
+      apiKeysRemaining: Math.max(0, (isFree ? 3 : 10) - apiKeyCount),
       apiKeysUnlimited: false,
       
       // Message limits - all paid plans have unlimited
