@@ -3,14 +3,14 @@
  * 
  * Uses server-side Polar checkout (via edge function) with embed modal
  * - Not logged in → "Get Started" → /auth
- * - Current plan → "Current Plan" (disabled)
+ * - Current plan → "Current Plan" (disabled) - compared by PLAN ID, not tier
  * - Has checkout → Opens Polar embed modal
  * - Enterprise → "Contact Sales" → mailto
  */
 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { useBilling } from '@/hooks/useBilling';
 import { PlanConfig, comparePlanTiers, PlanTier } from '@/config/plans';
 import { PolarCheckoutButton } from './PolarCheckoutButton';
 import { Spinner } from '@/components/ui/spinner';
@@ -24,10 +24,10 @@ interface PricingButtonProps {
 export function PricingButton({ plan, className = '', variant = 'secondary' }: PricingButtonProps) {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { plan: currentTierRaw, isLoading } = usePlanLimits();
+  const { billing, isLoading } = useBilling();
   
-  // Map the current tier string to our PlanTier type
-  const currentTier: PlanTier = (currentTierRaw as PlanTier) || 'free';
+  // Get the actual plan ID from billing (e.g., "pro-team-annual", "starter-individual-annual")
+  const currentPlanId = billing?.active_plan ?? 'free';
   
   // Button styles based on variant and state
   const getButtonClass = (disabled: boolean = false) => {
@@ -70,6 +70,14 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   
   // Free plan - go to dashboard
   if (plan.tier === 'free') {
+    // If user is on free plan, show "Current Plan"
+    if (currentPlanId === 'free') {
+      return (
+        <button className={`${getButtonClass(true)} ${className}`} disabled>
+          Current Plan
+        </button>
+      );
+    }
     return (
       <button
         onClick={(e) => {
@@ -96,11 +104,11 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     );
   }
   
-  // Compare current tier to target tier
-  const comparison = comparePlanTiers(currentTier, plan.tier);
+  // CRITICAL: Compare by PLAN ID, not tier
+  // This ensures "pro-team-annual" matches exactly, not just "pro" tier
+  const isCurrentPlan = currentPlanId === plan.id;
   
-  // Current plan - disabled
-  if (comparison === 0) {
+  if (isCurrentPlan) {
     return (
       <button className={`${getButtonClass(true)} ${className}`} disabled>
         Current Plan
@@ -117,7 +125,9 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     );
   }
   
-  // Upgrade or Downgrade - use server-side Polar checkout
+  // Determine if upgrade or downgrade by comparing tiers
+  const currentTier = getTierFromPlanId(currentPlanId);
+  const comparison = comparePlanTiers(currentTier, plan.tier);
   const buttonText = comparison < 0 ? 'Upgrade' : 'Switch Plan';
   
   return (
@@ -128,4 +138,16 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
       {buttonText}
     </PolarCheckoutButton>
   );
+}
+
+/**
+ * Extract tier from plan ID
+ * e.g., "pro-team-annual" → "pro", "starter-individual-annual" → "starter"
+ */
+function getTierFromPlanId(planId: string): PlanTier {
+  if (planId === 'free') return 'free';
+  if (planId === 'enterprise') return 'enterprise';
+  if (planId.includes('pro')) return 'pro';
+  if (planId.includes('starter')) return 'starter';
+  return 'free';
 }

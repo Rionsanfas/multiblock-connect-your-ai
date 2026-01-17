@@ -13,11 +13,16 @@ interface StorageUsageCardProps {
   isUnlimited?: boolean;
 }
 
-// Helper to format storage
+// Helper to format storage with better precision for small values
 const formatStorage = (mb: number): string => {
   if (mb >= 1024) {
     const gb = mb / 1024;
     return `${gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1)} GB`;
+  }
+  // Show KB for very small values (< 0.1 MB) to avoid showing "0.0 MB"
+  if (mb < 0.1 && mb > 0) {
+    const kb = mb * 1024;
+    return `${kb.toFixed(0)} KB`;
   }
   return `${mb.toFixed(1)} MB`;
 };
