@@ -14,81 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      api_key_access_requests: {
-        Row: {
-          api_key_id: string
-          created_at: string
-          id: string
-          rejection_reason: string | null
-          requester_id: string
-          resolved_at: string | null
-          resolved_by: string | null
-          status: Database["public"]["Enums"]["api_key_request_status"]
-          team_id: string
-          updated_at: string
-        }
-        Insert: {
-          api_key_id: string
-          created_at?: string
-          id?: string
-          rejection_reason?: string | null
-          requester_id: string
-          resolved_at?: string | null
-          resolved_by?: string | null
-          status?: Database["public"]["Enums"]["api_key_request_status"]
-          team_id: string
-          updated_at?: string
-        }
-        Update: {
-          api_key_id?: string
-          created_at?: string
-          id?: string
-          rejection_reason?: string | null
-          requester_id?: string
-          resolved_at?: string | null
-          resolved_by?: string | null
-          status?: Database["public"]["Enums"]["api_key_request_status"]
-          team_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "api_key_access_requests_api_key_id_fkey"
-            columns: ["api_key_id"]
-            isOneToOne: false
-            referencedRelation: "api_keys"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_key_access_requests_api_key_id_fkey"
-            columns: ["api_key_id"]
-            isOneToOne: false
-            referencedRelation: "api_keys_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_key_access_requests_requester_id_fkey"
-            columns: ["requester_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_key_access_requests_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "api_key_access_requests_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       api_keys: {
         Row: {
           api_key_encrypted: string
@@ -1164,10 +1089,6 @@ export type Database = {
           total_seats: number
         }[]
       }
-      get_pending_api_key_requests_count: {
-        Args: { p_team_id: string }
-        Returns: number
-      }
       get_team_api_key: {
         Args: {
           p_provider: Database["public"]["Enums"]["llm_provider"]
@@ -1299,10 +1220,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      has_team_api_key_access: {
-        Args: { p_api_key_id: string }
-        Returns: boolean
-      }
       has_team_role: {
         Args: {
           p_role: Database["public"]["Enums"]["team_role"]
@@ -1336,19 +1253,7 @@ export type Database = {
         Args: { p_member_user_id: string; p_team_id: string }
         Returns: boolean
       }
-      request_api_key_access: {
-        Args: { p_api_key_id: string; p_team_id: string }
-        Returns: string
-      }
       reset_daily_usage: { Args: never; Returns: undefined }
-      resolve_api_key_request: {
-        Args: {
-          p_approved: boolean
-          p_rejection_reason?: string
-          p_request_id: string
-        }
-        Returns: boolean
-      }
       shares_team_with: { Args: { target_user_id: string }; Returns: boolean }
       team_can_add_member: { Args: { p_team_id: string }; Returns: boolean }
       transfer_board_to_team: {
@@ -1388,7 +1293,6 @@ export type Database = {
       }
     }
     Enums: {
-      api_key_request_status: "pending" | "approved" | "rejected"
       app_role: "user" | "admin" | "super_admin"
       billing_period: "monthly" | "yearly" | "lifetime" | "one_time"
       grace_status:
@@ -1543,7 +1447,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      api_key_request_status: ["pending", "approved", "rejected"],
       app_role: ["user", "admin", "super_admin"],
       billing_period: ["monthly", "yearly", "lifetime", "one_time"],
       grace_status: [

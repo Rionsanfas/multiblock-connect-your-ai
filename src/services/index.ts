@@ -40,5 +40,3 @@ export {
   getQualityBadge,
   estimateCost,
 } from '@/hooks/useModelConfig';
-export { apiKeyAccessService } from './apiKeyAccessService';
-export type { ApiKeyAccessRequest } from './apiKeyAccessService';

@@ -19,8 +19,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useTeamContext } from "@/contexts/TeamContext";
 import { useApiKeysRefresh } from "@/hooks/usePageRefresh";
-import { ApiKeyAccessRequestButton } from "@/components/apikeys/ApiKeyAccessRequestButton";
-import { PendingAccessRequests } from "@/components/apikeys/PendingAccessRequests";
 
 // Use canonical provider config from models.ts - SINGLE SOURCE OF TRUTH
 import { PROVIDERS, type Provider } from '@/config/models';
@@ -69,7 +67,8 @@ export default function ApiKeys() {
     mutationFn: ({ provider, apiKey }: { provider: LLMProvider; apiKey: string }) => 
       api.keys.upsert(provider, apiKey, isTeamWorkspace ? currentTeamId : null),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      // Invalidate exact query key to refresh the current workspace keys
+      queryClient.invalidateQueries({ queryKey: ['api-keys', isTeamWorkspace ? currentTeamId : 'personal'] });
       toast.success(isTeamWorkspace ? "Team API key saved successfully" : "API key saved successfully");
       setIsAddModalOpen(false);
       setNewKey({ provider: "", key: "" });
@@ -84,7 +83,7 @@ export default function ApiKeys() {
   const deleteKeyMutation = useMutation({
     mutationFn: (id: string) => api.keys.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      queryClient.invalidateQueries({ queryKey: ['api-keys', isTeamWorkspace ? currentTeamId : 'personal'] });
       toast.success("API key removed");
       setDeleteId(null);
     },
@@ -196,12 +195,6 @@ export default function ApiKeys() {
           </div>
         </GlassCard>
 
-        {/* Pending Access Requests (for team admins/owners) */}
-        {isTeamWorkspace && currentTeamId && canManageTeam && (
-          <div className="mb-6">
-            <PendingAccessRequests teamId={currentTeamId} />
-          </div>
-        )}
 
         {/* Error State */}
         {keysError && (
@@ -271,14 +264,6 @@ export default function ApiKeys() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {/* Access Request Button for team keys (non-admins) */}
-                      {isTeamKey && !canManageTeam && currentTeamId && (
-                        <ApiKeyAccessRequestButton
-                          teamId={currentTeamId}
-                          apiKeyId={key.id}
-                          providerName={providerInfo.name}
-                        />
-                      )}
                       {canManageKeys && (
                         <button
                           onClick={() => setDeleteId(key.id)}
