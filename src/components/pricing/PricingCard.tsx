@@ -2,30 +2,27 @@
  * PricingCard - Reusable pricing card component
  */
 
-import { Info, HardDrive, Users, LayoutGrid, Plus, Infinity } from 'lucide-react';
+import { Info, HardDrive, Users, LayoutGrid, Plus } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PlanConfig, formatPlanPrice, formatStorage, formatLimit } from '@/config/plans';
 import { PricingButton } from './PricingButton';
-
 interface PricingCardProps {
   plan: PlanConfig;
   showSeats?: boolean;
 }
-
-export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
+export function PricingCard({
+  plan,
+  showSeats = false
+}: PricingCardProps) {
   const isLifetime = plan.billing_period === 'lifetime';
   const isEnterprise = plan.tier === 'enterprise';
-
-  return (
-    <div className={`premium-card-wrapper ${plan.highlight ? 'sm:scale-105 z-10' : ''} h-full`}>
+  return <div className={`premium-card-wrapper ${plan.highlight ? 'sm:scale-105 z-10' : ''} h-full`}>
       <div className="premium-card-gradient" />
       <div className="premium-card-content h-full p-4 sm:p-6 relative flex flex-col">
         {/* Badge */}
-        {plan.badge && (
-          <div className="inline-flex self-start px-2 sm:px-3 py-1 text-xs rounded-full mb-3 sm:mb-4 badge-3d-shiny whitespace-nowrap">
+        {plan.badge && <div className="inline-flex self-start px-2 sm:px-3 py-1 text-xs rounded-full mb-3 sm:mb-4 badge-3d-shiny whitespace-nowrap">
             {plan.badge}
-          </div>
-        )}
+          </div>}
 
         {/* Header */}
         <div className="mb-4 sm:mb-6">
@@ -39,18 +36,14 @@ export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
             <span className="text-3xl sm:text-4xl font-bold">
               {isEnterprise ? 'Custom' : plan.price_cents === 0 ? 'Free' : `$${(plan.price_cents / 100).toFixed(2)}`}
             </span>
-            {plan.price_cents > 0 && !isEnterprise && (
-              <span className="text-muted-foreground text-sm">
+            {plan.price_cents > 0 && !isEnterprise && <span className="text-muted-foreground text-sm">
                 {isLifetime ? ' one-time' : '/year'}
-              </span>
-            )}
+              </span>}
           </div>
-          {isLifetime && (
-            <div className="flex items-center gap-1 mt-2 text-xs text-accent">
-              <Infinity className="h-3 w-3" />
+          {isLifetime && <div className="flex items-center gap-1 mt-2 text-xs text-accent">
+              
               <span>Lifetime access</span>
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Key Stats */}
@@ -90,29 +83,24 @@ export function PricingCard({ plan, showSeats = false }: PricingCardProps) {
           </div>
           
           {/* Seats (for team plans or when specified) */}
-          {(showSeats || plan.seats > 1) && (
-            <div className="flex items-center gap-3 text-sm">
+          {(showSeats || plan.seats > 1) && <div className="flex items-center gap-3 text-sm">
               <div className="icon-3d-box">
                 <Users className="h-4 w-4 text-accent" />
               </div>
               <span>{formatLimit(plan.seats)} team seat{plan.seats !== 1 && plan.seats !== -1 ? 's' : ''}</span>
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Features */}
         <ul className="space-y-2 mb-6 flex-1">
-          {plan.features.slice(0, 6).map((feature) => (
-            <li key={feature} className="flex items-start gap-2.5 text-sm">
+          {plan.features.slice(0, 6).map(feature => <li key={feature} className="flex items-start gap-2.5 text-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 mt-2 flex-shrink-0" />
               <span className="text-muted-foreground">{feature}</span>
-            </li>
-          ))}
+            </li>)}
         </ul>
 
         {/* CTA Button */}
         <PricingButton plan={plan} variant={plan.highlight ? 'primary' : 'secondary'} />
       </div>
-    </div>
-  );
+    </div>;
 }
