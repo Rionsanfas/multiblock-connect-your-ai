@@ -1,11 +1,12 @@
-import { useMemo, useCallback, useRef } from 'react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlanEnforcement } from './usePlanLimits';
 import { blocksDb } from '@/lib/database';
 import { devLog, devError } from '@/lib/logger';
 import { getDragState } from '@/store/useDragStore';
 import { getBlockPosition, removeBlockPosition } from '@/store/useBlockPositions';
+import { getProviderFromModel } from '@/config/models';
 import type { Connection } from '@/hooks/useBlockConnections';
 import type { Block } from '@/types';
 import type { LLMProvider } from '@/types/database.types';
@@ -86,26 +87,25 @@ export function useBlockActions(boardId: string) {
       devError('[useBlockActions.createBlock] Cannot create: no user or boardId');
       throw new Error('Cannot create block: Board access denied');
     }
-    
+
     // Enforce plan limits
     if (!enforceCreateBlock(boardId)) {
       devLog('[useBlockActions.createBlock] Plan limit reached');
       return null;
     }
 
-    // Get provider from model_id
-    const { getProviderFromModel } = await import('@/config/models');
+    // IMPORTANT: provider resolution must be synchronous so we can optimistically render immediately.
     const provider = data.model_id ? getProviderFromModel(data.model_id) : 'openai';
-    
+
     // Map to Supabase enum
     const providerMap: Record<string, LLMProvider> = {
       openai: 'openai',
-      anthropic: 'anthropic', 
+      anthropic: 'anthropic',
       google: 'google',
       xai: 'xai',
       deepseek: 'deepseek',
     };
-    
+
     const supabaseProvider = providerMap[provider] || 'openai';
 
     // Create optimistic block for immediate UI
@@ -128,6 +128,7 @@ export function useBlockActions(boardId: string) {
       created_at: now,
       updated_at: now,
     };
+
 
     devLog('[useBlockActions.createBlock] Optimistic create:', optimisticId);
 
@@ -156,7 +157,7 @@ export function useBlockActions(boardId: string) {
       // Replace optimistic block with real block in cache
       queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
         const arr = Array.isArray(old) ? old : [];
-        return arr.map((b: any) => b.id === optimisticId ? block : b);
+        return arr.map((b: any) => (b.id === optimisticId ? block : b));
       });
 
       // Return the block from Supabase
@@ -182,6 +183,7 @@ export function useBlockActions(boardId: string) {
       throw error;
     }
   }, [boardId, canModify, user, enforceCreateBlock, queryClient]);
+
 
   /**
    * Update a block via Supabase with optimistic UI

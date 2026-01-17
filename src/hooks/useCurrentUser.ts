@@ -10,7 +10,8 @@
 import { useMemo } from 'react';
 import { useAuth } from './useAuth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { subscriptionsDb, boardsDb } from '@/lib/database';
+import { boardsDb } from '@/lib/database';
+import { usePlanLimits } from './usePlanLimits';
 import type { Board as SupabaseBoard } from '@/types/database.types';
 import type { Board as LegacyBoard } from '@/types';
 
@@ -19,6 +20,7 @@ interface LegacyUser {
   email: string;
   name: string;
   avatar?: string;
+  /** Display label (e.g. "Free", "Pro Team") */
   plan: string;
   boards_limit: number;
   boards_used: number;
@@ -53,54 +55,39 @@ function transformBoard(board: SupabaseBoard): LegacyBoard {
 
 /**
  * Get the current user and authentication state (legacy compatibility)
+ *
+ * IMPORTANT: plan display and limits come from user_billing via usePlanLimits.
+ * This prevents "Free" vs "Pro Team" mismatches across the app.
  */
 export function useCurrentUser(): CurrentUserState {
   const { user: authUser, isAuthenticated, isLoading: authLoading } = useAuth();
-  
-  const { data: subscription, isLoading: subLoading } = useQuery({
-    queryKey: ['user-subscription', authUser?.id],
-    queryFn: () => subscriptionsDb.getCurrent(),
-    enabled: !!authUser,
-    staleTime: 1000 * 60 * 10, // 10 minutes - subscription rarely changes
-    gcTime: 1000 * 60 * 30, // 30 minutes cache
-    refetchOnWindowFocus: false,
-    // Keep previous data for instant rendering
-    placeholderData: (previousData) => previousData,
-  });
-
-  const { data: boardCount = 0, isLoading: boardsLoading } = useQuery({
-    queryKey: ['user-board-count', authUser?.id],
-    queryFn: () => boardsDb.getCount(),
-    enabled: !!authUser,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 15, // 15 minutes cache
-    refetchOnWindowFocus: false,
-    placeholderData: (previousData) => previousData,
-  });
+  const limits = usePlanLimits();
 
   const legacyUser = useMemo((): LegacyUser | null => {
     if (!authUser) return null;
-    
+
+    const boardsLimit = limits.boardsUnlimited ? -1 : limits.boardsLimit;
+
     return {
       id: authUser.id,
       email: authUser.email || '',
       name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
       avatar: authUser.user_metadata?.avatar_url || undefined,
-      plan: subscription?.tier || 'free',
-      boards_limit: subscription?.max_boards || 3,
-      boards_used: boardCount,
-      storage_limit_mb: 100, // Default storage
+      plan: limits.planName, // "Free", "Pro Team", ...
+      boards_limit: boardsLimit,
+      boards_used: limits.boardsUsed,
+      storage_limit_mb: Math.round(limits.storageLimitMb),
       storage_used_mb: 0,
-      seats: subscription?.max_seats || 1,
+      seats: limits.seatsLimit,
       seats_used: 1,
       created_at: authUser.created_at || new Date().toISOString(),
     };
-  }, [authUser, subscription, boardCount]);
+  }, [authUser, limits.boardsUnlimited, limits.boardsLimit, limits.boardsUsed, limits.planName, limits.seatsLimit, limits.storageLimitMb]);
 
   return {
     user: legacyUser,
     isAuthenticated,
-    isLoading: authLoading || (isAuthenticated && (subLoading || boardsLoading)),
+    isLoading: authLoading || (isAuthenticated && limits.isLoading),
   };
 }
 
