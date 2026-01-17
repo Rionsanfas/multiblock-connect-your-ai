@@ -187,89 +187,31 @@ serve(async (req) => {
         last_validated_at: new Date().toISOString(),
       };
 
-      // If team_id is provided, this is a team key
+      // Set team_id appropriately
       if (team_id) {
         keyData.team_id = team_id;
-      }
-
-      // Upsert the encrypted key
-      // For team keys, conflict on (team_id, provider)
-      // For personal keys, conflict on (user_id, provider) where team_id IS NULL
-      let query;
-      if (team_id) {
-        // For team keys - check if key exists for this team + provider
-        const { data: existingKey } = await supabase
-          .from("api_keys")
-          .select("id")
-          .eq("team_id", team_id)
-          .eq("provider", provider)
-          .single();
-
-        if (existingKey) {
-          // Update existing team key
-          query = supabase
-            .from("api_keys")
-            .update({
-              api_key_encrypted: encryptedKey,
-              key_hint: keyHint,
-              is_valid: true,
-              last_validated_at: new Date().toISOString(),
-            })
-            .eq("id", existingKey.id)
-            .select("id, provider, key_hint, is_valid, created_at, team_id")
-            .single();
-        } else {
-          // Insert new team key
-          query = supabase
-            .from("api_keys")
-            .insert(keyData)
-            .select("id, provider, key_hint, is_valid, created_at, team_id")
-            .single();
-        }
       } else {
-        // For personal keys - check if key exists for this user + provider (with no team)
-        const { data: existingKey } = await supabase
-          .from("api_keys")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("provider", provider)
-          .is("team_id", null)
-          .single();
-
-        if (existingKey) {
-          // Update existing personal key
-          query = supabase
-            .from("api_keys")
-            .update({
-              api_key_encrypted: encryptedKey,
-              key_hint: keyHint,
-              is_valid: true,
-              last_validated_at: new Date().toISOString(),
-            })
-            .eq("id", existingKey.id)
-            .select("id, provider, key_hint, is_valid, created_at, team_id")
-            .single();
-        } else {
-          // Insert new personal key (explicitly set team_id to null)
-          keyData.team_id = null;
-          query = supabase
-            .from("api_keys")
-            .insert(keyData)
-            .select("id, provider, key_hint, is_valid, created_at, team_id")
-            .single();
-        }
+        keyData.team_id = null;
       }
+
+      // ALWAYS INSERT a new key (multiple keys per provider now allowed)
+      // The DB trigger will enforce limits (free=3, paid=unlimited)
+      const query = supabase
+        .from("api_keys")
+        .insert(keyData)
+        .select("id, provider, key_hint, is_valid, created_at, team_id")
+        .single();
 
       const { data, error } = await query;
 
       if (error) {
         console.error("Error storing API key:", error);
         
-        // Check for limit exceeded error from database trigger
+        // Check for limit exceeded error from database trigger (free plan = 3 keys max)
         if (error.message?.includes('LIMIT_EXCEEDED:API_KEY')) {
           return new Response(JSON.stringify({ 
             success: false,
-            error: "You have reached your API key limit. Upgrade your plan to add more keys." 
+            error: "Free plan allows up to 3 API keys. Upgrade to a paid plan for unlimited keys." 
           }), {
             status: 403,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
