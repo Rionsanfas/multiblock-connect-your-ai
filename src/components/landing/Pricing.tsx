@@ -1,4 +1,3 @@
-import { Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +17,7 @@ const Pricing = () => {
           {/* Header */}
           <AnimatedSection delay={0} className="text-center mb-6 sm:mb-8 md:mb-10">
             <span className="section-badge mb-4">
-              <Zap className="h-4 w-4" />
+              
               Simple Pricing
             </span>
             <h2 className="font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
