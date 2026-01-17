@@ -52,23 +52,39 @@ export default function ApiKeys() {
   const [testResult, setTestResult] = useState<{ valid: boolean; error?: string } | null>(null);
 
   // Fetch API keys based on current workspace
-  const { data: userKeys = [], isLoading: keysLoading, error: keysError } = useQuery({
-    queryKey: ['api-keys', isTeamWorkspace ? currentTeamId : 'personal'],
-    queryFn: () => isTeamWorkspace && currentTeamId 
-      ? api.keys.listTeamKeys(currentTeamId) 
-      : api.keys.list(),
-    enabled: isAuthenticated,
-    staleTime: 1000 * 10, // 10 seconds - ensure fresh data
-    refetchOnMount: 'always',
+  // Query key includes workspace context for proper cache separation
+  const workspaceKey = isTeamWorkspace && currentTeamId ? `team-${currentTeamId}` : 'personal';
+  
+  const { data: userKeys = [], isLoading: keysLoading, error: keysError, refetch } = useQuery({
+    queryKey: ['api-keys', workspaceKey],
+    queryFn: async () => {
+      console.log('[ApiKeys] Fetching keys for workspace:', workspaceKey);
+      const result = isTeamWorkspace && currentTeamId 
+        ? await api.keys.listTeamKeys(currentTeamId) 
+        : await api.keys.list();
+      console.log('[ApiKeys] Fetched keys:', result.length, 'keys');
+      return result;
+    },
+    enabled: isAuthenticated && (!isTeamWorkspace || !!currentTeamId),
+    staleTime: 0, // Always treat as stale to ensure fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Mutation to add/update API key
   const addKeyMutation = useMutation({
     mutationFn: ({ provider, apiKey }: { provider: LLMProvider; apiKey: string }) => 
       api.keys.upsert(provider, apiKey, isTeamWorkspace ? currentTeamId : null),
-    onSuccess: () => {
-      // Invalidate exact query key to refresh the current workspace keys
-      queryClient.invalidateQueries({ queryKey: ['api-keys', isTeamWorkspace ? currentTeamId : 'personal'] });
+    onSuccess: (data) => {
+      console.log('[ApiKeys] Key saved, invalidating cache for:', workspaceKey);
+      // Invalidate ALL api-keys queries to ensure fresh data across all views
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      // Also invalidate API key count for plan limits
+      queryClient.invalidateQueries({ queryKey: ['user-apikey-count'] });
+      // Also invalidate board-specific key queries
+      queryClient.invalidateQueries({ queryKey: ['available-keys-for-board'] });
+      // Force refetch the current query
+      refetch();
       toast.success(isTeamWorkspace ? "Team API key saved successfully" : "API key saved successfully");
       setIsAddModalOpen(false);
       setNewKey({ provider: "", key: "" });
@@ -83,7 +99,14 @@ export default function ApiKeys() {
   const deleteKeyMutation = useMutation({
     mutationFn: (id: string) => api.keys.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['api-keys', isTeamWorkspace ? currentTeamId : 'personal'] });
+      console.log('[ApiKeys] Key deleted, invalidating cache');
+      // Invalidate ALL api-keys queries
+      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      // Also invalidate API key count for plan limits
+      queryClient.invalidateQueries({ queryKey: ['user-apikey-count'] });
+      // Also invalidate board-specific key queries
+      queryClient.invalidateQueries({ queryKey: ['available-keys-for-board'] });
+      refetch();
       toast.success("API key removed");
       setDeleteId(null);
     },

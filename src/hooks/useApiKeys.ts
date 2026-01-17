@@ -9,15 +9,17 @@ export const SUPPORTED_PROVIDERS: LLMProvider[] = ['openai', 'anthropic', 'googl
 
 /**
  * Get all API keys for the current user from Supabase
+ * NOTE: This hook fetches personal keys only. For workspace-aware fetching,
+ * use the queries in ApiKeys.tsx page which respect TeamContext.
  */
 export function useUserApiKeys(): { keys: ApiKeyDisplay[]; isLoading: boolean; error: Error | null } {
   const { user, isAuthenticated } = useAuth();
   
   const { data: keys = [], isLoading, error } = useQuery({
-    queryKey: ['api-keys', user?.id],
+    queryKey: ['api-keys', 'personal'], // Consistent with ApiKeys page pattern
     queryFn: () => apiKeysDb.getAll(),
     enabled: isAuthenticated,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 0, // Keep fresh for consistency
   });
   
   return { keys, isLoading, error: error as Error | null };
