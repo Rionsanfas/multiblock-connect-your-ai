@@ -1,4 +1,4 @@
-import { Zap, Info, HardDrive, Infinity } from "lucide-react";
+import { Info, HardDrive, Infinity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -43,7 +43,7 @@ export default function Pricing() {
             {/* Header */}
             <div className="text-center mb-8 sm:mb-10 md:mb-12">
               <span className="section-badge mb-4">
-                <Zap className="h-4 w-4" />
+                
                 Simple Pricing
               </span>
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
