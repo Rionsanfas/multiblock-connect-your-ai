@@ -4,6 +4,7 @@ import { ArrowRight, Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -39,6 +40,7 @@ export default function Auth() {
   const [newPassword, setNewPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
@@ -413,9 +415,19 @@ export default function Auth() {
                 </div>
               )}
 
-              {/* Forgot password link - only show on signin */}
+              {/* Forgot password link and Keep logged in - only show on signin */}
               {mode === 'signin' && (
-                <div className="text-right" style={formFieldStyle(100)}>
+                <div className="flex items-center justify-between" style={formFieldStyle(100)}>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <Checkbox 
+                      checked={keepLoggedIn}
+                      onCheckedChange={(checked) => setKeepLoggedIn(checked === true)}
+                      className="h-4 w-4 border-border/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                    />
+                    <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+                      Keep me logged in
+                    </span>
+                  </label>
                   <button
                     type="button"
                     onClick={() => setMode('forgot-password')}
