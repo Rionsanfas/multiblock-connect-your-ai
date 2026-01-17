@@ -167,6 +167,9 @@
     scroll-behavior: smooth;
     /* Prevent horizontal overflow at page level */
     overflow-x: hidden;
+    /* Force consistent zoom/scaling across environments */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -176,6 +179,8 @@
     line-height: 1.5;
     /* Prevent horizontal overflow */
     overflow-x: hidden;
+    /* Consistent minimum width to prevent cramped layouts */
+    min-width: 320px;
   }
 
   /* Custom scrollbar - refined grayscale */

@@ -65,31 +65,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       url.hash.includes('access_token=');
 
     /**
-     * Session persistence logic:
-     * - Supabase persists sessions in localStorage (survives browser restarts)
-     * - If user explicitly unchecked "Keep me logged in", we clear ONLY on a fresh browser session
-     *
-     * IMPORTANT: never clear during an OAuth callback, otherwise the code exchange can be interrupted.
+     * Session persistence: ALWAYS persist sessions.
+     * Users stay logged in until they explicitly sign out.
+     * No "keep me logged in" opt-out - sessions persist across browser restarts.
      */
-    const keepLoggedIn = localStorage.getItem('multiblock_keep_logged_in');
-    const isNewBrowserSession = !sessionStorage.getItem('multiblock_session_active');
 
-    if (keepLoggedIn === 'false' && isNewBrowserSession && !hasOAuthCallback) {
-      console.log('[Auth] User opted out of persistent login + new browser session, clearing');
-      sessionStorage.setItem('multiblock_session_active', 'true');
-      supabase.auth.signOut().then(() => {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      });
-      return;
-    }
-
-    // Mark this browser session as active (so we don't clear on tab close/reopen)
-    sessionStorage.setItem('multiblock_session_active', 'true');
-
-    // If we just returned from OAuth, give Supabase a moment to exchange the code before we redirect.
-    // We'll still resolve instantly if we already have a session.
+    // If we just returned from OAuth, give Supabase time to exchange the code
     let oauthSafetyTimeout: number | undefined;
     if (hasOAuthCallback) {
       oauthSafetyTimeout = window.setTimeout(() => {
@@ -128,7 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           clean.searchParams.delete('state');
           clean.searchParams.delete('error');
           clean.searchParams.delete('error_description');
-          window.history.replaceState({}, document.title, clean.pathname + clean.search + clean.hash);
+          clean.hash = '';
+          window.history.replaceState({}, document.title, clean.pathname + clean.search);
         } catch {
           // ignore
         }
@@ -176,11 +158,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Helper to get the correct redirect URL (production vs preview)
   const getRedirectUrl = useCallback((path: string = '/dashboard') => {
     const origin = window.location.origin;
-    // If we're on the production domain, use it; otherwise use current origin
-    if (origin.includes('multiblock.space')) {
-      return `https://multiblock.space${path}`;
+    // Support both production domains
+    if (origin.includes('multiblock.space') || origin.includes('multiblock.app')) {
+      return `${origin}${path}`;
     }
-    // For Lovable preview
+    // For Lovable preview or other environments
     return `${origin}${path}`;
   }, []);
 
