@@ -633,6 +633,56 @@ export type Database = {
           },
         ]
       }
+      user_addons: {
+        Row: {
+          addon_plan_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          polar_order_id: string | null
+          quantity: number
+          snapshot_extra_boards: number | null
+          snapshot_storage_mb: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addon_plan_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          polar_order_id?: string | null
+          quantity?: number
+          snapshot_extra_boards?: number | null
+          snapshot_storage_mb?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addon_plan_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          polar_order_id?: string | null
+          quantity?: number
+          snapshot_extra_boards?: number | null
+          snapshot_storage_mb?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_addons_addon_plan_id_fkey"
+            columns: ["addon_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_billing: {
         Row: {
           access_expires_at: string | null
