@@ -51,12 +51,17 @@ const Pricing = () => {
                 <div className="text-center mb-4 sm:mb-6">
                   <p className="text-muted-foreground text-sm sm:text-base">Annual plans for individual users</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto items-stretch">
+                {/* Horizontal scroll on mobile/tablet, grid on desktop */}
+                <div className="lg:grid lg:grid-cols-3 lg:gap-6 lg:max-w-5xl lg:mx-auto lg:items-stretch max-lg:flex max-lg:gap-3 max-lg:overflow-x-auto max-lg:pb-4 max-lg:-mx-4 max-lg:px-4 max-lg:snap-x max-lg:snap-mandatory scrollbar-hide">
                   <AnimatedElement delay={0}>
-                    <PricingCard plan={freePlan} />
+                    <div className="max-lg:min-w-[240px] max-lg:max-w-[260px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[280px] md:max-lg:max-w-[300px]">
+                      <PricingCard plan={freePlan} />
+                    </div>
                   </AnimatedElement>
                   {individualAnnualPlans.map((plan, index) => <AnimatedElement key={plan.id} delay={(index + 1) * 100}>
-                      <PricingCard plan={plan} />
+                      <div className="max-lg:min-w-[240px] max-lg:max-w-[260px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[280px] md:max-lg:max-w-[300px]">
+                        <PricingCard plan={plan} />
+                      </div>
                     </AnimatedElement>)}
                 </div>
               </TabsContent>
@@ -66,9 +71,12 @@ const Pricing = () => {
                 <div className="text-center mb-4 sm:mb-6">
                   <p className="text-muted-foreground text-sm sm:text-base">Annual plans for teams</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto items-stretch">
+                {/* Horizontal scroll on mobile/tablet */}
+                <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:max-w-4xl lg:mx-auto lg:items-stretch max-lg:flex max-lg:gap-3 max-lg:overflow-x-auto max-lg:pb-4 max-lg:-mx-4 max-lg:px-4 max-lg:snap-x max-lg:snap-mandatory scrollbar-hide">
                   {teamAnnualPlans.map((plan, index) => <AnimatedElement key={plan.id} delay={index * 100}>
-                      <PricingCard plan={plan} showSeats />
+                      <div className="max-lg:min-w-[240px] max-lg:max-w-[260px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[280px] md:max-lg:max-w-[300px]">
+                        <PricingCard plan={plan} showSeats />
+                      </div>
                     </AnimatedElement>)}
                 </div>
               </TabsContent>
@@ -83,9 +91,10 @@ const Pricing = () => {
                 {/* Individual Lifetime */}
                 <div className="mb-8 sm:mb-10">
                   <h3 className="text-base sm:text-lg font-semibold text-center mb-4 sm:mb-6 text-muted-foreground">Individual Lifetime Deals</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto items-stretch">
+                  {/* Horizontal scroll on mobile/tablet */}
+                  <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:max-w-4xl lg:mx-auto lg:items-stretch max-lg:flex max-lg:gap-3 max-lg:overflow-x-auto max-lg:pb-4 max-lg:-mx-4 max-lg:px-4 max-lg:snap-x max-lg:snap-mandatory scrollbar-hide">
                     {individualLifetimePlans.map((plan, index) => <AnimatedElement key={plan.id} delay={index * 100}>
-                        <div className="relative">
+                        <div className="relative max-lg:min-w-[240px] max-lg:max-w-[260px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[280px] md:max-lg:max-w-[300px]">
                           {/* LTD Glow Effect */}
                           <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
                           <PricingCard plan={plan} />
@@ -97,9 +106,10 @@ const Pricing = () => {
                 {/* Team Lifetime */}
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold text-center mb-4 sm:mb-6 text-muted-foreground">Team Lifetime Deals</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto items-stretch">
+                  {/* Horizontal scroll on mobile/tablet */}
+                  <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:max-w-4xl lg:mx-auto lg:items-stretch max-lg:flex max-lg:gap-3 max-lg:overflow-x-auto max-lg:pb-4 max-lg:-mx-4 max-lg:px-4 max-lg:snap-x max-lg:snap-mandatory scrollbar-hide">
                     {teamLifetimePlans.map((plan, index) => <AnimatedElement key={plan.id} delay={index * 100}>
-                        <div className="relative">
+                        <div className="relative max-lg:min-w-[240px] max-lg:max-w-[260px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[280px] md:max-lg:max-w-[300px]">
                           {/* LTD Glow Effect */}
                           <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
                           <PricingCard plan={plan} showSeats />

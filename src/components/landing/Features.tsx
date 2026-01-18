@@ -44,23 +44,23 @@ const Features = () => {
           </p>
         </AnimatedSection>
 
-        {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+        {/* Feature Cards Grid - horizontal scroll on mobile/tablet, grid on desktop */}
+        <div className="lg:grid lg:grid-cols-3 lg:gap-6 max-lg:flex max-lg:gap-3 max-lg:overflow-x-auto max-lg:pb-4 max-lg:-mx-4 max-lg:px-4 max-lg:snap-x max-lg:snap-mandatory scrollbar-hide">
           {features.map((feature, index) => (
             <AnimatedElement key={feature.title} delay={index * 150}>
-              <div className="glass-card-hover group dot-grid-card h-full p-4 sm:p-5 lg:p-6 pt-3 sm:pt-4">
-                {/* 3D Animated Icon */}
-                <div className="relative z-10">
+              <div className="glass-card-hover group dot-grid-card h-full p-3 sm:p-4 lg:p-6 pt-2 sm:pt-3 lg:pt-4 max-lg:min-w-[200px] max-lg:max-w-[220px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[240px] md:max-lg:max-w-[260px]">
+                {/* 3D Animated Icon - smaller on mobile/tablet */}
+                <div className="relative z-10 max-lg:scale-75 max-lg:origin-center max-lg:-my-2">
                   <Feature3DIcon type={feature.iconType} />
                 </div>
 
                 {/* Title */}
-                <h3 className="font-semibold text-foreground text-wrap-balance text-center relative z-10 text-base sm:text-lg lg:text-xl mb-2 sm:mb-3">
+                <h3 className="font-semibold text-foreground text-wrap-balance text-center relative z-10 text-sm sm:text-base lg:text-xl mb-1.5 sm:mb-2 lg:mb-3">
                   {feature.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-muted-foreground leading-relaxed text-break text-center relative z-10 text-sm sm:text-base">
+                <p className="text-muted-foreground leading-relaxed text-break text-center relative z-10 text-xs sm:text-sm lg:text-base">
                   {feature.description}
                 </p>
               </div>

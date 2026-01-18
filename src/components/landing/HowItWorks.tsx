@@ -142,67 +142,64 @@ const HowItWorks = () => {
           </p>
         </AnimatedSection>
 
-        {/* Bento Grid */}
-        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Left side - Add Blocks (Big Card) */}
+        {/* Bento Grid - horizontal scroll on mobile/tablet */}
+        <div className="max-w-5xl mx-auto lg:grid lg:grid-cols-2 lg:gap-6 max-lg:flex max-lg:gap-3 max-lg:overflow-x-auto max-lg:pb-4 max-lg:-mx-4 max-lg:px-4 max-lg:snap-x max-lg:snap-mandatory scrollbar-hide">
+          {/* Card 1 - Add Blocks */}
           <AnimatedElement delay={100}>
-            <div className="hiw-bento-card hiw-card-3d hiw-card-3d-left hiw-card-featured dot-grid-card h-full min-h-[280px] sm:min-h-[320px] lg:min-h-[420px]">
+            <div className="hiw-bento-card hiw-card-3d hiw-card-3d-left hiw-card-featured dot-grid-card h-full min-h-[200px] sm:min-h-[240px] lg:min-h-[420px] max-lg:min-w-[200px] max-lg:max-w-[220px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[240px] md:max-lg:max-w-[260px]">
               <div className="hiw-card-3d-inner h-full flex flex-col">
-                {/* 3D Plus Icon */}
-                <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
+                {/* 3D Plus Icon - smaller on mobile/tablet */}
+                <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center max-lg:scale-75 max-lg:origin-center">
                   <Plus3DIcon />
                 </div>
                 
-                <div className="hiw-bento-content p-4 sm:p-6">
-                  <h3 className="hiw-bento-title text-lg sm:text-xl lg:text-2xl mb-2 sm:mb-3">Add Blocks</h3>
-                  <p className="hiw-bento-desc text-sm sm:text-base">
-                    Create a new block for each AI model you want to use. Choose from GPT-5, Claude, Gemini, and more.
+                <div className="hiw-bento-content p-3 sm:p-4 lg:p-6">
+                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-2xl mb-1.5 sm:mb-2 lg:mb-3">Add Blocks</h3>
+                  <p className="hiw-bento-desc text-xs sm:text-sm lg:text-base">
+                    Create blocks for GPT-5, Claude, Gemini, and more.
                   </p>
                 </div>
               </div>
             </div>
           </AnimatedElement>
 
-          {/* Right side - 2 stacked cards */}
-          <div className="flex flex-col gap-4 sm:gap-6">
-            {/* Card 2 - Chat with Models */}
-            <AnimatedElement delay={200}>
-              <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[180px] sm:min-h-[200px]">
-                <div className="hiw-card-3d-inner h-full flex flex-col">
-                  {/* Sequential letter highlight text */}
-                  <div className="hiw-overflow-text-new flex-1 flex items-center justify-center">
-                    <LetterHighlight text="Compare" />
-                  </div>
-                  
-                  <div className="hiw-bento-content hiw-content-bottom p-4 sm:p-5">
-                    <h3 className="hiw-bento-title text-lg sm:text-xl mb-1.5 sm:mb-2">Chat with Models</h3>
-                    <p className="hiw-bento-desc text-xs sm:text-sm">
-                      Interact with each model independently. Compare responses in real-time.
-                    </p>
-                  </div>
+          {/* Card 2 - Chat with Models */}
+          <AnimatedElement delay={200}>
+            <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[200px] sm:min-h-[240px] lg:min-h-[200px] max-lg:min-w-[200px] max-lg:max-w-[220px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[240px] md:max-lg:max-w-[260px]">
+              <div className="hiw-card-3d-inner h-full flex flex-col">
+                {/* Sequential letter highlight text - smaller on mobile */}
+                <div className="hiw-overflow-text-new flex-1 flex items-center justify-center max-lg:scale-75 max-lg:origin-center">
+                  <LetterHighlight text="Compare" />
+                </div>
+                
+                <div className="hiw-bento-content hiw-content-bottom p-3 sm:p-4 lg:p-5">
+                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-xl mb-1 sm:mb-1.5 lg:mb-2">Chat with Models</h3>
+                  <p className="hiw-bento-desc text-xs sm:text-sm">
+                    Compare responses in real-time.
+                  </p>
                 </div>
               </div>
-            </AnimatedElement>
+            </div>
+          </AnimatedElement>
 
-            {/* Card 3 - Connect Them */}
-            <AnimatedElement delay={300}>
-              <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[180px] sm:min-h-[200px]">
-                <div className="hiw-card-3d-inner h-full flex flex-col">
-                  {/* 3D Link Icon */}
-                  <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center">
-                    <Link3DIcon />
-                  </div>
-                  
-                  <div className="hiw-bento-content p-4 sm:p-5">
-                    <h3 className="hiw-bento-title text-lg sm:text-xl mb-1.5 sm:mb-2">Connect Them</h3>
-                    <p className="hiw-bento-desc text-xs sm:text-sm">
-                      Draw connections between blocks. One model's output becomes another's input.
-                    </p>
-                  </div>
+          {/* Card 3 - Connect Them */}
+          <AnimatedElement delay={300}>
+            <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[200px] sm:min-h-[240px] lg:min-h-[200px] max-lg:min-w-[200px] max-lg:max-w-[220px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[240px] md:max-lg:max-w-[260px]">
+              <div className="hiw-card-3d-inner h-full flex flex-col">
+                {/* 3D Link Icon - smaller on mobile/tablet */}
+                <div className="hiw-3d-icon-wrapper flex-1 flex items-center justify-center max-lg:scale-75 max-lg:origin-center">
+                  <Link3DIcon />
+                </div>
+                
+                <div className="hiw-bento-content p-3 sm:p-4 lg:p-5">
+                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-xl mb-1 sm:mb-1.5 lg:mb-2">Connect Them</h3>
+                  <p className="hiw-bento-desc text-xs sm:text-sm">
+                    One model's output becomes another's input.
+                  </p>
                 </div>
               </div>
-            </AnimatedElement>
-          </div>
+            </div>
+          </AnimatedElement>
         </div>
       </div>
     </section>

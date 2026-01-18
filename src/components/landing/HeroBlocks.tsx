@@ -63,16 +63,19 @@ export function HeroBlocks() {
       Responsive container that scales with viewport.
       Uses CSS scale transform for proportional sizing across breakpoints.
       Now visible on all screens with proper mobile scaling.
+      Mobile/tablet: scaled larger to fill the frame properly.
     */
     <div 
       className={cn(
         "relative w-full h-full flex items-center justify-center",
         "origin-center",
         "motion-reduce:!transform-none",
-        /* Desktop/laptop: no scaling (original size). Mobile/tablet: scaled down */
+        /* Desktop/laptop: no scaling (original size) */
         "lg:scale-100 xl:scale-100",
-        /* Mobile scaling - only applied on screens < 1024px */
-        "max-lg:scale-[0.48] max-md:scale-[0.42] max-sm:scale-[0.35]"
+        /* Tablet: larger scale to fill frame */
+        "md:scale-[0.65] max-lg:md:scale-[0.70]",
+        /* Mobile: significantly larger to be prominent */
+        "max-md:scale-[0.55] max-sm:scale-[0.50]"
       )}
     >
       {/* SVG Connection Lines - Softer glow with smoother animation */}
