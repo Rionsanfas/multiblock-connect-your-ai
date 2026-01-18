@@ -69,8 +69,10 @@ export function HeroBlocks() {
         "relative w-full h-full flex items-center justify-center",
         "origin-center",
         "motion-reduce:!transform-none",
-        /* Responsive scaling - smaller on mobile to fit all blocks */
-        "scale-[0.38] xs:scale-[0.42] sm:scale-[0.55] md:scale-[0.65] lg:scale-[0.8] xl:scale-[0.95]"
+        /* Desktop/laptop: no scaling (original size). Mobile/tablet: scaled down */
+        "lg:scale-100 xl:scale-100",
+        /* Mobile scaling - only applied on screens < 1024px */
+        "max-lg:scale-[0.48] max-md:scale-[0.42] max-sm:scale-[0.35]"
       )}
     >
       {/* SVG Connection Lines - Softer glow with smoother animation */}
