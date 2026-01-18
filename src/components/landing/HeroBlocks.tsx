@@ -62,7 +62,7 @@ export function HeroBlocks() {
     /* 
       Responsive container that scales with viewport.
       Uses CSS scale transform for proportional sizing across breakpoints.
-      Scale values: 0.5 (mobile) → 0.65 (tablet) → 0.8 (laptop) → 1.0 (desktop)
+      Scale values: 0.45 (mobile) → 0.6 (tablet) → 0.8 (laptop) → 1.0 (desktop)
     */
     <div 
       className={cn(
@@ -72,8 +72,8 @@ export function HeroBlocks() {
         "motion-reduce:!transform-none"
       )}
       style={{ 
-        /* Scale container based on viewport width */
-        transform: `scale(clamp(0.45, 0.3 + 0.04 * min(100vw / 10, 20), 1))`,
+        /* Scale container based on viewport width - more conservative on mobile */
+        transform: `scale(clamp(0.4, 0.25 + 0.035 * min(100vw / 10, 22), 1))`,
         transformOrigin: "center center",
       }}
     >

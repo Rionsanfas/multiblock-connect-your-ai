@@ -441,22 +441,22 @@ function BoardCard({
   return (
     <GlassCard
       variant="hover"
-      className={`cursor-pointer group ${viewMode === "list" ? "flex items-center justify-between p-4" : "p-5"}`}
+      className={`cursor-pointer group ${viewMode === "list" ? "flex items-center justify-between p-3 sm:p-4" : "p-4 sm:p-5"}`}
       onClick={onOpen}
       onMouseEnter={onMouseEnter}
     >
-      <div className={viewMode === "list" ? "flex items-center gap-4" : ""}>
-        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+      <div className={viewMode === "list" ? "flex items-center gap-3 sm:gap-4 flex-1 min-w-0" : ""}>
+        <h3 className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors truncate">
           {board.title}
         </h3>
-        <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
           <span>{blockCount} blocks</span>
           {usage && usage.message_count > 0 && (
             <>
-              <span>•</span>
-              <span>{usage.message_count} msgs</span>
-              <span>•</span>
-              <span>{formatBytes(usage.total_bytes)}</span>
+              <span className="hidden xs:inline">•</span>
+              <span className="hidden xs:inline">{usage.message_count} msgs</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline">{formatBytes(usage.total_bytes)}</span>
             </>
           )}
           <span>•</span>
@@ -466,7 +466,7 @@ function BoardCard({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="icon" className="p-2 hover:bg-secondary rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="p-1.5 sm:p-2 hover:bg-secondary rounded-lg opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 touch-target">
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>

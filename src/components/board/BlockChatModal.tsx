@@ -377,8 +377,8 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
           className={cn(
             "flex flex-col rounded-xl sm:rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300",
             isFullscreen 
-              ? "w-[100vw] h-[100vh] max-w-none max-h-none rounded-none" 
-              : "max-w-2xl w-[95vw] sm:w-[90vw] h-[85vh] sm:h-[80vh] max-h-[700px]"
+              ? "w-[100vw] h-[100dvh] max-w-none max-h-none rounded-none" 
+              : "max-w-2xl w-[95vw] sm:w-[90vw] h-[90dvh] sm:h-[80vh] max-h-none sm:max-h-[700px]"
           )}
         >
         <DialogHeader className="px-3 sm:px-4 py-2 sm:py-2.5 border-b border-border/20 flex-shrink-0">
