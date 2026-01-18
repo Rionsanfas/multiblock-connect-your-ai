@@ -69,6 +69,11 @@ export default function BoardCanvas() {
   const { connections: boardConnections } = useBoardConnections(board?.id);
   const { create: createConnection } = useConnectionActions(board?.id || '');
 
+  // Responsive hooks - MUST be called unconditionally at top level
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const showMobileZoomControls = isMobile || isTablet;
+
   const {
     selectedBlockId,
     selectBlock,
@@ -454,10 +459,7 @@ export default function BoardCanvas() {
     );
   }
 
-  // Check if mobile/tablet for zoom controls visibility
-  const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
-  const showMobileZoomControls = isMobile || isTablet;
+  // 7. Board loaded - render canvas
 
   // 7. Board loaded - render canvas
   return (
