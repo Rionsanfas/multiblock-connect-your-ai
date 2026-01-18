@@ -45,12 +45,12 @@ const Hero = () => {
       {/* Container */}
       <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero grid - stacks on mobile/tablet, side-by-side on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-center gap-6 sm:gap-8 lg:gap-10">
-          {/* Left: Text Content */}
-          <div className="text-center lg:text-left order-2 lg:order-1">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-center gap-8 lg:gap-10">
+          {/* Left: Text Content - Always on top on mobile */}
+          <div className="text-center lg:text-left order-1 lg:order-1 relative z-20">
             {/* Headline with shadow effect */}
             <h1 
-              className="font-bold leading-tight text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl mb-3 sm:mb-4"
+              className="font-bold leading-tight text-wrap-balance text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl mb-4 sm:mb-5"
               style={mainStyle}
             >
               <span 
@@ -148,9 +148,9 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right: Connected Blocks Visual */}
+          {/* Right: Connected Blocks Visual - Hidden on small mobile, decorative on medium+ */}
           <div 
-            className="order-1 lg:order-2 flex items-center justify-center min-h-[180px] sm:min-h-[220px] md:min-h-[280px] lg:min-h-[350px] max-h-[45vh] lg:max-h-[55vh]"
+            className="hidden sm:flex order-2 lg:order-2 items-center justify-center min-h-[280px] md:min-h-[320px] lg:min-h-[400px] max-h-[50vh] lg:max-h-[60vh] relative z-10"
             style={visualStyle}
           >
             <HeroBlocks />
