@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 interface ZoomControlsProps {
   onCenterView?: () => void;
   className?: string;
+  compact?: boolean;
 }
 
-export function ZoomControls({ onCenterView, className }: ZoomControlsProps) {
+export function ZoomControls({ onCenterView, className, compact = false }: ZoomControlsProps) {
   const { zoom, setZoom } = useAppStore();
 
   const handleZoomIn = () => {
@@ -31,44 +32,60 @@ export function ZoomControls({ onCenterView, className }: ZoomControlsProps) {
   return (
     <div 
       className={cn(
-        "flex items-center gap-1 p-1.5 rounded-xl bg-card/90 backdrop-blur-xl border border-border/30 shadow-lg",
+        "flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-card/90 backdrop-blur-xl border border-border/30 shadow-lg",
+        compact && "p-0.5 gap-0",
         className
       )}
     >
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 rounded-lg hover:bg-secondary/60"
+        className={cn(
+          "rounded-md sm:rounded-lg hover:bg-secondary/60",
+          compact ? "h-7 w-7" : "h-8 w-8 sm:h-9 sm:w-9"
+        )}
         onClick={handleZoomOut}
         disabled={zoom <= 0.25}
       >
-        <Minus className="h-4 w-4" />
+        <Minus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </Button>
       
-      <span className="min-w-[3rem] text-center text-xs font-medium text-muted-foreground">
+      <span className={cn(
+        "text-center font-medium text-muted-foreground",
+        compact ? "min-w-[2rem] text-[10px]" : "min-w-[2.5rem] sm:min-w-[3rem] text-[10px] sm:text-xs"
+      )}>
         {zoomPercent}%
       </span>
       
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 rounded-lg hover:bg-secondary/60"
+        className={cn(
+          "rounded-md sm:rounded-lg hover:bg-secondary/60",
+          compact ? "h-7 w-7" : "h-8 w-8 sm:h-9 sm:w-9"
+        )}
         onClick={handleZoomIn}
         disabled={zoom >= 3}
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </Button>
       
-      <div className="w-px h-5 bg-border/30 mx-0.5" />
+      <div className={cn(
+        "bg-border/30",
+        compact ? "w-px h-4 mx-0" : "w-px h-4 sm:h-5 mx-0.5"
+      )} />
       
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 rounded-lg hover:bg-secondary/60"
+        className={cn(
+          "rounded-md sm:rounded-lg hover:bg-secondary/60",
+          compact ? "h-7 w-7" : "h-8 w-8 sm:h-9 sm:w-9"
+        )}
         onClick={handleResetZoom}
         title="Reset zoom and center"
       >
-        <RotateCcw className="h-4 w-4" />
+        <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </Button>
     </div>
   );
