@@ -27,7 +27,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 
 import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
-import { useModelsGroupedByProvider, useAvailableProviders, useModelsGroupedByType } from "@/hooks/useModelConfig";
+import { useModelsGroupedByProvider, useAvailableProviders, useModelsGroupedByTypeAndProvider } from "@/hooks/useModelConfig";
 import { useBlockIncomingContext } from "@/hooks/useBlockConnections";
 import { useBlock } from "@/hooks/useBlockData";
 import { useBoardBlocks } from "@/hooks/useBoardBlocks";
@@ -128,7 +128,7 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   const userApiKeys = useUserApiKeys();
   const modelsByProvider = useModelsGroupedByProvider();
-  const { chat: chatModels, image: imageModels, video: videoModels } = useModelsGroupedByType();
+  const { chat: chatModels, image: imageModels, video: videoModels } = useModelsGroupedByTypeAndProvider();
   const providers = useAvailableProviders();
   const { messages: blockMessages, isLoading: messagesLoading } = useBlockMessages(blockId);
   const { sendMessage: persistMessage, deleteMessage: deletePersistedMessage } = useMessageActions(blockId);
