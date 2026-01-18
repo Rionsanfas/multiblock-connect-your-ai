@@ -583,7 +583,7 @@ export const useAppStore = create<AppState>()(
       closeBlockChat: () => set({ isBlockChatOpen: false, chatBlockId: null }),
       toggleAutoChain: () => set((state) => ({ autoChainEnabled: !state.autoChainEnabled })),
       toggleSnapToGrid: () => set((state) => ({ snapToGrid: !state.snapToGrid })),
-      setZoom: (zoom) => set({ zoom: Math.max(0.25, Math.min(2, zoom)) }),
+      setZoom: (zoom) => set({ zoom: Math.max(0.25, Math.min(3, zoom)) }),
       
       // Reset
       resetMocks: () => {

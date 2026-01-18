@@ -67,7 +67,8 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState("");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // CRITICAL: Sidebar starts CLOSED when entering fullscreen
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(256); // Default 256px (w-64)
   const [isResizing, setIsResizing] = useState(false);
   const [isSwitchingModel, setIsSwitchingModel] = useState(false);
@@ -396,22 +397,23 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                   </Button>
                 )}
                 <DialogTitle className="text-sm font-medium truncate">{block.title}</DialogTitle>
+                {/* Model selector - ALWAYS visible on all screens, not hidden on mobile */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button 
                       variant="ghost" 
                       disabled={isSwitchingModel}
-                      className={cn("hidden sm:flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg border border-border/20 h-auto text-xs sm:text-sm", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}
+                      className={cn("flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-lg border border-border/20 h-auto text-xs", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}
                     >
                       {isSwitchingModel ? (
                         <>
                           <Spinner className="h-3 w-3" />
-                          <span className="text-sm">Switching...</span>
+                          <span className="text-xs hidden sm:inline">Switching...</span>
                         </>
                       ) : currentModel ? (
                         <ProviderBadge provider={currentModel.provider} model={currentModel.name} />
                       ) : (
-                        <span className="text-sm text-muted-foreground">Select Model</span>
+                        <span className="text-xs text-muted-foreground">Select Model</span>
                       )}
                       {!hasKeyForCurrentProvider && !isSwitchingModel && <Lock className="h-3 w-3 text-destructive" />}
                       <ChevronDown className="h-3 w-3 text-muted-foreground" />
