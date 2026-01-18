@@ -547,22 +547,23 @@ export default function BoardCanvas() {
                   </div>
                 </div>
 
-                {/* Mobile/Tablet zoom controls */}
+                {/* Mobile/Tablet zoom controls - positioned for touch accessibility */}
                 {showMobileZoomControls && (
                   <ZoomControls 
                     onCenterView={handleCenterView}
-                    className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50"
+                    className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-50"
+                    compact={isMobile}
                   />
                 )}
               </div>
           </ContextMenuTrigger>
-          <ContextMenuContent className="bg-card/90 backdrop-blur-2xl border border-border/40 rounded-2xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+          <ContextMenuContent className="bg-card/90 backdrop-blur-2xl border border-border/40 rounded-xl sm:rounded-2xl min-w-[160px] sm:min-w-[180px] p-1 sm:p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
             <ContextMenuItem 
               onClick={handleCreateBlockAtContext}
-              className="rounded-xl gap-3 cursor-pointer px-4 py-3 text-sm font-medium transition-all duration-200 hover:bg-accent/20 focus:bg-accent/20 data-[highlighted]:bg-accent/20"
+              className="rounded-lg sm:rounded-xl gap-2 sm:gap-3 cursor-pointer px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all duration-200 hover:bg-accent/20 focus:bg-accent/20 data-[highlighted]:bg-accent/20"
             >
-              <div className="p-2 rounded-xl bg-secondary/60 border border-border/30 shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                <Plus className="h-4 w-4" />
+              <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-secondary/60 border border-border/30 shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
               Create Block
             </ContextMenuItem>

@@ -24,6 +24,7 @@ import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { getChatModels, PROVIDERS, getModelConfig } from "@/config/models";
 import { BoardApiKeySettings } from "@/components/board/BoardApiKeySettings";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface TopBarProps {
   boardId?: string;
@@ -117,57 +118,60 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
   };
 
   return (
-    <header className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-5 gap-2 sm:gap-4">
+    <header className="h-12 sm:h-14 md:h-16 flex items-center justify-between px-2 sm:px-3 md:px-5 gap-1.5 sm:gap-2 md:gap-4">
       {/* Left section */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 min-w-0 flex-1">
         {showBoardControls && (
           <button
             onClick={() => navigate("/dashboard")}
-            className="key-icon-3d p-2.5 rounded-xl"
+            className="key-icon-3d p-2 sm:p-2.5 rounded-lg sm:rounded-xl flex-shrink-0"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
         )}
 
-        {/* Home link */}
+        {/* Home link - hidden on very small screens when showing board controls */}
         <Link
           to="/"
-          className="key-icon-3d p-2.5 rounded-xl"
+          className={cn(
+            "key-icon-3d p-2 sm:p-2.5 rounded-lg sm:rounded-xl flex-shrink-0",
+            showBoardControls && "hidden xs:flex"
+          )}
         >
-          <Home className="h-4 w-4" />
+          <Home className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Link>
 
         {showBoardControls && boardTitle && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
             {isEditing ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-1">
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleTitleSave()}
-                  className="h-10 w-56 bg-secondary/50 rounded-xl border-border/20"
+                  className="h-8 sm:h-10 w-full max-w-[200px] sm:max-w-[300px] bg-secondary/50 rounded-lg sm:rounded-xl border-border/20 text-sm"
                   autoFocus
                 />
-                <button onClick={handleTitleSave} className="key-icon-3d p-2.5 rounded-xl">
-                  <Check className="h-4 w-4" />
+                <button onClick={handleTitleSave} className="key-icon-3d p-2 sm:p-2.5 rounded-lg sm:rounded-xl flex-shrink-0">
+                  <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 text-lg font-semibold hover:text-[hsl(var(--accent))] transition-colors group"
+                className="flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base md:text-lg font-semibold hover:text-[hsl(var(--accent))] transition-colors group min-w-0"
               >
-                {boardTitle}
-                <Pencil className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="truncate max-w-[120px] xs:max-w-[180px] sm:max-w-[250px] md:max-w-none">{boardTitle}</span>
+                <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* Center section - Zoom controls only */}
+      {/* Center section - Zoom controls - hidden on mobile (shown in floating controls instead) */}
       {showBoardControls && (
-        <div className="hidden sm:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-1 flex-shrink-0">
           {/* Zoom controls */}
           <div className="flex items-center gap-1 px-2">
             <button
@@ -190,42 +194,19 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
       )}
 
       {/* Right section */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
         {showBoardControls && (
           <>
-            {/* Instructions Popover */}
+            {/* Instructions Popover - hidden on small mobile */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="key-icon-3d p-2.5 rounded-xl"
+                  className="hidden xs:flex key-icon-3d p-2 sm:p-2.5 rounded-lg sm:rounded-xl h-8 w-8 sm:h-auto sm:w-auto"
                   title="Board Instructions"
                 >
-                  <HelpCircle className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72 p-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="bottom" align="end">
-                <div className="space-y-2">
-                  <p className="font-semibold text-sm">Board Instructions</p>
-                  <ul className="text-xs space-y-1.5 list-disc pl-4 text-muted-foreground">
-                    <li>Double-click canvas to create a new block</li>
-                    <li>Click a block to open chat</li>
-                    <li>Drag blocks to reposition them</li>
-                    <li>Drag block corners to resize</li>
-                    <li>Connect blocks by dragging from connection nodes</li>
-                    <li>Use zoom controls to zoom in/out</li>
-                    <li>Click and drag on canvas to pan</li>
-                  </ul>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Settings Popover - All Blocks with inline settings */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="key-icon-3d p-2.5 rounded-xl">
-                  <Settings className="h-4 w-4" />
+                  <HelpCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6),inset_0_1px_0_0_hsl(0_0%_100%/0.06)]" side="bottom" align="end">

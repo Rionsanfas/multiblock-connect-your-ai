@@ -374,46 +374,46 @@ export function BlockChatModal({
   }
   return <>
       <Dialog open onOpenChange={() => closeBlockChat()}>
-        <DialogContent hideCloseButton className={cn("flex flex-col rounded-xl sm:rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300", isFullscreen ? "w-[100vw] h-[100dvh] max-w-none max-h-none rounded-none" : "max-w-2xl w-[95vw] sm:w-[90vw] h-[90dvh] sm:h-[80vh] max-h-none sm:max-h-[700px]")}>
-        <DialogHeader className="px-3 sm:px-4 py-2 sm:py-2.5 border-b border-border/20 flex-shrink-0">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
+        <DialogContent hideCloseButton className={cn("flex flex-col rounded-xl sm:rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300", isFullscreen ? "w-[100vw] h-[100dvh] max-w-none max-h-none rounded-none" : "w-[98vw] sm:w-[95vw] md:w-[90vw] max-w-2xl h-[92dvh] sm:h-[90dvh] md:h-[80vh] max-h-none sm:max-h-[700px]")}>
+        <DialogHeader className="px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 border-b border-border/20 flex-shrink-0">
+            <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                 {/* Sidebar toggle - only show in fullscreen */}
-                {isFullscreen && <Button variant="ghost" size="icon" className="h-8 w-8 p-1.5 rounded-lg flex-shrink-0" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                    {isSidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+                {isFullscreen && <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 p-1 sm:p-1.5 rounded-lg flex-shrink-0" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+                    {isSidebarOpen ? <PanelLeftClose className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <PanelLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                   </Button>}
-                <DialogTitle className="text-sm font-medium truncate">{block.title}</DialogTitle>
-                {/* Model selector - ALWAYS visible on all screens, not hidden on mobile */}
+                <DialogTitle className="text-xs sm:text-sm font-medium truncate max-w-[80px] xs:max-w-[120px] sm:max-w-none">{block.title}</DialogTitle>
+                {/* Model selector - responsive sizing */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" disabled={isSwitchingModel} className={cn("flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 rounded-lg border border-border/20 h-auto text-xs", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
+                    <Button variant="ghost" disabled={isSwitchingModel} className={cn("flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg border border-border/20 h-auto text-[10px] sm:text-xs", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
                       {isSwitchingModel ? <>
-                          <Spinner className="h-3 w-3" />
-                          <span className="text-xs hidden sm:inline">Switching...</span>
-                        </> : currentModel ? <ProviderBadge provider={currentModel.provider} model={currentModel.name} /> : <span className="text-xs text-muted-foreground">Select Model</span>}
-                      {!hasKeyForCurrentProvider && !isSwitchingModel && <Lock className="h-3 w-3 text-destructive" />}
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                          <Spinner className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                          <span className="text-[10px] sm:text-xs hidden sm:inline">Switching...</span>
+                        </> : currentModel ? <ProviderBadge provider={currentModel.provider} model={currentModel.name} /> : <span className="text-[10px] sm:text-xs text-muted-foreground">Select</span>}
+                      {!hasKeyForCurrentProvider && !isSwitchingModel && <Lock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive" />}
+                      <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-80 max-h-[450px] overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
-                    <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20">
-                      <Brain className="h-3 w-3" />
+                  <DropdownMenuContent className="w-[280px] sm:w-80 max-h-[400px] sm:max-h-[450px] overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
+                    <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground border-b border-border/20">
+                      <Brain className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       <span>Switch model</span>
                     </div>
                     
-                    {/* Type tabs */}
-                    <div className="flex gap-1 p-2 border-b border-border/20">
-                      <button onClick={() => setModelTab('chat')} className={cn("flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors", modelTab === 'chat' ? "bg-primary text-primary-foreground" : "hover:bg-secondary/60 text-muted-foreground")}>
-                        <MessageSquare className="h-3 w-3" />
-                        Chat ({Object.values(chatModels).flat().length})
+                    {/* Type tabs - responsive */}
+                    <div className="flex gap-0.5 sm:gap-1 p-1.5 sm:p-2 border-b border-border/20">
+                      <button onClick={() => setModelTab('chat')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors", modelTab === 'chat' ? "bg-primary text-primary-foreground" : "hover:bg-secondary/60 text-muted-foreground")}>
+                        <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                        <span className="hidden xs:inline">Chat</span> ({Object.values(chatModels).flat().length})
                       </button>
-                      <button onClick={() => setModelTab('image')} className={cn("flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors", modelTab === 'image' ? "bg-purple-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
-                        <Image className="h-3 w-3" />
-                        Image ({Object.values(imageModels).flat().length})
+                      <button onClick={() => setModelTab('image')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors", modelTab === 'image' ? "bg-purple-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
+                        <Image className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                        <span className="hidden xs:inline">Image</span> ({Object.values(imageModels).flat().length})
                       </button>
-                      <button onClick={() => setModelTab('video')} className={cn("flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors", modelTab === 'video' ? "bg-pink-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
-                        <Video className="h-3 w-3" />
-                        Video ({Object.values(videoModels).flat().length})
+                      <button onClick={() => setModelTab('video')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors", modelTab === 'video' ? "bg-pink-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
+                        <Video className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                        <span className="hidden xs:inline">Video</span> ({Object.values(videoModels).flat().length})
                       </button>
                     </div>
 
@@ -464,40 +464,44 @@ export function BlockChatModal({
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                {blockUsage && <span className="text-xs text-muted-foreground">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
+                {blockUsage && <span className="hidden xs:inline text-[10px] sm:text-xs text-muted-foreground">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 sm:gap-1">
                 <Popover>
-                  <PopoverTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 p-1.5 rounded-lg"><Settings className="h-4 w-4" /></Button></PopoverTrigger>
-                  <PopoverContent className="w-80 p-4 space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl" side="bottom" align="end">
-                    <div className="font-semibold text-sm">Block Settings</div>
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Title</Label>
-                      {isEditingTitle ? <div className="flex gap-2"><Input value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === "Enter" && handleTitleSave()} className="bg-secondary/50 rounded-lg border-border/30 h-9" autoFocus /><button className="p-2 rounded-lg" onClick={handleTitleSave}><Check className="h-3.5 w-3.5" /></button></div> : <button onClick={() => {
+                  <PopoverTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 p-1 sm:p-1.5 rounded-lg"><Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></Button></PopoverTrigger>
+                  <PopoverContent className="w-[260px] sm:w-80 p-3 sm:p-4 space-y-3 sm:space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl" side="bottom" align="end">
+                    <div className="font-semibold text-xs sm:text-sm">Block Settings</div>
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label className="text-[10px] sm:text-xs text-muted-foreground">Title</Label>
+                      {isEditingTitle ? <div className="flex gap-1.5 sm:gap-2"><Input value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === "Enter" && handleTitleSave()} className="bg-secondary/50 rounded-lg border-border/30 h-8 sm:h-9 text-sm" autoFocus /><button className="p-1.5 sm:p-2 rounded-lg" onClick={handleTitleSave}><Check className="h-3 w-3 sm:h-3.5 sm:w-3.5" /></button></div> : <button onClick={() => {
                       setTitle(block.title);
                       setIsEditingTitle(true);
-                    }} className="w-full text-left p-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 flex items-center justify-between group text-sm"><span>{block.title}</span><Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100" /></button>}
+                    }} className="w-full text-left p-1.5 sm:p-2 rounded-lg bg-secondary/40 hover:bg-secondary/60 flex items-center justify-between group text-xs sm:text-sm"><span>{block.title}</span><Pencil className="h-2.5 w-2.5 sm:h-3 sm:w-3 opacity-0 group-hover:opacity-100" /></button>}
                     </div>
                   </PopoverContent>
                 </Popover>
                 {/* Fullscreen toggle button */}
-                <Button variant="ghost" size="icon" className="h-8 w-8 p-1.5 rounded-lg" onClick={() => setIsFullscreen(!isFullscreen)}>
-                  {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 p-1 sm:p-1.5 rounded-lg" onClick={() => setIsFullscreen(!isFullscreen)}>
+                  {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                 </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 p-1.5 rounded-lg" onClick={() => closeBlockChat()}><X className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 p-1 sm:p-1.5 rounded-lg" onClick={() => closeBlockChat()}><X className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></Button>
               </div>
             </div>
           </DialogHeader>
 
-          {!hasKeyForCurrentProvider && currentProvider && <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
-              <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-sm"><Lock className="h-4 w-4 text-destructive" /><span>No API key for {PROVIDERS[currentProvider].name}</span></div><button onClick={() => navigate("/settings/keys")} className="text-xs text-primary hover:underline">Add API Key</button></div>
+          {!hasKeyForCurrentProvider && currentProvider && <div className="px-3 sm:px-5 py-2 sm:py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
+              <div className="flex items-center justify-between"><div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"><Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" /><span>No API key for {PROVIDERS[currentProvider].name}</span></div><button onClick={() => navigate("/settings/keys")} className="text-[10px] sm:text-xs text-primary hover:underline">Add Key</button></div>
             </div>}
 
-          {errorMessage && <div className="px-5 py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
-              <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" /><span>{errorMessage}</span></div><Button variant="ghost" size="sm" onClick={() => {
+          {errorMessage && <div className="px-3 sm:px-5 py-2 sm:py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
+              <div className="flex items-center justify-between"><div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-destructive"><AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="truncate">{errorMessage}</span></div><Button variant="ghost" size="sm" onClick={() => {
               setErrorMessage(null);
               setMessageStatus('idle');
-            }} className="text-xs">Dismiss</Button></div>
+            }} className="text-[10px] sm:text-xs h-7">Dismiss</Button></div>
+            </div>}
+
+          {incomingContext.length > 0 && <div className="px-3 sm:px-5 py-1.5 sm:py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground"><Link2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" /><span className="truncate">Context from: {incomingContext.map(ctx => ctx.source_block_title).join(', ')}</span></div>
             </div>}
 
           {incomingContext.length > 0 && <div className="px-5 py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0">
@@ -552,8 +556,8 @@ export function BlockChatModal({
 
             {/* Chat content area */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-                {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-6 w-6" /></div> : blockMessages.length === 0 && !streamingContent ? <div className="flex flex-col items-center justify-center h-full text-center"><Sparkles className="h-8 w-8 text-muted-foreground/50 mb-3" /><p className="text-muted-foreground text-sm">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div> : <>
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-5 py-3 sm:py-4 space-y-3 sm:space-y-4">
+                {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-5 w-5 sm:h-6 sm:w-6" /></div> : blockMessages.length === 0 && !streamingContent ? <div className="flex flex-col items-center justify-center h-full text-center px-4"><Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/50 mb-2 sm:mb-3" /><p className="text-muted-foreground text-xs sm:text-sm">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div> : <>
                     {blockMessages.map(message => <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} selectable />)}
                     {streamingContent && <ChatMessage message={{
                   id: 'streaming',
@@ -563,8 +567,8 @@ export function BlockChatModal({
                   size_bytes: 0,
                   created_at: new Date().toISOString()
                 }} isStreaming />}
-                    {messageStatus === 'waiting_llm' && !streamingContent && <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                        <Spinner className="h-4 w-4" />
+                    {messageStatus === 'waiting_llm' && !streamingContent && <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground text-xs sm:text-sm">
+                        <Spinner className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         <span>Thinking...</span>
                       </div>}
                     <div ref={messagesEndRef} />
