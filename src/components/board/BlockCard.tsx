@@ -137,28 +137,15 @@ export function BlockCard({
   };
 
   // Separate click handler - only fires if no drag occurred
-  // Track if we just finished resizing to prevent click
-  const resizeEndTimeRef = useRef(0);
-  
-  // Separate click handler - only fires if no drag or resize occurred
   const handleClick = useCallback((e: React.MouseEvent) => {
-    // CRITICAL: Block click if any dragging or resizing occurred recently (within 300ms)
+    // CRITICAL: Block click if any dragging occurred recently (within 300ms)
+    // This handles the race condition where click fires after pointer up
     const timeSinceDragEnd = Date.now() - dragEndTimeRef.current;
-    const timeSinceResizeEnd = Date.now() - resizeEndTimeRef.current;
-    if (timeSinceDragEnd < 300 || timeSinceResizeEnd < 300 || isDraggingRef.current || isResizing || hasDraggedRef.current) {
+    if (timeSinceDragEnd < 300 || isDraggingRef.current || isResizing || hasDraggedRef.current) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
-    
-    // CRITICAL: Don't open chat if clicking on interactive elements
-    const target = e.target as HTMLElement;
-    if (target.closest('.no-drag')) return;
-    if (target.closest('[role="menu"]')) return;
-    if (target.closest('[role="menuitem"]')) return;
-    if (target.closest('[data-radix-popper-content-wrapper]')) return;
-    if (target.tagName === 'BUTTON') return;
-    
     openBlockChat(block.id);
   }, [isResizing, openBlockChat, block.id]);
 
@@ -222,8 +209,6 @@ export function BlockCard({
 
   const handleResizeEnd = useCallback(() => {
     if (isResizing) {
-      // Record resize end time to prevent click from triggering
-      resizeEndTimeRef.current = Date.now();
       // Release global drag lock
       endDrag();
       updateBlock(block.id, { config: { ...block.config, width: size.width, height: size.height } });
@@ -489,8 +474,6 @@ export function BlockCard({
             )}
             style={{ top: -cornerOffset, left: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'nw')}
-            onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); }}
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -511,8 +494,6 @@ export function BlockCard({
             )}
             style={{ top: -cornerOffset, right: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'ne')}
-            onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); }}
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -533,8 +514,6 @@ export function BlockCard({
             )}
             style={{ bottom: -cornerOffset, left: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'sw')}
-            onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); }}
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -555,8 +534,6 @@ export function BlockCard({
             )}
             style={{ bottom: -cornerOffset, right: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'se')}
-            onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); }}
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -650,36 +627,16 @@ export function BlockCard({
               </DropdownMenu>
             </div>
 
-            {/* Content Preview - text scales with block size */}
+            {/* Content Preview */}
             <div className="px-3 py-3 flex-1 overflow-hidden" style={{ minHeight: size.height - 100 }}>
               {lastMessage ? (
-                <p 
-                  className="text-muted-foreground/80 leading-relaxed"
-                  style={{ 
-                    fontSize: `${Math.max(12, Math.min(18, size.width / 20))}px`,
-                    lineClamp: Math.max(3, Math.floor((size.height - 100) / 24)),
-                    display: '-webkit-box',
-                    WebkitLineClamp: Math.max(3, Math.floor((size.height - 100) / 24)),
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}
-                >
+                <p className="text-xs text-muted-foreground/80 line-clamp-3 leading-relaxed">
                   {lastMessage.content}
                 </p>
               ) : needsModelSelection ? (
-                <p 
-                  className="text-amber-500/70 italic"
-                  style={{ fontSize: `${Math.max(12, Math.min(16, size.width / 22))}px` }}
-                >
-                  Select a model to start chatting
-                </p>
+                <p className="text-xs text-amber-500/70 italic">Select a model to start chatting</p>
               ) : (
-                <p 
-                  className="text-muted-foreground/40 italic"
-                  style={{ fontSize: `${Math.max(12, Math.min(16, size.width / 22))}px` }}
-                >
-                  Click to chat
-                </p>
+                <p className="text-xs text-muted-foreground/40 italic">Click to chat</p>
               )}
             </div>
 
