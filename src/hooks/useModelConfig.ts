@@ -112,6 +112,44 @@ export function useModelsGroupedByType(): Record<ModelType, ModelConfig[]> {
 }
 
 /**
+ * Get models grouped by type AND provider (for the model selector)
+ * Returns { chat: { openai: [...], anthropic: [...], ... }, image: { ... }, ... }
+ */
+export function useModelsGroupedByTypeAndProvider(): {
+  chat: Record<Provider, ModelConfig[]>;
+  image: Record<Provider, ModelConfig[]>;
+  video: Record<Provider, ModelConfig[]>;
+} {
+  return useMemo(() => {
+    const createProviderRecord = (): Record<Provider, ModelConfig[]> => ({
+      openai: [],
+      anthropic: [],
+      google: [],
+      xai: [],
+      deepseek: [],
+      mistral: [],
+      cohere: [],
+      together: [],
+      perplexity: [],
+    });
+
+    const result = {
+      chat: createProviderRecord(),
+      image: createProviderRecord(),
+      video: createProviderRecord(),
+    };
+
+    MODEL_CONFIGS.forEach((model) => {
+      if (model.type === 'chat' || model.type === 'image' || model.type === 'video') {
+        result[model.type][model.provider].push(model);
+      }
+    });
+
+    return result;
+  }, []);
+}
+
+/**
  * Get chat models grouped by provider
  */
 export function useChatModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
