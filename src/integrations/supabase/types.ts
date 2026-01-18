@@ -263,6 +263,94 @@ export type Database = {
           },
         ]
       }
+      generated_media: {
+        Row: {
+          block_id: string | null
+          board_id: string | null
+          created_at: string
+          duration_seconds: number | null
+          file_size_bytes: number | null
+          file_url: string
+          height: number | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          model_id: string
+          model_name: string
+          prompt: string
+          provider: string
+          storage_path: string | null
+          type: string
+          updated_at: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          block_id?: string | null
+          board_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          file_url: string
+          height?: number | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          model_id: string
+          model_name: string
+          prompt: string
+          provider: string
+          storage_path?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          block_id?: string | null
+          board_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          file_url?: string
+          height?: number | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          model_id?: string
+          model_name?: string
+          prompt?: string
+          provider?: string
+          storage_path?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_media_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_media_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_media_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ltd_inventory: {
         Row: {
           created_at: string

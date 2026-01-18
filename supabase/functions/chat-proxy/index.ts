@@ -221,17 +221,23 @@ serve(async (req) => {
         });
       }
 
-      const apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
+      // Try board-linked key first, then fallback to user keys
+      let apiKey = board_id ? await getApiKeyForBoard(supabaseAdmin, board_id, provider) : null;
       if (!apiKey) {
-        return new Response(JSON.stringify({ error: `No valid API key for ${provider}` }), {
+        apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
+      }
+      
+      if (!apiKey) {
+        return new Response(JSON.stringify({ error: `No valid API key for ${provider}. Please add your ${provider} API key in Settings.` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      console.log(`[chat-proxy] Image generation for user ${user.id} via ${provider}`);
+      console.log(`[chat-proxy] Image generation for user ${user.id} via ${provider}, model: ${model_id}`);
 
       let imageResponse;
+      let imageUrl: string | null = null;
       
       if (provider === "openai") {
         imageResponse = await fetch("https://api.openai.com/v1/images/generations", {
@@ -241,13 +247,19 @@ serve(async (req) => {
             "Authorization": `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: model_id.includes("dall-e") ? "dall-e-3" : "gpt-image-1",
+            model: "gpt-image-1",
             prompt,
             n: 1,
             size: "1024x1024",
           }),
         });
+        
+        if (imageResponse.ok) {
+          const data = await imageResponse.json();
+          imageUrl = data.data?.[0]?.url || data.data?.[0]?.b64_json;
+        }
       } else if (provider === "together") {
+        const togetherModel = model_id === "flux-together" ? "black-forest-labs/FLUX.1-schnell-Free" : model_id;
         imageResponse = await fetch("https://api.together.xyz/v1/images/generations", {
           method: "POST",
           headers: {
@@ -255,11 +267,59 @@ serve(async (req) => {
             "Authorization": `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: model_id,
+            model: togetherModel,
             prompt,
             n: 1,
-            size: "1024x1024",
+            width: 1024,
+            height: 1024,
           }),
+        });
+        
+        if (imageResponse.ok) {
+          const data = await imageResponse.json();
+          imageUrl = data.data?.[0]?.url || data.data?.[0]?.b64_json;
+        }
+      } else if (provider === "google") {
+        // Google Imagen API
+        imageResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instances: [{ prompt }],
+            parameters: { sampleCount: 1 },
+          }),
+        });
+        
+        if (imageResponse.ok) {
+          const data = await imageResponse.json();
+          imageUrl = data.predictions?.[0]?.bytesBase64Encoded 
+            ? `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`
+            : null;
+        }
+      } else if (provider === "xai") {
+        // xAI Grok Imagine
+        imageResponse = await fetch("https://api.x.ai/v1/images/generations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "grok-2-image",
+            prompt,
+            n: 1,
+          }),
+        });
+        
+        if (imageResponse.ok) {
+          const data = await imageResponse.json();
+          imageUrl = data.data?.[0]?.url;
+        }
+      } else if (provider === "mistral") {
+        // Mistral doesn't have image generation yet, return error
+        return new Response(JSON.stringify({ error: `Image generation is not yet available for Mistral. Please use a different provider.` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       } else {
         return new Response(JSON.stringify({ error: `Image generation not supported for ${provider}` }), {
@@ -268,18 +328,48 @@ serve(async (req) => {
         });
       }
 
-      if (!imageResponse.ok) {
-        const errorData = await imageResponse.json().catch(() => ({}));
+      if (!imageResponse!.ok) {
+        const errorData = await imageResponse!.json().catch(() => ({}));
+        console.error(`[chat-proxy] Image generation failed:`, errorData);
         return new Response(JSON.stringify({ error: errorData.error?.message || "Image generation failed" }), {
-          status: imageResponse.status,
+          status: imageResponse!.status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const imageData = await imageResponse.json();
-      const imageUrl = imageData.data?.[0]?.url;
+      if (!imageUrl) {
+        return new Response(JSON.stringify({ error: "No image was generated" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
-      return new Response(JSON.stringify({ image_url: imageUrl }), {
+      // Save generated media metadata to database
+      const { block_id: blockId, board_id: boardId } = body;
+      try {
+        await supabaseAdmin.from('generated_media').insert({
+          user_id: user.id,
+          block_id: blockId || null,
+          board_id: boardId || null,
+          type: 'image',
+          provider,
+          model_id: model_id || 'unknown',
+          model_name: model_id || 'Image Model',
+          prompt,
+          file_url: imageUrl,
+        });
+        console.log(`[chat-proxy] Saved generated image metadata for user ${user.id}`);
+      } catch (saveError) {
+        console.error(`[chat-proxy] Failed to save image metadata:`, saveError);
+        // Continue anyway - the image was generated successfully
+      }
+
+      return new Response(JSON.stringify({ 
+        image_url: imageUrl,
+        provider,
+        model_id,
+        prompt,
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -293,13 +383,137 @@ serve(async (req) => {
         });
       }
 
-      // Video generation is complex and provider-specific
-      // For now, return a placeholder response
+      // Try board-linked key first, then fallback to user keys
+      let apiKey = board_id ? await getApiKeyForBoard(supabaseAdmin, board_id, provider) : null;
+      if (!apiKey) {
+        apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
+      }
+      
+      if (!apiKey) {
+        return new Response(JSON.stringify({ error: `No valid API key for ${provider}. Please add your ${provider} API key in Settings.` }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log(`[chat-proxy] Video generation for user ${user.id} via ${provider}, model: ${model_id}`);
+
+      let videoUrl: string | null = null;
+      let videoResponse;
+
+      if (provider === "openai") {
+        // OpenAI Sora API (when available)
+        videoResponse = await fetch("https://api.openai.com/v1/videos/generations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "sora-2-pro",
+            prompt,
+            duration: 5,
+          }),
+        });
+        
+        if (videoResponse.ok) {
+          const data = await videoResponse.json();
+          videoUrl = data.data?.[0]?.url;
+        }
+      } else if (provider === "together") {
+        // Together.ai video models
+        videoResponse = await fetch("https://api.together.xyz/v1/videos/generations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: model_id || "stable-video-diffusion",
+            prompt,
+          }),
+        });
+        
+        if (videoResponse.ok) {
+          const data = await videoResponse.json();
+          videoUrl = data.data?.[0]?.url;
+        }
+      } else if (provider === "google") {
+        // Google Veo API (when available)
+        videoResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predict?key=${apiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            instances: [{ prompt }],
+            parameters: { duration: 5 },
+          }),
+        });
+        
+        if (videoResponse.ok) {
+          const data = await videoResponse.json();
+          videoUrl = data.predictions?.[0]?.videoUrl;
+        }
+      } else {
+        return new Response(JSON.stringify({ 
+          error: `Video generation is not yet available for ${provider}. Supported providers: OpenAI (Sora), Google (Veo), Together.ai (Stable Video).`
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!videoResponse!.ok) {
+        const errorData = await videoResponse!.json().catch(() => ({}));
+        console.error(`[chat-proxy] Video generation failed:`, errorData);
+        // Check if it's a "not available" error
+        const errorMessage = errorData.error?.message || "Video generation failed";
+        if (errorMessage.includes("not found") || errorMessage.includes("not available")) {
+          return new Response(JSON.stringify({ 
+            error: `Video generation API is not yet available for ${provider}. This feature is coming soon.`
+          }), {
+            status: 501,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ error: errorMessage }), {
+          status: videoResponse!.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!videoUrl) {
+        return new Response(JSON.stringify({ error: "No video was generated" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Save generated media metadata to database
+      const { block_id: blockId, board_id: boardId } = body;
+      try {
+        await supabaseAdmin.from('generated_media').insert({
+          user_id: user.id,
+          block_id: blockId || null,
+          board_id: boardId || null,
+          type: 'video',
+          provider,
+          model_id: model_id || 'unknown',
+          model_name: model_id || 'Video Model',
+          prompt,
+          file_url: videoUrl,
+        });
+        console.log(`[chat-proxy] Saved generated video metadata for user ${user.id}`);
+      } catch (saveError) {
+        console.error(`[chat-proxy] Failed to save video metadata:`, saveError);
+        // Continue anyway - the video was generated successfully
+      }
+
       return new Response(JSON.stringify({ 
-        error: "Video generation is currently being set up. Please check back later.",
-        video_url: null 
+        video_url: videoUrl,
+        provider,
+        model_id,
+        prompt,
       }), {
-        status: 501,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
