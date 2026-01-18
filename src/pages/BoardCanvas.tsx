@@ -21,8 +21,9 @@ import { toast } from "sonner";
 import { Plus, AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const DEFAULT_BLOCK_WIDTH = 280;
-const DEFAULT_BLOCK_HEIGHT = 160;
+// Responsive defaults - match BlockCard.tsx
+const DEFAULT_BLOCK_WIDTH = 260;
+const DEFAULT_BLOCK_HEIGHT = 140;
 
 export default function BoardCanvas() {
   const { id } = useParams<{ id: string }>();

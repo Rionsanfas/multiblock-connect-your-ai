@@ -566,42 +566,42 @@ function PlanUsageSection() {
           <CardDescription>Your subscription and usage details</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg bg-primary/10 border border-primary/20">
             <div>
-              <p className="font-semibold text-lg">{planName}</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="font-semibold text-base sm:text-lg">{planName}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {isFree ? 'Free forever' : isLifetime ? 'Lifetime access' : 'Annual subscription'}
               </p>
             </div>
             {isFree && (
-              <Button asChild>
+              <Button asChild className="w-full sm:w-auto">
                 <Link to="/pricing">Upgrade Plan</Link>
               </Button>
             )}
           </div>
 
           {/* Usage Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {/* Boards Usage */}
-            <GlassCard className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <LayoutGrid className="h-4 w-4 text-primary" />
-                <span className="font-medium text-sm">Boards</span>
+            <GlassCard className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <LayoutGrid className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                <span className="font-medium text-xs sm:text-sm">Boards</span>
               </div>
-              {boardsLimit !== -1 && <Progress value={boardsPercentage} className="h-2 mb-2" />}
-              <p className="text-xs text-muted-foreground">
+              {boardsLimit !== -1 && <Progress value={boardsPercentage} className="h-1.5 sm:h-2 mb-1.5 sm:mb-2" />}
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 {boardsUsed} of {boardsLimit === -1 ? 'Unlimited' : boardsLimit} boards used
               </p>
             </GlassCard>
 
             {/* Storage Usage */}
-            <GlassCard className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <HardDrive className="h-4 w-4 text-primary" />
-                <span className="font-medium text-sm">Storage</span>
+            <GlassCard className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <HardDrive className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                <span className="font-medium text-xs sm:text-sm">Storage</span>
               </div>
-              <Progress value={storagePercentage} className="h-2 mb-2" />
-              <p className="text-xs text-muted-foreground">
+              <Progress value={storagePercentage} className="h-1.5 sm:h-2 mb-1.5 sm:mb-2" />
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 {formatStorage(storageUsedMb)} of {formatStorage(storageLimitMb)} used
               </p>
             </GlassCard>
@@ -619,26 +619,28 @@ function PlanUsageSection() {
           <CardDescription>Expand your workspace capabilities</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:gap-4">
             {ADDONS.filter(a => a.is_active).map((addon) => (
-              <GlassCard key={addon.id} className="p-4">
-                <div className="flex items-center justify-between gap-4">
+              <GlassCard key={addon.id} className="p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium">{addon.name}</p>
-                    <p className="text-sm text-muted-foreground">{addon.description}</p>
+                    <p className="font-medium text-sm sm:text-base">{addon.name}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{addon.description}</p>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="font-semibold">{formatPrice(addon.price_cents)}</p>
-                    <p className="text-xs text-muted-foreground">one-time</p>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                    <div className="text-left sm:text-right flex-shrink-0">
+                      <p className="font-semibold text-sm sm:text-base">{formatPrice(addon.price_cents)}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">one-time</p>
+                    </div>
+                    <PolarCheckoutButton 
+                      planKey={addon.id} 
+                      isAddon={true}
+                      className="flex-shrink-0 text-xs sm:text-sm"
+                    >
+                      <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
+                      Add
+                    </PolarCheckoutButton>
                   </div>
-                  <PolarCheckoutButton 
-                    planKey={addon.id} 
-                    isAddon={true}
-                    className="flex-shrink-0"
-                  >
-                    <Zap className="h-4 w-4 mr-1.5" />
-                    Add
-                  </PolarCheckoutButton>
                 </div>
               </GlassCard>
             ))}

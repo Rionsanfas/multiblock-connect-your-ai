@@ -25,10 +25,11 @@ interface BlockCardProps {
   isConnecting: boolean;
 }
 
-const MIN_WIDTH = 200;
-const MIN_HEIGHT = 120;
-const DEFAULT_WIDTH = 280;
-const DEFAULT_HEIGHT = 160;
+// Responsive default sizes - smaller on mobile
+const MIN_WIDTH = 180;
+const MIN_HEIGHT = 100;
+const DEFAULT_WIDTH = 260;
+const DEFAULT_HEIGHT = 140;
 
 export function BlockCard({
   block,
