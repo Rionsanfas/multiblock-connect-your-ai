@@ -24,3 +24,6 @@ verify_jwt = true
 
 [functions.polar-customer-portal]
 verify_jwt = true
+
+[functions.get-signed-url]
+verify_jwt = true
