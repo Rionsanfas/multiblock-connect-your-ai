@@ -27,6 +27,11 @@ import { Button } from "@/components/ui/button";
 const DEFAULT_BLOCK_WIDTH = 260;
 const DEFAULT_BLOCK_HEIGHT = 140;
 
+// Zoom constraints
+const MIN_ZOOM = 0.3;
+const MAX_ZOOM = 2.5;
+const ZOOM_SENSITIVITY = 0.001;
+
 export default function BoardCanvas() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -79,6 +84,7 @@ export default function BoardCanvas() {
     selectBlock,
     setCurrentBoard,
     zoom,
+    setZoom,
     isBlockChatOpen,
     chatBlockId,
   } = useAppStore();
@@ -86,6 +92,40 @@ export default function BoardCanvas() {
   useEffect(() => {
     zoomRef.current = zoom;
   }, [zoom]);
+
+  // Mouse wheel zoom handler - cursor-centered zooming
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault();
+      
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      // Get cursor position relative to canvas
+      const cursorX = e.clientX - rect.left;
+      const cursorY = e.clientY - rect.top;
+
+      // Calculate the point in canvas space that the cursor is over
+      const canvasX = (cursorX - panOffset.x) / zoom;
+      const canvasY = (cursorY - panOffset.y) / zoom;
+
+      // Calculate new zoom level
+      const delta = -e.deltaY * ZOOM_SENSITIVITY;
+      const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * (1 + delta)));
+
+      // Skip if zoom didn't change (at limits)
+      if (newZoom === zoom) return;
+
+      // Calculate new pan offset to keep the cursor position fixed
+      const newPanX = cursorX - canvasX * newZoom;
+      const newPanY = cursorY - canvasY * newZoom;
+
+      // Apply both changes
+      setPanOffset({ x: newPanX, y: newPanY });
+      setZoom(newZoom);
+    },
+    [zoom, panOffset, setZoom]
+  );
 
   // CRITICAL: connection dragging must be window-scoped, never canvas-scoped.
   // Otherwise leaving the canvas ends the drag mid-mouse-down.
@@ -488,6 +528,7 @@ export default function BoardCanvas() {
                 onMouseLeave={handleCanvasMouseUp}
                 onDoubleClick={handleCanvasDoubleClick}
                 onContextMenu={handleContextMenu}
+                onWheel={handleWheel}
               >
                 {/* Canvas viewport - clips content but allows internal scrolling via pan */}
                 <div 

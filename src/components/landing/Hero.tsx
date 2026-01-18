@@ -148,9 +148,9 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right: Connected Blocks Visual - Desktop: full size, Mobile/Tablet: scaled */}
+          {/* Right: Connected Blocks Visual - Desktop: full size, Mobile/Tablet: scaled up and centered */}
           <div 
-            className="flex order-2 lg:order-2 items-center justify-center min-h-[280px] sm:min-h-[320px] md:min-h-[380px] lg:min-h-[500px] xl:min-h-[550px] max-h-[50vh] lg:max-h-[70vh] relative z-10 w-full overflow-visible"
+            className="flex order-2 lg:order-2 items-center justify-center min-h-[360px] sm:min-h-[400px] md:min-h-[440px] lg:min-h-[500px] xl:min-h-[550px] max-h-[55vh] sm:max-h-[50vh] lg:max-h-[70vh] relative z-10 w-full overflow-visible"
             style={visualStyle}
           >
             <HeroBlocks />
