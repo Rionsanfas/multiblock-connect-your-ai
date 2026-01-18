@@ -86,6 +86,32 @@ export function useModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
 }
 
 /**
+ * Get all models grouped by type (chat, image, video, etc.)
+ */
+export function useModelsGroupedByType(): Record<ModelType, ModelConfig[]> {
+  return useMemo(() => {
+    const grouped: Record<ModelType, ModelConfig[]> = {
+      chat: [],
+      image: [],
+      video: [],
+      audio: [],
+      embedding: [],
+      code: [],
+      rerank: [],
+      vision: [],
+    };
+
+    MODEL_CONFIGS.forEach((model) => {
+      if (grouped[model.type]) {
+        grouped[model.type].push(model);
+      }
+    });
+
+    return grouped;
+  }, []);
+}
+
+/**
  * Get chat models grouped by provider
  */
 export function useChatModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
