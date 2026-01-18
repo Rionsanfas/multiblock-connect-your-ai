@@ -148,9 +148,9 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right: Connected Blocks Visual - Hidden on small mobile, decorative on medium+ */}
+          {/* Right: Connected Blocks Visual - Visible on all screens, scaled appropriately */}
           <div 
-            className="hidden sm:flex order-2 lg:order-2 items-center justify-center min-h-[280px] md:min-h-[320px] lg:min-h-[400px] max-h-[50vh] lg:max-h-[60vh] relative z-10"
+            className="flex order-2 lg:order-2 items-center justify-center min-h-[320px] sm:min-h-[360px] md:min-h-[400px] lg:min-h-[450px] max-h-[55vh] sm:max-h-[50vh] lg:max-h-[60vh] relative z-10 w-full overflow-hidden"
             style={visualStyle}
           >
             <HeroBlocks />

@@ -7,6 +7,7 @@ import { ConnectionLine } from "@/components/board/ConnectionLine";
 import { BlocksSidebar } from "@/components/board/BlocksSidebar";
 import { BlockChatModal } from "@/components/board/BlockChatModal";
 import { ConnectionContextMenu } from "@/components/board/ConnectionContextMenu";
+import { ZoomControls } from "@/components/board/ZoomControls";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { SkeletonCard } from "@/components/ui/skeleton-card";
 import { useAppStore } from "@/store/useAppStore";
@@ -16,6 +17,7 @@ import { useUserBoard } from "@/hooks/useCurrentUser";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { useBoardConnections, useConnectionActions } from "@/hooks/useBlockConnections";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Plus, AlertCircle, Lock } from "lucide-react";
@@ -452,6 +454,11 @@ export default function BoardCanvas() {
     );
   }
 
+  // Check if mobile/tablet for zoom controls visibility
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const showMobileZoomControls = isMobile || isTablet;
+
   // 7. Board loaded - render canvas
   return (
     <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls hideSidebar>
@@ -537,6 +544,14 @@ export default function BoardCanvas() {
                     ))}
                   </div>
                 </div>
+
+                {/* Mobile/Tablet zoom controls */}
+                {showMobileZoomControls && (
+                  <ZoomControls 
+                    onCenterView={handleCenterView}
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50"
+                  />
+                )}
               </div>
           </ContextMenuTrigger>
           <ContextMenuContent className="bg-card/90 backdrop-blur-2xl border border-border/40 rounded-2xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">

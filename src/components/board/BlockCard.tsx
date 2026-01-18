@@ -14,6 +14,7 @@ import { getModelConfig } from "@/config/models";
 import { api } from "@/api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useIsMobile, useIsTablet, useIsTouchDevice } from "@/hooks/use-mobile";
 import type { Block } from "@/types";
 
 interface BlockCardProps {
@@ -64,6 +65,12 @@ export function BlockCard({
   const startSize = useRef({ width: 0, height: 0 });
   const startBlockPos = useRef({ x: 0, y: 0 });
   const blockPositionRef = useRef({ x: block.position.x, y: block.position.y });
+
+  // Touch/mobile detection for always-visible handles
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isTouchDevice = useIsTouchDevice();
+  const showHandlesAlways = isMobile || isTablet || isTouchDevice;
 
   // Global drag store for cross-component drag lock
   const startDrag = useDragStore((s) => s.startDrag);
@@ -441,6 +448,7 @@ export function BlockCard({
           </div>
           
           {/* Connection click zone - invisible but clickable overlay for starting/ending connections */}
+          {/* On touch devices: single tap starts connection, no aiming required */}
           <div 
             className="absolute cursor-crosshair no-drag pointer-events-auto"
             style={{
@@ -452,6 +460,23 @@ export function BlockCard({
             }}
             onMouseEnter={() => setIsConnectionZoneHovered(true)}
             onMouseLeave={() => setIsConnectionZoneHovered(false)}
+            onTouchStart={(e) => {
+              // On touch devices, single tap immediately starts connection
+              if (isTouchDevice && !isConnecting) {
+                e.stopPropagation();
+                const target = e.target as HTMLElement;
+                if (!target.closest('.block-main-card')) {
+                  onStartConnection();
+                }
+              }
+            }}
+            onTouchEnd={(e) => {
+              // On touch devices, tap ends connection
+              if (isTouchDevice && isConnecting) {
+                e.stopPropagation();
+                onEndConnection();
+              }
+            }}
             onMouseDown={(e) => {
               // Only start connection if not clicking on the main card
               const target = e.target as HTMLElement;
@@ -466,15 +491,20 @@ export function BlockCard({
             }}
           />
 
-          {/* Layer 2: Corner resize brackets - visible only on hover, farther from block */}
+          {/* Layer 2: Corner resize brackets - visible on hover OR always on touch devices */}
           {/* Top-left corner bracket */}
           <div 
             className={cn(
               "absolute pointer-events-auto cursor-nw-resize no-drag transition-opacity duration-150",
-              isHovered ? "opacity-100" : "opacity-0"
+              (isHovered || showHandlesAlways) ? "opacity-100" : "opacity-0"
             )}
             style={{ top: -cornerOffset, left: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'nw')}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              const touch = e.touches[0];
+              handleResizeStart({ clientX: touch.clientX, clientY: touch.clientY, stopPropagation: () => {}, preventDefault: () => {} } as any, 'nw');
+            }}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -491,10 +521,15 @@ export function BlockCard({
           <div 
             className={cn(
               "absolute pointer-events-auto cursor-ne-resize no-drag transition-opacity duration-150",
-              isHovered ? "opacity-100" : "opacity-0"
+              (isHovered || showHandlesAlways) ? "opacity-100" : "opacity-0"
             )}
             style={{ top: -cornerOffset, right: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'ne')}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              const touch = e.touches[0];
+              handleResizeStart({ clientX: touch.clientX, clientY: touch.clientY, stopPropagation: () => {}, preventDefault: () => {} } as any, 'ne');
+            }}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -511,10 +546,15 @@ export function BlockCard({
           <div 
             className={cn(
               "absolute pointer-events-auto cursor-sw-resize no-drag transition-opacity duration-150",
-              isHovered ? "opacity-100" : "opacity-0"
+              (isHovered || showHandlesAlways) ? "opacity-100" : "opacity-0"
             )}
             style={{ bottom: -cornerOffset, left: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'sw')}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              const touch = e.touches[0];
+              handleResizeStart({ clientX: touch.clientX, clientY: touch.clientY, stopPropagation: () => {}, preventDefault: () => {} } as any, 'sw');
+            }}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -531,10 +571,15 @@ export function BlockCard({
           <div 
             className={cn(
               "absolute pointer-events-auto cursor-se-resize no-drag transition-opacity duration-150",
-              isHovered ? "opacity-100" : "opacity-0"
+              (isHovered || showHandlesAlways) ? "opacity-100" : "opacity-0"
             )}
             style={{ bottom: -cornerOffset, right: -cornerOffset }}
             onMouseDown={(e) => handleResizeStart(e, 'se')}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              const touch = e.touches[0];
+              handleResizeStart({ clientX: touch.clientX, clientY: touch.clientY, stopPropagation: () => {}, preventDefault: () => {} } as any, 'se');
+            }}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path

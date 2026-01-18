@@ -62,15 +62,15 @@ export function HeroBlocks() {
     /* 
       Responsive container that scales with viewport.
       Uses CSS scale transform for proportional sizing across breakpoints.
-      Hidden on mobile (handled by parent), shown from sm breakpoint up.
+      Now visible on all screens with proper mobile scaling.
     */
     <div 
       className={cn(
         "relative w-full h-full flex items-center justify-center",
         "origin-center",
         "motion-reduce:!transform-none",
-        /* Responsive scaling via Tailwind classes */
-        "scale-[0.55] sm:scale-[0.6] md:scale-[0.7] lg:scale-[0.85] xl:scale-100"
+        /* Responsive scaling - smaller on mobile to fit all blocks */
+        "scale-[0.38] xs:scale-[0.42] sm:scale-[0.55] md:scale-[0.65] lg:scale-[0.8] xl:scale-[0.95]"
       )}
     >
       {/* SVG Connection Lines - Softer glow with smoother animation */}
@@ -183,8 +183,8 @@ export function HeroBlocks() {
         />
       </svg>
 
-      {/* Chat Blocks Container - uses flex with gap for consistent spacing */}
-      <div className="relative z-10 flex flex-col items-center gap-16">
+      {/* Chat Blocks Container - uses flex with gap for consistent spacing, tighter on mobile */}
+      <div className="relative z-10 flex flex-col items-center gap-8 sm:gap-12 md:gap-14 lg:gap-16">
         {/* Block 1 - User input with typing animation */}
         <div
           style={{ 
@@ -193,7 +193,7 @@ export function HeroBlocks() {
           }}
           className={cn(
             "relative motion-reduce:!transform-none",
-            "w-[22rem]",
+            "w-[20rem] sm:w-[22rem]",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
@@ -235,7 +235,7 @@ export function HeroBlocks() {
           }}
           className={cn(
             "relative motion-reduce:!transform-none",
-            "w-[26rem]",
+            "w-[22rem] sm:w-[24rem] md:w-[26rem]",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
@@ -277,7 +277,7 @@ export function HeroBlocks() {
           }}
           className={cn(
             "relative motion-reduce:!transform-none",
-            "w-[20rem]",
+            "w-[18rem] sm:w-[20rem]",
             "rounded-2xl",
             "bg-gradient-to-br from-secondary/90 via-secondary/60 to-secondary/30",
             "border border-border/40",
