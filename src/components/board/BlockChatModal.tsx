@@ -10,7 +10,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent } from "react";
-import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2, AlertCircle, Maximize2, Minimize2, PanelLeftClose, PanelLeft, MessageSquare } from "lucide-react";
+import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2, AlertCircle, Maximize2, Minimize2, PanelLeftClose, PanelLeft, MessageSquare, Image, Video } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 
 import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
-import { useModelsGroupedByProvider, useAvailableProviders } from "@/hooks/useModelConfig";
+import { useModelsGroupedByProvider, useAvailableProviders, useModelsGroupedByType } from "@/hooks/useModelConfig";
 import { useBlockIncomingContext } from "@/hooks/useBlockConnections";
 import { useBlock } from "@/hooks/useBlockData";
 import { useBoardBlocks } from "@/hooks/useBoardBlocks";
@@ -128,11 +128,15 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
 
   const userApiKeys = useUserApiKeys();
   const modelsByProvider = useModelsGroupedByProvider();
+  const { chat: chatModels, image: imageModels, video: videoModels } = useModelsGroupedByType();
   const providers = useAvailableProviders();
   const { messages: blockMessages, isLoading: messagesLoading } = useBlockMessages(blockId);
   const { sendMessage: persistMessage, deleteMessage: deletePersistedMessage } = useMessageActions(blockId);
   const blockUsage = useBlockUsage(blockId);
   const incomingContext = useBlockIncomingContext(blockId);
+  
+  // Model selector tab state
+  const [modelTab, setModelTab] = useState<'chat' | 'image' | 'video'>('chat');
   
   // Get all blocks on this board for the sidebar
   const boardBlocks = useBoardBlocks(block?.board_id || '');
@@ -419,50 +423,109 @@ export function BlockChatModal({ blockId }: BlockChatModalProps) {
                       <ChevronDown className="h-3 w-3 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-80 max-h-96 overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
-                    <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20"><Brain className="h-3 w-3" /><span>Switch model</span></div>
-                    {providers.map((provider) => {
-                      const hasKey = getProviderHasKey(provider.id);
-                      const models = (modelsByProvider[provider.id] || []).slice(0, 6);
-                      return (
-                        <div key={provider.id}>
-                          <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
-                            <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: provider.color }} /><span className="text-xs font-medium">{provider.name}</span></div>
-                            {hasKey ? (
-                              <span className="flex items-center gap-1 text-[10px] text-green-500">
-                                <Zap className="h-2.5 w-2.5" />Connected
-                              </span>
-                            ) : (
-                              <button 
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  window.open(provider.apiKeyUrl, '_blank', 'noopener,noreferrer'); 
-                                }} 
-                                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                  <DropdownMenuContent className="w-80 max-h-[450px] overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
+                    <div className="px-3 py-2 flex items-center gap-2 text-xs text-muted-foreground border-b border-border/20">
+                      <Brain className="h-3 w-3" />
+                      <span>Switch model</span>
+                    </div>
+                    
+                    {/* Type tabs */}
+                    <div className="flex gap-1 p-2 border-b border-border/20">
+                      <button
+                        onClick={() => setModelTab('chat')}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                          modelTab === 'chat' ? "bg-primary text-primary-foreground" : "hover:bg-secondary/60 text-muted-foreground"
+                        )}
+                      >
+                        <MessageSquare className="h-3 w-3" />
+                        Chat ({Object.values(chatModels).flat().length})
+                      </button>
+                      <button
+                        onClick={() => setModelTab('image')}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                          modelTab === 'image' ? "bg-purple-500 text-white" : "hover:bg-secondary/60 text-muted-foreground"
+                        )}
+                      >
+                        <Image className="h-3 w-3" />
+                        Image ({Object.values(imageModels).flat().length})
+                      </button>
+                      <button
+                        onClick={() => setModelTab('video')}
+                        className={cn(
+                          "flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                          modelTab === 'video' ? "bg-pink-500 text-white" : "hover:bg-secondary/60 text-muted-foreground"
+                        )}
+                      >
+                        <Video className="h-3 w-3" />
+                        Video ({Object.values(videoModels).flat().length})
+                      </button>
+                    </div>
+
+                    {/* Models list based on active tab */}
+                    {(() => {
+                      const modelsToShow = modelTab === 'chat' ? chatModels : modelTab === 'image' ? imageModels : videoModels;
+                      const providersWithModels = providers.filter(p => modelsToShow[p.id]?.length > 0);
+                      
+                      if (providersWithModels.length === 0) {
+                        return (
+                          <div className="px-4 py-6 text-center text-muted-foreground text-sm">
+                            No {modelTab} models available
+                          </div>
+                        );
+                      }
+                      
+                      return providersWithModels.map((provider) => {
+                        const hasKey = getProviderHasKey(provider.id);
+                        const models = modelsToShow[provider.id] || [];
+                        return (
+                          <div key={provider.id}>
+                            <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: provider.color }} />
+                                <span className="text-xs font-medium">{provider.name}</span>
+                              </div>
+                              {hasKey ? (
+                                <span className="flex items-center gap-1 text-[10px] text-green-500">
+                                  <Zap className="h-2.5 w-2.5" />Connected
+                                </span>
+                              ) : (
+                                <button 
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    window.open(provider.apiKeyUrl, '_blank', 'noopener,noreferrer'); 
+                                  }} 
+                                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                                >
+                                  <ExternalLink className="h-2.5 w-2.5" />Get Key
+                                </button>
+                              )}
+                            </DropdownMenuLabel>
+                            {models.map((model) => (
+                              <DropdownMenuItem 
+                                key={model.id} 
+                                disabled={!hasKey || isSwitchingModel} 
+                                className={cn("mx-1 rounded-md", !hasKey && "opacity-50", block.model_id === model.id && "bg-primary/10")} 
+                                onClick={() => hasKey && !isSwitchingModel && handleModelSwitch(model.id)}
                               >
-                                <ExternalLink className="h-2.5 w-2.5" />Get Key
-                              </button>
-                            )}
-                          </DropdownMenuLabel>
-                          {models.map((model) => (
-                            <DropdownMenuItem 
-                              key={model.id} 
-                              disabled={!hasKey || isSwitchingModel} 
-                              className={cn("mx-1 rounded-md", !hasKey && "opacity-50", block.model_id === model.id && "bg-primary/10")} 
-                              onClick={() => hasKey && !isSwitchingModel && handleModelSwitch(model.id)}
-                            >
-                              <span className="flex items-center gap-2 w-full">
-                                <span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} />
-                                <span className="text-sm truncate flex-1">{model.name}</span>
-                                {block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}
-                              </span>
-                            </DropdownMenuItem>
-                          ))}
-                          <DropdownMenuSeparator className="my-1" />
-                        </div>
-                      );
-                    })}
-                    <DropdownMenuItem className="mx-1 rounded-md text-primary" onClick={() => navigate("/settings/keys")}><Zap className="h-3 w-3 mr-2" />Manage API Keys</DropdownMenuItem>
+                                <span className="flex items-center gap-2 w-full">
+                                  <span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} />
+                                  <span className="text-sm truncate flex-1">{model.name}</span>
+                                  {model.type === 'image' && <Image className="h-3 w-3 text-purple-400" />}
+                                  {model.type === 'video' && <Video className="h-3 w-3 text-pink-400" />}
+                                  {block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}
+                                </span>
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator className="my-1" />
+                          </div>
+                        );
+                      });
+                    })()}
+                    <DropdownMenuItem className="mx-1 rounded-md text-primary" onClick={() => navigate("/settings/keys")}>
+                      <Zap className="h-3 w-3 mr-2" />Manage API Keys
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 {blockUsage && <span className="text-xs text-muted-foreground">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
