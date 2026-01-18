@@ -129,8 +129,10 @@ export function useBlockActions(boardId: string) {
       updated_at: now,
     };
 
-
     devLog('[useBlockActions.createBlock] Optimistic create:', optimisticId);
+    
+    // Show immediate feedback that block is being created
+    toast.loading('Creating block...', { id: `create-block-${optimisticId}` });
 
     // Optimistic update - add to cache immediately
     queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
@@ -160,6 +162,9 @@ export function useBlockActions(boardId: string) {
         return arr.map((b: any) => (b.id === optimisticId ? block : b));
       });
 
+      // Dismiss loading toast and show success
+      toast.success('Block created', { id: `create-block-${optimisticId}` });
+
       // Return the block from Supabase
       return {
         id: block.id,
@@ -175,6 +180,8 @@ export function useBlockActions(boardId: string) {
       };
     } catch (error) {
       devError('[useBlockActions.createBlock] Failed:', error);
+      // Dismiss loading toast and show error
+      toast.error('Failed to create block', { id: `create-block-${optimisticId}` });
       // Rollback optimistic update
       queryClient.setQueryData(['board-blocks', boardId], (old: unknown) => {
         const arr = Array.isArray(old) ? old : [];
