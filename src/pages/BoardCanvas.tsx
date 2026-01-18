@@ -460,16 +460,17 @@ export default function BoardCanvas() {
         <BlocksSidebar boardId={board.id} onCenterView={handleCenterView} />
 
         <ContextMenu>
-            <ContextMenuTrigger>
+            <ContextMenuTrigger asChild>
               <div
                 ref={canvasRef}
                 className={cn(
-                  "flex-1 relative overflow-hidden board-canvas-bg rounded-2xl",
+                  "flex-1 relative board-canvas-bg rounded-xl sm:rounded-2xl",
+                  "overflow-hidden",
                   isPanning ? "cursor-grabbing" : "cursor-grab"
                 )}
                 style={{
-                  // CRITICAL: Clip all children to prevent visual overflow
-                  clipPath: "inset(0 round 16px)",
+                  // Ensure the canvas container fills available space
+                  minHeight: "100%",
                 }}
                 onMouseDown={handleCanvasMouseDown}
                 onMouseMove={handleCanvasMouseMove}
@@ -479,53 +480,64 @@ export default function BoardCanvas() {
                 onDoubleClick={handleCanvasDoubleClick}
                 onContextMenu={handleContextMenu}
               >
-              <div
-                className="canvas-inner origin-top-left"
-                style={{
-                  width: "5000px",
-                  height: "5000px",
-                  transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
-                  willChange: "transform",
-                }}
-              >
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: "visible" }}>
-                  {visibleConnections.map((conn) => {
-                    const from = getBlockCenter(conn.from_block);
-                    const to = getBlockCenter(conn.to_block);
-                    return (
-                      <g key={conn.id} style={{ pointerEvents: 'auto' }}>
+                {/* Canvas viewport - clips content but allows internal scrolling via pan */}
+                <div 
+                  className="absolute inset-0 overflow-hidden"
+                  style={{
+                    // Safe padding to ensure edge elements are reachable
+                    padding: "0",
+                  }}
+                >
+                  <div
+                    className="canvas-inner origin-top-left relative"
+                    style={{
+                      // Large virtual canvas for block placement
+                      width: "10000px",
+                      height: "10000px",
+                      // Center the origin point with some padding
+                      transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+                      willChange: "transform",
+                    }}
+                  >
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: "visible" }}>
+                      {visibleConnections.map((conn) => {
+                        const from = getBlockCenter(conn.from_block);
+                        const to = getBlockCenter(conn.to_block);
+                        return (
+                          <g key={conn.id} style={{ pointerEvents: 'auto' }}>
+                            <ConnectionLine
+                              from={from}
+                              to={to}
+                              connectionId={conn.id}
+                              boardId={board.id}
+                              onContextMenu={handleConnectionContextMenu(conn.id)}
+                            />
+                          </g>
+                        );
+                      })}
+                      {connectingFrom && (
                         <ConnectionLine
-                          from={from}
-                          to={to}
-                          connectionId={conn.id}
-                          boardId={board.id}
-                          onContextMenu={handleConnectionContextMenu(conn.id)}
+                          from={getBlockCenter(connectingFrom)}
+                          to={mousePos}
+                          isDrawing
                         />
-                      </g>
-                    );
-                  })}
-                  {connectingFrom && (
-                    <ConnectionLine
-                      from={getBlockCenter(connectingFrom)}
-                      to={mousePos}
-                      isDrawing
-                    />
-                  )}
-                </svg>
+                      )}
+                    </svg>
 
-                {boardBlocks.map((block) => (
-                  <BlockCard
-                    key={block.id}
-                    block={block}
-                    isSelected={selectedBlockId === block.id}
-                    onSelect={() => selectBlock(block.id)}
-                    onStartConnection={() => handleStartConnection(block.id)}
-                    onEndConnection={() => handleEndConnection(block.id)}
-                    isConnecting={!!connectingFrom}
-                  />
-                ))}
+                    {boardBlocks.map((block) => (
+                      <BlockCard
+                        key={block.id}
+                        block={block}
+                        isSelected={selectedBlockId === block.id}
+                        onSelect={() => selectBlock(block.id)}
+                        onStartConnection={() => handleStartConnection(block.id)}
+                        onEndConnection={() => handleEndConnection(block.id)}
+                        isConnecting={!!connectingFrom}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
           </ContextMenuTrigger>
           <ContextMenuContent className="bg-card/90 backdrop-blur-2xl border border-border/40 rounded-2xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
             <ContextMenuItem 

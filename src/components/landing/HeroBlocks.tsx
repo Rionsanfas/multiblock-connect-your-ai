@@ -62,20 +62,16 @@ export function HeroBlocks() {
     /* 
       Responsive container that scales with viewport.
       Uses CSS scale transform for proportional sizing across breakpoints.
-      Scale values: 0.45 (mobile) → 0.6 (tablet) → 0.8 (laptop) → 1.0 (desktop)
+      Hidden on mobile (handled by parent), shown from sm breakpoint up.
     */
     <div 
       className={cn(
         "relative w-full h-full flex items-center justify-center",
         "origin-center",
-        /* Fluid scale using clamp - prevents abrupt size changes */
-        "motion-reduce:!transform-none"
+        "motion-reduce:!transform-none",
+        /* Responsive scaling via Tailwind classes */
+        "scale-[0.55] sm:scale-[0.6] md:scale-[0.7] lg:scale-[0.85] xl:scale-100"
       )}
-      style={{ 
-        /* Scale container based on viewport width - more conservative on mobile */
-        transform: `scale(clamp(0.4, 0.25 + 0.035 * min(100vw / 10, 22), 1))`,
-        transformOrigin: "center center",
-      }}
     >
       {/* SVG Connection Lines - Softer glow with smoother animation */}
       <svg
