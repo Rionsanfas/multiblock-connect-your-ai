@@ -91,7 +91,15 @@ export function BlockCard({
   }, [block.position.x, block.position.y]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest(".no-drag")) return;
+    // CRITICAL: Ignore clicks on dropdown menus, buttons, and other interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest(".no-drag")) return;
+    if (target.closest('[role="menu"]')) return;
+    if (target.closest('[role="menuitem"]')) return;
+    if (target.closest('[data-radix-popper-content-wrapper]')) return;
+    if (target.closest('[data-state="open"]')) return;
+    if (target.tagName === 'BUTTON') return;
+    
     if (isResizing) return;
     // Ignore right-click and middle-click
     if (e.button !== 0) return;
@@ -572,26 +580,46 @@ export function BlockCard({
                     variant="ghost" 
                     size="sm" 
                     className="no-drag h-7 w-7 opacity-60 hover:opacity-100"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                    onPointerDown={(e) => { e.stopPropagation(); }}
+                    onMouseDown={(e) => { e.stopPropagation(); }}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </IconButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openBlockChat(block.id); }} className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm">
+                <DropdownMenuContent 
+                  align="end" 
+                  className="bg-card/95 backdrop-blur-xl border-border/30 rounded-xl min-w-[180px] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-[100]"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DropdownMenuItem 
+                    onSelect={(e) => { e.preventDefault(); openBlockChat(block.id); }} 
+                    className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm"
+                  >
                     <MessageSquare className="h-4 w-4" />
                     Open Chat
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onSelect(); }} className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm">
+                  <DropdownMenuItem 
+                    onSelect={(e) => { e.preventDefault(); onSelect(); }} 
+                    className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm"
+                  >
                     <Settings className="h-4 w-4" />
                     Block Settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); duplicateBlock(block.id); }} className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm">
+                  <DropdownMenuItem 
+                    onSelect={(e) => { e.preventDefault(); duplicateBlock(block.id); }} 
+                    className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm"
+                  >
                     <Copy className="h-4 w-4" />
                     Duplicate
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleRequestDeleteBlock(); }} className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm text-red-400 focus:text-red-400 focus:bg-red-500/10">
+                  <DropdownMenuItem 
+                    onSelect={(e) => { e.preventDefault(); handleRequestDeleteBlock(); }} 
+                    className="rounded-lg gap-2 cursor-pointer px-3 py-2 text-sm text-red-400 focus:text-red-400 focus:bg-red-500/10"
+                  >
                     <Trash2 className="h-4 w-4" />
                     Delete Block
                   </DropdownMenuItem>
