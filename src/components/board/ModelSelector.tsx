@@ -96,6 +96,7 @@ interface ProviderSectionProps {
   onAddApiKey?: (provider: Provider) => void;
   expandedProviders: Set<Provider>;
   onToggleProvider: (provider: Provider) => void;
+  isVideoTab?: boolean;
 }
 
 function ProviderSection({ 
@@ -106,7 +107,8 @@ function ProviderSection({
   onSelect, 
   onAddApiKey,
   expandedProviders,
-  onToggleProvider
+  onToggleProvider,
+  isVideoTab = false
 }: ProviderSectionProps) {
   const isExpanded = expandedProviders.has(provider.id);
   const visibleModels = isExpanded ? models : models.slice(0, INITIAL_MODELS_SHOWN);
@@ -141,7 +143,7 @@ function ProviderSection({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {!hasKey && (
+          {!hasKey && !isVideoTab && (
             <>
               <Button
                 variant="ghost"
@@ -171,7 +173,9 @@ function ProviderSection({
       <div className="grid gap-2">
         {visibleModels.map((model) => {
           const isSelected = model.id === selectedModelId;
-          const isDisabled = !hasKey;
+          // Video models are always disabled (coming soon)
+          const isVideoModel = model.type === 'video';
+          const isDisabled = isVideoModel || !hasKey;
 
           return (
             <button
@@ -184,24 +188,30 @@ function ProviderSection({
                 isDisabled
                   ? "opacity-50 cursor-not-allowed bg-muted/20"
                   : "hover:bg-accent/50 cursor-pointer",
-                isSelected && "ring-2 ring-primary bg-primary/10"
+                isSelected && !isDisabled && "ring-2 ring-primary bg-primary/10"
               )}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{model.name}</span>
-                  {model.quality === "premium" && (
+                  {model.quality === "premium" && !isVideoModel && (
                     <Star className="h-3 w-3 text-yellow-500" />
                   )}
-                  {model.speed === "fast" && (
+                  {model.speed === "fast" && !isVideoModel && (
                     <Zap className="h-3 w-3 text-green-500" />
                   )}
-                  {isDisabled && <Lock className="h-3 w-3 text-muted-foreground" />}
+                  {isVideoModel ? (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-orange-400 border-orange-400/30 bg-orange-400/10">
+                      Coming Soon
+                    </Badge>
+                  ) : isDisabled ? (
+                    <Lock className="h-3 w-3 text-muted-foreground" />
+                  ) : null}
                 </div>
-                {isSelected && <Check className="h-4 w-4 text-primary" />}
+                {isSelected && !isDisabled && <Check className="h-4 w-4 text-primary" />}
               </div>
               <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                {model.description}
+                {isVideoModel ? "Video generation coming soon" : model.description}
               </p>
             </button>
           );
@@ -274,7 +284,7 @@ export function ModelSelector({
   const videoCount = getVideoModels().length;
   const chatCount = getChatModels().length;
 
-  const renderProviderSections = (modelsByProvider: Record<Provider, ModelConfig[]>) => {
+  const renderProviderSections = (modelsByProvider: Record<Provider, ModelConfig[]>, isVideoTab: boolean = false) => {
     const providersWithModels = providers.filter(p => modelsByProvider[p.id]?.length > 0);
     
     if (providersWithModels.length === 0) {
@@ -302,6 +312,7 @@ export function ModelSelector({
               onAddApiKey={onAddApiKey}
               expandedProviders={expandedProviders}
               onToggleProvider={toggleProvider}
+              isVideoTab={isVideoTab}
             />
           );
         })}
@@ -369,10 +380,10 @@ export function ModelSelector({
               <div className="mb-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
                 <p className="text-xs text-orange-400">
                   <Video className="h-3 w-3 inline mr-1" />
-                  Video models for generating videos from text prompts
+                  Video generation is coming soon — these models are not yet available
                 </p>
               </div>
-              {renderProviderSections(videoModelsByProvider)}
+              {renderProviderSections(videoModelsByProvider, true)}
             </TabsContent>
           </ScrollArea>
         </Tabs>
