@@ -183,6 +183,11 @@
     min-width: 320px;
   }
 
+  /* Ensure Sonner/shadcn toasts are always visible above dialogs/overlays */
+  .toaster {
+    z-index: 9999;
+  }
+
   /* Custom scrollbar - refined grayscale */
   ::-webkit-scrollbar {
     width: 6px;

@@ -149,7 +149,7 @@ export default function BoardCanvas() {
   }, [isTouchDevice]);
 
   // ========== DESKTOP CONNECTION LINE DRAWING ==========
-  // Smooth, immediate mouse following with hover-based target detection.
+  // Smooth, immediate pointer following with hover-based target detection.
   // Completely isolated from touch/mobile logic.
   useEffect(() => {
     // Only run on desktop (non-touch devices)
@@ -167,7 +167,7 @@ export default function BoardCanvas() {
       };
     };
 
-    const updateMousePos = () => {
+    const flushMousePos = () => {
       raf = 0;
       if (!latest) return;
       setMousePos(latest);
@@ -178,18 +178,18 @@ export default function BoardCanvas() {
     // This ensures the line is visible the instant dragging starts
     if (lastMouseClientPos.current) {
       const world = toWorld(lastMouseClientPos.current.x, lastMouseClientPos.current.y);
-      if (world) {
-        setMousePos(world);
-      }
+      if (world) setMousePos(world);
     }
 
-    const onMouseMove = (e: MouseEvent) => {
+    // IMPORTANT: Use POINTER events here.
+    // The connection handle uses onPointerDown + preventDefault, which suppresses
+    // compatibility mouse events in many browsers. Mousemove won't fire reliably.
+    const onPointerMove = (e: PointerEvent) => {
       const world = toWorld(e.clientX, e.clientY);
       if (!world) return;
 
-      // Immediate update for responsive line following
       latest = { x: world.x, y: world.y };
-      if (!raf) raf = window.requestAnimationFrame(updateMousePos);
+      if (!raf) raf = window.requestAnimationFrame(flushMousePos);
 
       // Detect hover over blocks for visual feedback
       const els = document.elementsFromPoint?.(e.clientX, e.clientY) ?? [];
@@ -204,12 +204,10 @@ export default function BoardCanvas() {
       setConnectionTargetId(foundTarget);
     };
 
-    const onMouseUp = (e: MouseEvent) => {
+    const onPointerUp = (e: PointerEvent) => {
       // Final position
       const world = toWorld(e.clientX, e.clientY);
-      if (world) {
-        setMousePos({ x: world.x, y: world.y });
-      }
+      if (world) setMousePos({ x: world.x, y: world.y });
 
       // Check if released over a block
       const els = document.elementsFromPoint?.(e.clientX, e.clientY) ?? [];
@@ -227,13 +225,23 @@ export default function BoardCanvas() {
       setConnectingFrom(null);
     };
 
-    // Use capture phase for immediate response
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    window.addEventListener('mouseup', onMouseUp);
+    const onBlur = () => {
+      setConnectionTargetId(null);
+      endDrag();
+      setConnectingFrom(null);
+    };
+
+    // Capture phase ensures we receive events even if the pointer is retargeted.
+    window.addEventListener('pointermove', onPointerMove, { passive: true, capture: true });
+    window.addEventListener('pointerup', onPointerUp, { capture: true });
+    window.addEventListener('pointercancel', onPointerUp, { capture: true });
+    window.addEventListener('blur', onBlur);
 
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('pointermove', onPointerMove as any, { capture: true } as any);
+      window.removeEventListener('pointerup', onPointerUp as any, { capture: true } as any);
+      window.removeEventListener('pointercancel', onPointerUp as any, { capture: true } as any);
+      window.removeEventListener('blur', onBlur);
       setConnectionTargetId(null);
       if (raf) window.cancelAnimationFrame(raf);
     };
