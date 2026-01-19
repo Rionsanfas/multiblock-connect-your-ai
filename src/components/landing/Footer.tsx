@@ -60,7 +60,7 @@ const Footer = () => {
 
           {/* Social Links - Only X with 3D premium styling */}
           <div className="flex items-center order-2 md:order-3">
-            <a href="#" className="group relative rounded-full flex items-center justify-center text-muted-foreground transition-all duration-500 ease-out focus:outline-none focus:ring-2 focus:ring-primary/50" style={{
+            <a href="https://x.com/FASsan251870" target="_blank" rel="noopener noreferrer" className="group relative rounded-full flex items-center justify-center text-muted-foreground transition-all duration-500 ease-out focus:outline-none focus:ring-2 focus:ring-primary/50" style={{
             width: "48px",
             height: "48px"
           }} aria-label="X (Twitter)">

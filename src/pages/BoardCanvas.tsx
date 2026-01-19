@@ -16,6 +16,7 @@ import { useBlockPositions } from "@/store/useBlockPositions";
 import { useUserBoard } from "@/hooks/useCurrentUser";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { useBoardConnections, useConnectionActions } from "@/hooks/useBlockConnections";
+import { useBoardConnectionSync } from "@/hooks/useConnectionSync";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -73,6 +74,9 @@ export default function BoardCanvas() {
   // Connections from Supabase - NOT Zustand
   const { connections: boardConnections } = useBoardConnections(board?.id);
   const { create: createConnection } = useConnectionActions(board?.id || '');
+
+  // Live sync: when messages are sent in connected blocks, update context automatically
+  useBoardConnectionSync(board?.id);
 
   // Responsive hooks - MUST be called unconditionally at top level
   const isMobile = useIsMobile();

@@ -28,6 +28,7 @@ import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
 import { useModelsGroupedByProvider, useAvailableProviders, useModelsGroupedByTypeAndProvider } from "@/hooks/useModelConfig";
 import { useBlockIncomingContext } from "@/hooks/useBlockConnections";
+import { useBlockContextSync } from "@/hooks/useConnectionSync";
 import { useBlock } from "@/hooks/useBlockData";
 import { useBoardBlocks } from "@/hooks/useBoardBlocks";
 import { blocksDb, messagesDb } from "@/lib/database";
@@ -149,6 +150,9 @@ export function BlockChatModal({
   } = useMessageActions(blockId);
   const blockUsage = useBlockUsage(blockId);
   const incomingContext = useBlockIncomingContext(blockId);
+
+  // Live sync: automatically update context when connected blocks send messages
+  useBlockContextSync(blockId);
 
   // Model selector tab state
   const [modelTab, setModelTab] = useState<'chat' | 'image' | 'video'>('chat');
