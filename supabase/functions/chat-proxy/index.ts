@@ -238,6 +238,7 @@ serve(async (req) => {
 
       let imageResponse;
       let imageUrl: string | null = null;
+      let imageBytes: Uint8Array | null = null;
       
       if (provider === "openai") {
         imageResponse = await fetch("https://api.openai.com/v1/images/generations", {
@@ -256,14 +257,18 @@ serve(async (req) => {
         
         if (imageResponse.ok) {
           const data = await imageResponse.json();
-          // Normalize: OpenAI returns either URL or b64_json - convert b64_json to data URI
           const rawImage = data.data?.[0]?.url || data.data?.[0]?.b64_json;
           if (rawImage) {
-            // If it's base64 without data: prefix, convert to data URI
-            if (!rawImage.startsWith('http') && !rawImage.startsWith('data:')) {
-              imageUrl = `data:image/png;base64,${rawImage}`;
+            if (rawImage.startsWith('http')) {
+              // It's a URL - fetch the actual image bytes
+              const imgFetch = await fetch(rawImage);
+              if (imgFetch.ok) {
+                imageBytes = new Uint8Array(await imgFetch.arrayBuffer());
+              }
             } else {
-              imageUrl = rawImage;
+              // It's base64 - decode to bytes
+              const b64 = rawImage.replace(/^data:image\/\w+;base64,/, '');
+              imageBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
             }
           }
         }
@@ -286,19 +291,20 @@ serve(async (req) => {
         
         if (imageResponse.ok) {
           const data = await imageResponse.json();
-          // Normalize: Together returns either URL or b64_json - convert b64_json to data URI
           const rawImage = data.data?.[0]?.url || data.data?.[0]?.b64_json;
           if (rawImage) {
-            // If it's base64 without data: prefix, convert to data URI
-            if (!rawImage.startsWith('http') && !rawImage.startsWith('data:')) {
-              imageUrl = `data:image/png;base64,${rawImage}`;
+            if (rawImage.startsWith('http')) {
+              const imgFetch = await fetch(rawImage);
+              if (imgFetch.ok) {
+                imageBytes = new Uint8Array(await imgFetch.arrayBuffer());
+              }
             } else {
-              imageUrl = rawImage;
+              const b64 = rawImage.replace(/^data:image\/\w+;base64,/, '');
+              imageBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
             }
           }
         }
       } else if (provider === "google") {
-        // Google Imagen API
         imageResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -310,12 +316,12 @@ serve(async (req) => {
         
         if (imageResponse.ok) {
           const data = await imageResponse.json();
-          imageUrl = data.predictions?.[0]?.bytesBase64Encoded 
-            ? `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`
-            : null;
+          const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+          if (b64) {
+            imageBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+          }
         }
       } else if (provider === "xai") {
-        // xAI Grok Imagine
         imageResponse = await fetch("https://api.x.ai/v1/images/generations", {
           method: "POST",
           headers: {
@@ -331,10 +337,15 @@ serve(async (req) => {
         
         if (imageResponse.ok) {
           const data = await imageResponse.json();
-          imageUrl = data.data?.[0]?.url;
+          const rawUrl = data.data?.[0]?.url;
+          if (rawUrl) {
+            const imgFetch = await fetch(rawUrl);
+            if (imgFetch.ok) {
+              imageBytes = new Uint8Array(await imgFetch.arrayBuffer());
+            }
+          }
         }
       } else if (provider === "mistral") {
-        // Mistral doesn't have image generation yet, return error
         return new Response(JSON.stringify({ error: `Image generation is not yet available for Mistral. Please use a different provider.` }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -355,15 +366,39 @@ serve(async (req) => {
         });
       }
 
-      if (!imageUrl) {
+      if (!imageBytes) {
         return new Response(JSON.stringify({ error: "No image was generated" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Save generated media metadata to database
+      // CRITICAL: Upload image to Supabase Storage for persistence and proper preview
       const { block_id: blockId, board_id: boardId } = body;
+      const fileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}.png`;
+      
+      const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+        .from('generated-media')
+        .upload(fileName, imageBytes, {
+          contentType: 'image/png',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error(`[chat-proxy] Failed to upload image to storage:`, uploadError);
+        // Fallback: return base64 data URI if storage fails
+        const b64 = btoa(String.fromCharCode(...imageBytes));
+        imageUrl = `data:image/png;base64,${b64}`;
+      } else {
+        // Get the public URL for the uploaded image
+        const { data: urlData } = supabaseAdmin.storage
+          .from('generated-media')
+          .getPublicUrl(fileName);
+        imageUrl = urlData.publicUrl;
+        console.log(`[chat-proxy] Image uploaded to storage: ${imageUrl}`);
+      }
+
+      // Save generated media metadata to database
       try {
         await supabaseAdmin.from('generated_media').insert({
           user_id: user.id,
@@ -375,11 +410,11 @@ serve(async (req) => {
           model_name: model_id || 'Image Model',
           prompt,
           file_url: imageUrl,
+          storage_path: uploadData?.path || null,
         });
         console.log(`[chat-proxy] Saved generated image metadata for user ${user.id}`);
       } catch (saveError) {
         console.error(`[chat-proxy] Failed to save image metadata:`, saveError);
-        // Continue anyway - the image was generated successfully
       }
 
       return new Response(JSON.stringify({ 
@@ -431,11 +466,10 @@ serve(async (req) => {
             "Authorization": `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: model_id || "sora",
+            model: model_id || "sora-2",
             prompt,
-            size: "1920x1080",
-            duration: 5,
-            n: 1,
+            size: "1280x720",
+            seconds: "8", // OpenAI Sora uses 'seconds' (string: "4", "8", "12"), NOT 'duration'
           }),
         });
         
