@@ -5,14 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  MODEL_CONFIGS, 
-  PROVIDERS, 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  MODEL_CONFIGS,
+  PROVIDERS,
   getModelsByType,
-  type Provider, 
-  type ProviderInfo, 
-  type ModelConfig, 
-  type ModelType 
+  type Provider,
+  type ProviderInfo,
+  type ModelConfig,
+  type ModelType
 } from "@/config/models";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { useAvailableProviders } from "@/hooks/useModelConfig";
@@ -173,11 +174,12 @@ function ProviderSection({
       <div className="grid gap-2">
         {visibleModels.map((model) => {
           const isSelected = model.id === selectedModelId;
-          // Video models are always disabled (coming soon)
+
+          // Video models are always locked (UI only)
           const isVideoModel = model.type === 'video';
           const isDisabled = isVideoModel || !hasKey;
 
-          return (
+          const button = (
             <button
               key={model.id}
               onClick={() => !isDisabled && onSelect(model)}
@@ -200,21 +202,39 @@ function ProviderSection({
                   {model.speed === "fast" && !isVideoModel && (
                     <Zap className="h-3 w-3 text-green-500" />
                   )}
+
                   {isVideoModel ? (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-orange-400 border-orange-400/30 bg-orange-400/10">
-                      Coming Soon
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-muted/50">
+                      Not available
                     </Badge>
-                  ) : isDisabled ? (
+                  ) : !hasKey ? (
                     <Lock className="h-3 w-3 text-muted-foreground" />
                   ) : null}
                 </div>
                 {isSelected && !isDisabled && <Check className="h-4 w-4 text-primary" />}
               </div>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                {isVideoModel ? "Video generation coming soon" : model.description}
-              </p>
+
+              {!isVideoModel && (
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{model.description}</p>
+              )}
             </button>
           );
+
+          if (isVideoModel) {
+            // Disabled buttons don't trigger hover reliably, so use a wrapper as trigger.
+            return (
+              <Tooltip key={model.id}>
+                <TooltipTrigger asChild>
+                  <div className="w-full">{button}</div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Not available at the moment</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return button;
         })}
       </div>
 
@@ -377,12 +397,6 @@ export function ModelSelector({
             </TabsContent>
 
             <TabsContent value="video" className="mt-0">
-              <div className="mb-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                <p className="text-xs text-orange-400">
-                  <Video className="h-3 w-3 inline mr-1" />
-                  Video generation is coming soon — these models are not yet available
-                </p>
-              </div>
               {renderProviderSections(videoModelsByProvider, true)}
             </TabsContent>
           </ScrollArea>
