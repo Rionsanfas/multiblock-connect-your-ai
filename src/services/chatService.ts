@@ -51,108 +51,63 @@ export interface MessageMeta {
 // Model ID mappings for each provider (internal ID -> API ID)
 const getProviderModelId = (modelId: string, provider: Provider): string => {
   const mappings: Record<string, string> = {
-    // OpenAI (chat-completions compatible)
+    // OpenAI (actual Chat Completions API models)
     'gpt-4o': 'gpt-4o',
     'gpt-4o-mini': 'gpt-4o-mini',
     'gpt-4-turbo': 'gpt-4-turbo',
-    'gpt-image-1.5': 'gpt-image-1',
-    // Note: Sora / GPT-5* models are intentionally not mapped here because this app uses
-    // OpenAI Chat Completions API for OpenAI provider and those IDs may not be available there.
+    'dall-e-3': 'dall-e-3',
     'gpt-4o-audio': 'gpt-4o-audio-preview',
     'whisper': 'whisper-1',
 
+    // Anthropic (real model IDs)
+    'claude-3-5-sonnet': 'claude-3-5-sonnet-20241022',
+    'claude-3-5-haiku': 'claude-3-5-haiku-20241022',
+    'claude-3-opus': 'claude-3-opus-20240229',
+    'claude-3-sonnet': 'claude-3-sonnet-20240229',
+    'claude-3-haiku': 'claude-3-haiku-20240307',
     
-    // Anthropic
-    'claude-opus-4.5': 'claude-opus-4-5-20250115',
-    'claude-sonnet-4.5': 'claude-sonnet-4-5-20250115',
-    'claude-haiku-4.5': 'claude-haiku-4-5-20250115',
-    'claude-opus-4.1': 'claude-opus-4-1-20250101',
-    'claude-sonnet-4': 'claude-sonnet-4-20250101',
+    // Google (real model IDs)
+    'gemini-1.5-pro': 'gemini-1.5-pro-latest',
+    'gemini-1.5-flash': 'gemini-1.5-flash-latest',
+    'gemini-1.5-flash-8b': 'gemini-1.5-flash-8b-latest',
+    'gemini-2.0-flash': 'gemini-2.0-flash-exp',
+
     
-    // Google
-    'gemini-3-pro': 'gemini-3-pro',
-    'gemini-3-flash': 'gemini-3-flash',
-    'gemini-3-nano': 'gemini-3-nano',
-    'gemini-2.5-pro': 'gemini-2.5-pro',
-    'gemini-2.5-flash': 'gemini-2.5-flash',
-    'gemini-live-2.5-flash': 'gemini-live-2.5-flash',
-    'imagen-4.0-ultra': 'imagen-4.0-ultra',
-    'imagen-3': 'imagen-3',
-    'veo-3.1': 'veo-3.1',
-    'veo-3.1-fast': 'veo-3.1-fast',
+    // xAI (real Grok model IDs)
+    'grok-2': 'grok-2-1212',
+    'grok-2-mini': 'grok-2-mini-1212',
+    'grok-beta': 'grok-beta',
+
     
-    // xAI
-    'grok-4.1-fast': 'grok-4.1-fast',
-    'grok-4.1-fast-reasoning': 'grok-4.1-fast-reasoning',
-    'grok-4.1-fast-non-reasoning': 'grok-4.1-fast-non-reasoning',
-    'grok-4-fast-reasoning': 'grok-4-fast-reasoning',
-    'grok-4-fast-non-reasoning': 'grok-4-fast-non-reasoning',
-    'grok-4.0709': 'grok-4.0709',
-    'grok-code-fast-1': 'grok-code-fast-1',
+    // DeepSeek (real model IDs)
+    'deepseek-chat': 'deepseek-chat',
+    'deepseek-reasoner': 'deepseek-reasoner',
     
-    // DeepSeek
-    'deepseek-v3.2': 'deepseek-chat',
-    'deepseek-v3.2-speciale': 'deepseek-chat',
-    'deepseek-v3.1': 'deepseek-chat',
-    
-    // Mistral
-    'mistral-large-3': 'mistral-large-latest',
-    'mistral-medium-3.1': 'mistral-medium-latest',
-    'mistral-small-3.2': 'mistral-small-latest',
-    'ministral-3-14b': 'ministral-3b-latest',
-    'ministral-3-8b': 'ministral-8b-latest',
-    'ministral-3-3b': 'ministral-3b-latest',
-    'magistral-medium-1.2': 'magistral-medium-latest',
-    'magistral-small-1.2': 'magistral-small-latest',
-    'mistral-nemo-12b': 'open-mistral-nemo',
-    'pixtral-large': 'pixtral-large-latest',
+    // Mistral (real model IDs)
+    'mistral-large': 'mistral-large-latest',
+    'mistral-small': 'mistral-small-latest',
+    'mistral-nemo': 'open-mistral-nemo',
     'codestral': 'codestral-latest',
-    'voxtral-small': 'voxtral-small-latest',
-    'voxtral-mini': 'voxtral-mini-latest',
-    'mistral-embed': 'mistral-embed',
+    'pixtral-large': 'pixtral-large-latest',
+
     
-    // Cohere
-    'command-a-03-2025': 'command-a-03-2025',
-    'command-a-reasoning-08-2025': 'command-a-reasoning-08-2025',
-    'command-r-plus-08-2024': 'command-r-plus-08-2024',
-    'command-a-vision-07-2025': 'command-a-vision-07-2025',
-    'c4ai-aya-vision-32b': 'c4ai-aya-vision-32b',
-    'embed-v4.0': 'embed-v4.0',
-    'embed-english-v3.0': 'embed-english-v3.0',
-    'embed-multilingual-v3.0': 'embed-multilingual-v3.0',
-    'rerank-v4.0-pro': 'rerank-v4.0',
-    'c4ai-aya-expanse-32b': 'c4ai-aya-expanse-32b',
+    // Cohere (real model IDs)
+    'command-r-plus': 'command-r-plus',
+    'command-r': 'command-r',
+    'command-light': 'command-light',
+
     
-    // Together.ai
+    // Together.ai (real model IDs)
     'llama-3.3-70b-instruct-turbo': 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    'llama-4-maverick-17bx128e': 'meta-llama/Llama-4-Maverick-17Bx128E',
-    'llama-4-scout-17bx16e': 'meta-llama/Llama-4-Scout-17Bx16E',
-    'qwen3-235b-a22b-instruct': 'Qwen/Qwen3-235B-A22B-Instruct',
-    'deepseek-v3.1-together': 'deepseek-ai/DeepSeek-V3.1',
     'flux-schnell-turbo': 'black-forest-labs/FLUX.1-schnell-Turbo',
-    'flux-1-dev': 'black-forest-labs/FLUX.1-dev',
-    'flux-1.1-pro': 'black-forest-labs/FLUX.1.1-pro',
-    'flux-1-kontext-pro': 'black-forest-labs/FLUX.1-Kontext-pro',
-    'flux-2-pro': 'black-forest-labs/FLUX.2-pro',
-    'imagen-4.0-ultra-together': 'google/imagen-4.0-ultra',
-    'veo-3.0': 'google/veo-3.0',
-    'veo-3.0-fast-audio': 'google/veo-3.0-fast-audio',
-    'kling-2.1-pro': 'kuaishou/kling-2.1-pro',
-    'sora-2-pro-together': 'openai/sora-2-pro',
     
-    // Perplexity
+    // Perplexity (real model IDs)
     'sonar-large-online': 'sonar-pro',
-    'pplx-70b': 'llama-3.1-sonar-large-128k-online',
-    'gpt-5.1-pplx': 'gpt-5.1',
-    'claude-sonnet-4.5-pplx': 'claude-sonnet-4.5',
-    'claude-opus-4.1-thinking-pplx': 'claude-opus-4.1-thinking',
-    'gemini-3-pro-pplx': 'gemini-3-pro',
-    'grok-4.1-pplx': 'grok-4.1',
-    'kimi-k2-pplx': 'kimi-k2',
-    'o3-pro-pplx': 'o3-pro',
+    'sonar-small-online': 'sonar',
   };
   return mappings[modelId] || modelId;
 };
+
 
 class ChatService {
   private abortController: AbortController | null = null;
