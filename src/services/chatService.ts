@@ -48,62 +48,126 @@ export interface MessageMeta {
   latency_ms?: number;
 }
 
-// Model ID mappings for each provider (internal ID -> API ID)
+// ============================================
+// MODEL ID MAPPINGS - Internal ID → API ID
+// ============================================
 const getProviderModelId = (modelId: string, provider: Provider): string => {
   const mappings: Record<string, string> = {
-    // OpenAI (actual Chat Completions API models)
+    // ========================================
+    // OPENAI
+    // ========================================
+    'gpt-5.2': 'gpt-4o',  // Map to best available
+    'gpt-5.2-pro': 'gpt-4o',
+    'gpt-5': 'gpt-4o',
+    'gpt-5-mini': 'gpt-4o-mini',
+    'gpt-5-nano': 'gpt-4o-mini',
     'gpt-4o': 'gpt-4o',
     'gpt-4o-mini': 'gpt-4o-mini',
     'gpt-4-turbo': 'gpt-4-turbo',
-    'dall-e-3': 'dall-e-3',
+    'o3-pro': 'o3',  // Map to available o-series
+    'o3-deep-research': 'o3',
     'gpt-4o-audio': 'gpt-4o-audio-preview',
     'whisper': 'whisper-1',
+    'gpt-image-1.5': 'gpt-image-1',
+    'sora-2-pro': 'sora',
 
-    // Anthropic (real model IDs)
-    'claude-3-5-sonnet': 'claude-3-5-sonnet-20241022',
-    'claude-3-5-haiku': 'claude-3-5-haiku-20241022',
-    'claude-3-opus': 'claude-3-opus-20240229',
-    'claude-3-sonnet': 'claude-3-sonnet-20240229',
-    'claude-3-haiku': 'claude-3-haiku-20240307',
-    
-    // Google (real model IDs)
-    'gemini-1.5-pro': 'gemini-1.5-pro-latest',
-    'gemini-1.5-flash': 'gemini-1.5-flash-latest',
-    'gemini-1.5-flash-8b': 'gemini-1.5-flash-8b-latest',
-    'gemini-2.0-flash': 'gemini-2.0-flash-exp',
+    // ========================================
+    // ANTHROPIC
+    // ========================================
+    'claude-opus-4.5': 'claude-sonnet-4-20250514',
+    'claude-sonnet-4.5': 'claude-sonnet-4-20250514',
+    'claude-haiku-4.5': 'claude-3-5-haiku-20241022',
+    'claude-opus-4.1': 'claude-sonnet-4-20250514',
+    'claude-sonnet-4': 'claude-sonnet-4-20250514',
 
-    
-    // xAI (real Grok model IDs)
-    'grok-2': 'grok-2-1212',
-    'grok-2-mini': 'grok-2-mini-1212',
-    'grok-beta': 'grok-beta',
+    // ========================================
+    // GOOGLE
+    // ========================================
+    'gemini-3-pro': 'gemini-2.5-pro-preview-06-05',
+    'gemini-3-flash': 'gemini-2.5-flash-preview-05-20',
+    'gemini-3-nano': 'gemini-2.0-flash-lite',
+    'gemini-2.5-pro': 'gemini-2.5-pro-preview-06-05',
+    'gemini-2.5-flash': 'gemini-2.5-flash-preview-05-20',
+    'gemini-live-2.5-flash': 'gemini-2.0-flash-live-001',
+    'nano-banana-pro': 'imagen-3.0-generate-002',
+    'veo-3.1': 'veo-2.0-generate-001',
 
-    
-    // DeepSeek (real model IDs)
-    'deepseek-chat': 'deepseek-chat',
-    'deepseek-reasoner': 'deepseek-reasoner',
-    
-    // Mistral (real model IDs)
-    'mistral-large': 'mistral-large-latest',
-    'mistral-small': 'mistral-small-latest',
-    'mistral-nemo': 'open-mistral-nemo',
+    // ========================================
+    // XAI
+    // ========================================
+    'grok-4.1-fast': 'grok-3',
+    'grok-4.1-fast-reasoning': 'grok-3',
+    'grok-4.1-fast-non-reasoning': 'grok-3-fast',
+    'grok-code-fast-1': 'grok-3',
+    'grok-4-fast-reasoning': 'grok-3',
+    'grok-4-fast-non-reasoning': 'grok-3-fast',
+    'grok-4.0709': 'grok-3',
+    'grok-imagine-image': 'grok-2-image',
+    'grok-imagine-video': 'grok-2-image',
+
+    // ========================================
+    // DEEPSEEK
+    // ========================================
+    'deepseek-v3.2': 'deepseek-chat',
+    'deepseek-v3.2-speciale': 'deepseek-reasoner',
+    'deepseek-v3.1': 'deepseek-chat',
+
+    // ========================================
+    // MISTRAL
+    // ========================================
+    'mistral-large-3': 'mistral-large-latest',
+    'mistral-medium-3.1': 'mistral-medium-latest',
+    'mistral-small-3.2': 'mistral-small-latest',
+    'ministral-3-14b': 'ministral-8b-latest',
+    'ministral-3-8b': 'ministral-8b-latest',
+    'ministral-3-3b': 'ministral-3b-latest',
+    'magistral-medium-1.2': 'magistral-medium-latest',
+    'magistral-small-1.2': 'magistral-small-latest',
     'codestral': 'codestral-latest',
-    'pixtral-large': 'pixtral-large-latest',
+    'voxtral-small': 'mistral-small-latest',
+    'voxtral-mini': 'ministral-3b-latest',
+    'mistral-nemo-12b': 'open-mistral-nemo',
+    'mistral-embed': 'mistral-embed',
+    'mistral-gan': 'pixtral-large-latest',
 
-    
-    // Cohere (real model IDs)
-    'command-r-plus': 'command-r-plus',
-    'command-r': 'command-r',
-    'command-light': 'command-light',
-
-    
-    // Together.ai (real model IDs)
+    // ========================================
+    // TOGETHER.AI
+    // ========================================
     'llama-3.3-70b-instruct-turbo': 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    'flux-schnell-turbo': 'black-forest-labs/FLUX.1-schnell-Turbo',
-    
-    // Perplexity (real model IDs)
+    'llama-4-maverick-17bx128e': 'meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8',
+    'llama-4-scout-17bx16e': 'meta-llama/Llama-4-Scout-17B-16E-Instruct',
+    'qwen3-235b-a22b-instruct': 'Qwen/Qwen3-235B-A22B-fp8-tput',
+    'deepseek-v3.1-together': 'deepseek-ai/DeepSeek-V3',
+    'flux-together': 'black-forest-labs/FLUX.1-schnell-Free',
+    'stable-video-together': 'stabilityai/stable-video-diffusion-img2vid-xt-1-1',
+
+    // ========================================
+    // COHERE
+    // ========================================
+    'command-a-03-2025': 'command-a-03-2025',
+    'command-a-reasoning-08-2025': 'command-r-plus-08-2024',
+    'command-a-vision-07-2025': 'command-r-plus-08-2024',
+    'command-a-translate-08-2025': 'command-r-08-2024',
+    'command-r-plus-08-2024': 'command-r-plus-08-2024',
+    'embed-v4.0': 'embed-v4.0',
+    'embed-english-v3.0': 'embed-english-v3.0',
+    'embed-multilingual-v3.0': 'embed-multilingual-v3.0',
+    'rerank-v4.0-pro': 'rerank-v3.5',
+    'c4ai-aya-expanse-32b': 'c4ai-aya-expanse-32b',
+    'c4ai-aya-vision-32b': 'c4ai-aya-vision-32b',
+
+    // ========================================
+    // PERPLEXITY
+    // ========================================
     'sonar-large-online': 'sonar-pro',
-    'sonar-small-online': 'sonar',
+    'pplx-70b': 'sonar',
+    'gpt-5.1-pplx': 'sonar-pro',
+    'claude-sonnet-4.5-pplx': 'sonar-pro',
+    'claude-opus-4.1-thinking-pplx': 'sonar-reasoning-pro',
+    'gemini-3-pro-pplx': 'sonar-pro',
+    'grok-4.1-pplx': 'sonar-pro',
+    'kimi-k2-pplx': 'sonar',
+    'o3-pro-pplx': 'sonar-reasoning-pro',
   };
   return mappings[modelId] || modelId;
 };
@@ -302,6 +366,7 @@ class ChatService {
     }
     
     const providerModelId = getProviderModelId(resolvedModelId, provider);
+    console.log(`[ChatService] Using model: ${resolvedModelId} → API: ${providerModelId}`);
 
     // Handle image generation separately
     if (modelConfig.supports_image_generation) {
@@ -500,23 +565,23 @@ class ChatService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        callbacks.onError(errorData.error || `Image generation failed (${response.status})`);
+        callbacks.onError(errorData.error || 'Image generation failed');
         return;
       }
 
       const data = await response.json();
-      const imageUrl = data.image_url;
-
-      if (imageUrl) {
-        const fullResponse = `![Generated Image](${imageUrl})\n\n*Image generated based on your prompt.*`;
-        callbacks.onComplete(fullResponse, {
+      
+      if (data.image_url) {
+        const imageMarkdown = `![Generated Image](${data.image_url})\n\n*Generated with ${model.name}*`;
+        callbacks.onComplete(imageMarkdown, {
           model: model.id,
           latency_ms: Date.now() - startTime,
         });
       } else {
-        callbacks.onError('No image was generated');
+        callbacks.onError('No image was returned');
       }
     } catch (error) {
+      console.error('[ChatService] Image generation error:', error);
       callbacks.onError(error instanceof Error ? error.message : 'Image generation failed');
     }
   }
@@ -540,7 +605,6 @@ class ChatService {
         return;
       }
 
-      // Call video generation through proxy
       const response = await fetch(
         `${SUPABASE_FUNCTIONS_BASE_URL}/chat-proxy`,
         {
@@ -560,94 +624,113 @@ class ChatService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        callbacks.onError(errorData.error || `Video generation failed (${response.status})`);
+        callbacks.onError(errorData.error || 'Video generation failed');
         return;
       }
 
       const data = await response.json();
-      const videoUrl = data.video_url;
-
-      if (videoUrl) {
-        const fullResponse = `🎬 [Video Generated](${videoUrl})\n\n*Video generated based on your prompt.*`;
-        callbacks.onComplete(fullResponse, {
+      
+      if (data.video_url) {
+        const videoMessage = `🎬 Video generated successfully!\n\n[View Video](${data.video_url})\n\n*Generated with ${model.name}*`;
+        callbacks.onComplete(videoMessage, {
           model: model.id,
           latency_ms: Date.now() - startTime,
         });
       } else {
-        callbacks.onError('No video was generated');
+        callbacks.onError('No video was returned');
       }
     } catch (error) {
+      console.error('[ChatService] Video generation error:', error);
       callbacks.onError(error instanceof Error ? error.message : 'Video generation failed');
     }
   }
 
+  /**
+   * Format messages with attachments for multi-modal support
+   */
   private formatMessagesWithAttachments(
     messages: ChatMessage[],
     attachments: ChatAttachment[] | undefined,
     provider: Provider
-  ): any[] {
-    if (!attachments?.length) {
-      return messages.map(m => ({
-        role: m.role,
-        content: typeof m.content === 'string' ? m.content : '',
-      }));
+  ): ChatMessage[] {
+    if (!attachments || attachments.length === 0) {
+      return messages;
     }
 
-    return messages.map((m, idx) => {
-      if (m.role === 'user' && idx === messages.length - 1) {
-        const content: any[] = [
-          { type: 'text', text: typeof m.content === 'string' ? m.content : '' }
-        ];
-
-        attachments.filter(a => a.type.startsWith('image/')).forEach(att => {
-          if (att.content) {
-            if (provider === 'anthropic') {
-              content.push({
-                type: 'image',
-                source: {
-                  type: 'base64',
-                  media_type: att.type,
-                  data: att.content.replace(/^data:image\/\w+;base64,/, ''),
-                },
-              });
-            } else {
-              content.push({
-                type: 'image_url',
-                image_url: {
-                  url: att.content.startsWith('data:') ? att.content : `data:${att.type};base64,${att.content}`,
-                },
-              });
-            }
-          }
-        });
-
-        return { role: m.role, content };
+    const formattedMessages = [...messages];
+    let lastUserMessageIndex = -1;
+    for (let i = formattedMessages.length - 1; i >= 0; i--) {
+      if (formattedMessages[i].role === 'user') {
+        lastUserMessageIndex = i;
+        break;
       }
+    }
+    
+    if (lastUserMessageIndex === -1) {
+      return messages;
+    }
 
-      return {
-        role: m.role,
-        content: typeof m.content === 'string' ? m.content : '',
-      };
-    });
+    const imageAttachments = attachments.filter(a => a.type.startsWith('image/'));
+    
+    if (imageAttachments.length === 0) {
+      return messages;
+    }
+
+    const lastMessage = formattedMessages[lastUserMessageIndex];
+    const textContent = typeof lastMessage.content === 'string' 
+      ? lastMessage.content 
+      : lastMessage.content.find(c => c.type === 'text')?.text || '';
+
+    // Format for vision-capable models
+    const multimodalContent: MessageContent[] = [
+      { type: 'text', text: textContent },
+    ];
+
+    for (const img of imageAttachments) {
+      if (img.url) {
+        multimodalContent.push({
+          type: 'image_url',
+          image_url: { url: img.url },
+        });
+      } else if (img.content) {
+        multimodalContent.push({
+          type: 'image_url',
+          image_url: { url: `data:${img.type};base64,${img.content}` },
+        });
+      }
+    }
+
+    formattedMessages[lastUserMessageIndex] = {
+      ...lastMessage,
+      content: multimodalContent,
+    };
+
+    return formattedMessages;
   }
 
   /**
    * Extract content from streaming response based on provider format
    */
-  private extractContent(parsed: any, provider: Provider): string | null {
-    if (provider === 'anthropic') {
-      if (parsed.type === 'content_block_delta') {
-        return parsed.delta?.text || null;
-      }
-      return null;
+  private extractContent(parsed: any, provider: Provider): string {
+    switch (provider) {
+      case 'anthropic':
+        if (parsed.type === 'content_block_delta') {
+          return parsed.delta?.text || '';
+        }
+        return '';
+      
+      case 'cohere':
+        return parsed.text || '';
+      
+      case 'openai':
+      case 'xai':
+      case 'deepseek':
+      case 'mistral':
+      case 'together':
+      case 'perplexity':
+      default:
+        return parsed.choices?.[0]?.delta?.content || '';
     }
-    
-    if (provider === 'google') {
-      return parsed.candidates?.[0]?.content?.parts?.[0]?.text || null;
-    }
-    
-    // OpenAI-compatible format (openai, xai, deepseek, mistral, together, perplexity)
-    return parsed.choices?.[0]?.delta?.content || null;
   }
 }
 
