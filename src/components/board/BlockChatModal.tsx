@@ -446,15 +446,41 @@ export function BlockChatModal({
                                   <ExternalLink className="h-2.5 w-2.5" />Get Key
                                 </button>}
                             </DropdownMenuLabel>
-                            {models.map(model => <DropdownMenuItem key={model.id} disabled={!hasKey || isSwitchingModel} className={cn("mx-1 rounded-md", !hasKey && "opacity-50", block.model_id === model.id && "bg-primary/10")} onClick={() => hasKey && !isSwitchingModel && handleModelSwitch(model.id)}>
-                                <span className="flex items-center gap-2 w-full">
-                                  <span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} />
-                                  <span className="text-sm truncate flex-1">{model.name}</span>
-                                  {model.type === 'image' && <Image className="h-3 w-3 text-white" />}
-                                  {model.type === 'video' && <Video className="h-3 w-3 text-white" />}
-                                  {block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}
-                                </span>
-                              </DropdownMenuItem>)}
+                            {models.map(model => {
+                              // Video models are locked at UI level
+                              const isVideoLocked = model.type === 'video';
+                              const isLocked = isVideoLocked;
+                              const isItemDisabled = isLocked || !hasKey || isSwitchingModel;
+
+                              return (
+                                <DropdownMenuItem
+                                  key={model.id}
+                                  disabled={isItemDisabled}
+                                  className={cn(
+                                    "mx-1 rounded-md",
+                                    isItemDisabled && "opacity-50 cursor-not-allowed",
+                                    block.model_id === model.id && "bg-primary/10"
+                                  )}
+                                  onClick={() => {
+                                    if (isLocked) return;
+                                    if (hasKey && !isSwitchingModel) handleModelSwitch(model.id);
+                                  }}
+                                >
+                                  <span className="flex items-center gap-2 w-full">
+                                    <span className={cn("w-1.5 h-1.5 rounded-full", block.model_id === model.id ? "bg-primary" : "bg-muted-foreground/30")} />
+                                    <span className="text-sm truncate flex-1">{model.name}</span>
+                                    {isVideoLocked ? (
+                                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">Not available</span>
+                                    ) : (
+                                      <>
+                                        {model.type === 'image' && <Image className="h-3 w-3 text-purple-400" />}
+                                      </>
+                                    )}
+                                    {block.model_id === model.id && <Check className="h-3 w-3 text-primary" />}
+                                  </span>
+                                </DropdownMenuItem>
+                              );
+                            })}
                             <DropdownMenuSeparator className="my-1" />
                           </div>;
                     });
