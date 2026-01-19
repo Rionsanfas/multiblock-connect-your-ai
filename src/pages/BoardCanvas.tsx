@@ -494,11 +494,33 @@ export default function BoardCanvas() {
         queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
       }
 
+      // Initialize mouse position to the starting block's center
+      // This prevents the line from jumping when first starting to drag
+      const startCenter = (() => {
+        const storePos = useBlockPositions.getState().positions[blockId];
+        if (storePos) {
+          return {
+            x: storePos.x + DEFAULT_BLOCK_WIDTH / 2,
+            y: storePos.y + DEFAULT_BLOCK_HEIGHT / 2,
+          };
+        }
+        const block = boardBlocks.find((b) => b.id === blockId);
+        if (block) {
+          return {
+            x: block.position.x + DEFAULT_BLOCK_WIDTH / 2,
+            y: block.position.y + DEFAULT_BLOCK_HEIGHT / 2,
+          };
+        }
+        return { x: 0, y: 0 };
+      })();
+      
+      setMousePos(startCenter);
+
       // Set global drag lock for connection drawing
       startDrag('connection', blockId);
       setConnectingFrom(blockId);
     },
-    [board?.id, queryClient, startDrag]
+    [board?.id, boardBlocks, queryClient, startDrag]
   );
 
   const handleEndConnection = useCallback(
