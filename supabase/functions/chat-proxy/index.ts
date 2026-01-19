@@ -688,7 +688,11 @@ serve(async (req) => {
       if (response.status === 401 || response.status === 403) {
         errorMessage = `Invalid or expired API key for ${provider}. Please update your key in Settings > API Keys.`;
       } else if (response.status === 429) {
-        errorMessage = `Rate limit exceeded for ${provider}. Please wait a moment and try again.`;
+        // Rate limit - be specific about retry timing
+        const retryAfter = response.headers.get('retry-after') || response.headers.get('x-ratelimit-reset-requests');
+        const waitTime = retryAfter ? ` (wait ~${retryAfter}s)` : '';
+        errorMessage = `Rate limit reached for ${provider}${waitTime}. This is normal after heavy usage. Please wait 30-60 seconds before trying again.`;
+        console.log(`[chat-proxy] Rate limit hit for ${provider}, user ${user.id}. Retry-After: ${retryAfter}`);
       } else if (response.status === 404) {
         errorMessage = `Model "${model_id}" not found for ${provider}. It may not be available or the name is incorrect.`;
       } else if (response.status === 400) {

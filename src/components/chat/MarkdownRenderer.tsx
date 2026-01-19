@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Download, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MarkdownRendererProps {
@@ -73,6 +73,192 @@ function CodeBlock({ language, code }: CodeBlockProps) {
   );
 }
 
+/**
+ * Image component with loading states, error handling, and download support
+ */
+interface ImagePreviewProps {
+  src: string;
+  alt: string;
+}
+
+function ImagePreview({ src, alt }: ImagePreviewProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(src);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = alt || 'generated-image.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download image:', error);
+      // Fallback: open in new tab
+      window.open(src, '_blank');
+    }
+  };
+
+  if (hasError) {
+    return (
+      <div className="my-3 p-4 rounded-lg border border-destructive/30 bg-destructive/10 flex items-center gap-3">
+        <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-destructive font-medium">Failed to load image</p>
+          <p className="text-xs text-muted-foreground truncate mt-0.5">{src}</p>
+        </div>
+        <a 
+          href={src} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-secondary/50 hover:bg-secondary transition-colors"
+        >
+          <ExternalLink className="h-3 w-3" />
+          Open
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-3 relative group">
+      {/* Loading state */}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded-lg">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+      
+      {/* Image container */}
+      <div 
+        className={cn(
+          "relative overflow-hidden rounded-lg border border-border/30 bg-muted/20 cursor-pointer transition-all",
+          isExpanded ? "max-w-full" : "max-w-md",
+          isLoading && "min-h-[200px]"
+        )}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <img
+          src={src}
+          alt={alt || 'Generated image'}
+          className={cn(
+            "w-full h-auto transition-opacity duration-300",
+            isLoading ? "opacity-0" : "opacity-100"
+          )}
+          onLoad={() => setIsLoading(false)}
+          onError={() => {
+            setIsLoading(false);
+            setHasError(true);
+          }}
+        />
+        
+        {/* Overlay with actions */}
+        {!isLoading && (
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload();
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-white/90 text-black hover:bg-white transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </button>
+              <a
+                href={src}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-white/90 text-black hover:bg-white transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Open
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Caption */}
+      {alt && alt !== 'Generated image' && alt !== 'Generated Image' && (
+        <p className="text-xs text-muted-foreground mt-1.5 italic">{alt}</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Video component with loading states and controls
+ */
+interface VideoPreviewProps {
+  src: string;
+  alt?: string;
+}
+
+function VideoPreview({ src, alt }: VideoPreviewProps) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return (
+      <div className="my-3 p-4 rounded-lg border border-destructive/30 bg-destructive/10 flex items-center gap-3">
+        <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-destructive font-medium">Failed to load video</p>
+          <p className="text-xs text-muted-foreground truncate mt-0.5">{src}</p>
+        </div>
+        <a 
+          href={src} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 px-2 py-1 text-xs rounded-md bg-secondary/50 hover:bg-secondary transition-colors"
+        >
+          <ExternalLink className="h-3 w-3" />
+          Open
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-3 relative">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50 rounded-lg min-h-[200px]">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
+      
+      <video
+        src={src}
+        controls
+        className={cn(
+          "w-full max-w-lg rounded-lg border border-border/30",
+          isLoading && "opacity-0"
+        )}
+        onLoadedData={() => setIsLoading(false)}
+        onError={() => {
+          setIsLoading(false);
+          setHasError(true);
+        }}
+      >
+        Your browser does not support the video tag.
+      </video>
+      
+      {alt && (
+        <p className="text-xs text-muted-foreground mt-1.5 italic">{alt}</p>
+      )}
+    </div>
+  );
+}
+
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   return (
     <div className={cn("markdown-content", className)}>
@@ -124,6 +310,22 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             return <>{children}</>;
           },
 
+          // Images - CRITICAL: properly render generated images
+          img({ src, alt }) {
+            if (!src) return null;
+            
+            // Check if it's a video URL
+            const isVideo = src.match(/\.(mp4|webm|ogg|mov)(\?|$)/i) || 
+                           src.includes('video') ||
+                           alt?.toLowerCase().includes('video');
+            
+            if (isVideo) {
+              return <VideoPreview src={src} alt={alt} />;
+            }
+            
+            return <ImagePreview src={src} alt={alt || 'Image'} />;
+          },
+
           // Paragraphs
           p({ children }) {
             return <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>;
@@ -162,8 +364,16 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             return <em className="italic">{children}</em>;
           },
 
-          // Links
+          // Links - also handle video links
           a({ href, children }) {
+            // Check if link points to a video
+            const isVideoLink = href?.match(/\.(mp4|webm|ogg|mov)(\?|$)/i) ||
+                               href?.includes('video');
+            
+            if (isVideoLink && href) {
+              return <VideoPreview src={href} alt={String(children) || undefined} />;
+            }
+            
             return (
               <a
                 href={href}
