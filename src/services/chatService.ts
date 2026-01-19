@@ -328,7 +328,8 @@ class ChatService {
     callbacks: StreamCallbacks,
     config?: { temperature?: number; maxTokens?: number },
     attachments?: ChatAttachment[],
-    boardId?: string
+    boardId?: string,
+    blockId?: string
   ): Promise<void> {
     // Pre-flight validation
     if (!modelId) {
@@ -370,13 +371,13 @@ class ChatService {
 
     // Handle image generation separately
     if (modelConfig.supports_image_generation) {
-      await this.handleImageGeneration(modelConfig, messageContent, callbacks, boardId);
+      await this.handleImageGeneration(modelConfig, messageContent, callbacks, boardId, blockId);
       return;
     }
 
     // Handle video generation separately
     if (modelConfig.supports_video_generation) {
-      await this.handleVideoGeneration(modelConfig, messageContent, callbacks, boardId);
+      await this.handleVideoGeneration(modelConfig, messageContent, callbacks, boardId, blockId);
       return;
     }
 
@@ -536,7 +537,8 @@ class ChatService {
     model: ModelConfig,
     prompt: string,
     callbacks: StreamCallbacks,
-    boardId?: string
+    boardId?: string,
+    blockId?: string
   ): Promise<void> {
     const startTime = Date.now();
     
@@ -564,6 +566,7 @@ class ChatService {
             action: 'image_generation',
             prompt,
             board_id: boardId,
+            block_id: blockId,
           }),
         }
       );
@@ -610,7 +613,8 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
     model: ModelConfig,
     prompt: string,
     callbacks: StreamCallbacks,
-    boardId?: string
+    boardId?: string,
+    blockId?: string
   ): Promise<void> {
     const startTime = Date.now();
     
@@ -637,6 +641,7 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
             action: 'video_generation',
             prompt,
             board_id: boardId,
+            block_id: blockId,
           }),
         }
       );

@@ -308,26 +308,32 @@ export function BlockChatModal({
     block.system_prompt, undefined, connectedContext);
 
     // Use the validated model ID for the request, pass boardId for API key resolution
-    await chatService.streamChat(activeModelId, history, {
-      onChunk: chunk => setStreamingContent(prev => prev + chunk),
-      onComplete: (response, meta) => {
-        // 3) Convert streaming -> real assistant message instantly, then persist in background
-        persistMessage('assistant', response, meta as Record<string, unknown>);
-        setStreamingContent("");
-        setMessageStatus('idle');
-      },
-      onError: errorMsg => {
-        setMessageStatus('error');
-        // Surface the actual error message from chatService instead of generic
-        setErrorMessage(errorMsg || 'Assistant failed. Please try again.');
-        setStreamingContent("");
+    await chatService.streamChat(
+      activeModelId,
+      history,
+      {
+        onChunk: (chunk) => setStreamingContent((prev) => prev + chunk),
+        onComplete: (response, meta) => {
+          // 3) Convert streaming -> real assistant message instantly, then persist in background
+          persistMessage('assistant', response, meta as Record<string, unknown>);
+          setStreamingContent("");
+          setMessageStatus('idle');
+        },
+        onError: (errorMsg) => {
+          setMessageStatus('error');
+          // Surface the actual error message from chatService instead of generic
+          setErrorMessage(errorMsg || 'Assistant failed. Please try again.');
+          setStreamingContent("");
 
-        // Log for debugging
-        console.error('[BlockChatModal] Chat error:', errorMsg);
-      }
-    }, undefined,
-    // config
-    attachments, block.board_id // Pass board_id for board-level API key resolution
+          // Log for debugging
+          console.error('[BlockChatModal] Chat error:', errorMsg);
+        },
+      },
+      undefined,
+      // config
+      attachments,
+      block.board_id,
+      block.id
     );
   }, [block, blockId, hasKeyForCurrentProvider, incomingContext, isSwitchingModel, messageStatus, navigate, persistMessage, queryClient]);
   const handleStop = useCallback(() => {

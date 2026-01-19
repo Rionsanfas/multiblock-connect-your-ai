@@ -375,32 +375,45 @@ serve(async (req) => {
 
       // CRITICAL: Upload image to Supabase Storage for persistence and proper preview
       const { block_id: blockId, board_id: boardId } = body;
-      const fileName = `${user.id}/${Date.now()}-${crypto.randomUUID()}.png`;
-      
-      const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+      const storagePath = `${user.id}/${Date.now()}-${crypto.randomUUID()}.png`;
+
+      const { error: uploadError } = await supabaseAdmin.storage
         .from('generated-media')
-        .upload(fileName, imageBytes, {
+        .upload(storagePath, imageBytes, {
           contentType: 'image/png',
           upsert: false,
         });
 
       if (uploadError) {
         console.error(`[chat-proxy] Failed to upload image to storage:`, uploadError);
-        // Fallback: return base64 data URI if storage fails
-        const b64 = btoa(String.fromCharCode(...imageBytes));
-        imageUrl = `data:image/png;base64,${b64}`;
-      } else {
-        // Get the public URL for the uploaded image
-        const { data: urlData } = supabaseAdmin.storage
-          .from('generated-media')
-          .getPublicUrl(fileName);
-        imageUrl = urlData.publicUrl;
-        console.log(`[chat-proxy] Image uploaded to storage: ${imageUrl}`);
+        return new Response(JSON.stringify({ error: "Failed to save generated image" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      // Save generated media metadata to database
-      try {
-        await supabaseAdmin.from('generated_media').insert({
+      // Create a signed URL for immediate preview (bucket is private)
+      const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
+        .from('generated-media')
+        .createSignedUrl(storagePath, 3600); // 1 hour
+
+      if (signedUrlError || !signedUrlData?.signedUrl) {
+        console.error(`[chat-proxy] Failed to create signed URL:`, signedUrlError);
+        return new Response(JSON.stringify({ error: "Failed to generate preview URL" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Stable reference URL (may not be publicly accessible; use storage_path + get-signed-url for access)
+      const { data: publicUrlData } = supabaseAdmin.storage
+        .from('generated-media')
+        .getPublicUrl(storagePath);
+
+      // Save generated media metadata to database (NEVER store base64)
+      const { data: mediaRow, error: mediaError } = await supabaseAdmin
+        .from('generated_media')
+        .insert({
           user_id: user.id,
           block_id: blockId || null,
           board_id: boardId || null,
@@ -409,16 +422,31 @@ serve(async (req) => {
           model_id: model_id || 'unknown',
           model_name: model_id || 'Image Model',
           prompt,
-          file_url: imageUrl,
-          storage_path: uploadData?.path || null,
+          file_url: publicUrlData.publicUrl,
+          storage_path: storagePath,
+        })
+        .select('id')
+        .single();
+
+      if (mediaError) {
+        console.error(`[chat-proxy] Failed to save image metadata:`, mediaError);
+        // Still return the signed URL so the user sees the preview, but indicate it wasn't saved.
+        return new Response(JSON.stringify({
+          image_url: signedUrlData.signedUrl,
+          storage_path: storagePath,
+          provider,
+          model_id,
+          prompt,
+          warning: 'Image preview created but metadata could not be saved',
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
-        console.log(`[chat-proxy] Saved generated image metadata for user ${user.id}`);
-      } catch (saveError) {
-        console.error(`[chat-proxy] Failed to save image metadata:`, saveError);
       }
 
-      return new Response(JSON.stringify({ 
-        image_url: imageUrl,
+      return new Response(JSON.stringify({
+        image_url: signedUrlData.signedUrl,
+        media_id: mediaRow.id,
+        storage_path: storagePath,
         provider,
         model_id,
         prompt,

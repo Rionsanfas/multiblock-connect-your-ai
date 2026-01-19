@@ -150,7 +150,8 @@ export default function BoardCanvas() {
 
     const getCoords = (e: PointerEvent | TouchEvent): { clientX: number; clientY: number } | null => {
       if ('touches' in e) {
-        return e.touches[0] ? { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY } : null;
+        const t = e.touches?.[0] ?? e.changedTouches?.[0];
+        return t ? { clientX: t.clientX, clientY: t.clientY } : null;
       }
       return { clientX: e.clientX, clientY: e.clientY };
     };
@@ -164,11 +165,37 @@ export default function BoardCanvas() {
       };
     };
 
-    // Hit-test the DOM at the release point to find the target block
+    // Mobile/tablet: forgiving drop targeting.
+    // We do NOT rely on hover/proximity; we only need a robust "what block is under the finger on release".
+    // elementFromPoint can be unreliable with pointer capture / SVG overlays, so we:
+    //  1) prefer elementsFromPoint (respects visual stacking)
+    //  2) fall back to bounding-rect hit testing across all blocks
     const getBlockIdAtPoint = (clientX: number, clientY: number): string | null => {
-      const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
-      const blockEl = el?.closest?.('[data-block-id]') as HTMLElement | null;
-      return blockEl?.dataset?.blockId || null;
+      const els = (document.elementsFromPoint?.(clientX, clientY) ?? []) as HTMLElement[];
+      for (const el of els) {
+        const blockEl = el?.closest?.('[data-block-id]') as HTMLElement | null;
+        if (blockEl?.dataset?.blockId) return blockEl.dataset.blockId;
+      }
+
+      // Fallback: bounding-rect hit test
+      const blocks = Array.from(document.querySelectorAll<HTMLElement>('[data-block-id]'));
+      let best: { id: string; z: number } | null = null;
+
+      for (const blockEl of blocks) {
+        const rect = blockEl.getBoundingClientRect();
+        const inside = clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+        if (!inside) continue;
+
+        const z = Number.parseInt(window.getComputedStyle(blockEl).zIndex || '0', 10) || 0;
+        const id = blockEl.dataset.blockId;
+        if (!id) continue;
+
+        if (!best || z >= best.z) {
+          best = { id, z };
+        }
+      }
+
+      return best?.id ?? null;
     };
 
     const onMove = (e: PointerEvent | TouchEvent) => {
