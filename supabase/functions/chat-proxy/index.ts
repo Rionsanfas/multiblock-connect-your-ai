@@ -305,20 +305,32 @@ serve(async (req) => {
           }
         }
       } else if (provider === "google") {
-        imageResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`, {
+        // Use Gemini 2.5 Flash with image generation via generateContent + responseModalities
+        // This is the correct approach for image generation with Gemini models
+        const geminiModel = "gemini-2.0-flash-exp"; // Supports image output
+        imageResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            instances: [{ prompt }],
-            parameters: { sampleCount: 1 },
+            contents: [{ parts: [{ text: `Generate an image: ${prompt}` }] }],
+            generationConfig: {
+              responseModalities: ["TEXT", "IMAGE"],
+            },
           }),
         });
         
         if (imageResponse.ok) {
           const data = await imageResponse.json();
-          const b64 = data.predictions?.[0]?.bytesBase64Encoded;
-          if (b64) {
-            imageBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+          // Extract image from Gemini response structure
+          const parts = data.candidates?.[0]?.content?.parts || [];
+          for (const part of parts) {
+            if (part.inlineData?.mimeType?.startsWith('image/')) {
+              const b64 = part.inlineData.data;
+              if (b64) {
+                imageBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                break;
+              }
+            }
           }
         }
       } else if (provider === "xai") {
