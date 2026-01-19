@@ -370,13 +370,13 @@ class ChatService {
 
     // Handle image generation separately
     if (modelConfig.supports_image_generation) {
-      await this.handleImageGeneration(modelConfig, messageContent, callbacks);
+      await this.handleImageGeneration(modelConfig, messageContent, callbacks, boardId);
       return;
     }
 
     // Handle video generation separately
     if (modelConfig.supports_video_generation) {
-      await this.handleVideoGeneration(modelConfig, messageContent, callbacks);
+      await this.handleVideoGeneration(modelConfig, messageContent, callbacks, boardId);
       return;
     }
 
@@ -528,16 +528,20 @@ class ChatService {
 
   /**
    * Handle image generation requests via proxy
+   * 
+   * CRITICAL: Returns markdown image that MarkdownRenderer will display.
+   * The image_url from the proxy is embedded directly in markdown.
    */
   private async handleImageGeneration(
     model: ModelConfig,
     prompt: string,
-    callbacks: StreamCallbacks
+    callbacks: StreamCallbacks,
+    boardId?: string
   ): Promise<void> {
     const startTime = Date.now();
     
     try {
-      callbacks.onChunk('Generating image...\n\n');
+      callbacks.onChunk('🎨 Generating image...\n\n');
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -559,6 +563,7 @@ class ChatService {
             model_id: model.id,
             action: 'image_generation',
             prompt,
+            board_id: boardId,
           }),
         }
       );
@@ -572,13 +577,23 @@ class ChatService {
       const data = await response.json();
       
       if (data.image_url) {
-        const imageMarkdown = `![Generated Image](${data.image_url})\n\n*Generated with ${model.name}*`;
+        // Build response with proper markdown image syntax
+        // MarkdownRenderer will render this as an actual <img> with loading states
+        const imageUrl = data.image_url;
+        const promptPreview = prompt.length > 100 ? prompt.substring(0, 97) + '...' : prompt;
+        
+        const imageMarkdown = `![Generated Image](${imageUrl})
+
+*Image generated based on your prompt.*
+
+${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
+
         callbacks.onComplete(imageMarkdown, {
           model: model.id,
           latency_ms: Date.now() - startTime,
         });
       } else {
-        callbacks.onError('No image was returned');
+        callbacks.onError('No image was returned from the API. Please try again.');
       }
     } catch (error) {
       console.error('[ChatService] Image generation error:', error);
@@ -588,16 +603,19 @@ class ChatService {
 
   /**
    * Handle video generation requests via proxy
+   * 
+   * CRITICAL: Returns markdown with video link that MarkdownRenderer will display.
    */
   private async handleVideoGeneration(
     model: ModelConfig,
     prompt: string,
-    callbacks: StreamCallbacks
+    callbacks: StreamCallbacks,
+    boardId?: string
   ): Promise<void> {
     const startTime = Date.now();
     
     try {
-      callbacks.onChunk('Generating video... This may take a few minutes.\n\n');
+      callbacks.onChunk('🎬 Generating video... This may take a few minutes.\n\n');
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -618,6 +636,7 @@ class ChatService {
             model_id: model.id,
             action: 'video_generation',
             prompt,
+            board_id: boardId,
           }),
         }
       );
@@ -631,13 +650,19 @@ class ChatService {
       const data = await response.json();
       
       if (data.video_url) {
-        const videoMessage = `🎬 Video generated successfully!\n\n[View Video](${data.video_url})\n\n*Generated with ${model.name}*`;
+        // Build response with video link that MarkdownRenderer will handle
+        const videoMessage = `🎬 **Video Generated Successfully!**
+
+[▶️ Play Video](${data.video_url})
+
+*${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s*`;
+
         callbacks.onComplete(videoMessage, {
           model: model.id,
           latency_ms: Date.now() - startTime,
         });
       } else {
-        callbacks.onError('No video was returned');
+        callbacks.onError('No video was returned from the API. Please try again.');
       }
     } catch (error) {
       console.error('[ChatService] Video generation error:', error);
