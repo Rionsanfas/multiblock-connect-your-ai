@@ -127,8 +127,12 @@ export default function BoardCanvas() {
     [zoom, panOffset, setZoom]
   );
 
+  // State for mobile connection target highlight
+  const [connectionTargetId, setConnectionTargetId] = useState<string | null>(null);
+
   // CRITICAL: connection dragging must be window-scoped, never canvas-scoped.
   // Uses pointer events for unified mouse + touch handling.
+  // Includes touch hit-testing via elementFromPoint for mobile connection target detection.
   useEffect(() => {
     if (!connectingFrom) return;
 
@@ -162,33 +166,67 @@ export default function BoardCanvas() {
       };
 
       if (!raf) raf = window.requestAnimationFrame(updateMousePos);
+
+      // Mobile connection target hit-testing via elementFromPoint
+      // This simulates hover detection for touch by finding what block is under the finger
+      const elementUnderFinger = document.elementFromPoint(coords.clientX, coords.clientY);
+      if (elementUnderFinger) {
+        const blockCard = elementUnderFinger.closest('[data-block-id]');
+        const blockId = blockCard?.getAttribute('data-block-id');
+        // Only set target if it's a different block than the source
+        if (blockId && blockId !== connectingFrom) {
+          setConnectionTargetId(blockId);
+        } else {
+          setConnectionTargetId(null);
+        }
+      } else {
+        setConnectionTargetId(null);
+      }
     };
 
-    const onUp = () => {
-      // If a block handled the drop, it will already have cleared connectingFrom.
+    const onUp = (e: PointerEvent | TouchEvent) => {
+      const coords = getCoords(e);
+      
+      // Try to auto-connect on touch release via hit-testing
+      if (coords) {
+        const elementUnderFinger = document.elementFromPoint(coords.clientX, coords.clientY);
+        if (elementUnderFinger) {
+          const blockCard = elementUnderFinger.closest('[data-block-id]');
+          const targetBlockId = blockCard?.getAttribute('data-block-id');
+          if (targetBlockId && targetBlockId !== connectingFrom) {
+            // Auto-connect to the target block
+            createConnection(connectingFrom, targetBlockId);
+            toast.success("Connection created");
+          }
+        }
+      }
+      
+      // Clear target highlight and connection state
+      setConnectionTargetId(null);
       endDrag();
       setConnectingFrom(null);
     };
 
     // Use pointer events for unified mouse + touch support
     window.addEventListener('pointermove', onMove as any);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
+    window.addEventListener('pointerup', onUp as any);
+    window.addEventListener('pointercancel', onUp as any);
     // Touch fallbacks for devices that don't fully support pointer events
     window.addEventListener('touchmove', onMove as any, { passive: false });
-    window.addEventListener('touchend', onUp);
-    window.addEventListener('touchcancel', onUp);
+    window.addEventListener('touchend', onUp as any);
+    window.addEventListener('touchcancel', onUp as any);
 
     return () => {
       window.removeEventListener('pointermove', onMove as any);
-      window.removeEventListener('pointerup', onUp);
-      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('pointerup', onUp as any);
+      window.removeEventListener('pointercancel', onUp as any);
       window.removeEventListener('touchmove', onMove as any);
-      window.removeEventListener('touchend', onUp);
-      window.removeEventListener('touchcancel', onUp);
+      window.removeEventListener('touchend', onUp as any);
+      window.removeEventListener('touchcancel', onUp as any);
+      setConnectionTargetId(null);
       if (raf) window.cancelAnimationFrame(raf);
     };
-  }, [connectingFrom, endDrag]);
+  }, [connectingFrom, endDrag, createConnection]);
 
   const handleCenterView = useCallback(() => {
     if (boardBlocks.length === 0) {
@@ -621,6 +659,7 @@ export default function BoardCanvas() {
                         onStartConnection={() => handleStartConnection(block.id)}
                         onEndConnection={() => handleEndConnection(block.id)}
                         isConnecting={!!connectingFrom}
+                        isConnectionTarget={connectionTargetId === block.id}
                       />
                     ))}
                   </div>

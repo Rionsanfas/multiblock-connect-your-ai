@@ -256,7 +256,16 @@ serve(async (req) => {
         
         if (imageResponse.ok) {
           const data = await imageResponse.json();
-          imageUrl = data.data?.[0]?.url || data.data?.[0]?.b64_json;
+          // Normalize: OpenAI returns either URL or b64_json - convert b64_json to data URI
+          const rawImage = data.data?.[0]?.url || data.data?.[0]?.b64_json;
+          if (rawImage) {
+            // If it's base64 without data: prefix, convert to data URI
+            if (!rawImage.startsWith('http') && !rawImage.startsWith('data:')) {
+              imageUrl = `data:image/png;base64,${rawImage}`;
+            } else {
+              imageUrl = rawImage;
+            }
+          }
         }
       } else if (provider === "together") {
         const togetherModel = model_id === "flux-together" ? "black-forest-labs/FLUX.1-schnell-Free" : model_id;
@@ -277,7 +286,16 @@ serve(async (req) => {
         
         if (imageResponse.ok) {
           const data = await imageResponse.json();
-          imageUrl = data.data?.[0]?.url || data.data?.[0]?.b64_json;
+          // Normalize: Together returns either URL or b64_json - convert b64_json to data URI
+          const rawImage = data.data?.[0]?.url || data.data?.[0]?.b64_json;
+          if (rawImage) {
+            // If it's base64 without data: prefix, convert to data URI
+            if (!rawImage.startsWith('http') && !rawImage.startsWith('data:')) {
+              imageUrl = `data:image/png;base64,${rawImage}`;
+            } else {
+              imageUrl = rawImage;
+            }
+          }
         }
       } else if (provider === "google") {
         // Google Imagen API
@@ -402,24 +420,102 @@ serve(async (req) => {
       let videoResponse;
 
       if (provider === "openai") {
-        // OpenAI Sora API (when available)
-        videoResponse = await fetch("https://api.openai.com/v1/videos/generations", {
+        // OpenAI Sora uses async job API: create job, poll for completion, get content URL
+        console.log(`[chat-proxy] Starting OpenAI Sora video generation...`);
+        
+        // Step 1: Create video generation job
+        const createResponse = await fetch("https://api.openai.com/v1/videos", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
-            model: "sora-2-pro",
+            model: model_id || "sora",
             prompt,
+            size: "1920x1080",
             duration: 5,
+            n: 1,
           }),
         });
         
-        if (videoResponse.ok) {
-          const data = await videoResponse.json();
-          videoUrl = data.data?.[0]?.url;
+        if (!createResponse.ok) {
+          const errorData = await createResponse.json().catch(() => ({}));
+          console.error(`[chat-proxy] Sora job creation failed:`, errorData);
+          
+          // Check if Sora is not available
+          if (createResponse.status === 404 || errorData.error?.message?.includes('not found')) {
+            return new Response(JSON.stringify({ 
+              error: `OpenAI Sora video generation is not available with your API key. Make sure you have Sora access enabled.`
+            }), {
+              status: 501,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          
+          return new Response(JSON.stringify({ error: errorData.error?.message || "Failed to start video generation" }), {
+            status: createResponse.status,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
+        
+        const jobData = await createResponse.json();
+        const jobId = jobData.id;
+        console.log(`[chat-proxy] Sora job created: ${jobId}`);
+        
+        // Step 2: Poll for completion (max 5 minutes with exponential backoff)
+        let attempts = 0;
+        const maxAttempts = 60; // 60 attempts * 5s avg = 5 minutes max
+        let pollInterval = 2000; // Start at 2s, increase gradually
+        
+        while (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          attempts++;
+          
+          const pollResponse = await fetch(`https://api.openai.com/v1/videos/${jobId}`, {
+            headers: { "Authorization": `Bearer ${apiKey}` },
+          });
+          
+          if (!pollResponse.ok) {
+            console.error(`[chat-proxy] Sora poll failed:`, pollResponse.status);
+            continue;
+          }
+          
+          const pollData = await pollResponse.json();
+          console.log(`[chat-proxy] Sora job ${jobId} status: ${pollData.status} (attempt ${attempts})`);
+          
+          if (pollData.status === "completed" || pollData.status === "succeeded") {
+            // Step 3: Get the video content URL
+            videoUrl = pollData.output?.url || pollData.data?.[0]?.url || pollData.video_url;
+            if (videoUrl) {
+              console.log(`[chat-proxy] Sora video ready: ${videoUrl.substring(0, 100)}...`);
+              break;
+            }
+          } else if (pollData.status === "failed" || pollData.status === "error") {
+            console.error(`[chat-proxy] Sora generation failed:`, pollData.error);
+            return new Response(JSON.stringify({ 
+              error: pollData.error?.message || "Video generation failed"
+            }), {
+              status: 500,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          
+          // Increase poll interval (max 10s)
+          pollInterval = Math.min(pollInterval * 1.2, 10000);
+        }
+        
+        if (!videoUrl) {
+          return new Response(JSON.stringify({ 
+            error: "Video generation timed out. Please try again."
+          }), {
+            status: 504,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        // Create a successful videoResponse-like object so the rest of the code works
+        videoResponse = new Response(JSON.stringify({ success: true }), { status: 200 });
       } else if (provider === "together") {
         // Together.ai video models
         videoResponse = await fetch("https://api.together.xyz/v1/videos/generations", {

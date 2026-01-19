@@ -24,6 +24,7 @@ interface BlockCardProps {
   onStartConnection: () => void;
   onEndConnection: () => void;
   isConnecting: boolean;
+  isConnectionTarget?: boolean; // For mobile touch highlight
 }
 
 // Responsive default sizes - smaller on mobile
@@ -39,6 +40,7 @@ export function BlockCard({
   onStartConnection,
   onEndConnection,
   isConnecting,
+  isConnectionTarget = false,
 }: BlockCardProps) {
   // CRITICAL: Use refs for drag state to prevent re-renders during drag
   const isDraggingRef = useRef(false);
@@ -409,8 +411,11 @@ export function BlockCard({
           className={cn(
             "block-card absolute select-none",
             isDragging ? "cursor-grabbing z-50" : "cursor-grab",
-            isResizing && "z-50"
+            isResizing && "z-50",
+            // Mobile connection target highlight - glow effect when finger is over this block
+            isConnectionTarget && "ring-2 ring-primary ring-offset-2 ring-offset-background"
           )}
+          data-block-id={block.id}
           style={{
             left: block.position.x,
             top: block.position.y,
@@ -426,10 +431,11 @@ export function BlockCard({
           }}
         >
           {/* Layer 1: Full outline bracket for connections - always visible, symmetric offset */}
+          {/* Enhanced glow when this block is a mobile connection target */}
           <div 
             className={cn(
               "absolute pointer-events-none transition-all duration-150",
-              isConnectionZoneHovered && "drop-shadow-[0_0_12px_hsl(0,0%,70%)]"
+              (isConnectionZoneHovered || isConnectionTarget) && "drop-shadow-[0_0_16px_hsl(var(--primary))]"
             )}
             style={{
               top: -bracketOffset,
@@ -451,9 +457,9 @@ export function BlockCard({
                 rx={borderRadius + 8}
                 ry={borderRadius + 8}
                 fill="none"
-                stroke={isConnectionZoneHovered ? "hsl(0, 0%, 60%)" : "hsl(0, 0%, 35%)"}
-                strokeWidth={isConnectionZoneHovered ? "2.5" : "1.5"}
-                strokeOpacity={isConnectionZoneHovered ? "1" : "0.7"}
+                stroke={isConnectionTarget ? "hsl(var(--primary))" : isConnectionZoneHovered ? "hsl(0, 0%, 60%)" : "hsl(0, 0%, 35%)"}
+                strokeWidth={isConnectionTarget ? "3" : isConnectionZoneHovered ? "2.5" : "1.5"}
+                strokeOpacity={isConnectionTarget || isConnectionZoneHovered ? "1" : "0.7"}
               />
             </svg>
           </div>
