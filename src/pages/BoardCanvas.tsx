@@ -133,6 +133,21 @@ export default function BoardCanvas() {
   // Determine if we're on a touch device
   const isTouchDevice = isMobile || isTablet;
 
+  // Track the last known mouse position for immediate line visibility on desktop
+  const lastMouseClientPos = useRef<{ x: number; y: number } | null>(null);
+
+  // Capture mouse position globally so we have it when connection starts
+  useEffect(() => {
+    if (isTouchDevice) return;
+    
+    const onGlobalMouseMove = (e: MouseEvent) => {
+      lastMouseClientPos.current = { x: e.clientX, y: e.clientY };
+    };
+    
+    window.addEventListener('mousemove', onGlobalMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onGlobalMouseMove);
+  }, [isTouchDevice]);
+
   // ========== DESKTOP CONNECTION LINE DRAWING ==========
   // Smooth, immediate mouse following with hover-based target detection.
   // Completely isolated from touch/mobile logic.
@@ -143,13 +158,6 @@ export default function BoardCanvas() {
     let raf = 0;
     let latest: { x: number; y: number } | null = null;
 
-    const updateMousePos = () => {
-      raf = 0;
-      if (!latest) return;
-      setMousePos(latest);
-      latest = null;
-    };
-
     const toWorld = (clientX: number, clientY: number) => {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return null;
@@ -158,6 +166,22 @@ export default function BoardCanvas() {
         y: (clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
       };
     };
+
+    const updateMousePos = () => {
+      raf = 0;
+      if (!latest) return;
+      setMousePos(latest);
+      latest = null;
+    };
+
+    // IMMEDIATELY set mouse position from cached global position
+    // This ensures the line is visible the instant dragging starts
+    if (lastMouseClientPos.current) {
+      const world = toWorld(lastMouseClientPos.current.x, lastMouseClientPos.current.y);
+      if (world) {
+        setMousePos(world);
+      }
+    }
 
     const onMouseMove = (e: MouseEvent) => {
       const world = toWorld(e.clientX, e.clientY);
@@ -494,38 +518,34 @@ export default function BoardCanvas() {
         queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
       }
 
-      // Get the starting block's center position
-      const getStartCenter = () => {
+      // For desktop: use the cached mouse position for immediate line visibility
+      // For touch: use block center as fallback
+      if (!isTouchDevice && lastMouseClientPos.current && canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const worldPos = {
+          x: (lastMouseClientPos.current.x - rect.left - panOffset.x) / zoom,
+          y: (lastMouseClientPos.current.y - rect.top - panOffset.y) / zoom,
+        };
+        setMousePos(worldPos);
+      } else {
+        // Fallback for touch or if no mouse position cached
         const storePos = useBlockPositions.getState().positions[blockId];
-        if (storePos) {
-          return {
-            x: storePos.x + DEFAULT_BLOCK_WIDTH / 2,
-            y: storePos.y + DEFAULT_BLOCK_HEIGHT / 2,
-          };
-        }
         const block = boardBlocks.find((b) => b.id === blockId);
-        if (block) {
-          return {
-            x: block.position.x + DEFAULT_BLOCK_WIDTH / 2,
-            y: block.position.y + DEFAULT_BLOCK_HEIGHT / 2,
-          };
-        }
-        return { x: 0, y: 0 };
-      };
-
-      const startCenter = getStartCenter();
-      
-      // Set initial mouse position SLIGHTLY offset from center so line is visible
-      // (If from and to are identical, the line has zero length and won't render)
-      setMousePos({ x: startCenter.x + 1, y: startCenter.y + 1 });
+        const center = storePos 
+          ? { x: storePos.x + DEFAULT_BLOCK_WIDTH / 2, y: storePos.y + DEFAULT_BLOCK_HEIGHT / 2 }
+          : block 
+            ? { x: block.position.x + DEFAULT_BLOCK_WIDTH / 2, y: block.position.y + DEFAULT_BLOCK_HEIGHT / 2 }
+            : { x: 0, y: 0 };
+        setMousePos({ x: center.x + 10, y: center.y + 10 });
+      }
 
       // Set global drag lock for connection drawing
       startDrag('connection', blockId);
       
-      // Set connectingFrom AFTER mousePos to ensure line renders immediately
+      // Set connectingFrom to trigger the drawing effect
       setConnectingFrom(blockId);
     },
-    [board?.id, boardBlocks, queryClient, startDrag]
+    [board?.id, boardBlocks, queryClient, startDrag, isTouchDevice, panOffset, zoom]
   );
 
   const handleEndConnection = useCallback(
