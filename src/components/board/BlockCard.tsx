@@ -73,6 +73,7 @@ export function BlockCard({
   const isTablet = useIsTablet();
   const isTouchDevice = useIsTouchDevice();
   const showHandlesAlways = isMobile || isTablet || isTouchDevice;
+  const isMobileOrTablet = isMobile || isTablet;
 
   // Global drag store for cross-component drag lock
   const startDrag = useDragStore((s) => s.startDrag);
@@ -488,9 +489,10 @@ export function BlockCard({
               }
             }}
             onPointerUp={(e) => {
-              // End connection on pointer up
+              // Desktop only: end connection on pointer up.
+              // Mobile/Tablet uses window-scoped pointerup hit-test to decide connect vs cancel.
               e.stopPropagation();
-              if (isConnecting) onEndConnection();
+              if (!isMobileOrTablet && isConnecting) onEndConnection();
             }}
           />
 

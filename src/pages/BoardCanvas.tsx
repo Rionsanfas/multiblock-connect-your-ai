@@ -675,7 +675,8 @@ export default function BoardCanvas() {
                         onStartConnection={() => handleStartConnection(block.id)}
                         onEndConnection={() => handleEndConnection(block.id)}
                         isConnecting={!!connectingFrom}
-                        isConnectionTarget={connectionTargetId === block.id}
+                        // Mobile/Tablet: all blocks are "accepting" while a connection is being dragged.
+                        isConnectionTarget={(isMobile || isTablet) && !!connectingFrom ? block.id !== connectingFrom : connectionTargetId === block.id}
                       />
                     ))}
                   </div>
