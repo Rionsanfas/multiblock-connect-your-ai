@@ -128,7 +128,7 @@ export default function BoardCanvas() {
   );
 
   // CRITICAL: connection dragging must be window-scoped, never canvas-scoped.
-  // Otherwise leaving the canvas ends the drag mid-mouse-down.
+  // Uses pointer events for unified mouse + touch handling.
   useEffect(() => {
     if (!connectingFrom) return;
 
@@ -142,13 +142,23 @@ export default function BoardCanvas() {
       latest = null;
     };
 
-    const onMove = (e: MouseEvent) => {
+    const getCoords = (e: PointerEvent | TouchEvent): { clientX: number; clientY: number } | null => {
+      if ('touches' in e) {
+        return e.touches[0] ? { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY } : null;
+      }
+      return { clientX: e.clientX, clientY: e.clientY };
+    };
+
+    const onMove = (e: PointerEvent | TouchEvent) => {
+      const coords = getCoords(e);
+      if (!coords) return;
+      
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
 
       latest = {
-        x: (e.clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
-        y: (e.clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
+        x: (coords.clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
+        y: (coords.clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
       };
 
       if (!raf) raf = window.requestAnimationFrame(updateMousePos);
@@ -160,12 +170,22 @@ export default function BoardCanvas() {
       setConnectingFrom(null);
     };
 
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    // Use pointer events for unified mouse + touch support
+    window.addEventListener('pointermove', onMove as any);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    // Touch fallbacks for devices that don't fully support pointer events
+    window.addEventListener('touchmove', onMove as any, { passive: false });
+    window.addEventListener('touchend', onUp);
+    window.addEventListener('touchcancel', onUp);
 
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('pointermove', onMove as any);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('touchmove', onMove as any);
+      window.removeEventListener('touchend', onUp);
+      window.removeEventListener('touchcancel', onUp);
       if (raf) window.cancelAnimationFrame(raf);
     };
   }, [connectingFrom, endDrag]);
@@ -221,8 +241,9 @@ export default function BoardCanvas() {
     };
   }, [board?.id, setCurrentBoard]);
 
-  const handleCanvasMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+  // Unified pointer handler for canvas panning (works with mouse + touch)
+  const handleCanvasPointerDown = useCallback(
+    (e: React.PointerEvent) => {
       const target = e.target as HTMLElement;
       // Only enable panning on canvas background, not on blocks
       if (target === canvasRef.current || target.classList.contains('board-canvas-bg') || target.closest('.canvas-inner')) {
@@ -238,6 +259,13 @@ export default function BoardCanvas() {
           setIsPanning(true);
           setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
           selectBlock(null);
+          
+          // Capture pointer for reliable tracking
+          try {
+            (e.target as HTMLElement).setPointerCapture(e.pointerId);
+          } catch {
+            // ignore
+          }
         }
       }
     },
@@ -298,9 +326,11 @@ export default function BoardCanvas() {
     }
   };
 
-  const handleCanvasMouseMove = useCallback(
-    (e: React.MouseEvent) => {
+  const handleCanvasPointerMove = useCallback(
+    (e: React.PointerEvent) => {
       if (isPanning) {
+        // Prevent default to stop touch scrolling during pan
+        e.preventDefault();
         // Direct state update for panning - no React interference
         setPanOffset({
           x: e.clientX - dragStart.x,
@@ -311,10 +341,17 @@ export default function BoardCanvas() {
     [isPanning, dragStart]
   );
 
-  const handleCanvasMouseUp = useCallback(() => {
+  const handleCanvasPointerUp = useCallback((e: React.PointerEvent) => {
     if (isPanning) {
       endDrag();
       setIsPanning(false);
+      
+      // Release pointer capture
+      try {
+        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {
+        // ignore
+      }
     }
   }, [isPanning, endDrag]);
 
@@ -520,12 +557,13 @@ export default function BoardCanvas() {
                 style={{
                   // Ensure the canvas container fills available space
                   minHeight: "100%",
+                  touchAction: 'none', // Prevent browser gestures during canvas pan
                 }}
-                onMouseDown={handleCanvasMouseDown}
-                onMouseMove={handleCanvasMouseMove}
-                onMouseUp={handleCanvasMouseUp}
-                // IMPORTANT: do NOT end connection-drag on mouse-leave; connection drag is window-scoped.
-                onMouseLeave={handleCanvasMouseUp}
+                onPointerDown={handleCanvasPointerDown}
+                onPointerMove={handleCanvasPointerMove}
+                onPointerUp={handleCanvasPointerUp}
+                onPointerLeave={handleCanvasPointerUp}
+                onPointerCancel={handleCanvasPointerUp}
                 onDoubleClick={handleCanvasDoubleClick}
                 onContextMenu={handleContextMenu}
                 onWheel={handleWheel}

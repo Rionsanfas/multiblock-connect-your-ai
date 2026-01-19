@@ -157,7 +157,8 @@ export function BlockCard({
     openBlockChat(block.id);
   }, [isResizing, openBlockChat, block.id]);
 
-  const handleResizeStart = useCallback((e: React.MouseEvent, corner: string) => {
+  // Unified pointer-based resize start (works with mouse + touch)
+  const handleResizePointerDown = useCallback((e: React.PointerEvent, corner: string) => {
     e.stopPropagation();
     e.preventDefault();
     // Set global drag lock for resize
@@ -167,9 +168,16 @@ export function BlockCard({
     startPos.current = { x: e.clientX, y: e.clientY };
     startSize.current = { width: size.width, height: size.height };
     startBlockPos.current = { x: block.position.x, y: block.position.y };
+    
+    // Capture pointer for reliable tracking across boundaries
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
   }, [startDrag, block.id, size.width, size.height, block.position.x, block.position.y]);
 
-  const handleResizeMove = (e: MouseEvent) => {
+  const handleResizeMove = useCallback((e: PointerEvent) => {
     if (!isResizing || !resizeCorner) return;
 
     const deltaX = (e.clientX - startPos.current.x) / zoom;
@@ -213,7 +221,7 @@ export function BlockCard({
       setSize({ width: newWidth, height: newHeight });
       updateBlockPosition(block.id, { x: newX, y: newY });
     });
-  };
+  }, [isResizing, resizeCorner, zoom, block.id, updateBlockPosition]);
 
   const handleResizeEnd = useCallback(() => {
     if (isResizing) {
@@ -344,16 +352,19 @@ export function BlockCard({
     };
   }, [isDragging, isResizing, zoom, block.id, updateBlockPosition, persistBlockPosition, endDrag]);
 
+  // Pointer-driven resize listeners - use pointer events for unified mouse + touch
   useEffect(() => {
     if (isResizing) {
-      window.addEventListener("mousemove", handleResizeMove);
-      window.addEventListener("mouseup", handleResizeEnd);
+      window.addEventListener("pointermove", handleResizeMove);
+      window.addEventListener("pointerup", handleResizeEnd);
+      window.addEventListener("pointercancel", handleResizeEnd);
       return () => {
-        window.removeEventListener("mousemove", handleResizeMove);
-        window.removeEventListener("mouseup", handleResizeEnd);
+        window.removeEventListener("pointermove", handleResizeMove);
+        window.removeEventListener("pointerup", handleResizeEnd);
+        window.removeEventListener("pointercancel", handleResizeEnd);
       };
     }
-  }, [isResizing, resizeCorner, zoom]);
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
 
   const handleRun = async () => {
     setIsRunning(true);
@@ -448,7 +459,7 @@ export function BlockCard({
           </div>
           
           {/* Connection click zone - invisible but clickable overlay for starting/ending connections */}
-          {/* On touch devices: single tap starts connection, no aiming required */}
+          {/* Unified pointer events for mouse + touch */}
           <div 
             className="absolute cursor-crosshair no-drag pointer-events-auto"
             style={{
@@ -457,35 +468,21 @@ export function BlockCard({
               width: `calc(100% + ${(bracketOffset + 8) * 2}px)`,
               height: `calc(100% + ${(bracketOffset + 8) * 2}px)`,
               borderRadius: borderRadius + bracketOffset + 4,
+              touchAction: 'none', // Prevent browser gestures during connection drag
             }}
             onMouseEnter={() => setIsConnectionZoneHovered(true)}
             onMouseLeave={() => setIsConnectionZoneHovered(false)}
-            onTouchStart={(e) => {
-              // On touch devices, single tap immediately starts connection
-              if (isTouchDevice && !isConnecting) {
-                e.stopPropagation();
-                const target = e.target as HTMLElement;
-                if (!target.closest('.block-main-card')) {
-                  onStartConnection();
-                }
-              }
-            }}
-            onTouchEnd={(e) => {
-              // On touch devices, tap ends connection
-              if (isTouchDevice && isConnecting) {
-                e.stopPropagation();
-                onEndConnection();
-              }
-            }}
-            onMouseDown={(e) => {
-              // Only start connection if not clicking on the main card
+            onPointerDown={(e) => {
+              // Start connection on pointer down (works for mouse + touch)
               const target = e.target as HTMLElement;
               if (!target.closest('.block-main-card')) {
                 e.stopPropagation();
+                e.preventDefault();
                 onStartConnection();
               }
             }}
-            onMouseUp={(e) => {
+            onPointerUp={(e) => {
+              // End connection on pointer up
               e.stopPropagation();
               if (isConnecting) onEndConnection();
             }}
@@ -498,13 +495,8 @@ export function BlockCard({
               "absolute pointer-events-auto cursor-nw-resize no-drag transition-opacity duration-150",
               (isHovered || showHandlesAlways) ? "opacity-100" : "opacity-0"
             )}
-            style={{ top: -cornerOffset, left: -cornerOffset }}
-            onMouseDown={(e) => handleResizeStart(e, 'nw')}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              const touch = e.touches[0];
-              handleResizeStart({ clientX: touch.clientX, clientY: touch.clientY, stopPropagation: () => {}, preventDefault: () => {} } as any, 'nw');
-            }}
+            style={{ top: -cornerOffset, left: -cornerOffset, touchAction: 'none' }}
+            onPointerDown={(e) => handleResizePointerDown(e, 'nw')}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -518,18 +510,14 @@ export function BlockCard({
           </div>
 
           {/* Top-right corner bracket */}
+
           <div 
             className={cn(
               "absolute pointer-events-auto cursor-ne-resize no-drag transition-opacity duration-150",
               (isHovered || showHandlesAlways) ? "opacity-100" : "opacity-0"
             )}
-            style={{ top: -cornerOffset, right: -cornerOffset }}
-            onMouseDown={(e) => handleResizeStart(e, 'ne')}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              const touch = e.touches[0];
-              handleResizeStart({ clientX: touch.clientX, clientY: touch.clientY, stopPropagation: () => {}, preventDefault: () => {} } as any, 'ne');
-            }}
+            style={{ top: -cornerOffset, right: -cornerOffset, touchAction: 'none' }}
+            onPointerDown={(e) => handleResizePointerDown(e, 'ne')}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -542,19 +530,13 @@ export function BlockCard({
             </svg>
           </div>
 
-          {/* Bottom-left corner bracket */}
           <div 
             className={cn(
               "absolute pointer-events-auto cursor-sw-resize no-drag transition-opacity duration-150",
               (isHovered || showHandlesAlways) ? "opacity-100" : "opacity-0"
             )}
-            style={{ bottom: -cornerOffset, left: -cornerOffset }}
-            onMouseDown={(e) => handleResizeStart(e, 'sw')}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              const touch = e.touches[0];
-              handleResizeStart({ clientX: touch.clientX, clientY: touch.clientY, stopPropagation: () => {}, preventDefault: () => {} } as any, 'sw');
-            }}
+            style={{ bottom: -cornerOffset, left: -cornerOffset, touchAction: 'none' }}
+            onPointerDown={(e) => handleResizePointerDown(e, 'sw')}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -567,19 +549,13 @@ export function BlockCard({
             </svg>
           </div>
 
-          {/* Bottom-right corner bracket */}
           <div 
             className={cn(
               "absolute pointer-events-auto cursor-se-resize no-drag transition-opacity duration-150",
               (isHovered || showHandlesAlways) ? "opacity-100" : "opacity-0"
             )}
-            style={{ bottom: -cornerOffset, right: -cornerOffset }}
-            onMouseDown={(e) => handleResizeStart(e, 'se')}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              const touch = e.touches[0];
-              handleResizeStart({ clientX: touch.clientX, clientY: touch.clientY, stopPropagation: () => {}, preventDefault: () => {} } as any, 'se');
-            }}
+            style={{ bottom: -cornerOffset, right: -cornerOffset, touchAction: 'none' }}
+            onPointerDown={(e) => handleResizePointerDown(e, 'se')}
           >
             <svg width={cornerBracketSize} height={cornerBracketSize} className="overflow-visible">
               <path
@@ -603,8 +579,8 @@ export function BlockCard({
                 : "shadow-[0_4px_24px_rgba(0,0,0,0.3)]",
               isDragging && "shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
             )}
-            onMouseUp={(e) => {
-              // Allow dropping connections anywhere on the main card
+            onPointerUp={(e) => {
+              // Allow dropping connections anywhere on the main card (works for touch + mouse)
               e.stopPropagation();
               if (isConnecting) onEndConnection();
             }}
