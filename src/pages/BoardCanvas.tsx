@@ -127,19 +127,19 @@ export default function BoardCanvas() {
     [zoom, panOffset, setZoom]
   );
 
-  // State for mobile connection target highlight
+  // State for mobile connection target highlight (desktop only uses hover-based onEndConnection)
   const [connectionTargetId, setConnectionTargetId] = useState<string | null>(null);
 
-  // CRITICAL: connection dragging must be window-scoped, never canvas-scoped.
-  // Uses pointer events for unified mouse + touch handling.
-  // PROXIMITY-BASED detection: calculates distance to all blocks in world coords,
-  // not elementFromPoint (which fails on mobile as finger covers dragged element).
+  // Mobile/Tablet ONLY: "all blocks accepting" mode.
+  // While connectingFrom is set, ALL other blocks highlight.
+  // On release, if finger is over a block (elementFromPoint), connect; else cancel.
+  // Desktop uses existing hover + onEndConnection flow.
   useEffect(() => {
-    if (!connectingFrom) return;
+    const isMobileOrTablet = isMobile || isTablet;
+    if (!connectingFrom || !isMobileOrTablet) return;
 
     let raf = 0;
     let latest: { x: number; y: number } | null = null;
-    const PROXIMITY_THRESHOLD = 80; // World units - how close the line must be to auto-target
 
     const updateMousePos = () => {
       raf = 0;
@@ -155,79 +155,54 @@ export default function BoardCanvas() {
       return { clientX: e.clientX, clientY: e.clientY };
     };
 
-    // Find the closest block to a world-coordinate point (excluding the source block)
-    const findClosestBlock = (worldX: number, worldY: number): string | null => {
-      let closestId: string | null = null;
-      let closestDist = PROXIMITY_THRESHOLD;
+    const toWorld = (clientX: number, clientY: number) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return null;
+      return {
+        x: (clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
+        y: (clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
+      };
+    };
 
-      for (const block of boardBlocks) {
-        if (block.id === connectingFrom) continue;
-        
-        // Calculate block center in world coords
-        const blockCenterX = block.position.x + DEFAULT_BLOCK_WIDTH / 2;
-        const blockCenterY = block.position.y + DEFAULT_BLOCK_HEIGHT / 2;
-        
-        // Distance from line endpoint to block center
-        const dist = Math.hypot(worldX - blockCenterX, worldY - blockCenterY);
-        
-        if (dist < closestDist) {
-          closestDist = dist;
-          closestId = block.id;
-        }
-      }
-      
-      return closestId;
+    // Hit-test the DOM at the release point to find the target block
+    const getBlockIdAtPoint = (clientX: number, clientY: number): string | null => {
+      const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
+      const blockEl = el?.closest?.('[data-block-id]') as HTMLElement | null;
+      return blockEl?.dataset?.blockId || null;
     };
 
     const onMove = (e: PointerEvent | TouchEvent) => {
       const coords = getCoords(e);
       if (!coords) return;
-      
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      const world = toWorld(coords.clientX, coords.clientY);
+      if (!world) return;
 
-      // Convert screen coords to world coords
-      const worldX = (coords.clientX - rect.left - panOffsetRef.current.x) / zoomRef.current;
-      const worldY = (coords.clientY - rect.top - panOffsetRef.current.y) / zoomRef.current;
-
-      latest = { x: worldX, y: worldY };
-
+      latest = { x: world.x, y: world.y };
       if (!raf) raf = window.requestAnimationFrame(updateMousePos);
 
-      // PROXIMITY-BASED targeting: find the closest block within threshold
-      const targetId = findClosestBlock(worldX, worldY);
-      setConnectionTargetId(targetId);
+      // No proximity-based highlight on touch—all blocks stay "accepting" via isConnectionTarget prop
     };
 
     const onUp = (e: PointerEvent | TouchEvent) => {
       const coords = getCoords(e);
-      
-      // Auto-connect to the closest block if within threshold
+
+      // Connect ONLY if finger released over a block
       if (coords) {
-        const rect = canvasRef.current?.getBoundingClientRect();
-        if (rect) {
-          const worldX = (coords.clientX - rect.left - panOffsetRef.current.x) / zoomRef.current;
-          const worldY = (coords.clientY - rect.top - panOffsetRef.current.y) / zoomRef.current;
-          
-          const targetId = findClosestBlock(worldX, worldY);
-          if (targetId) {
-            createConnection(connectingFrom, targetId);
-            toast.success("Connection created");
-          }
+        const targetId = getBlockIdAtPoint(coords.clientX, coords.clientY);
+        if (targetId && targetId !== connectingFrom) {
+          createConnection(connectingFrom, targetId);
+          toast.success("Connection created");
         }
       }
-      
-      // Clear target highlight and connection state
+
       setConnectionTargetId(null);
       endDrag();
       setConnectingFrom(null);
     };
 
-    // Use pointer events for unified mouse + touch support
-    window.addEventListener('pointermove', onMove as any);
+    window.addEventListener('pointermove', onMove as any, { passive: false } as any);
     window.addEventListener('pointerup', onUp as any);
     window.addEventListener('pointercancel', onUp as any);
-    // Touch fallbacks for devices that don't fully support pointer events
     window.addEventListener('touchmove', onMove as any, { passive: false });
     window.addEventListener('touchend', onUp as any);
     window.addEventListener('touchcancel', onUp as any);
@@ -242,7 +217,7 @@ export default function BoardCanvas() {
       setConnectionTargetId(null);
       if (raf) window.cancelAnimationFrame(raf);
     };
-  }, [connectingFrom, endDrag, createConnection, boardBlocks]);
+  }, [connectingFrom, isMobile, isTablet, endDrag, createConnection]);
 
   const handleCenterView = useCallback(() => {
     if (boardBlocks.length === 0) {
