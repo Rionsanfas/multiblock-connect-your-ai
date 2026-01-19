@@ -655,14 +655,18 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
       const data = await response.json();
       
       if (data.video_url) {
-        // Build response with video link that MarkdownRenderer will handle
-        const videoMessage = `🎬 **Video Generated Successfully!**
+        // Build response with video that MarkdownRenderer will render as inline player
+        // Use markdown image syntax with video URL - MarkdownRenderer detects .mp4 and shows VideoPreview
+        const videoUrl = data.video_url;
+        const duration = data.duration || '?';
+        
+        const videoMarkdown = `![Generated Video](${videoUrl})
 
-[▶️ Play Video](${data.video_url})
+🎬 **Video Generated Successfully!**
 
-*${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s*`;
+*Duration: ${duration}s · ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s generation time*`;
 
-        callbacks.onComplete(videoMessage, {
+        callbacks.onComplete(videoMarkdown, {
           model: model.id,
           latency_ms: Date.now() - startTime,
         });
