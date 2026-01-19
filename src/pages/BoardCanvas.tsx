@@ -132,12 +132,14 @@ export default function BoardCanvas() {
 
   // CRITICAL: connection dragging must be window-scoped, never canvas-scoped.
   // Uses pointer events for unified mouse + touch handling.
-  // Includes touch hit-testing via elementFromPoint for mobile connection target detection.
+  // PROXIMITY-BASED detection: calculates distance to all blocks in world coords,
+  // not elementFromPoint (which fails on mobile as finger covers dragged element).
   useEffect(() => {
     if (!connectingFrom) return;
 
     let raf = 0;
     let latest: { x: number; y: number } | null = null;
+    const PROXIMITY_THRESHOLD = 80; // World units - how close the line must be to auto-target
 
     const updateMousePos = () => {
       raf = 0;
@@ -153,6 +155,30 @@ export default function BoardCanvas() {
       return { clientX: e.clientX, clientY: e.clientY };
     };
 
+    // Find the closest block to a world-coordinate point (excluding the source block)
+    const findClosestBlock = (worldX: number, worldY: number): string | null => {
+      let closestId: string | null = null;
+      let closestDist = PROXIMITY_THRESHOLD;
+
+      for (const block of boardBlocks) {
+        if (block.id === connectingFrom) continue;
+        
+        // Calculate block center in world coords
+        const blockCenterX = block.position.x + DEFAULT_BLOCK_WIDTH / 2;
+        const blockCenterY = block.position.y + DEFAULT_BLOCK_HEIGHT / 2;
+        
+        // Distance from line endpoint to block center
+        const dist = Math.hypot(worldX - blockCenterX, worldY - blockCenterY);
+        
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestId = block.id;
+        }
+      }
+      
+      return closestId;
+    };
+
     const onMove = (e: PointerEvent | TouchEvent) => {
       const coords = getCoords(e);
       if (!coords) return;
@@ -160,42 +186,32 @@ export default function BoardCanvas() {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      latest = {
-        x: (coords.clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
-        y: (coords.clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
-      };
+      // Convert screen coords to world coords
+      const worldX = (coords.clientX - rect.left - panOffsetRef.current.x) / zoomRef.current;
+      const worldY = (coords.clientY - rect.top - panOffsetRef.current.y) / zoomRef.current;
+
+      latest = { x: worldX, y: worldY };
 
       if (!raf) raf = window.requestAnimationFrame(updateMousePos);
 
-      // Mobile connection target hit-testing via elementFromPoint
-      // This simulates hover detection for touch by finding what block is under the finger
-      const elementUnderFinger = document.elementFromPoint(coords.clientX, coords.clientY);
-      if (elementUnderFinger) {
-        const blockCard = elementUnderFinger.closest('[data-block-id]');
-        const blockId = blockCard?.getAttribute('data-block-id');
-        // Only set target if it's a different block than the source
-        if (blockId && blockId !== connectingFrom) {
-          setConnectionTargetId(blockId);
-        } else {
-          setConnectionTargetId(null);
-        }
-      } else {
-        setConnectionTargetId(null);
-      }
+      // PROXIMITY-BASED targeting: find the closest block within threshold
+      const targetId = findClosestBlock(worldX, worldY);
+      setConnectionTargetId(targetId);
     };
 
     const onUp = (e: PointerEvent | TouchEvent) => {
       const coords = getCoords(e);
       
-      // Try to auto-connect on touch release via hit-testing
+      // Auto-connect to the closest block if within threshold
       if (coords) {
-        const elementUnderFinger = document.elementFromPoint(coords.clientX, coords.clientY);
-        if (elementUnderFinger) {
-          const blockCard = elementUnderFinger.closest('[data-block-id]');
-          const targetBlockId = blockCard?.getAttribute('data-block-id');
-          if (targetBlockId && targetBlockId !== connectingFrom) {
-            // Auto-connect to the target block
-            createConnection(connectingFrom, targetBlockId);
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (rect) {
+          const worldX = (coords.clientX - rect.left - panOffsetRef.current.x) / zoomRef.current;
+          const worldY = (coords.clientY - rect.top - panOffsetRef.current.y) / zoomRef.current;
+          
+          const targetId = findClosestBlock(worldX, worldY);
+          if (targetId) {
+            createConnection(connectingFrom, targetId);
             toast.success("Connection created");
           }
         }
@@ -226,7 +242,7 @@ export default function BoardCanvas() {
       setConnectionTargetId(null);
       if (raf) window.cancelAnimationFrame(raf);
     };
-  }, [connectingFrom, endDrag, createConnection]);
+  }, [connectingFrom, endDrag, createConnection, boardBlocks]);
 
   const handleCenterView = useCallback(() => {
     if (boardBlocks.length === 0) {
