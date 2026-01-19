@@ -127,131 +127,16 @@ export default function BoardCanvas() {
     [zoom, panOffset, setZoom]
   );
 
-  // State for connection target highlight
+  // State for mobile connection target highlight (desktop only uses hover-based onEndConnection)
   const [connectionTargetId, setConnectionTargetId] = useState<string | null>(null);
 
-  // Determine if we're on a touch device
-  const isTouchDevice = isMobile || isTablet;
-
-  // Track the last known mouse position for immediate line visibility on desktop
-  const lastMouseClientPos = useRef<{ x: number; y: number } | null>(null);
-
-  // Capture mouse position globally so we have it when connection starts
+  // Mobile/Tablet ONLY: "all blocks accepting" mode.
+  // While connectingFrom is set, ALL other blocks highlight.
+  // On release, if finger is over a block (elementFromPoint), connect; else cancel.
+  // Desktop uses existing hover + onEndConnection flow.
   useEffect(() => {
-    if (isTouchDevice) return;
-    
-    const onGlobalMouseMove = (e: MouseEvent) => {
-      lastMouseClientPos.current = { x: e.clientX, y: e.clientY };
-    };
-    
-    window.addEventListener('mousemove', onGlobalMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', onGlobalMouseMove);
-  }, [isTouchDevice]);
-
-  // ========== DESKTOP CONNECTION LINE DRAWING ==========
-  // Smooth, immediate pointer following with hover-based target detection.
-  // Completely isolated from touch/mobile logic.
-  useEffect(() => {
-    // Only run on desktop (non-touch devices)
-    if (!connectingFrom || isTouchDevice) return;
-
-    let raf = 0;
-    let latest: { x: number; y: number } | null = null;
-
-    const toWorld = (clientX: number, clientY: number) => {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (!rect) return null;
-      return {
-        x: (clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
-        y: (clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
-      };
-    };
-
-    const flushMousePos = () => {
-      raf = 0;
-      if (!latest) return;
-      setMousePos(latest);
-      latest = null;
-    };
-
-    // IMMEDIATELY set mouse position from cached global position
-    // This ensures the line is visible the instant dragging starts
-    if (lastMouseClientPos.current) {
-      const world = toWorld(lastMouseClientPos.current.x, lastMouseClientPos.current.y);
-      if (world) setMousePos(world);
-    }
-
-    // IMPORTANT: Use POINTER events here.
-    // The connection handle uses onPointerDown + preventDefault, which suppresses
-    // compatibility mouse events in many browsers. Mousemove won't fire reliably.
-    const onPointerMove = (e: PointerEvent) => {
-      const world = toWorld(e.clientX, e.clientY);
-      if (!world) return;
-
-      latest = { x: world.x, y: world.y };
-      if (!raf) raf = window.requestAnimationFrame(flushMousePos);
-
-      // Detect hover over blocks for visual feedback
-      const els = document.elementsFromPoint?.(e.clientX, e.clientY) ?? [];
-      let foundTarget: string | null = null;
-      for (const el of els) {
-        const blockEl = (el as HTMLElement).closest?.('[data-block-id]') as HTMLElement | null;
-        if (blockEl?.dataset?.blockId && blockEl.dataset.blockId !== connectingFrom) {
-          foundTarget = blockEl.dataset.blockId;
-          break;
-        }
-      }
-      setConnectionTargetId(foundTarget);
-    };
-
-    const onPointerUp = (e: PointerEvent) => {
-      // Final position
-      const world = toWorld(e.clientX, e.clientY);
-      if (world) setMousePos({ x: world.x, y: world.y });
-
-      // Check if released over a block
-      const els = document.elementsFromPoint?.(e.clientX, e.clientY) ?? [];
-      for (const el of els) {
-        const blockEl = (el as HTMLElement).closest?.('[data-block-id]') as HTMLElement | null;
-        if (blockEl?.dataset?.blockId && blockEl.dataset.blockId !== connectingFrom) {
-          createConnection(connectingFrom, blockEl.dataset.blockId);
-          toast.success("Connection created");
-          break;
-        }
-      }
-
-      setConnectionTargetId(null);
-      endDrag();
-      setConnectingFrom(null);
-    };
-
-    const onBlur = () => {
-      setConnectionTargetId(null);
-      endDrag();
-      setConnectingFrom(null);
-    };
-
-    // Capture phase ensures we receive events even if the pointer is retargeted.
-    window.addEventListener('pointermove', onPointerMove, { passive: true, capture: true });
-    window.addEventListener('pointerup', onPointerUp, { capture: true });
-    window.addEventListener('pointercancel', onPointerUp, { capture: true });
-    window.addEventListener('blur', onBlur);
-
-    return () => {
-      window.removeEventListener('pointermove', onPointerMove as any, { capture: true } as any);
-      window.removeEventListener('pointerup', onPointerUp as any, { capture: true } as any);
-      window.removeEventListener('pointercancel', onPointerUp as any, { capture: true } as any);
-      window.removeEventListener('blur', onBlur);
-      setConnectionTargetId(null);
-      if (raf) window.cancelAnimationFrame(raf);
-    };
-  }, [connectingFrom, isTouchDevice, endDrag, createConnection]);
-
-  // ========== MOBILE/TABLET CONNECTION LINE DRAWING ==========
-  // "All blocks accepting" mode - highlight all blocks, connect on release over any block.
-  useEffect(() => {
-    // Only run on touch devices
-    if (!connectingFrom || !isTouchDevice) return;
+    const isMobileOrTablet = isMobile || isTablet;
+    if (!connectingFrom || !isMobileOrTablet) return;
 
     let raf = 0;
     let latest: { x: number; y: number } | null = null;
@@ -280,7 +165,11 @@ export default function BoardCanvas() {
       };
     };
 
-    // Forgiving drop targeting for touch
+    // Mobile/tablet: forgiving drop targeting.
+    // We do NOT rely on hover/proximity; we only need a robust "what block is under the finger on release".
+    // elementFromPoint can be unreliable with pointer capture / SVG overlays, so we:
+    //  1) prefer elementsFromPoint (respects visual stacking)
+    //  2) fall back to bounding-rect hit testing across all blocks
     const getBlockIdAtPoint = (clientX: number, clientY: number): string | null => {
       const els = (document.elementsFromPoint?.(clientX, clientY) ?? []) as HTMLElement[];
       for (const el of els) {
@@ -317,11 +206,14 @@ export default function BoardCanvas() {
 
       latest = { x: world.x, y: world.y };
       if (!raf) raf = window.requestAnimationFrame(updateMousePos);
+
+      // No proximity-based highlight on touch—all blocks stay "accepting" via isConnectionTarget prop
     };
 
     const onUp = (e: PointerEvent | TouchEvent) => {
       const coords = getCoords(e);
 
+      // Connect ONLY if finger released over a block
       if (coords) {
         const targetId = getBlockIdAtPoint(coords.clientX, coords.clientY);
         if (targetId && targetId !== connectingFrom) {
@@ -335,24 +227,24 @@ export default function BoardCanvas() {
       setConnectingFrom(null);
     };
 
-    window.addEventListener('pointermove', onMove as EventListener, { passive: false });
-    window.addEventListener('pointerup', onUp as EventListener);
-    window.addEventListener('pointercancel', onUp as EventListener);
-    window.addEventListener('touchmove', onMove as EventListener, { passive: false });
-    window.addEventListener('touchend', onUp as EventListener);
-    window.addEventListener('touchcancel', onUp as EventListener);
+    window.addEventListener('pointermove', onMove as any, { passive: false } as any);
+    window.addEventListener('pointerup', onUp as any);
+    window.addEventListener('pointercancel', onUp as any);
+    window.addEventListener('touchmove', onMove as any, { passive: false });
+    window.addEventListener('touchend', onUp as any);
+    window.addEventListener('touchcancel', onUp as any);
 
     return () => {
-      window.removeEventListener('pointermove', onMove as EventListener);
-      window.removeEventListener('pointerup', onUp as EventListener);
-      window.removeEventListener('pointercancel', onUp as EventListener);
-      window.removeEventListener('touchmove', onMove as EventListener);
-      window.removeEventListener('touchend', onUp as EventListener);
-      window.removeEventListener('touchcancel', onUp as EventListener);
+      window.removeEventListener('pointermove', onMove as any);
+      window.removeEventListener('pointerup', onUp as any);
+      window.removeEventListener('pointercancel', onUp as any);
+      window.removeEventListener('touchmove', onMove as any);
+      window.removeEventListener('touchend', onUp as any);
+      window.removeEventListener('touchcancel', onUp as any);
       setConnectionTargetId(null);
       if (raf) window.cancelAnimationFrame(raf);
     };
-  }, [connectingFrom, isTouchDevice, endDrag, createConnection]);
+  }, [connectingFrom, isMobile, isTablet, endDrag, createConnection]);
 
   const handleCenterView = useCallback(() => {
     if (boardBlocks.length === 0) {
@@ -526,34 +418,11 @@ export default function BoardCanvas() {
         queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
       }
 
-      // For desktop: use the cached mouse position for immediate line visibility
-      // For touch: use block center as fallback
-      if (!isTouchDevice && lastMouseClientPos.current && canvasRef.current) {
-        const rect = canvasRef.current.getBoundingClientRect();
-        const worldPos = {
-          x: (lastMouseClientPos.current.x - rect.left - panOffset.x) / zoom,
-          y: (lastMouseClientPos.current.y - rect.top - panOffset.y) / zoom,
-        };
-        setMousePos(worldPos);
-      } else {
-        // Fallback for touch or if no mouse position cached
-        const storePos = useBlockPositions.getState().positions[blockId];
-        const block = boardBlocks.find((b) => b.id === blockId);
-        const center = storePos 
-          ? { x: storePos.x + DEFAULT_BLOCK_WIDTH / 2, y: storePos.y + DEFAULT_BLOCK_HEIGHT / 2 }
-          : block 
-            ? { x: block.position.x + DEFAULT_BLOCK_WIDTH / 2, y: block.position.y + DEFAULT_BLOCK_HEIGHT / 2 }
-            : { x: 0, y: 0 };
-        setMousePos({ x: center.x + 10, y: center.y + 10 });
-      }
-
       // Set global drag lock for connection drawing
       startDrag('connection', blockId);
-      
-      // Set connectingFrom to trigger the drawing effect
       setConnectingFrom(blockId);
     },
-    [board?.id, boardBlocks, queryClient, startDrag, isTouchDevice, panOffset, zoom]
+    [board?.id, queryClient, startDrag]
   );
 
   const handleEndConnection = useCallback(
@@ -808,13 +677,8 @@ export default function BoardCanvas() {
                         onStartConnection={() => handleStartConnection(block.id)}
                         onEndConnection={() => handleEndConnection(block.id)}
                         isConnecting={!!connectingFrom}
-                        // Desktop: highlight only the block under cursor
-                        // Mobile/Tablet: highlight ALL blocks as accepting targets
-                        isConnectionTarget={
-                          isTouchDevice && !!connectingFrom
-                            ? block.id !== connectingFrom
-                            : connectionTargetId === block.id
-                        }
+                        // Mobile/Tablet: all blocks are "accepting" while a connection is being dragged.
+                        isConnectionTarget={(isMobile || isTablet) && !!connectingFrom ? block.id !== connectingFrom : connectionTargetId === block.id}
                       />
                     ))}
                   </div>

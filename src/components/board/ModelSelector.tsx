@@ -5,15 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  MODEL_CONFIGS,
-  PROVIDERS,
+import { 
+  MODEL_CONFIGS, 
+  PROVIDERS, 
   getModelsByType,
-  type Provider,
-  type ProviderInfo,
-  type ModelConfig,
-  type ModelType
+  type Provider, 
+  type ProviderInfo, 
+  type ModelConfig, 
+  type ModelType 
 } from "@/config/models";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { useAvailableProviders } from "@/hooks/useModelConfig";
@@ -97,7 +96,6 @@ interface ProviderSectionProps {
   onAddApiKey?: (provider: Provider) => void;
   expandedProviders: Set<Provider>;
   onToggleProvider: (provider: Provider) => void;
-  isVideoTab?: boolean;
 }
 
 function ProviderSection({ 
@@ -108,8 +106,7 @@ function ProviderSection({
   onSelect, 
   onAddApiKey,
   expandedProviders,
-  onToggleProvider,
-  isVideoTab = false
+  onToggleProvider
 }: ProviderSectionProps) {
   const isExpanded = expandedProviders.has(provider.id);
   const visibleModels = isExpanded ? models : models.slice(0, INITIAL_MODELS_SHOWN);
@@ -144,7 +141,7 @@ function ProviderSection({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {!hasKey && !isVideoTab && (
+          {!hasKey && (
             <>
               <Button
                 variant="ghost"
@@ -174,12 +171,9 @@ function ProviderSection({
       <div className="grid gap-2">
         {visibleModels.map((model) => {
           const isSelected = model.id === selectedModelId;
+          const isDisabled = !hasKey;
 
-          // Video models are always locked (UI only)
-          const isVideoModel = model.type === 'video';
-          const isDisabled = isVideoModel || !hasKey;
-
-          const button = (
+          return (
             <button
               key={model.id}
               onClick={() => !isDisabled && onSelect(model)}
@@ -190,51 +184,27 @@ function ProviderSection({
                 isDisabled
                   ? "opacity-50 cursor-not-allowed bg-muted/20"
                   : "hover:bg-accent/50 cursor-pointer",
-                isSelected && !isDisabled && "ring-2 ring-primary bg-primary/10"
+                isSelected && "ring-2 ring-primary bg-primary/10"
               )}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm">{model.name}</span>
-                  {model.quality === "premium" && !isVideoModel && (
+                  {model.quality === "premium" && (
                     <Star className="h-3 w-3 text-yellow-500" />
                   )}
-                  {model.speed === "fast" && !isVideoModel && (
+                  {model.speed === "fast" && (
                     <Zap className="h-3 w-3 text-green-500" />
                   )}
-
-                  {isVideoModel ? (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-muted/50">
-                      Not available
-                    </Badge>
-                  ) : !hasKey ? (
-                    <Lock className="h-3 w-3 text-muted-foreground" />
-                  ) : null}
+                  {isDisabled && <Lock className="h-3 w-3 text-muted-foreground" />}
                 </div>
-                {isSelected && !isDisabled && <Check className="h-4 w-4 text-primary" />}
+                {isSelected && <Check className="h-4 w-4 text-primary" />}
               </div>
-
-              {!isVideoModel && (
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{model.description}</p>
-              )}
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                {model.description}
+              </p>
             </button>
           );
-
-          if (isVideoModel) {
-            // Disabled buttons don't trigger hover reliably, so use a wrapper as trigger.
-            return (
-              <Tooltip key={model.id}>
-                <TooltipTrigger asChild>
-                  <div className="w-full">{button}</div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <p>Not available at the moment</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-
-          return button;
         })}
       </div>
 
@@ -304,7 +274,7 @@ export function ModelSelector({
   const videoCount = getVideoModels().length;
   const chatCount = getChatModels().length;
 
-  const renderProviderSections = (modelsByProvider: Record<Provider, ModelConfig[]>, isVideoTab: boolean = false) => {
+  const renderProviderSections = (modelsByProvider: Record<Provider, ModelConfig[]>) => {
     const providersWithModels = providers.filter(p => modelsByProvider[p.id]?.length > 0);
     
     if (providersWithModels.length === 0) {
@@ -332,7 +302,6 @@ export function ModelSelector({
               onAddApiKey={onAddApiKey}
               expandedProviders={expandedProviders}
               onToggleProvider={toggleProvider}
-              isVideoTab={isVideoTab}
             />
           );
         })}
@@ -397,7 +366,13 @@ export function ModelSelector({
             </TabsContent>
 
             <TabsContent value="video" className="mt-0">
-              {renderProviderSections(videoModelsByProvider, true)}
+              <div className="mb-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                <p className="text-xs text-orange-400">
+                  <Video className="h-3 w-3 inline mr-1" />
+                  Video models for generating videos from text prompts
+                </p>
+              </div>
+              {renderProviderSections(videoModelsByProvider)}
             </TabsContent>
           </ScrollArea>
         </Tabs>

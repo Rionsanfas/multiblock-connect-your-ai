@@ -489,45 +489,16 @@ serve(async (req) => {
         });
       }
 
-      // ===== DURATION LOGIC =====
-      // If user specifies duration, respect it. Otherwise auto-select based on prompt complexity.
-      const userDuration = body.duration; // Explicit user override (in seconds)
-      let videoDuration: number;
-
-      if (userDuration && typeof userDuration === 'number' && userDuration >= 4 && userDuration <= 20) {
-        videoDuration = userDuration;
-        console.log(`[chat-proxy] User specified duration: ${videoDuration}s`);
-      } else {
-        const wordCount = prompt.split(/\s+/).length;
-        const hasCinematic = /cinematic|epic|dramatic|slow\s*motion|time\s*lapse|pan|zoom|sweeping|aerial/i.test(prompt);
-        const hasSimple = /simple|quick|short|brief|fast/i.test(prompt);
-
-        if (hasSimple || wordCount < 10) {
-          videoDuration = 5;
-        } else if (hasCinematic || wordCount > 30) {
-          videoDuration = 12;
-        } else if (wordCount > 20) {
-          videoDuration = 10;
-        } else {
-          videoDuration = 8;
-        }
-        console.log(`[chat-proxy] Auto-selected duration: ${videoDuration}s (words: ${wordCount}, cinematic: ${hasCinematic})`);
-      }
-
-      console.log(`[chat-proxy] Video generation for user ${user.id} via ${provider}, model: ${model_id}, duration: ${videoDuration}s`);
+      console.log(`[chat-proxy] Video generation for user ${user.id} via ${provider}, model: ${model_id}`);
 
       let videoUrl: string | null = null;
-      let videoBytes: Uint8Array | null = null;
       let videoResponse;
-      let actualDuration = videoDuration;
 
       if (provider === "openai") {
+        // OpenAI Sora uses async job API: create job, poll for completion, get content URL
         console.log(`[chat-proxy] Starting OpenAI Sora video generation...`);
         
-        // Sora supports: "5", "10", "15", "20"
-        const soraDuration = videoDuration <= 7 ? "5" : videoDuration <= 12 ? "10" : videoDuration <= 17 ? "15" : "20";
-        actualDuration = parseInt(soraDuration, 10);
-        
+        // Step 1: Create video generation job
         const createResponse = await fetch("https://api.openai.com/v1/videos", {
           method: "POST",
           headers: {
@@ -538,7 +509,7 @@ serve(async (req) => {
             model: model_id || "sora-2",
             prompt,
             size: "1280x720",
-            seconds: soraDuration,
+            seconds: "8", // OpenAI Sora uses 'seconds' (string: "4", "8", "12"), NOT 'duration'
           }),
         });
         
@@ -546,6 +517,7 @@ serve(async (req) => {
           const errorData = await createResponse.json().catch(() => ({}));
           console.error(`[chat-proxy] Sora job creation failed:`, errorData);
           
+          // Check if Sora is not available
           if (createResponse.status === 404 || errorData.error?.message?.includes('not found')) {
             return new Response(JSON.stringify({ 
               error: `OpenAI Sora video generation is not available with your API key. Make sure you have Sora access enabled.`
@@ -565,9 +537,10 @@ serve(async (req) => {
         const jobId = jobData.id;
         console.log(`[chat-proxy] Sora job created: ${jobId}`);
         
+        // Step 2: Poll for completion (max 5 minutes with exponential backoff)
         let attempts = 0;
-        const maxAttempts = 60;
-        let pollInterval = 2000;
+        const maxAttempts = 60; // 60 attempts * 5s avg = 5 minutes max
+        let pollInterval = 2000; // Start at 2s, increase gradually
         
         while (attempts < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, pollInterval));
@@ -586,14 +559,10 @@ serve(async (req) => {
           console.log(`[chat-proxy] Sora job ${jobId} status: ${pollData.status} (attempt ${attempts})`);
           
           if (pollData.status === "completed" || pollData.status === "succeeded") {
+            // Step 3: Get the video content URL
             videoUrl = pollData.output?.url || pollData.data?.[0]?.url || pollData.video_url;
             if (videoUrl) {
               console.log(`[chat-proxy] Sora video ready: ${videoUrl.substring(0, 100)}...`);
-              // Fetch video bytes for storage
-              const vidFetch = await fetch(videoUrl);
-              if (vidFetch.ok) {
-                videoBytes = new Uint8Array(await vidFetch.arrayBuffer());
-              }
               break;
             }
           } else if (pollData.status === "failed" || pollData.status === "error") {
@@ -606,6 +575,7 @@ serve(async (req) => {
             });
           }
           
+          // Increase poll interval (max 10s)
           pollInterval = Math.min(pollInterval * 1.2, 10000);
         }
         
@@ -618,6 +588,7 @@ serve(async (req) => {
           });
         }
         
+        // Create a successful videoResponse-like object so the rest of the code works
         videoResponse = new Response(JSON.stringify({ success: true }), { status: 200 });
       } else if (provider === "together") {
         // Together.ai video models
@@ -630,43 +601,27 @@ serve(async (req) => {
           body: JSON.stringify({
             model: model_id || "stable-video-diffusion",
             prompt,
-            duration: videoDuration,
           }),
         });
         
         if (videoResponse.ok) {
           const data = await videoResponse.json();
-          const rawUrl = data.data?.[0]?.url;
-          if (rawUrl) {
-            // Fetch video bytes for storage
-            const vidFetch = await fetch(rawUrl);
-            if (vidFetch.ok) {
-              videoBytes = new Uint8Array(await vidFetch.arrayBuffer());
-              videoUrl = rawUrl; // Temporary; will be replaced by storage URL
-            }
-          }
+          videoUrl = data.data?.[0]?.url;
         }
       } else if (provider === "google") {
-        // Google Veo API
+        // Google Veo API (when available)
         videoResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predict?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             instances: [{ prompt }],
-            parameters: { durationSeconds: videoDuration },
+            parameters: { duration: 5 },
           }),
         });
         
         if (videoResponse.ok) {
           const data = await videoResponse.json();
-          const rawUrl = data.predictions?.[0]?.videoUrl;
-          if (rawUrl) {
-            const vidFetch = await fetch(rawUrl);
-            if (vidFetch.ok) {
-              videoBytes = new Uint8Array(await vidFetch.arrayBuffer());
-              videoUrl = rawUrl;
-            }
-          }
+          videoUrl = data.predictions?.[0]?.videoUrl;
         }
       } else {
         return new Response(JSON.stringify({ 
@@ -680,6 +635,7 @@ serve(async (req) => {
       if (!videoResponse!.ok) {
         const errorData = await videoResponse!.json().catch(() => ({}));
         console.error(`[chat-proxy] Video generation failed:`, errorData);
+        // Check if it's a "not available" error
         const errorMessage = errorData.error?.message || "Video generation failed";
         if (errorMessage.includes("not found") || errorMessage.includes("not available")) {
           return new Response(JSON.stringify({ 
@@ -695,51 +651,17 @@ serve(async (req) => {
         });
       }
 
-      if (!videoUrl && !videoBytes) {
+      if (!videoUrl) {
         return new Response(JSON.stringify({ error: "No video was generated" }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // CRITICAL: Upload video to Supabase Storage if we have bytes
-      const { block_id: blockId, board_id: boardId } = body;
-      let storagePath: string | null = null;
-      let signedVideoUrl = videoUrl;
-
-      if (videoBytes) {
-        storagePath = `${user.id}/${Date.now()}-${crypto.randomUUID()}.mp4`;
-
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from('generated-media')
-          .upload(storagePath, videoBytes, {
-            contentType: 'video/mp4',
-            upsert: false,
-          });
-
-        if (uploadError) {
-          console.error(`[chat-proxy] Failed to upload video to storage:`, uploadError);
-          // Fall back to original URL if storage fails
-        } else {
-          // Create signed URL for preview
-          const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
-            .from('generated-media')
-            .createSignedUrl(storagePath, 3600);
-
-          if (!signedUrlError && signedUrlData?.signedUrl) {
-            signedVideoUrl = signedUrlData.signedUrl;
-          }
-        }
-      }
-
       // Save generated media metadata to database
-      const { data: publicUrlData } = supabaseAdmin.storage
-        .from('generated-media')
-        .getPublicUrl(storagePath || '');
-
-      const { data: mediaRow, error: mediaError } = await supabaseAdmin
-        .from('generated_media')
-        .insert({
+      const { block_id: blockId, board_id: boardId } = body;
+      try {
+        await supabaseAdmin.from('generated_media').insert({
           user_id: user.id,
           block_id: blockId || null,
           board_id: boardId || null,
@@ -748,24 +670,16 @@ serve(async (req) => {
           model_id: model_id || 'unknown',
           model_name: model_id || 'Video Model',
           prompt,
-          file_url: storagePath ? publicUrlData.publicUrl : videoUrl,
-          storage_path: storagePath,
-          duration_seconds: actualDuration,
-        })
-        .select('id')
-        .single();
-
-      if (mediaError) {
-        console.error(`[chat-proxy] Failed to save video metadata:`, mediaError);
-      } else {
-        console.log(`[chat-proxy] Saved generated video metadata for user ${user.id}, media_id: ${mediaRow?.id}`);
+          file_url: videoUrl,
+        });
+        console.log(`[chat-proxy] Saved generated video metadata for user ${user.id}`);
+      } catch (saveError) {
+        console.error(`[chat-proxy] Failed to save video metadata:`, saveError);
+        // Continue anyway - the video was generated successfully
       }
 
       return new Response(JSON.stringify({ 
-        video_url: signedVideoUrl,
-        media_id: mediaRow?.id,
-        storage_path: storagePath,
-        duration: actualDuration,
+        video_url: videoUrl,
         provider,
         model_id,
         prompt,
