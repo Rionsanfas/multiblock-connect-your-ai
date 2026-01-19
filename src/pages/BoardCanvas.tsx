@@ -494,9 +494,8 @@ export default function BoardCanvas() {
         queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
       }
 
-      // Initialize mouse position to the starting block's center
-      // This prevents the line from jumping when first starting to drag
-      const startCenter = (() => {
+      // Get the starting block's center position
+      const getStartCenter = () => {
         const storePos = useBlockPositions.getState().positions[blockId];
         if (storePos) {
           return {
@@ -512,12 +511,18 @@ export default function BoardCanvas() {
           };
         }
         return { x: 0, y: 0 };
-      })();
+      };
+
+      const startCenter = getStartCenter();
       
-      setMousePos(startCenter);
+      // Set initial mouse position SLIGHTLY offset from center so line is visible
+      // (If from and to are identical, the line has zero length and won't render)
+      setMousePos({ x: startCenter.x + 1, y: startCenter.y + 1 });
 
       // Set global drag lock for connection drawing
       startDrag('connection', blockId);
+      
+      // Set connectingFrom AFTER mousePos to ensure line renders immediately
       setConnectingFrom(blockId);
     },
     [board?.id, boardBlocks, queryClient, startDrag]
