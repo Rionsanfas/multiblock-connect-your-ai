@@ -2,14 +2,18 @@
 // All API calls go through chat-proxy edge function - API keys NEVER exposed to frontend
 
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  getModelConfig, 
+import {
+  getModelConfig,
   getVisionModelForProvider,
   getImageGenModelForProvider,
-  type Provider, 
-  type ModelConfig 
+  type Provider,
+  type ModelConfig,
 } from '@/config/models';
 import type { Message } from '@/types';
+
+// Lovable does not reliably expose VITE_* env vars on the client; use the project ref URL directly.
+const SUPABASE_FUNCTIONS_BASE_URL = "https://dpeljwqtkjjkriobkhtj.supabase.co/functions/v1";
+
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -47,22 +51,16 @@ export interface MessageMeta {
 // Model ID mappings for each provider (internal ID -> API ID)
 const getProviderModelId = (modelId: string, provider: Provider): string => {
   const mappings: Record<string, string> = {
-    // OpenAI
-    'gpt-5.2': 'gpt-5.2',
-    'gpt-5.2-pro': 'gpt-5.2-pro',
-    'gpt-5': 'gpt-5',
-    'gpt-5-mini': 'gpt-5-mini',
-    'gpt-5-nano': 'gpt-5-nano',
+    // OpenAI (chat-completions compatible)
     'gpt-4o': 'gpt-4o',
     'gpt-4o-mini': 'gpt-4o-mini',
     'gpt-4-turbo': 'gpt-4-turbo',
-    'o3-pro': 'o3-pro',
-    'o3-deep-research': 'o3-deep-research',
     'gpt-image-1.5': 'gpt-image-1',
-    'sora-2': 'sora-2',
-    'sora-2-pro': 'sora-2-pro',
+    // Note: Sora / GPT-5* models are intentionally not mapped here because this app uses
+    // OpenAI Chat Completions API for OpenAI provider and those IDs may not be available there.
     'gpt-4o-audio': 'gpt-4o-audio-preview',
     'whisper': 'whisper-1',
+
     
     // Anthropic
     'claude-opus-4.5': 'claude-opus-4-5-20250115',
@@ -370,21 +368,19 @@ class ChatService {
       // Format messages with attachments for the proxy
       const formattedMessages = this.formatMessagesWithAttachments(messages, attachments, provider);
 
-      // Get session for auth header
+      // Ensure we have a fresh-ish token; if the call fails with 401 we refresh once and retry.
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         callbacks.onError('Not authenticated. Please log in.');
         return;
       }
 
-      // Call chat-proxy edge function - API key decryption happens server-side
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-proxy`,
-        {
+      const makeRequest = async (accessToken: string) => {
+        return fetch(`${SUPABASE_FUNCTIONS_BASE_URL}/chat-proxy`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             provider,
@@ -395,39 +391,41 @@ class ChatService {
               maxTokens: config?.maxTokens ?? 2048,
             },
             stream: true,
-            board_id: boardId, // Pass board_id for board-level API key resolution
+            board_id: boardId,
           }),
-          signal: this.abortController.signal,
+          signal: this.abortController?.signal,
+        });
+      };
+
+      let response = await makeRequest(session.access_token);
+
+      // If the JWT is stale/expired, refresh once and retry.
+      if (response.status === 401) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        const nextToken = refreshed.session?.access_token;
+        if (nextToken) {
+          response = await makeRequest(nextToken);
         }
-      );
+      }
 
       if (!response.ok) {
         let errorMessage = `Request failed (${response.status})`;
-        
+
         try {
           const errorData = await response.json();
-          // Use the detailed error from the proxy
           errorMessage = errorData.error || errorMessage;
-          
-          // Log additional details for debugging
           if (errorData.details) {
             console.error('[ChatService] Error details:', errorData.details);
           }
         } catch {
-          // If we can't parse JSON, try to get text
           try {
             const errorText = await response.text();
-            if (errorText) {
-              errorMessage = errorText.substring(0, 200); // Limit length
-            }
+            if (errorText) errorMessage = errorText.substring(0, 200);
           } catch {}
         }
 
-        // Handle specific HTTP status codes with user-friendly messages
         if (response.status === 401) {
           errorMessage = 'Authentication failed. Please log in again.';
-        } else if (response.status === 400 && errorMessage.includes('No valid API key')) {
-          // This is already a good message from the proxy
         }
 
         callbacks.onError(errorMessage);
@@ -529,7 +527,7 @@ class ChatService {
 
       // Call image generation through proxy
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-proxy`,
+        `${SUPABASE_FUNCTIONS_BASE_URL}/chat-proxy`,
         {
           method: 'POST',
           headers: {
@@ -589,7 +587,7 @@ class ChatService {
 
       // Call video generation through proxy
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-proxy`,
+        `${SUPABASE_FUNCTIONS_BASE_URL}/chat-proxy`,
         {
           method: 'POST',
           headers: {
