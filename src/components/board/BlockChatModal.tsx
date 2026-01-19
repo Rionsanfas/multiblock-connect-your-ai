@@ -308,32 +308,26 @@ export function BlockChatModal({
     block.system_prompt, undefined, connectedContext);
 
     // Use the validated model ID for the request, pass boardId for API key resolution
-    await chatService.streamChat(
-      activeModelId,
-      history,
-      {
-        onChunk: (chunk) => setStreamingContent((prev) => prev + chunk),
-        onComplete: (response, meta) => {
-          // 3) Convert streaming -> real assistant message instantly, then persist in background
-          persistMessage('assistant', response, meta as Record<string, unknown>);
-          setStreamingContent("");
-          setMessageStatus('idle');
-        },
-        onError: (errorMsg) => {
-          setMessageStatus('error');
-          // Surface the actual error message from chatService instead of generic
-          setErrorMessage(errorMsg || 'Assistant failed. Please try again.');
-          setStreamingContent("");
-
-          // Log for debugging
-          console.error('[BlockChatModal] Chat error:', errorMsg);
-        },
+    await chatService.streamChat(activeModelId, history, {
+      onChunk: chunk => setStreamingContent(prev => prev + chunk),
+      onComplete: (response, meta) => {
+        // 3) Convert streaming -> real assistant message instantly, then persist in background
+        persistMessage('assistant', response, meta as Record<string, unknown>);
+        setStreamingContent("");
+        setMessageStatus('idle');
       },
-      undefined,
-      // config
-      attachments,
-      block.board_id,
-      block.id
+      onError: errorMsg => {
+        setMessageStatus('error');
+        // Surface the actual error message from chatService instead of generic
+        setErrorMessage(errorMsg || 'Assistant failed. Please try again.');
+        setStreamingContent("");
+
+        // Log for debugging
+        console.error('[BlockChatModal] Chat error:', errorMsg);
+      }
+    }, undefined,
+    // config
+    attachments, block.board_id // Pass board_id for board-level API key resolution
     );
   }, [block, blockId, hasKeyForCurrentProvider, incomingContext, isSwitchingModel, messageStatus, navigate, persistMessage, queryClient]);
   const handleStop = useCallback(() => {
@@ -417,7 +411,7 @@ export function BlockChatModal({
                         <Image className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         <span className="hidden xs:inline">Image</span> ({Object.values(imageModels).flat().length})
                       </button>
-                      <button onClick={() => setModelTab('video')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors", modelTab === 'video' ? "bg-pink-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
+                      <button onClick={() => setModelTab('video')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors sm:px-0", modelTab === 'video' ? "bg-pink-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
                         <Video className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         <span className="hidden xs:inline">Video</span> ({Object.values(videoModels).flat().length})
                       </button>
