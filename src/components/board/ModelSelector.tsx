@@ -14,6 +14,7 @@ import {
   type ModelConfig, 
   type ModelType 
 } from "@/config/models";
+import { toast } from "sonner";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { useAvailableProviders } from "@/hooks/useModelConfig";
 import { cn } from "@/lib/utils";
@@ -321,25 +322,35 @@ export function ModelSelector({
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="chat" className="gap-2">
-              <MessageSquare className={cn("h-4 w-4", activeTab === 'chat' && "text-green-400")} />
-              <span>Chat</span>
-              <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0 h-5">
-                {chatCount}
+            <TabsTrigger value="chat" className="gap-1.5 whitespace-nowrap">
+              <MessageSquare className={cn("h-4 w-4 shrink-0", activeTab === 'chat' && "text-green-400")} />
+              <span className="truncate">Chat</span>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+                ({chatCount})
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="image" className="gap-2">
-              <Image className={cn("h-4 w-4", activeTab === 'image' && "text-purple-400")} />
-              <span>Image</span>
-              <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0 h-5">
-                {imageCount}
+            <TabsTrigger value="image" className="gap-1.5 whitespace-nowrap">
+              <Image className={cn("h-4 w-4 shrink-0", activeTab === 'image' && "text-purple-400")} />
+              <span className="truncate">Image</span>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+                ({imageCount})
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="video" className="gap-2">
-              <Video className={cn("h-4 w-4", activeTab === 'video' && "text-orange-400")} />
-              <span>Video</span>
-              <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0 h-5">
-                {videoCount}
+            <TabsTrigger 
+              value="video" 
+              className="gap-1.5 whitespace-nowrap opacity-50 cursor-not-allowed"
+              onClick={(e) => {
+                e.preventDefault();
+                toast.info("Video generation is coming soon!", {
+                  description: "This feature is not available right now."
+                });
+              }}
+              disabled
+            >
+              <Video className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="truncate">Video</span>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+                ({videoCount})
               </Badge>
             </TabsTrigger>
           </TabsList>
