@@ -413,17 +413,26 @@ export function BlockChatModal({
                     
                     {/* Type tabs - responsive */}
                     <div className="flex gap-0.5 sm:gap-1 p-1.5 sm:p-2 border-b border-border/20">
-                      <button onClick={() => setModelTab('chat')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors", modelTab === 'chat' ? "bg-primary text-primary-foreground" : "hover:bg-secondary/60 text-muted-foreground")}>
-                        <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        <span className="hidden xs:inline">Chat</span> ({Object.values(chatModels).flat().length})
+                      <button onClick={() => setModelTab('chat')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap", modelTab === 'chat' ? "bg-primary text-primary-foreground" : "hover:bg-secondary/60 text-muted-foreground")}>
+                        <MessageSquare className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
+                        <span className="shrink-0">Chat</span> <span className="shrink-0">({Object.values(chatModels).flat().length})</span>
                       </button>
-                      <button onClick={() => setModelTab('image')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors", modelTab === 'image' ? "bg-purple-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
-                        <Image className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        <span className="hidden xs:inline">Image</span> ({Object.values(imageModels).flat().length})
+                      <button onClick={() => setModelTab('image')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap", modelTab === 'image' ? "bg-purple-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
+                        <Image className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
+                        <span className="shrink-0">Image</span> <span className="shrink-0">({Object.values(imageModels).flat().length})</span>
                       </button>
-                      <button onClick={() => setModelTab('video')} className={cn("flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors", modelTab === 'video' ? "bg-pink-500 text-white" : "hover:bg-secondary/60 text-muted-foreground")}>
-                        <Video className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                        <span className="hidden xs:inline">Video</span> ({Object.values(videoModels).flat().length})
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toast.info("Video generation is coming soon!", {
+                            description: "This feature is not available right now."
+                          });
+                        }} 
+                        className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap opacity-50 cursor-not-allowed text-muted-foreground"
+                        disabled
+                      >
+                        <Video className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
+                        <span className="shrink-0">Video</span> <span className="shrink-0">({Object.values(videoModels).flat().length})</span>
                       </button>
                     </div>
 

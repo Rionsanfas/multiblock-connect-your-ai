@@ -322,23 +322,23 @@ export function ModelSelector({
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="chat" className="gap-1.5 whitespace-nowrap">
+            <TabsTrigger value="chat" className="gap-1 whitespace-nowrap shrink-0">
               <MessageSquare className={cn("h-4 w-4 shrink-0", activeTab === 'chat' && "text-green-400")} />
-              <span className="truncate">Chat</span>
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
-                ({chatCount})
+              <span className="shrink-0">Chat</span>
+              <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5 shrink-0">
+                {chatCount}
               </Badge>
             </TabsTrigger>
-            <TabsTrigger value="image" className="gap-1.5 whitespace-nowrap">
+            <TabsTrigger value="image" className="gap-1 whitespace-nowrap shrink-0">
               <Image className={cn("h-4 w-4 shrink-0", activeTab === 'image' && "text-purple-400")} />
-              <span className="truncate">Image</span>
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
-                ({imageCount})
+              <span className="shrink-0">Image</span>
+              <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5 shrink-0">
+                {imageCount}
               </Badge>
             </TabsTrigger>
             <TabsTrigger 
               value="video" 
-              className="gap-1.5 whitespace-nowrap opacity-50 cursor-not-allowed"
+              className="gap-1 whitespace-nowrap shrink-0 opacity-50 cursor-not-allowed"
               onClick={(e) => {
                 e.preventDefault();
                 toast.info("Video generation is coming soon!", {
@@ -348,9 +348,9 @@ export function ModelSelector({
               disabled
             >
               <Video className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="truncate">Video</span>
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
-                ({videoCount})
+              <span className="shrink-0">Video</span>
+              <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5 shrink-0">
+                {videoCount}
               </Badge>
             </TabsTrigger>
           </TabsList>
