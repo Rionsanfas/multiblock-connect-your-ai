@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Plus, Box, FileCode, Focus } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Focus } from "lucide-react";
 import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -66,28 +65,21 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
   return (
     <>
       <aside className="fixed left-2 sm:left-4 top-16 sm:top-20 z-50 flex flex-col gap-1.5 sm:gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="p-2.5 sm:p-3 rounded-xl btn-3d-shiny text-foreground h-9 w-9 sm:h-10 sm:w-10">
+      <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleCreateWithModel("New Block")}
+              className="p-2.5 sm:p-3 rounded-xl btn-3d-shiny text-foreground h-9 w-9 sm:h-10 sm:w-10"
+            >
               <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="right" className="w-44 sm:w-48 bg-card/95 backdrop-blur-xl border-border/20 rounded-xl p-1">
-            <DropdownMenuItem onClick={() => handleCreateWithModel("New Block")} className="rounded-lg text-xs sm:text-sm">
-              <Box className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
-              New Block
-            </DropdownMenuItem>
-            <div className="px-2 py-1 text-[10px] sm:text-xs text-muted-foreground font-medium">Quick Templates</div>
-            <DropdownMenuItem onClick={() => handleCreateWithModel("Research Assistant")} className="rounded-lg text-xs sm:text-sm">
-              <FileCode className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
-              Research Assistant
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleCreateWithModel("Code Reviewer")} className="rounded-lg text-xs sm:text-sm">
-              <FileCode className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
-              Code Reviewer
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Add Block</p>
+          </TooltipContent>
+        </Tooltip>
         
         <Tooltip>
           <TooltipTrigger asChild>
