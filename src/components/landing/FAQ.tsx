@@ -10,17 +10,12 @@ const faqs = [
   {
     question: "Which AI models are supported?",
     answer:
-      "We support all major providers including OpenAI (GPT-5), Anthropic (Claude 4), Google (Gemini), Mistral, and more. We're constantly adding new models as they become available.",
+      "We support all major providers including OpenAI (GPT-5), Anthropic (Claude 4), Google (Gemini), xAI, and more. We're constantly adding new models as they become available.",
   },
   {
     question: "What's the difference between blocks and boards?",
     answer:
       "A block is an individual AI model chat instance. A board is a workspace where you arrange multiple blocks. Think of blocks as chat windows and boards as your desk where you organize them.",
-  },
-  {
-    question: "Is my data stored on your servers?",
-    answer:
-      "No. All conversations happen directly between your browser and the AI providers. We only store your workspace layout and block configurations, not the actual chat content.",
   },
   {
     question: "Can I connect blocks to create automated workflows?",
