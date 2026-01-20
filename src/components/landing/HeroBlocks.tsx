@@ -74,8 +74,10 @@ export function HeroBlocks() {
         "lg:scale-100 xl:scale-100",
         /* Tablet: larger scale to fill frame */
         "md:scale-[0.65] max-lg:md:scale-[0.70]",
-        /* Mobile: significantly larger to be prominent */
-        "max-md:scale-[0.55] max-sm:scale-[0.50]"
+        /* Mobile: much larger scale for prominence, positioned lower to avoid header overlap */
+        "max-md:scale-[0.75] max-sm:scale-[0.70]",
+        /* Mobile: shift down slightly so animation doesn't overlap text/buttons at top */
+        "max-md:translate-y-8"
       )}
     >
       {/* SVG Connection Lines - Softer glow with smoother animation */}
