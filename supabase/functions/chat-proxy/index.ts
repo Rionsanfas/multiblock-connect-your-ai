@@ -22,6 +22,25 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
   perplexity: "https://api.perplexity.ai/chat/completions",
 };
 
+// Map internal model IDs to actual Google API model IDs (currently available)
+const GOOGLE_MODEL_MAP: Record<string, string> = {
+  // Gemini 3.x models (map to latest available)
+  "gemini-3-pro": "gemini-2.5-pro-preview-05-06",
+  "gemini-3-flash": "gemini-2.5-flash-preview-04-17", 
+  "gemini-3-nano": "gemini-2.0-flash-lite",
+  // Gemini 2.5 models
+  "gemini-2.5-pro": "gemini-2.5-pro-preview-05-06",
+  "gemini-2.5-flash": "gemini-2.5-flash-preview-04-17",
+  "gemini-2.5-pro-preview-05-06": "gemini-2.5-pro-preview-05-06",
+  "gemini-2.5-flash-preview-04-17": "gemini-2.5-flash-preview-04-17",
+  "gemini-live-2.5-flash": "gemini-2.0-flash",
+  // Fallbacks for older naming
+  "gemini-2.0-flash": "gemini-2.0-flash",
+  "gemini-2.0-flash-lite": "gemini-2.0-flash-lite",
+  // Image generation
+  "nano-banana-pro": "gemini-2.0-flash-exp",
+};
+
 // AES-256-GCM decryption
 async function getAESKey(keyString: string): Promise<CryptoKey> {
   const encoder = new TextEncoder();
@@ -757,13 +776,59 @@ serve(async (req) => {
         messages: formatted.messages,
       };
     } else if (provider === "google") {
-      endpoint = `${endpoint}/${model_id}:streamGenerateContent?alt=sse&key=${apiKey}`;
+      // Map internal model ID to actual Google API model ID
+      const googleModelId = GOOGLE_MODEL_MAP[model_id] || model_id;
+      endpoint = `${endpoint}/${googleModelId}:streamGenerateContent?alt=sse&key=${apiKey}`;
+      console.log(`[chat-proxy] Google model mapping: ${model_id} -> ${googleModelId}`);
+      
       const formatted = formatMessagesForProvider(provider, messages);
       requestBody = {
-        contents: formatted.messages.map((m: any) => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: typeof m.content === "string" ? m.content : m.content[0]?.text || "" }],
-        })),
+        contents: formatted.messages.map((m: any) => {
+          const parts: any[] = [];
+          
+          // Handle multimodal content (text + images/files)
+          if (Array.isArray(m.content)) {
+            for (const part of m.content) {
+              if (part.type === "text" && part.text) {
+                parts.push({ text: part.text });
+              } else if (part.type === "image_url" && part.image_url?.url) {
+                // Extract base64 from data URL or use URL directly
+                const url = part.image_url.url;
+                if (url.startsWith("data:")) {
+                  const matches = url.match(/^data:([^;]+);base64,(.+)$/);
+                  if (matches) {
+                    parts.push({
+                      inlineData: {
+                        mimeType: matches[1],
+                        data: matches[2],
+                      },
+                    });
+                  }
+                } else {
+                  // For external URLs, Gemini needs them as file data
+                  parts.push({
+                    fileData: {
+                      mimeType: "image/jpeg",
+                      fileUri: url,
+                    },
+                  });
+                }
+              }
+            }
+          } else if (typeof m.content === "string") {
+            parts.push({ text: m.content });
+          }
+          
+          // Ensure at least one part
+          if (parts.length === 0) {
+            parts.push({ text: "" });
+          }
+          
+          return {
+            role: m.role === "assistant" ? "model" : "user",
+            parts,
+          };
+        }),
         generationConfig: {
           temperature: config?.temperature ?? 0.7,
           maxOutputTokens: config?.maxTokens || 4096,

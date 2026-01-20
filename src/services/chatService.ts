@@ -81,15 +81,15 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'claude-sonnet-4': 'claude-sonnet-4-20250514',
 
     // ========================================
-    // GOOGLE
+    // GOOGLE - Using currently available model IDs
     // ========================================
-    'gemini-3-pro': 'gemini-2.5-pro-preview-06-05',
-    'gemini-3-flash': 'gemini-2.5-flash-preview-05-20',
+    'gemini-3-pro': 'gemini-2.5-pro-preview-05-06',
+    'gemini-3-flash': 'gemini-2.5-flash-preview-04-17',
     'gemini-3-nano': 'gemini-2.0-flash-lite',
-    'gemini-2.5-pro': 'gemini-2.5-pro-preview-06-05',
-    'gemini-2.5-flash': 'gemini-2.5-flash-preview-05-20',
-    'gemini-live-2.5-flash': 'gemini-2.0-flash-live-001',
-    'nano-banana-pro': 'imagen-3.0-generate-002',
+    'gemini-2.5-pro': 'gemini-2.5-pro-preview-05-06',
+    'gemini-2.5-flash': 'gemini-2.5-flash-preview-04-17',
+    'gemini-live-2.5-flash': 'gemini-2.0-flash',
+    'nano-banana-pro': 'gemini-2.0-flash-exp',
     'veo-3.1': 'veo-2.0-generate-001',
 
     // ========================================
@@ -746,6 +746,14 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
       case 'anthropic':
         if (parsed.type === 'content_block_delta') {
           return parsed.delta?.text || '';
+        }
+        return '';
+      
+      case 'google':
+        // Google Gemini SSE format: candidates[0].content.parts[0].text
+        const parts = parsed.candidates?.[0]?.content?.parts;
+        if (parts && Array.isArray(parts)) {
+          return parts.map((p: any) => p.text || '').join('');
         }
         return '';
       
