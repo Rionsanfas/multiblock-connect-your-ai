@@ -19,7 +19,6 @@ export function ProviderBadge({ provider, model, modelType, size = "sm", classNa
     switch (type) {
       case 'image': return 'hsl(280 70% 55%)';
       case 'video': return 'hsl(24 90% 55%)';
-      case 'audio': return 'hsl(200 80% 50%)';
       case 'embedding': return 'hsl(45 90% 50%)';
       case 'code': return 'hsl(217 90% 60%)';
       default: return color;

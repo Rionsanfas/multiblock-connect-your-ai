@@ -22,42 +22,138 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
   perplexity: "https://api.perplexity.ai/chat/completions",
 };
 
-// Map internal model IDs to STABLE Google API model IDs (avoid versioned previews)
-const GOOGLE_MODEL_MAP: Record<string, string> = {
-  // Gemini 3.x models -> stable 2.5 equivalents
-  "gemini-3-pro": "gemini-2.5-pro",
-  "gemini-3-flash": "gemini-2.5-flash",
-  "gemini-3-nano": "gemini-2.0-flash-lite",
-  // Gemini 2.5 models -> stable IDs
-  "gemini-2.5-pro": "gemini-2.5-pro",
-  "gemini-2.5-flash": "gemini-2.5-flash",
-  "gemini-live-2.5-flash": "gemini-2.0-flash",
-  // Gemini 2.0 stable models
-  "gemini-2.0-flash": "gemini-2.0-flash",
-  "gemini-2.0-flash-lite": "gemini-2.0-flash-lite",
-  // Image generation
-  "nano-banana-pro": "gemini-2.0-flash-exp",
+// ============================================
+// MODEL ID MAPPINGS - Internal ID → Provider API ID
+// SINGLE SOURCE OF TRUTH - No audio models
+// ============================================
+const MODEL_ID_MAPPINGS: Record<string, string> = {
+  // ========================================
+  // OPENAI
+  // ========================================
+  'gpt-5.2': 'gpt-5.2',
+  'gpt-5.2-pro': 'gpt-5.2-pro',
+  'gpt-5': 'gpt-5',
+  'gpt-5-mini': 'gpt-5-mini',
+  'gpt-5-nano': 'gpt-5-nano',
+  'gpt-4o': 'gpt-4o',
+  'gpt-4o-mini': 'gpt-4o-mini',
+  'gpt-4-turbo': 'gpt-4-turbo',
+  'o3-pro': 'o3-pro',
+  'o3-deep-research': 'o3-deep-research',
+  'gpt-image-1.5': 'gpt-image-1.5',
+  'sora-2-pro': 'sora-2-pro',
+
+  // ========================================
+  // ANTHROPIC
+  // ========================================
+  'claude-opus-4.5': 'claude-opus-4-5',
+  'claude-sonnet-4.5': 'claude-sonnet-4-5',
+  'claude-haiku-4.5': 'claude-haiku-4-5',
+  'claude-opus-4.1': 'claude-opus-4-5',
+  'claude-sonnet-4': 'claude-sonnet-4-5',
+
+  // ========================================
+  // GOOGLE (REAL, STABLE GEMINI IDS ONLY)
+  // ========================================
+  'gemini-3-pro': 'gemini-3-pro-preview',
+  'gemini-3-flash': 'gemini-3-flash-preview',
+  'gemini-3-nano': 'gemini-2.5-flash-lite',
+  'gemini-2.5-pro': 'gemini-2.5-pro',
+  'gemini-2.5-flash': 'gemini-2.5-flash',
+  'gemini-live-2.5-flash': 'gemini-2.0-flash',
+  'nano-banana-pro': 'gemini-2.0-flash-exp',
+
+  // Backward compatibility for saved blocks
+  'gemini-2.5-pro-preview-06-05': 'gemini-2.5-pro',
+  'gemini-2.5-pro-preview-05-06': 'gemini-2.5-pro',
+  'gemini-2.5-flash-preview-04-17': 'gemini-2.5-flash',
+  'veo-3.1': 'veo-3.1-generate-preview',
+
+  // ========================================
+  // XAI
+  // ========================================
+  'grok-4.1-fast': 'grok-4-1-fast',
+  'grok-4.1-fast-reasoning': 'grok-4-1-fast-reasoning',
+  'grok-4.1-fast-non-reasoning': 'grok-4-1-fast-non-reasoning',
+  'grok-code-fast-1': 'grok-4-1-fast-reasoning',
+  'grok-4-fast-reasoning': 'grok-4-fast-reasoning',
+  'grok-4-fast-non-reasoning': 'grok-4-fast-non-reasoning',
+  'grok-4.0709': 'grok-4-0709',
+  'grok-imagine-image': 'grok-2-image',
+  'grok-imagine-video': 'grok-2-video',
+
+  // ========================================
+  // DEEPSEEK
+  // ========================================
+  'deepseek-v3.2': 'deepseek-chat',
+  'deepseek-v3.2-speciale': 'deepseek-reasoner',
+  'deepseek-v3.1': 'deepseek-chat',
+
+  // ========================================
+  // MISTRAL
+  // ========================================
+  'mistral-large-3': 'mistral-large-latest',
+  'mistral-medium-3.1': 'mistral-large-latest',
+  'mistral-small-3.2': 'mistral-small-latest',
+  'ministral-3-14b': 'ministral-8b-latest',
+  'ministral-3-8b': 'ministral-8b-latest',
+  'ministral-3-3b': 'ministral-3b-latest',
+  'magistral-medium-1.2': 'mistral-large-latest',
+  'magistral-small-1.2': 'mistral-small-latest',
+  'codestral': 'codestral-latest',
+  'mistral-nemo-12b': 'open-mistral-nemo',
+  'mistral-embed': 'mistral-embed',
+  'mistral-gan': 'pixtral-12b-latest',
+
+  // ========================================
+  // TOGETHER.AI
+  // ========================================
+  'llama-3.3-70b-instruct-turbo': 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+  'llama-4-maverick-17bx128e': 'meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8',
+  'llama-4-scout-17bx16e': 'meta-llama/Llama-4-Scout-17B-16E-Instruct',
+  'qwen3-235b-a22b-instruct': 'Qwen/Qwen3-235B-A22B-fp8-tput',
+  'deepseek-v3.1-together': 'deepseek-ai/DeepSeek-V3',
+  'flux-together': 'black-forest-labs/FLUX.1-schnell-Free',
+  'stable-video-together': 'stabilityai/stable-video-diffusion-img2vid-xt-1-1',
+
+  // ========================================
+  // COHERE
+  // ========================================
+  'command-a-03-2025': 'command-a-03-2025',
+  'command-a-reasoning-08-2025': 'command-r-plus-08-2024',
+  'command-a-vision-07-2025': 'command-r-plus-08-2024',
+  'command-a-translate-08-2025': 'command-r-08-2024',
+  'command-r-plus-08-2024': 'command-r-plus-08-2024',
+  'embed-v4.0': 'embed-v4.0',
+  'embed-english-v3.0': 'embed-english-v3.0',
+  'embed-multilingual-v3.0': 'embed-multilingual-v3.0',
+  'rerank-v4.0-pro': 'rerank-v4.0-pro',
+  'c4ai-aya-expanse-32b': 'c4ai-aya-expanse-32b',
+  'c4ai-aya-vision-32b': 'c4ai-aya-vision-32b',
+
+  // ========================================
+  // PERPLEXITY
+  // ========================================
+  'sonar-large-online': 'sonar-pro',
+  'pplx-70b': 'sonar',
+  'gpt-5.1-pplx': 'sonar-pro',
+  'claude-sonnet-4.5-pplx': 'sonar-pro',
+  'claude-opus-4.1-thinking-pplx': 'sonar-reasoning-pro',
+  'gemini-3-pro-pplx': 'sonar-pro',
+  'grok-4.1-pplx': 'sonar-pro',
+  'kimi-k2-pplx': 'sonar',
+  'o3-pro-pplx': 'sonar-reasoning-pro',
 };
 
-// Fallback chain for Google models when a model returns 404
-const GOOGLE_FALLBACK_CHAIN: Record<string, string[]> = {
-  "gemini-2.5-pro": ["gemini-2.5-flash", "gemini-2.0-flash"],
-  "gemini-2.5-flash": ["gemini-2.0-flash", "gemini-2.0-flash-lite"],
-  "gemini-2.0-flash": ["gemini-2.0-flash-lite"],
-  "gemini-2.0-flash-lite": [],
-};
-
-// Resolve any versioned preview model ID to a stable one
-function resolveGoogleModelId(modelId: string): string {
-  // Direct mapping
-  if (GOOGLE_MODEL_MAP[modelId]) {
-    return GOOGLE_MODEL_MAP[modelId];
+// Resolve model ID to provider API ID
+function resolveModelId(modelId: string, provider: string, log: (msg: string, extra?: Record<string, unknown>) => void): string {
+  const resolved = MODEL_ID_MAPPINGS[modelId];
+  if (resolved) {
+    log('Model ID resolved', { from: modelId, to: resolved, provider });
+    return resolved;
   }
-  // Handle versioned preview IDs like gemini-2.5-pro-preview-06-05
-  const previewMatch = modelId.match(/^gemini-(2\.5|2\.0)-(pro|flash|flash-lite)-preview-/);
-  if (previewMatch) {
-    return `gemini-${previewMatch[1]}-${previewMatch[2]}`;
-  }
+  // No silent fallback - log warning and return as-is (will fail at provider with clear error)
+  log('Model ID not in mapping - may fail', { modelId, provider });
   return modelId;
 }
 
@@ -898,9 +994,9 @@ serve(async (req) => {
       };
     } else if (provider === "google") {
       // Resolve to stable Google API model ID using helper function
-      const googleModelId = resolveGoogleModelId(model_id);
+      const googleModelId = resolveModelId(model_id, provider, log);
       endpoint = `${endpoint}/${googleModelId}:streamGenerateContent?alt=sse&key=${apiKey}`;
-      log('Google model mapping', { from: model_id, to: googleModelId });
+      log('Google request', { from: model_id, to: googleModelId });
       
       const formatted = formatMessagesForProvider(provider, messages);
       requestBody = {

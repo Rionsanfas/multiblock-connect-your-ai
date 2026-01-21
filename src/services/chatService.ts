@@ -50,65 +50,65 @@ export interface MessageMeta {
 }
 
 // ============================================
-// MODEL ID MAPPINGS - Internal ID → API ID
+// MODEL ID MAPPINGS - Internal ID → Provider API ID
+// SINGLE SOURCE OF TRUTH - No audio models
 // ============================================
 const getProviderModelId = (modelId: string, provider: Provider): string => {
   const mappings: Record<string, string> = {
     // ========================================
     // OPENAI
     // ========================================
-    'gpt-5.2': 'gpt-4o',  // Map to best available
-    'gpt-5.2-pro': 'gpt-4o',
-    'gpt-5': 'gpt-4o',
-    'gpt-5-mini': 'gpt-4o-mini',
-    'gpt-5-nano': 'gpt-4o-mini',
+    'gpt-5.2': 'gpt-5.2',
+    'gpt-5.2-pro': 'gpt-5.2-pro',
+    'gpt-5': 'gpt-5',
+    'gpt-5-mini': 'gpt-5-mini',
+    'gpt-5-nano': 'gpt-5-nano',
     'gpt-4o': 'gpt-4o',
     'gpt-4o-mini': 'gpt-4o-mini',
     'gpt-4-turbo': 'gpt-4-turbo',
-    'o3-pro': 'o3',  // Map to available o-series
-    'o3-deep-research': 'o3',
-    'gpt-4o-audio': 'gpt-4o-audio-preview',
-    'whisper': 'whisper-1',
-    'gpt-image-1.5': 'gpt-image-1',
-    'sora-2-pro': 'sora',
+    'o3-pro': 'o3-pro',
+    'o3-deep-research': 'o3-deep-research',
+    'gpt-image-1.5': 'gpt-image-1.5',
+    'sora-2-pro': 'sora-2-pro',
 
     // ========================================
     // ANTHROPIC
     // ========================================
-    'claude-opus-4.5': 'claude-sonnet-4-20250514',
-    'claude-sonnet-4.5': 'claude-sonnet-4-20250514',
-    'claude-haiku-4.5': 'claude-3-5-haiku-20241022',
-    'claude-opus-4.1': 'claude-sonnet-4-20250514',
-    'claude-sonnet-4': 'claude-sonnet-4-20250514',
+    'claude-opus-4.5': 'claude-opus-4-5',
+    'claude-sonnet-4.5': 'claude-sonnet-4-5',
+    'claude-haiku-4.5': 'claude-haiku-4-5',
+    'claude-opus-4.1': 'claude-opus-4-5',
+    'claude-sonnet-4': 'claude-sonnet-4-5',
 
     // ========================================
-    // GOOGLE - Use stable, real Gemini API IDs
+    // GOOGLE (REAL, STABLE GEMINI IDS ONLY)
     // ========================================
-    'gemini-3-pro': 'gemini-2.5-pro',
-    'gemini-3-flash': 'gemini-2.5-flash',
-    'gemini-3-nano': 'gemini-2.0-flash-lite',
+    'gemini-3-pro': 'gemini-3-pro-preview',
+    'gemini-3-flash': 'gemini-3-flash-preview',
+    'gemini-3-nano': 'gemini-2.5-flash-lite',
     'gemini-2.5-pro': 'gemini-2.5-pro',
     'gemini-2.5-flash': 'gemini-2.5-flash',
     'gemini-live-2.5-flash': 'gemini-2.0-flash',
     'nano-banana-pro': 'gemini-2.0-flash-exp',
-    // Back-compat: older preview IDs that may exist in saved blocks
+
+    // Backward compatibility for saved blocks
     'gemini-2.5-pro-preview-06-05': 'gemini-2.5-pro',
     'gemini-2.5-pro-preview-05-06': 'gemini-2.5-pro',
     'gemini-2.5-flash-preview-04-17': 'gemini-2.5-flash',
-    'veo-3.1': 'veo-2.0-generate-001',
+    'veo-3.1': 'veo-3.1-generate-preview',
 
     // ========================================
     // XAI
     // ========================================
-    'grok-4.1-fast': 'grok-3',
-    'grok-4.1-fast-reasoning': 'grok-3',
-    'grok-4.1-fast-non-reasoning': 'grok-3-fast',
-    'grok-code-fast-1': 'grok-3',
-    'grok-4-fast-reasoning': 'grok-3',
-    'grok-4-fast-non-reasoning': 'grok-3-fast',
-    'grok-4.0709': 'grok-3',
+    'grok-4.1-fast': 'grok-4-1-fast',
+    'grok-4.1-fast-reasoning': 'grok-4-1-fast-reasoning',
+    'grok-4.1-fast-non-reasoning': 'grok-4-1-fast-non-reasoning',
+    'grok-code-fast-1': 'grok-4-1-fast-reasoning',
+    'grok-4-fast-reasoning': 'grok-4-fast-reasoning',
+    'grok-4-fast-non-reasoning': 'grok-4-fast-non-reasoning',
+    'grok-4.0709': 'grok-4-0709',
     'grok-imagine-image': 'grok-2-image',
-    'grok-imagine-video': 'grok-2-image',
+    'grok-imagine-video': 'grok-2-video',
 
     // ========================================
     // DEEPSEEK
@@ -121,19 +121,17 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     // MISTRAL
     // ========================================
     'mistral-large-3': 'mistral-large-latest',
-    'mistral-medium-3.1': 'mistral-medium-latest',
+    'mistral-medium-3.1': 'mistral-large-latest',
     'mistral-small-3.2': 'mistral-small-latest',
     'ministral-3-14b': 'ministral-8b-latest',
     'ministral-3-8b': 'ministral-8b-latest',
     'ministral-3-3b': 'ministral-3b-latest',
-    'magistral-medium-1.2': 'magistral-medium-latest',
-    'magistral-small-1.2': 'magistral-small-latest',
+    'magistral-medium-1.2': 'mistral-large-latest',
+    'magistral-small-1.2': 'mistral-small-latest',
     'codestral': 'codestral-latest',
-    'voxtral-small': 'mistral-small-latest',
-    'voxtral-mini': 'ministral-3b-latest',
     'mistral-nemo-12b': 'open-mistral-nemo',
     'mistral-embed': 'mistral-embed',
-    'mistral-gan': 'pixtral-large-latest',
+    'mistral-gan': 'pixtral-12b-latest',
 
     // ========================================
     // TOGETHER.AI
@@ -157,7 +155,7 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'embed-v4.0': 'embed-v4.0',
     'embed-english-v3.0': 'embed-english-v3.0',
     'embed-multilingual-v3.0': 'embed-multilingual-v3.0',
-    'rerank-v4.0-pro': 'rerank-v3.5',
+    'rerank-v4.0-pro': 'rerank-v4.0-pro',
     'c4ai-aya-expanse-32b': 'c4ai-aya-expanse-32b',
     'c4ai-aya-vision-32b': 'c4ai-aya-vision-32b',
 
@@ -174,12 +172,15 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'kimi-k2-pplx': 'sonar',
     'o3-pro-pplx': 'sonar-reasoning-pro',
   };
-  if (mappings[modelId]) return mappings[modelId];
 
-  // Generic fallback: convert date-versioned preview IDs to stable IDs
-  const m = modelId.match(/^gemini-(2\.5)-(pro|flash)-preview-/);
-  if (m) return `gemini-${m[1]}-${m[2]}`;
+  // Direct match - return mapped value
+  if (mappings[modelId]) {
+    return mappings[modelId];
+  }
 
+  // No fallback - if model is not in mapping, it's invalid
+  // Log warning and return as-is (will fail at provider level with clear error)
+  console.warn(`[ChatService] Model ID "${modelId}" not in mapping - may fail at provider`);
   return modelId;
 };
 

@@ -87,6 +87,7 @@ export function useModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
 
 /**
  * Get all models grouped by type (chat, image, video, etc.)
+ * NOTE: No audio type - system is TEXT + IMAGE + VIDEO only
  */
 export function useModelsGroupedByType(): Record<ModelType, ModelConfig[]> {
   return useMemo(() => {
@@ -94,7 +95,6 @@ export function useModelsGroupedByType(): Record<ModelType, ModelConfig[]> {
       chat: [],
       image: [],
       video: [],
-      audio: [],
       embedding: [],
       code: [],
       rerank: [],
@@ -251,6 +251,7 @@ export function getQualityBadge(quality: ModelConfig['quality']): { label: strin
 
 /**
  * Get model type label with color
+ * NOTE: No audio type - system is TEXT + IMAGE + VIDEO only
  */
 export function getModelTypeBadge(type: ModelType): { label: string; color: string } {
   switch (type) {
@@ -260,8 +261,6 @@ export function getModelTypeBadge(type: ModelType): { label: string; color: stri
       return { label: 'Image', color: 'hsl(280 70% 55%)' };
     case 'video':
       return { label: 'Video', color: 'hsl(24 90% 55%)' };
-    case 'audio':
-      return { label: 'Audio', color: 'hsl(200 80% 50%)' };
     case 'embedding':
       return { label: 'Embedding', color: 'hsl(45 90% 50%)' };
     case 'code':
@@ -277,6 +276,7 @@ export function getModelTypeBadge(type: ModelType): { label: string; color: stri
 
 /**
  * Check if a model supports a specific feature
+ * NOTE: No audio support - system is TEXT + IMAGE + VIDEO only
  */
 export function useModelCapabilities(modelId: string | undefined) {
   return useMemo(() => {
@@ -286,7 +286,6 @@ export function useModelCapabilities(modelId: string | undefined) {
         supportsFunctions: false,
         supportsImageGeneration: false,
         supportsVideoGeneration: false,
-        supportsAudio: false,
         contextWindow: 0,
         maxOutput: 0,
         type: 'chat' as ModelType,
@@ -300,7 +299,6 @@ export function useModelCapabilities(modelId: string | undefined) {
         supportsFunctions: false,
         supportsImageGeneration: false,
         supportsVideoGeneration: false,
-        supportsAudio: false,
         contextWindow: 0,
         maxOutput: 0,
         type: 'chat' as ModelType,
@@ -312,7 +310,6 @@ export function useModelCapabilities(modelId: string | undefined) {
       supportsFunctions: model.supports_functions,
       supportsImageGeneration: model.supports_image_generation,
       supportsVideoGeneration: model.supports_video_generation,
-      supportsAudio: model.supports_audio,
       contextWindow: model.context_window,
       maxOutput: model.max_output_tokens,
       type: model.type,
