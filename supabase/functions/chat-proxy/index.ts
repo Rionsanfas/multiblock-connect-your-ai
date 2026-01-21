@@ -22,24 +22,44 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
   perplexity: "https://api.perplexity.ai/chat/completions",
 };
 
-// Map internal model IDs to actual Google API model IDs (currently available)
+// Map internal model IDs to STABLE Google API model IDs (avoid versioned previews)
 const GOOGLE_MODEL_MAP: Record<string, string> = {
-  // Gemini 3.x models (map to latest available)
-  "gemini-3-pro": "gemini-2.5-pro-preview-05-06",
-  "gemini-3-flash": "gemini-2.5-flash-preview-04-17", 
+  // Gemini 3.x models -> stable 2.5 equivalents
+  "gemini-3-pro": "gemini-2.5-pro",
+  "gemini-3-flash": "gemini-2.5-flash",
   "gemini-3-nano": "gemini-2.0-flash-lite",
-  // Gemini 2.5 models
-  "gemini-2.5-pro": "gemini-2.5-pro-preview-05-06",
-  "gemini-2.5-flash": "gemini-2.5-flash-preview-04-17",
-  "gemini-2.5-pro-preview-05-06": "gemini-2.5-pro-preview-05-06",
-  "gemini-2.5-flash-preview-04-17": "gemini-2.5-flash-preview-04-17",
+  // Gemini 2.5 models -> stable IDs
+  "gemini-2.5-pro": "gemini-2.5-pro",
+  "gemini-2.5-flash": "gemini-2.5-flash",
   "gemini-live-2.5-flash": "gemini-2.0-flash",
-  // Fallbacks for older naming
+  // Gemini 2.0 stable models
   "gemini-2.0-flash": "gemini-2.0-flash",
   "gemini-2.0-flash-lite": "gemini-2.0-flash-lite",
   // Image generation
   "nano-banana-pro": "gemini-2.0-flash-exp",
 };
+
+// Fallback chain for Google models when a model returns 404
+const GOOGLE_FALLBACK_CHAIN: Record<string, string[]> = {
+  "gemini-2.5-pro": ["gemini-2.5-flash", "gemini-2.0-flash"],
+  "gemini-2.5-flash": ["gemini-2.0-flash", "gemini-2.0-flash-lite"],
+  "gemini-2.0-flash": ["gemini-2.0-flash-lite"],
+  "gemini-2.0-flash-lite": [],
+};
+
+// Resolve any versioned preview model ID to a stable one
+function resolveGoogleModelId(modelId: string): string {
+  // Direct mapping
+  if (GOOGLE_MODEL_MAP[modelId]) {
+    return GOOGLE_MODEL_MAP[modelId];
+  }
+  // Handle versioned preview IDs like gemini-2.5-pro-preview-06-05
+  const previewMatch = modelId.match(/^gemini-(2\.5|2\.0)-(pro|flash|flash-lite)-preview-/);
+  if (previewMatch) {
+    return `gemini-${previewMatch[1]}-${previewMatch[2]}`;
+  }
+  return modelId;
+}
 
 // AES-256-GCM decryption
 async function getAESKey(keyString: string): Promise<CryptoKey> {
@@ -776,8 +796,8 @@ serve(async (req) => {
         messages: formatted.messages,
       };
     } else if (provider === "google") {
-      // Map internal model ID to actual Google API model ID
-      const googleModelId = GOOGLE_MODEL_MAP[model_id] || model_id;
+      // Resolve to stable Google API model ID using helper function
+      const googleModelId = resolveGoogleModelId(model_id);
       endpoint = `${endpoint}/${googleModelId}:streamGenerateContent?alt=sse&key=${apiKey}`;
       console.log(`[chat-proxy] Google model mapping: ${model_id} -> ${googleModelId}`);
       
@@ -805,14 +825,31 @@ serve(async (req) => {
                     });
                   }
                 } else {
-                  // For external URLs, Gemini needs them as file data
+                  // For external URLs, detect mime type from extension
+                  const ext = url.split('.').pop()?.toLowerCase() || '';
+                  const mimeMap: Record<string, string> = {
+                    'png': 'image/png',
+                    'jpg': 'image/jpeg',
+                    'jpeg': 'image/jpeg',
+                    'gif': 'image/gif',
+                    'webp': 'image/webp',
+                    'pdf': 'application/pdf',
+                  };
                   parts.push({
                     fileData: {
-                      mimeType: "image/jpeg",
+                      mimeType: mimeMap[ext] || "image/jpeg",
                       fileUri: url,
                     },
                   });
                 }
+              } else if (part.type === "file" && part.file) {
+                // Handle PDFs and other files sent as base64 inlineData
+                parts.push({
+                  inlineData: {
+                    mimeType: part.file.mimeType,
+                    data: part.file.data,
+                  },
+                });
               }
             }
           } else if (typeof m.content === "string") {
