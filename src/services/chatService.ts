@@ -57,20 +57,18 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     // ========================================
     // OPENAI
     // ========================================
-    'gpt-5.2': 'gpt-4o',  // Map to best available
-    'gpt-5.2-pro': 'gpt-4o',
-    'gpt-5': 'gpt-4o',
-    'gpt-5-mini': 'gpt-4o-mini',
-    'gpt-5-nano': 'gpt-4o-mini',
+    'gpt-5.2': 'gpt-5',
+    'gpt-5.2-pro': 'gpt-5',
+    'gpt-5': 'gpt-5',
+    'gpt-5-mini': 'gpt-5-mini',
+    'gpt-5-nano': 'gpt-5-mini',
     'gpt-4o': 'gpt-4o',
     'gpt-4o-mini': 'gpt-4o-mini',
     'gpt-4-turbo': 'gpt-4-turbo',
-    'o3-pro': 'o3',  // Map to available o-series
+    'o3-pro': 'o3',
     'o3-deep-research': 'o3',
-    'gpt-4o-audio': 'gpt-4o-audio-preview',
-    'whisper': 'whisper-1',
-    'gpt-image-1.5': 'gpt-image-1',
-    'sora-2-pro': 'sora',
+    'gpt-image-1.5': 'dall-e-3', 
+    'sora-2-pro': 'sora-1'
 
     // ========================================
     // ANTHROPIC
