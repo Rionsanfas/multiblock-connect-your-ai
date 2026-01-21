@@ -960,11 +960,24 @@ serve(async (req) => {
       if (response.status === 401 || response.status === 403) {
         errorMessage = `Invalid or expired API key for ${provider}. Please update your key in Settings > API Keys.`;
       } else if (response.status === 429) {
-        // Rate limit - be specific about retry timing
+        // Distinguish between rate limit (temporary) and quota exhausted (daily/monthly limit)
         const retryAfter = response.headers.get('retry-after') || response.headers.get('x-ratelimit-reset-requests');
-        const waitTime = retryAfter ? ` (wait ~${retryAfter}s)` : '';
-        errorMessage = `Rate limit reached for ${provider}${waitTime}. This is normal after heavy usage. Please wait 30-60 seconds before trying again.`;
-        console.log(`[chat-proxy] Rate limit hit for ${provider}, user ${user.id}. Retry-After: ${retryAfter}`);
+        
+        // Check if it's a quota exhaustion (Google-specific: RESOURCE_EXHAUSTED with limit: 0 or "exceeded quota")
+        const isQuotaExhausted = errorText.includes('RESOURCE_EXHAUSTED') || 
+                                  errorText.includes('exceeded your current quota') ||
+                                  errorText.includes('limit: 0');
+        
+        if (isQuotaExhausted) {
+          // Daily/monthly quota exhausted - need to wait until reset or upgrade
+          errorMessage = `Your ${provider} API quota has been exhausted. This usually resets daily. You can check your quota at ${provider === 'google' ? 'https://ai.google.dev/gemini-api/docs/rate-limits' : 'your provider dashboard'}. Consider upgrading your API plan for higher limits.`;
+          console.log(`[chat-proxy] Quota exhausted for ${provider}, user ${user.id}`);
+        } else {
+          // Temporary rate limit - just wait
+          const waitTime = retryAfter ? ` (wait ~${retryAfter}s)` : '';
+          errorMessage = `Rate limit reached for ${provider}${waitTime}. Please wait 30-60 seconds before trying again.`;
+          console.log(`[chat-proxy] Rate limit hit for ${provider}, user ${user.id}. Retry-After: ${retryAfter}`);
+        }
       } else if (response.status === 404) {
         errorMessage = `Model "${model_id}" not found for ${provider}. It may not be available or the name is incorrect.`;
       } else if (response.status === 400) {
