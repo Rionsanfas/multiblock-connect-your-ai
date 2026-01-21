@@ -117,36 +117,80 @@ async function decrypt(encryptedBase64: string, keyString: string): Promise<stri
 }
 
 // Get API key for a board (first checks board's linked key, then falls back to user's keys)
-async function getApiKeyForBoard(supabase: any, boardId: string, provider: string): Promise<string | null> {
-  // First, check if the board has a linked API key
-  const { data: boardKey, error: boardKeyError } = await supabase
-    .rpc('get_board_api_key', { p_board_id: boardId });
-  
-  if (!boardKeyError && boardKey && boardKey.length > 0) {
-    const keyData = boardKey[0];
-    // Verify the key matches the requested provider
-    if (keyData.provider === provider && keyData.api_key_encrypted) {
-      if (keyData.is_valid === false) {
-        console.log(`[chat-proxy] Board's linked key for ${provider} is marked as invalid`);
-        return null;
-      }
-      console.log(`[chat-proxy] Using board's linked API key for ${provider}`);
-      return await decrypt(keyData.api_key_encrypted, ENCRYPTION_KEY);
-    }
+async function getApiKeyForBoard(
+  supabase: any,
+  boardId: string,
+  provider: string,
+  log: (msg: string, extra?: Record<string, unknown>) => void,
+): Promise<{ apiKey: string; keyId: string; keyHint: string | null } | null> {
+  // Use boards.api_key_id as the single source of truth for board-linked keys.
+  // (This avoids any ambiguity/caching inside RPCs and lets us log which key row was used.)
+  const { data: boardRow, error: boardErr } = await supabase
+    .from('boards')
+    .select('api_key_id')
+    .eq('id', boardId)
+    .maybeSingle();
+
+  if (boardErr) {
+    log(`Failed to read boards.api_key_id`, { error: boardErr.message });
+    return null;
   }
-  
-  // No board-linked key found, return null - caller should handle
-  console.log(`[chat-proxy] No board-linked key for ${provider}, board: ${boardId}`);
-  return null;
+
+  const apiKeyId = boardRow?.api_key_id as string | null | undefined;
+  if (!apiKeyId) {
+    log(`No board-linked key`, { board_id: boardId, provider });
+    return null;
+  }
+
+  const { data: keyRow, error: keyErr } = await supabase
+    .from('api_keys')
+    .select('id, provider, api_key_encrypted, is_valid, key_hint, team_id, user_id, created_at')
+    .eq('id', apiKeyId)
+    .maybeSingle();
+
+  if (keyErr) {
+    log(`Failed to read api_keys row for board-linked key`, { api_key_id: apiKeyId, error: keyErr.message });
+    return null;
+  }
+
+  if (!keyRow?.api_key_encrypted) {
+    log(`Board-linked api_key_id points to missing key`, { api_key_id: apiKeyId });
+    return null;
+  }
+
+  if (keyRow.provider !== provider) {
+    log(`Board-linked key provider mismatch`, { api_key_id: apiKeyId, expected: provider, actual: keyRow.provider });
+    return null;
+  }
+
+  if (keyRow.is_valid === false) {
+    log(`Board-linked key is marked invalid`, { api_key_id: apiKeyId, provider });
+    return null;
+  }
+
+  const decrypted = await decrypt(keyRow.api_key_encrypted, ENCRYPTION_KEY);
+  log(`Using board-linked API key`, {
+    provider,
+    api_key_id: keyRow.id,
+    key_hint: keyRow.key_hint,
+    team_id: keyRow.team_id,
+    key_owner_user_id: keyRow.user_id,
+  });
+  return { apiKey: decrypted, keyId: keyRow.id, keyHint: keyRow.key_hint };
 }
 
 // Legacy: Get API key from user's personal or team keys (for backwards compatibility)
 // Now supports multiple keys per provider - picks the most recently created valid key
-async function getDecryptedApiKey(supabase: any, userId: string, provider: string): Promise<string | null> {
+async function getDecryptedApiKey(
+  supabase: any,
+  userId: string,
+  provider: string,
+  log: (msg: string, extra?: Record<string, unknown>) => void,
+): Promise<{ apiKey: string; keyId: string; keyHint: string | null; source: 'personal' | 'team' } | null> {
   // First try to get a personal key (team_id IS NULL), prefer most recent
   let { data, error } = await supabase
     .from("api_keys")
-    .select("api_key_encrypted, is_valid")
+    .select("id, api_key_encrypted, is_valid, key_hint, team_id, created_at")
     .eq("user_id", userId)
     .eq("provider", provider)
     .is("team_id", null)
@@ -155,11 +199,13 @@ async function getDecryptedApiKey(supabase: any, userId: string, provider: strin
     .limit(1)
     .maybeSingle();
 
+  let source: 'personal' | 'team' = 'personal';
+
   // If no personal key, try to get a team key the user has access to
   if (!data?.api_key_encrypted) {
     const teamKeyResult = await supabase
       .from("api_keys")
-      .select("api_key_encrypted, is_valid, team_id")
+      .select("id, api_key_encrypted, is_valid, key_hint, team_id, created_at")
       .eq("user_id", userId)
       .eq("provider", provider)
       .not("team_id", "is", null)
@@ -171,21 +217,29 @@ async function getDecryptedApiKey(supabase: any, userId: string, provider: strin
     if (teamKeyResult.data?.api_key_encrypted) {
       data = teamKeyResult.data;
       error = teamKeyResult.error;
+      source = 'team';
     }
   }
 
   if (error) {
-    console.error(`[chat-proxy] Database error fetching API key for ${provider}:`, error.message);
+    log(`Database error fetching API key`, { provider, error: error.message });
     return null;
   }
 
   if (!data?.api_key_encrypted) {
-    console.log(`[chat-proxy] No API key found for provider: ${provider}, user: ${userId}`);
+    log(`No API key found`, { provider, user_id: userId });
     return null;
   }
 
-  console.log(`[chat-proxy] Found valid API key for ${provider}`);
-  return await decrypt(data.api_key_encrypted, ENCRYPTION_KEY);
+  log(`Using fallback API key`, {
+    provider,
+    source,
+    api_key_id: data.id,
+    key_hint: data.key_hint,
+    team_id: data.team_id,
+  });
+  const decrypted = await decrypt(data.api_key_encrypted, ENCRYPTION_KEY);
+  return { apiKey: decrypted, keyId: data.id, keyHint: data.key_hint, source };
 }
 
 // Format messages for different providers
@@ -248,8 +302,36 @@ serve(async (req) => {
       });
     }
 
+    const requestId = crypto.randomUUID();
     const body = await req.json();
-    const { provider, model_id, messages, config, stream = true, action, prompt, board_id } = body;
+    const {
+      provider,
+      model_id,
+      messages,
+      config,
+      stream = true,
+      action,
+      prompt,
+      board_id,
+      block_id,
+      client_request_id,
+    } = body;
+
+    const log = (msg: string, extra?: Record<string, unknown>) => {
+      const payload = extra ? ` ${JSON.stringify(extra)}` : '';
+      console.log(`[chat-proxy][${requestId}] ${msg}${payload}`);
+    };
+
+    log('Incoming request', {
+      user_id: user.id,
+      action: action || 'chat',
+      provider,
+      model_id,
+      board_id,
+      block_id,
+      client_request_id,
+      stream,
+    });
 
     // Handle image generation
     if (action === "image_generation") {
@@ -261,9 +343,14 @@ serve(async (req) => {
       }
 
       // Try board-linked key first, then fallback to user keys
-      let apiKey = board_id ? await getApiKeyForBoard(supabaseAdmin, board_id, provider) : null;
+      let apiKey: string | null = null;
+      if (board_id) {
+        const boardKey = await getApiKeyForBoard(supabaseAdmin, board_id, provider, log);
+        apiKey = boardKey?.apiKey || null;
+      }
       if (!apiKey) {
-        apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
+        const fallbackKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider, log);
+        apiKey = fallbackKey?.apiKey || null;
       }
       
       if (!apiKey) {
@@ -273,7 +360,7 @@ serve(async (req) => {
         });
       }
 
-      console.log(`[chat-proxy] Image generation for user ${user.id} via ${provider}, model: ${model_id}`);
+      log('Image generation', { provider, model_id });
 
       let imageResponse;
       let imageUrl: string | null = null;
@@ -516,9 +603,14 @@ serve(async (req) => {
       }
 
       // Try board-linked key first, then fallback to user keys
-      let apiKey = board_id ? await getApiKeyForBoard(supabaseAdmin, board_id, provider) : null;
+      let apiKey: string | null = null;
+      if (board_id) {
+        const boardKey = await getApiKeyForBoard(supabaseAdmin, board_id, provider, log);
+        apiKey = boardKey?.apiKey || null;
+      }
       if (!apiKey) {
-        apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
+        const fallbackKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider, log);
+        apiKey = fallbackKey?.apiKey || null;
       }
       
       if (!apiKey) {
@@ -528,7 +620,7 @@ serve(async (req) => {
         });
       }
 
-      console.log(`[chat-proxy] Video generation for user ${user.id} via ${provider}, model: ${model_id}`);
+      log('Video generation', { provider, model_id });
 
       let videoUrl: string | null = null;
       let videoResponse;
@@ -756,19 +848,28 @@ serve(async (req) => {
     // Get decrypted API key (server-side only - never exposed to frontend)
     // Priority: 1) Board's linked key, 2) User's personal/team keys (legacy fallback)
     let apiKey: string | null = null;
+    let resolvedKeyInfo: { key_source: 'board' | 'fallback'; key_id?: string; key_hint?: string | null } = { key_source: 'fallback' };
     
     if (board_id) {
       // Try to get the board's linked key first
-      apiKey = await getApiKeyForBoard(supabaseAdmin, board_id, provider);
+      const boardKey = await getApiKeyForBoard(supabaseAdmin, board_id, provider, log);
+      if (boardKey) {
+        apiKey = boardKey.apiKey;
+        resolvedKeyInfo = { key_source: 'board', key_id: boardKey.keyId, key_hint: boardKey.keyHint };
+      }
     }
     
     // Fallback to user's keys if no board-linked key found
     if (!apiKey) {
-      apiKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider);
+      const fallbackKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider, log);
+      if (fallbackKey) {
+        apiKey = fallbackKey.apiKey;
+        resolvedKeyInfo = { key_source: 'fallback', key_id: fallbackKey.keyId, key_hint: fallbackKey.keyHint };
+      }
     }
     
     if (!apiKey) {
-      console.error("[chat-proxy] No API key found for provider:", provider, "user:", user.id, "board:", board_id);
+      log('No API key resolved', { provider, user_id: user.id, board_id });
       return new Response(JSON.stringify({ 
         error: `No valid API key found for ${provider}. Please select an API key for this board in Board Settings, or add your API key in Settings > API Keys.`
       }), {
@@ -777,7 +878,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[chat-proxy] Proxying request for user ${user.id} to ${provider}/${model_id}`);
+    log('Proxying request', { provider, model_id, ...resolvedKeyInfo });
 
     // Build request based on provider
     let endpoint = PROVIDER_ENDPOINTS[provider];
@@ -799,7 +900,7 @@ serve(async (req) => {
       // Resolve to stable Google API model ID using helper function
       const googleModelId = resolveGoogleModelId(model_id);
       endpoint = `${endpoint}/${googleModelId}:streamGenerateContent?alt=sse&key=${apiKey}`;
-      console.log(`[chat-proxy] Google model mapping: ${model_id} -> ${googleModelId}`);
+      log('Google model mapping', { from: model_id, to: googleModelId });
       
       const formatted = formatMessagesForProvider(provider, messages);
       requestBody = {
@@ -945,7 +1046,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[chat-proxy] Provider ${provider} error: ${response.status}`, errorText);
+      console.error(`[chat-proxy][${requestId}] Provider ${provider} error: ${response.status}`, errorText);
       
       let errorMessage = `${provider} API error (${response.status})`;
       let errorDetails = '';
@@ -971,12 +1072,12 @@ serve(async (req) => {
         if (isQuotaExhausted) {
           // Daily/monthly quota exhausted - need to wait until reset or upgrade
           errorMessage = `Your ${provider} API quota has been exhausted. This usually resets daily. You can check your quota at ${provider === 'google' ? 'https://ai.google.dev/gemini-api/docs/rate-limits' : 'your provider dashboard'}. Consider upgrading your API plan for higher limits.`;
-          console.log(`[chat-proxy] Quota exhausted for ${provider}, user ${user.id}`);
+          log('Quota exhausted (or RESOURCE_EXHAUSTED)', { provider, retryAfter, ...resolvedKeyInfo });
         } else {
           // Temporary rate limit - just wait
           const waitTime = retryAfter ? ` (wait ~${retryAfter}s)` : '';
           errorMessage = `Rate limit reached for ${provider}${waitTime}. Please wait 30-60 seconds before trying again.`;
-          console.log(`[chat-proxy] Rate limit hit for ${provider}, user ${user.id}. Retry-After: ${retryAfter}`);
+          log('Rate limit hit', { provider, retryAfter, ...resolvedKeyInfo });
         }
       } else if (response.status === 404) {
         errorMessage = `Model "${model_id}" not found for ${provider}. It may not be available or the name is incorrect.`;
@@ -988,7 +1089,9 @@ serve(async (req) => {
         error: errorMessage,
         details: errorDetails,
         status: response.status,
-        provider 
+        provider,
+        request_id: requestId,
+        client_request_id,
       }), {
         status: response.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

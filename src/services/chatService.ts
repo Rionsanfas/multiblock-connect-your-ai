@@ -395,6 +395,7 @@ class ChatService {
     this.abortController = new AbortController();
     const startTime = Date.now();
     let fullResponse = '';
+    const clientRequestId = crypto.randomUUID();
 
     try {
       // Format messages with attachments for the proxy
@@ -424,6 +425,8 @@ class ChatService {
             },
             stream: true,
             board_id: boardId,
+            block_id: blockId,
+            client_request_id: clientRequestId,
           }),
           signal: this.abortController?.signal,
         });
@@ -446,6 +449,9 @@ class ChatService {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
+          if (errorData.request_id) {
+            errorMessage = `${errorMessage} (request_id: ${errorData.request_id})`;
+          }
           if (errorData.details) {
             console.error('[ChatService] Error details:', errorData.details);
           }
@@ -563,6 +569,7 @@ class ChatService {
       }
 
       // Call image generation through proxy
+      const clientRequestId = crypto.randomUUID();
       const response = await fetch(
         `${SUPABASE_FUNCTIONS_BASE_URL}/chat-proxy`,
         {
@@ -578,13 +585,17 @@ class ChatService {
             prompt,
             board_id: boardId,
             block_id: blockId,
+            client_request_id: clientRequestId,
           }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        callbacks.onError(errorData.error || 'Image generation failed');
+        const withId = errorData.request_id
+          ? `${errorData.error || 'Image generation failed'} (request_id: ${errorData.request_id})`
+          : (errorData.error || 'Image generation failed');
+        callbacks.onError(withId);
         return;
       }
 
@@ -638,6 +649,7 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
         return;
       }
 
+      const clientRequestId = crypto.randomUUID();
       const response = await fetch(
         `${SUPABASE_FUNCTIONS_BASE_URL}/chat-proxy`,
         {
@@ -653,13 +665,17 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
             prompt,
             board_id: boardId,
             block_id: blockId,
+            client_request_id: clientRequestId,
           }),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        callbacks.onError(errorData.error || 'Video generation failed');
+        const withId = errorData.request_id
+          ? `${errorData.error || 'Video generation failed'} (request_id: ${errorData.request_id})`
+          : (errorData.error || 'Video generation failed');
+        callbacks.onError(withId);
         return;
       }
 
