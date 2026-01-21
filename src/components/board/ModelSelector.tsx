@@ -37,7 +37,6 @@ function getModelTypeIcon(type: ModelType) {
     case 'image': return <Image className="h-4 w-4" />;
     case 'video': return <Video className="h-4 w-4" />;
     case 'chat': return <MessageSquare className="h-4 w-4" />;
-    case 'audio': return <Music className="h-4 w-4" />;
     case 'code': return <Code className="h-4 w-4" />;
     case 'embedding': return <Search className="h-4 w-4" />;
     case 'vision': return <Layers className="h-4 w-4" />;
@@ -51,7 +50,6 @@ function getTypeColor(type: ModelType) {
     case 'image': return 'text-purple-400';
     case 'video': return 'text-orange-400';
     case 'chat': return 'text-green-400';
-    case 'audio': return 'text-blue-400';
     case 'code': return 'text-cyan-400';
     default: return 'text-foreground';
   }
