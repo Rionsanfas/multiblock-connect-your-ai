@@ -21,9 +21,10 @@ export interface ChatMessage {
 }
 
 export interface MessageContent {
-  type: 'text' | 'image_url';
+  type: 'text' | 'image_url' | 'file';
   text?: string;
   image_url?: { url: string };
+  file?: { mimeType: string; data: string; name?: string };
 }
 
 export interface ChatAttachment {
@@ -81,15 +82,19 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'claude-sonnet-4': 'claude-sonnet-4-20250514',
 
     // ========================================
-    // GOOGLE - Using currently available model IDs
+    // GOOGLE - Use stable, real Gemini API IDs
     // ========================================
-    'gemini-3-pro': 'gemini-2.5-pro-preview-05-06',
-    'gemini-3-flash': 'gemini-2.5-flash-preview-04-17',
+    'gemini-3-pro': 'gemini-2.5-pro',
+    'gemini-3-flash': 'gemini-2.5-flash',
     'gemini-3-nano': 'gemini-2.0-flash-lite',
-    'gemini-2.5-pro': 'gemini-2.5-pro-preview-05-06',
-    'gemini-2.5-flash': 'gemini-2.5-flash-preview-04-17',
+    'gemini-2.5-pro': 'gemini-2.5-pro',
+    'gemini-2.5-flash': 'gemini-2.5-flash',
     'gemini-live-2.5-flash': 'gemini-2.0-flash',
     'nano-banana-pro': 'gemini-2.0-flash-exp',
+    // Back-compat: older preview IDs that may exist in saved blocks
+    'gemini-2.5-pro-preview-06-05': 'gemini-2.5-pro',
+    'gemini-2.5-pro-preview-05-06': 'gemini-2.5-pro',
+    'gemini-2.5-flash-preview-04-17': 'gemini-2.5-flash',
     'veo-3.1': 'veo-2.0-generate-001',
 
     // ========================================
@@ -169,7 +174,13 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'kimi-k2-pplx': 'sonar',
     'o3-pro-pplx': 'sonar-reasoning-pro',
   };
-  return mappings[modelId] || modelId;
+  if (mappings[modelId]) return mappings[modelId];
+
+  // Generic fallback: convert date-versioned preview IDs to stable IDs
+  const m = modelId.match(/^gemini-(2\.5)-(pro|flash)-preview-/);
+  if (m) return `gemini-${m[1]}-${m[2]}`;
+
+  return modelId;
 };
 
 
@@ -701,19 +712,36 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
     }
 
     const imageAttachments = attachments.filter(a => a.type.startsWith('image/'));
-    
-    if (imageAttachments.length === 0) {
-      return messages;
-    }
+    const otherAttachments = attachments.filter(a => !a.type.startsWith('image/'));
 
     const lastMessage = formattedMessages[lastUserMessageIndex];
     const textContent = typeof lastMessage.content === 'string' 
       ? lastMessage.content 
       : lastMessage.content.find(c => c.type === 'text')?.text || '';
 
+    // For non-image files, embed text-based content directly (all providers).
+    // For PDFs, only Gemini can ingest as inlineData; other providers get a note.
+    let enhancedText = textContent;
+    for (const file of otherAttachments) {
+      const isTextLike =
+        file.type.startsWith('text/') ||
+        file.type === 'application/json' ||
+        file.type === 'text/csv' ||
+        file.type === 'text/markdown';
+      const isPdf = file.type === 'application/pdf';
+
+      if (isTextLike && file.content) {
+        enhancedText += `\n\n[File: ${file.name}]\n\n\`\`\`\n${file.content}\n\`\`\``;
+      } else if (isPdf) {
+        enhancedText += `\n\n[Attached PDF: ${file.name}]`;
+      } else {
+        enhancedText += `\n\n[Attached file: ${file.name} (${file.type})]`;
+      }
+    }
+
     // Format for vision-capable models
     const multimodalContent: MessageContent[] = [
-      { type: 'text', text: textContent },
+      { type: 'text', text: enhancedText },
     ];
 
     for (const img of imageAttachments) {
@@ -727,6 +755,18 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
           type: 'image_url',
           image_url: { url: `data:${img.type};base64,${img.content}` },
         });
+      }
+    }
+
+    // Gemini-only: send PDFs as inlineData so the model can actually read them
+    if (provider === 'google') {
+      for (const file of otherAttachments) {
+        if (file.type === 'application/pdf' && file.content) {
+          multimodalContent.push({
+            type: 'file',
+            file: { mimeType: file.type, data: file.content, name: file.name },
+          });
+        }
       }
     }
 

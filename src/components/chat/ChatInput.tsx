@@ -85,14 +85,17 @@ export function ChatInput({
       
       reader.onload = () => {
         const content = reader.result as string;
+        const isBinary = file.type.startsWith('image/') || file.type === 'application/pdf';
+        const normalizedContent = isBinary
+          ? content.replace(/^data:[^;]+;base64,/, '') // base64 only
+          : content;
+
         resolve({
           id: Math.random().toString(36).substring(2, 15),
           name: file.name,
           type: file.type,
           size: file.size,
-          content: file.type.startsWith('image/') 
-            ? content // Base64 for images
-            : content.replace(/^data:[^;]+;base64,/, ''), // Raw for text
+          content: normalizedContent,
         });
       };
 
@@ -101,7 +104,7 @@ export function ChatInput({
         resolve(null);
       };
 
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/') || file.type === 'application/pdf') {
         reader.readAsDataURL(file);
       } else {
         reader.readAsText(file);
