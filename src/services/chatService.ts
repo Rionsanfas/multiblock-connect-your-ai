@@ -72,13 +72,13 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'sora-2-pro': 'sora-2-pro',
 
     // ========================================
-    // ANTHROPIC
+    // ANTHROPIC (CANONICAL: with date suffixes)
     // ========================================
-    'claude-opus-4.5': 'claude-opus-4-5',
-    'claude-sonnet-4.5': 'claude-sonnet-4-5',
-    'claude-haiku-4.5': 'claude-haiku-4-5',
-    'claude-opus-4.1': 'claude-opus-4-5',
-    'claude-sonnet-4': 'claude-sonnet-4-5',
+    'claude-opus-4.5': 'claude-opus-4-5-20251101',
+    'claude-sonnet-4.5': 'claude-sonnet-4-5-20250929',
+    'claude-haiku-4.5': 'claude-haiku-4-5-20251001',
+    'claude-opus-4.1': 'claude-opus-4-1-20250805',
+    'claude-sonnet-4': 'claude-sonnet-4-20250514',
 
     // ========================================
     // GOOGLE (REAL, STABLE GEMINI IDS ONLY)
@@ -89,7 +89,7 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'gemini-2.5-pro': 'gemini-2.5-pro',
     'gemini-2.5-flash': 'gemini-2.5-flash',
     'gemini-live-2.5-flash': 'gemini-2.0-flash',
-    'nano-banana-pro': 'gemini-2.0-flash-exp',
+    'nano-banana-pro': 'gemini-3-pro-image-preview',
 
     // Backward compatibility for saved blocks
     'gemini-2.5-pro-preview-06-05': 'gemini-2.5-pro',
@@ -98,59 +98,62 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'veo-3.1': 'veo-3.1-generate-preview',
 
     // ========================================
-    // XAI
+    // XAI (CANONICAL: grok-4-1-fast defaults to non-reasoning)
     // ========================================
-    'grok-4.1-fast': 'grok-4-1-fast',
+    'grok-4.1-fast': 'grok-4-1-fast-non-reasoning',
     'grok-4.1-fast-reasoning': 'grok-4-1-fast-reasoning',
     'grok-4.1-fast-non-reasoning': 'grok-4-1-fast-non-reasoning',
-    'grok-code-fast-1': 'grok-4-1-fast-reasoning',
+    'grok-code-fast-1': 'grok-code-fast-1',
     'grok-4-fast-reasoning': 'grok-4-fast-reasoning',
     'grok-4-fast-non-reasoning': 'grok-4-fast-non-reasoning',
     'grok-4.0709': 'grok-4-0709',
-    'grok-imagine-image': 'grok-2-image',
+    'grok-imagine-image': 'grok-2-image-1212',
     'grok-imagine-video': 'grok-2-video',
 
     // ========================================
-    // DEEPSEEK
+    // DEEPSEEK (CANONICAL)
     // ========================================
     'deepseek-v3.2': 'deepseek-chat',
     'deepseek-v3.2-speciale': 'deepseek-reasoner',
     'deepseek-v3.1': 'deepseek-chat',
+    'deepseek-chat': 'deepseek-chat',
+    'deepseek-reasoner': 'deepseek-reasoner',
+    'deepseek-coder': 'deepseek-coder',
 
     // ========================================
-    // MISTRAL
+    // MISTRAL (CANONICAL)
     // ========================================
     'mistral-large-3': 'mistral-large-latest',
-    'mistral-medium-3.1': 'mistral-large-latest',
+    'mistral-medium-3.1': 'mistral-medium-latest',
     'mistral-small-3.2': 'mistral-small-latest',
-    'ministral-3-14b': 'ministral-8b-latest',
+    'ministral-3-14b': 'ministral-14b-latest',
     'ministral-3-8b': 'ministral-8b-latest',
     'ministral-3-3b': 'ministral-3b-latest',
-    'magistral-medium-1.2': 'mistral-large-latest',
-    'magistral-small-1.2': 'mistral-small-latest',
+    'magistral-medium-1.2': 'magistral-medium-latest',
+    'magistral-small-1.2': 'magistral-small-latest',
     'codestral': 'codestral-latest',
     'mistral-nemo-12b': 'open-mistral-nemo',
     'mistral-embed': 'mistral-embed',
     'mistral-gan': 'pixtral-12b-latest',
 
     // ========================================
-    // TOGETHER.AI
+    // TOGETHER.AI (CANONICAL)
     // ========================================
     'llama-3.3-70b-instruct-turbo': 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
-    'llama-4-maverick-17bx128e': 'meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8',
+    'llama-4-maverick-17bx128e': 'meta-llama/Llama-4-Maverick-17B-128E-Instruct',
     'llama-4-scout-17bx16e': 'meta-llama/Llama-4-Scout-17B-16E-Instruct',
-    'qwen3-235b-a22b-instruct': 'Qwen/Qwen3-235B-A22B-fp8-tput',
-    'deepseek-v3.1-together': 'deepseek-ai/DeepSeek-V3',
+    'qwen3-235b-a22b-instruct': 'Qwen/Qwen3-235B-A22B-Instruct',
+    'deepseek-v3.1-together': 'deepseek-ai/DeepSeek-V3.1',
     'flux-together': 'black-forest-labs/FLUX.1-schnell-Free',
     'stable-video-together': 'stabilityai/stable-video-diffusion-img2vid-xt-1-1',
 
     // ========================================
-    // COHERE
+    // COHERE (CANONICAL)
     // ========================================
     'command-a-03-2025': 'command-a-03-2025',
-    'command-a-reasoning-08-2025': 'command-r-plus-08-2024',
-    'command-a-vision-07-2025': 'command-r-plus-08-2024',
-    'command-a-translate-08-2025': 'command-r-08-2024',
+    'command-a-reasoning-08-2025': 'command-a-reasoning-08-2025',
+    'command-a-vision-07-2025': 'command-a-vision-07-2025',
+    'command-a-translate-08-2025': 'command-a-translate-08-2025',
     'command-r-plus-08-2024': 'command-r-plus-08-2024',
     'embed-v4.0': 'embed-v4.0',
     'embed-english-v3.0': 'embed-english-v3.0',
