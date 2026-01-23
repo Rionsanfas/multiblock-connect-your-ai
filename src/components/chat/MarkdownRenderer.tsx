@@ -261,7 +261,7 @@ function VideoPreview({ src, alt }: VideoPreviewProps) {
 
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
   return (
-    <div className={cn("markdown-content", className)}>
+    <div className={cn("markdown-content text-[15px] sm:text-base leading-relaxed", className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

@@ -100,24 +100,24 @@ export function ChatMessage({
           </div>
         )}
 
-        {/* Message bubble with glow effect for user messages */}
+        {/* Message bubble with glow effect for user messages - increased font sizes */}
         <div
           className={cn(
-            "rounded-xl sm:rounded-2xl text-sm relative",
+            "rounded-xl sm:rounded-2xl relative",
             isUser 
-              ? "bg-secondary/60 text-foreground px-3 sm:px-4 py-2 sm:py-2.5 user-message-glow"
-              : "bg-transparent py-1"
+              ? "bg-secondary/60 text-foreground px-3 sm:px-4 py-2.5 sm:py-3 user-message-glow text-base sm:text-lg"
+              : "bg-transparent py-1 text-[15px] sm:text-base"
           )}
         >
           {isUser ? (
             <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
           ) : (
-            <MarkdownRenderer content={message.content} />
+            <MarkdownRenderer content={message.content} className="text-[15px] sm:text-base leading-relaxed" />
           )}
           
           {/* Streaming cursor */}
           {isStreaming && isAssistant && (
-            <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 rounded-sm" />
+            <span className="inline-block w-2 h-5 bg-primary animate-pulse ml-1 rounded-sm" />
           )}
         </div>
 

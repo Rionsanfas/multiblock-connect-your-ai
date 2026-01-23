@@ -10,7 +10,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent } from "react";
-import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2, AlertCircle, Maximize2, Minimize2, PanelLeftClose, PanelLeft, MessageSquare, Image, Video } from "lucide-react";
+import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2, AlertCircle, Maximize2, Minimize2, PanelLeftClose, PanelLeft, MessageSquare, Image, Video, ArrowDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,6 +108,10 @@ export function BlockChatModal({
   }, [sidebarWidth]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Smart auto-scroll state - only auto-scroll when user is at bottom
+  const [isUserAtBottom, setIsUserAtBottom] = useState(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
@@ -159,11 +163,33 @@ export function BlockChatModal({
 
   // Get all blocks on this board for the sidebar
   const boardBlocks = useBoardBlocks(block?.board_id || '');
+  // Smart auto-scroll: only scroll if user is at bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth"
-    });
-  }, [blockMessages, streamingContent]);
+    if (isUserAtBottom) {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth"
+      });
+    }
+  }, [blockMessages, streamingContent, isUserAtBottom]);
+  
+  // Handle scroll events to detect user position
+  const handleChatScroll = useCallback(() => {
+    const container = chatContainerRef.current;
+    if (!container) return;
+    
+    const threshold = 100; // pixels from bottom
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+    
+    setIsUserAtBottom(isNearBottom);
+    setShowScrollButton(!isNearBottom);
+  }, []);
+  
+  // Scroll to bottom handler
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setIsUserAtBottom(true);
+    setShowScrollButton(false);
+  }, []);
   useEffect(() => {
     if (block) setTitle(block.title);
   }, [block?.title]);
@@ -574,9 +600,13 @@ export function BlockChatModal({
               </aside>}
 
             {/* Chat content area */}
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-5 py-3 sm:py-4 space-y-3 sm:space-y-4">
-                {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-5 w-5 sm:h-6 sm:w-6" /></div> : blockMessages.length === 0 && !streamingContent ? <div className="flex flex-col items-center justify-center h-full text-center px-4"><Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/50 mb-2 sm:mb-3" /><p className="text-muted-foreground text-xs sm:text-sm">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div> : <>
+            <div className="flex-1 flex flex-col overflow-hidden relative">
+              <div 
+                ref={chatContainerRef} 
+                onScroll={handleChatScroll}
+                className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-5 py-3 sm:py-4 space-y-4 sm:space-y-5"
+              >
+                {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-5 w-5 sm:h-6 sm:w-6" /></div> : blockMessages.length === 0 && !streamingContent ? <div className="flex flex-col items-center justify-center h-full text-center px-4"><Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/50 mb-2 sm:mb-3" /><p className="text-muted-foreground text-sm sm:text-base">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div> : <>
                     {blockMessages.map(message => <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} selectable />)}
                     {streamingContent && <ChatMessage message={{
                   id: 'streaming',
@@ -586,13 +616,24 @@ export function BlockChatModal({
                   size_bytes: 0,
                   created_at: new Date().toISOString()
                 }} isStreaming />}
-                    {messageStatus === 'waiting_llm' && !streamingContent && <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground text-xs sm:text-sm">
+                    {messageStatus === 'waiting_llm' && !streamingContent && <div className="flex items-center gap-1.5 sm:gap-2 text-muted-foreground text-sm">
                         <Spinner className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         <span>Thinking...</span>
                       </div>}
                     <div ref={messagesEndRef} />
                   </>}
               </div>
+              
+              {/* Scroll to bottom button */}
+              {showScrollButton && (
+                <button
+                  onClick={scrollToBottom}
+                  className="absolute bottom-20 right-4 sm:right-6 p-2.5 rounded-full bg-secondary/90 hover:bg-secondary border border-border/30 shadow-lg backdrop-blur-sm transition-all hover:scale-105 z-10"
+                  aria-label="Scroll to bottom"
+                >
+                  <ArrowDown className="h-4 w-4 text-foreground" />
+                </button>
+              )}
 
               <ChatInput onSend={handleSend} onStop={handleStop} isRunning={isRunning} disabled={needsModelSelection || !hasKeyForCurrentProvider} placeholder={needsModelSelection ? "Select a model..." : !hasKeyForCurrentProvider ? "Add an API key..." : "Type a message..."} references={pendingReferences} onReferencesChange={setPendingReferences} />
             </div>
