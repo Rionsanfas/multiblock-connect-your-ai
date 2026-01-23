@@ -123,8 +123,7 @@ const Pricing = () => {
 
           {/* View All Plans CTA */}
           <AnimatedSection delay={300} className="text-center mt-8 sm:mt-10 md:mt-12">
-            
-            
+            <></>
           </AnimatedSection>
         </div>
       </section>

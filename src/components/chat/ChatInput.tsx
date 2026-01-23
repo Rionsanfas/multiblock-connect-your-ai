@@ -227,7 +227,7 @@ export function ChatInput({
             className="hidden"
           />
 
-          {/* Text input */}
+          {/* Text input - increased font size */}
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -235,7 +235,7 @@ export function ChatInput({
             placeholder={references.length > 0 ? 'Add a message with your references...' : placeholder}
             disabled={disabled}
             className={cn(
-              "min-h-[40px] sm:min-h-[44px] max-h-[160px] sm:max-h-[200px] resize-none rounded-lg sm:rounded-xl border-border/30 text-sm bg-secondary/30 focus:bg-secondary/50 transition-colors",
+              "min-h-[44px] sm:min-h-[48px] max-h-[160px] sm:max-h-[200px] resize-none rounded-lg sm:rounded-xl border-border/30 text-base sm:text-lg bg-secondary/30 focus:bg-secondary/50 transition-colors leading-relaxed",
               disabled && "opacity-50"
             )}
             rows={1}
