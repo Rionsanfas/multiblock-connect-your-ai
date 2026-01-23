@@ -123,12 +123,8 @@ const Pricing = () => {
 
           {/* View All Plans CTA */}
           <AnimatedSection delay={300} className="text-center mt-8 sm:mt-10 md:mt-12">
-            <p className="text-muted-foreground text-sm sm:text-base mb-3">
-              Need add-ons or enterprise solutions?
-            </p>
-            <Link to="/pricing" className="text-accent hover:text-accent/80 font-medium transition-colors min-h-[44px] inline-flex items-center text-sm sm:text-base">
-              View All Plans & Add-ons →
-            </Link>
+            
+            
           </AnimatedSection>
         </div>
       </section>
