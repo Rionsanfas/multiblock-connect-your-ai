@@ -82,7 +82,7 @@ export default function TermsOfService() {
                   Your storage quota covers messages, blocks, and uploaded files. Storage limits vary by plan:
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-2">
-                  <li><strong className="text-foreground">Free:</strong> 0.1 GB (102 MB), 1 board, 3 blocks per board</li>
+                  <li><strong className="text-foreground">Free:</strong> 100 MB storage, 1 board, 3 blocks per board</li>
                   <li><strong className="text-foreground">Individual Yearly:</strong> 2 GB - 4 GB storage, 50-100 boards</li>
                   <li><strong className="text-foreground">Team Yearly:</strong> 5 GB - 6 GB storage, 50-100 boards, up to 20 seats</li>
                   <li><strong className="text-foreground">Individual Lifetime:</strong> 6 GB - 7 GB storage, 50-150 boards</li>

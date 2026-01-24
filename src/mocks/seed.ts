@@ -4,7 +4,7 @@ import type {
   PlanCapabilities
 } from '@/types';
 import {
-  FREE_PLAN_STORAGE_MB_DB,
+  FREE_PLAN_STORAGE_MB,
   FREE_PLAN_STORAGE_DISPLAY,
   FREE_PLAN_BOARDS,
   FREE_PLAN_BLOCKS_PER_BOARD,
@@ -65,7 +65,7 @@ export const pricingPlans: PricingPlan[] = [
     billing_period: 'monthly',
     boards: FREE_PLAN_BOARDS,
     blocks_per_board: FREE_PLAN_BLOCKS_PER_BOARD,
-    storage_mb: FREE_PLAN_STORAGE_MB_DB,
+    storage_mb: FREE_PLAN_STORAGE_MB,
     seats: FREE_PLAN_SEATS,
     features: [
       `${FREE_PLAN_BOARDS} board`,
