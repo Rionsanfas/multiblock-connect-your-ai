@@ -16,6 +16,7 @@ import { useTeamContext } from '@/contexts/TeamContext';
 import { useBilling } from '@/hooks/useBilling';
 import { supabase } from '@/integrations/supabase/client';
 import { boardsDb } from '@/lib/database';
+import { FREE_PLAN_STORAGE_MB } from '@/config/plan-constants';
 
 interface WorkspaceStats {
   // Boards
@@ -142,9 +143,10 @@ export function useWorkspaceStats(): WorkspaceStats & { isLoading: boolean } {
     const baseBoardsLimit = isFree ? 1 : (billing?.total_boards ?? 1);
     const isUnlimitedBoards = baseBoardsLimit === -1;
     
-    // Storage limits
-    const storageGb = isFree ? 0.1 : (billing?.total_storage_gb ?? 1);
-    const storageLimitMb = storageGb === -1 ? -1 : storageGb * 1024;
+    // Storage limits - use exact MB constant for free plan to avoid GB conversion rounding
+    const storageLimitMb = isFree 
+      ? FREE_PLAN_STORAGE_MB 
+      : (billing?.total_storage_gb === -1 ? -1 : (billing?.total_storage_gb ?? 1) * 1024);
     const isUnlimitedStorage = storageLimitMb === -1;
     
     // Current workspace boards
