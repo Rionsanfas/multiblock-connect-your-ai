@@ -84,9 +84,7 @@ const Pricing = () => {
               {/* Lifetime Deals */}
               <TabsContent value="lifetime" className="mt-6 sm:mt-8">
                 {/* LTD Scarcity Badge */}
-                <div className="flex justify-center mb-6 sm:mb-8">
-                  <LtdScarcityBadge />
-                </div>
+                
 
                 {/* Individual Lifetime */}
                 <div className="mb-8 sm:mb-10">
