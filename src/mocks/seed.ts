@@ -58,12 +58,12 @@ export const pricingPlans: PricingPlan[] = [
     billing_period: 'monthly',
     boards: 1,
     blocks_per_board: 3,
-    storage_mb: 100,
-    seats: 1,
-    features: [
-      '1 board',
-      '3 blocks per board',
-      '100 MB storage',
+  storage_mb: 102.4,
+  seats: 1,
+  features: [
+    '1 board',
+    '3 blocks per board',
+    '102.4 MB storage',
       'Basic AI models',
       'Community support',
     ],
