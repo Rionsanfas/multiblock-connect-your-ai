@@ -9,7 +9,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useMemo, u
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAppStore } from '@/store/useAppStore';
-import { FREE_PLAN_STORAGE_MB_DB } from '@/config/plan-constants';
+import { FREE_PLAN_STORAGE_MB } from '@/config/plan-constants';
 
 interface AuthContextValue {
   user: User | null;
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         plan: 'free',
         boards_limit: 10,
         boards_used: 0,
-        storage_limit_mb: FREE_PLAN_STORAGE_MB_DB,
+        storage_limit_mb: FREE_PLAN_STORAGE_MB,
         storage_used_mb: 0,
         created_at: supabaseUser.created_at || new Date().toISOString(),
       });

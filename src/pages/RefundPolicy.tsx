@@ -111,7 +111,7 @@ export default function RefundPolicy() {
                 <p className="text-muted-foreground leading-relaxed">
                   After a refund is processed, your stored data (boards, blocks, messages, and files) will remain in
                   your account until you choose to delete it. Your account will be downgraded to the Free plan, and
-                  storage limits will apply accordingly (0.1 GB storage, 1 board, 3 blocks per board). Data exceeding Free plan limits may become inaccessible until
+                  storage limits will apply accordingly (100 MB storage, 1 board, 3 blocks per board). Data exceeding Free plan limits may become inaccessible until
                   you upgrade or delete excess data.
                 </p>
               </section>

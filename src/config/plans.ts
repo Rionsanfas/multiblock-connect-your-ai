@@ -1,5 +1,5 @@
 import {
-  FREE_PLAN_STORAGE_MB_DB,
+  FREE_PLAN_STORAGE_MB,
   FREE_PLAN_STORAGE_DISPLAY,
   FREE_PLAN_BOARDS,
   FREE_PLAN_BLOCKS_PER_BOARD,
@@ -123,7 +123,7 @@ const FREE_PLAN: PlanConfig = {
   billing_period: 'monthly',
   boards: 1,
   blocks_per_board: FREE_PLAN_BLOCKS_PER_BOARD,
-  storage_mb: FREE_PLAN_STORAGE_MB_DB,
+  storage_mb: FREE_PLAN_STORAGE_MB,
   seats: FREE_PLAN_SEATS,
   messages_per_day: FREE_PLAN_MESSAGES_PER_DAY,
   api_keys: FREE_PLAN_API_KEYS,
