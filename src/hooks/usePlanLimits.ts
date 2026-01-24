@@ -4,7 +4,12 @@ import { useAuth } from './useAuth';
 import { useBilling } from './useBilling';
 import { boardsDb, apiKeysDb } from '@/lib/database';
 import { toast } from 'sonner';
-
+import { 
+  FREE_PLAN_STORAGE_MB_DB,
+  FREE_PLAN_BOARDS,
+  FREE_PLAN_BLOCKS_PER_BOARD,
+  FREE_PLAN_STORAGE_GB
+} from '@/config/plan-constants';
 /**
  * Fetch real plan limits from user_billing table (Polar-synced)
  */
@@ -41,15 +46,15 @@ export function usePlanLimits() {
     const isFree = !isActive || planName === 'free';
     
     // Board limits - use total_boards which includes addons
-    const maxBoards = billing?.total_boards ?? 1;
+    const maxBoards = billing?.total_boards ?? FREE_PLAN_BOARDS;
     const maxBlocksPerBoard = billing?.blocks ?? -1; // -1 is unlimited
-    const maxStorageMb = (billing?.total_storage_gb ?? 0.1) * 1024; // Convert GB to MB
+    const maxStorageMb = (billing?.total_storage_gb ?? FREE_PLAN_STORAGE_GB) * 1024; // Convert GB to MB
     const maxSeats = billing?.seats ?? 1;
     
-    // For free plan, use default limits
-    const effectiveMaxBoards = isFree ? 1 : maxBoards;
-    const effectiveMaxBlocks = isFree ? 3 : maxBlocksPerBoard;
-    const effectiveStorageMb = isFree ? 102.4 : maxStorageMb;
+    // For free plan, use default limits (102 MB - integer for DB compatibility)
+    const effectiveMaxBoards = isFree ? FREE_PLAN_BOARDS : maxBoards;
+    const effectiveMaxBlocks = isFree ? FREE_PLAN_BLOCKS_PER_BOARD : maxBlocksPerBoard;
+    const effectiveStorageMb = isFree ? FREE_PLAN_STORAGE_MB_DB : maxStorageMb;
     
     // -1 means unlimited
     const isUnlimited = (val: number) => val === -1;

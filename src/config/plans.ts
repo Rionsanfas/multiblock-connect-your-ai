@@ -1,3 +1,13 @@
+import {
+  FREE_PLAN_STORAGE_MB_DB,
+  FREE_PLAN_STORAGE_DISPLAY,
+  FREE_PLAN_BOARDS,
+  FREE_PLAN_BLOCKS_PER_BOARD,
+  FREE_PLAN_SEATS,
+  FREE_PLAN_MESSAGES_PER_DAY,
+  FREE_PLAN_API_KEYS,
+} from './plan-constants';
+
 /**
  * Pricing Plans Configuration
  * 
@@ -112,16 +122,16 @@ const FREE_PLAN: PlanConfig = {
   price_cents: 0,
   billing_period: 'monthly',
   boards: 1,
-  blocks_per_board: 3,
-  storage_mb: 102.4,
-  seats: 1,
-  messages_per_day: 50,
-  api_keys: 3,
+  blocks_per_board: FREE_PLAN_BLOCKS_PER_BOARD,
+  storage_mb: FREE_PLAN_STORAGE_MB_DB,
+  seats: FREE_PLAN_SEATS,
+  messages_per_day: FREE_PLAN_MESSAGES_PER_DAY,
+  api_keys: FREE_PLAN_API_KEYS,
   features: [
-    '1 board',
-    '3 blocks per board',
-    '102.4 MB storage',
-    '50 messages/day',
+    `${FREE_PLAN_BOARDS} board`,
+    `${FREE_PLAN_BLOCKS_PER_BOARD} blocks per board`,
+    `${FREE_PLAN_STORAGE_DISPLAY} storage`,
+    `${FREE_PLAN_MESSAGES_PER_DAY} messages/day`,
     'Basic AI models',
     'Community support',
   ],

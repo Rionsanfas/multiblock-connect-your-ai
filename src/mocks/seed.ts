@@ -3,6 +3,13 @@ import type {
   BoardAddon, User, Team, TeamMember, Seat, Subscription, UserPlan,
   PlanCapabilities
 } from '@/types';
+import {
+  FREE_PLAN_STORAGE_MB_DB,
+  FREE_PLAN_STORAGE_DISPLAY,
+  FREE_PLAN_BOARDS,
+  FREE_PLAN_BLOCKS_PER_BOARD,
+  FREE_PLAN_SEATS,
+} from '@/config/plan-constants';
 
 // ============================================
 // DEFAULT PLAN CAPABILITIES
@@ -56,14 +63,14 @@ export const pricingPlans: PricingPlan[] = [
     tier: 'free',
     price_cents: 0,
     billing_period: 'monthly',
-    boards: 1,
-    blocks_per_board: 3,
-  storage_mb: 102.4,
-  seats: 1,
-  features: [
-    '1 board',
-    '3 blocks per board',
-    '102.4 MB storage',
+    boards: FREE_PLAN_BOARDS,
+    blocks_per_board: FREE_PLAN_BLOCKS_PER_BOARD,
+    storage_mb: FREE_PLAN_STORAGE_MB_DB,
+    seats: FREE_PLAN_SEATS,
+    features: [
+      `${FREE_PLAN_BOARDS} board`,
+      `${FREE_PLAN_BLOCKS_PER_BOARD} blocks per board`,
+      `${FREE_PLAN_STORAGE_DISPLAY} storage`,
       'Basic AI models',
       'Community support',
     ],
