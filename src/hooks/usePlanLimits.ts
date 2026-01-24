@@ -49,7 +49,7 @@ export function usePlanLimits() {
     // For free plan, use default limits
     const effectiveMaxBoards = isFree ? 1 : maxBoards;
     const effectiveMaxBlocks = isFree ? 3 : maxBlocksPerBoard;
-    const effectiveStorageMb = isFree ? 100 : maxStorageMb;
+    const effectiveStorageMb = isFree ? 102.4 : maxStorageMb;
     
     // -1 means unlimited
     const isUnlimited = (val: number) => val === -1;

@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         plan: 'free',
         boards_limit: 10,
         boards_used: 0,
-        storage_limit_mb: 100,
+        storage_limit_mb: 102.4,
         storage_used_mb: 0,
         created_at: supabaseUser.created_at || new Date().toISOString(),
       });
