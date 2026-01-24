@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { pricingPlans, boardAddons } from '@/mocks/seed';
 import type { PricingPlan, PlanCapabilities, UserPlan, Subscription } from '@/types';
+import { FREE_PLAN_STORAGE_MB_DB } from '@/config/plan-constants';
 
 // ============================================
 // PLAN DATA HOOKS
@@ -63,7 +64,7 @@ export function usePlanLimits() {
   return useMemo(() => ({
     boardsLimit: userPlan?.effective_boards_limit ?? planDetails?.boards ?? 1,
     boardsUsed: userPlan?.boards_used ?? 0,
-    storageLimit: userPlan?.effective_storage_mb ?? planDetails?.storage_mb ?? 100,
+    storageLimit: userPlan?.effective_storage_mb ?? planDetails?.storage_mb ?? FREE_PLAN_STORAGE_MB_DB,
     storageUsed: userPlan?.storage_used_mb ?? 0,
     seatsLimit: userPlan?.effective_seats ?? planDetails?.seats ?? 1,
     blocksPerBoard: planDetails?.blocks_per_board ?? 3,
