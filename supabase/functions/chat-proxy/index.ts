@@ -22,6 +22,80 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
   perplexity: "https://api.perplexity.ai/chat/completions",
 };
 
+// OpenRouter endpoint and configuration
+const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
+const OPENROUTER_REFERER = "https://multiblock.app";
+const OPENROUTER_TITLE = "Multiblock";
+
+// Check if API key is an OpenRouter key (starts with sk-or-)
+function isOpenRouterKey(apiKey: string): boolean {
+  return apiKey.startsWith('sk-or-');
+}
+
+// Map internal model ID to OpenRouter model ID format (provider/model)
+function getOpenRouterModelId(modelId: string, provider: string): string {
+  // OpenRouter model mappings - use provider prefix format
+  const openRouterMappings: Record<string, string> = {
+    // OpenAI models
+    'gpt-5.2': 'openai/gpt-5.2',
+    'gpt-5.2-pro': 'openai/gpt-5.2-pro',
+    'gpt-5': 'openai/gpt-5',
+    'gpt-5-mini': 'openai/gpt-5-mini',
+    'gpt-5-nano': 'openai/gpt-5-nano',
+    'gpt-4o': 'openai/gpt-4o',
+    'gpt-4o-mini': 'openai/gpt-4o-mini',
+    'gpt-4-turbo': 'openai/gpt-4-turbo',
+    'o3-pro': 'openai/o3-pro',
+    'o3-deep-research': 'openai/o3-deep-research',
+    // Anthropic models
+    'claude-opus-4.5': 'anthropic/claude-opus-4.5',
+    'claude-sonnet-4.5': 'anthropic/claude-sonnet-4.5',
+    'claude-haiku-4.5': 'anthropic/claude-haiku-4.5',
+    'claude-opus-4.1': 'anthropic/claude-opus-4.1',
+    'claude-sonnet-4': 'anthropic/claude-sonnet-4',
+    // Google models
+    'gemini-3-pro': 'google/gemini-3-pro',
+    'gemini-3-flash': 'google/gemini-3-flash',
+    'gemini-3-nano': 'google/gemini-2.5-flash-lite',
+    'gemini-2.5-pro': 'google/gemini-2.5-pro',
+    'gemini-2.5-flash': 'google/gemini-2.5-flash',
+    // DeepSeek models
+    'deepseek-v3.2': 'deepseek/deepseek-chat',
+    'deepseek-v3.2-speciale': 'deepseek/deepseek-reasoner',
+    'deepseek-v3.1': 'deepseek/deepseek-chat',
+    'deepseek-chat': 'deepseek/deepseek-chat',
+    'deepseek-reasoner': 'deepseek/deepseek-reasoner',
+    // Mistral models
+    'mistral-large-3': 'mistralai/mistral-large-latest',
+    'mistral-medium-3.1': 'mistralai/mistral-medium-latest',
+    'mistral-small-3.2': 'mistralai/mistral-small-latest',
+    // xAI Grok models
+    'grok-4.1-fast': 'x-ai/grok-4.1-fast',
+    'grok-4.1-fast-reasoning': 'x-ai/grok-4.1-fast-reasoning',
+  };
+  
+  // Check if we have a specific mapping
+  if (openRouterMappings[modelId]) {
+    return openRouterMappings[modelId];
+  }
+  
+  // Default: prefix with provider name
+  const providerPrefixes: Record<string, string> = {
+    openai: 'openai',
+    anthropic: 'anthropic',
+    google: 'google',
+    xai: 'x-ai',
+    deepseek: 'deepseek',
+    mistral: 'mistralai',
+    cohere: 'cohere',
+    together: 'together',
+    perplexity: 'perplexity',
+  };
+  
+  const prefix = providerPrefixes[provider] || provider;
+  return `${prefix}/${modelId}`;
+}
+
 // ============================================
 // MODEL ID MAPPINGS - Internal ID → Provider API ID
 // SINGLE SOURCE OF TRUTH - No audio models
@@ -977,14 +1051,41 @@ serve(async (req) => {
       });
     }
 
-    log('Proxying request', { provider, model_id, ...resolvedKeyInfo });
+    // Detect if this is an OpenRouter key
+    const useOpenRouter = isOpenRouterKey(apiKey);
+    
+    log('Proxying request', { 
+      provider, 
+      model_id, 
+      key_source: resolvedKeyInfo.key_source,
+      key_id: resolvedKeyInfo.key_id,
+      key_hint: resolvedKeyInfo.key_hint,
+      use_openrouter: useOpenRouter,
+    });
 
-    // Build request based on provider
-    let endpoint = PROVIDER_ENDPOINTS[provider];
+    // Build request based on provider (or OpenRouter if detected)
+    let endpoint = useOpenRouter ? OPENROUTER_ENDPOINT : PROVIDER_ENDPOINTS[provider];
     let headers: Record<string, string> = { "Content-Type": "application/json" };
     let requestBody: any;
-
-    if (provider === "anthropic") {
+    
+    // If using OpenRouter, set up OpenRouter-specific headers and model ID
+    if (useOpenRouter) {
+      headers["Authorization"] = `Bearer ${apiKey}`;
+      headers["HTTP-Referer"] = OPENROUTER_REFERER;
+      headers["X-Title"] = OPENROUTER_TITLE;
+      
+      // Convert model ID to OpenRouter format (provider/model)
+      const openRouterModelId = getOpenRouterModelId(model_id, provider);
+      log('OpenRouter routing', { original_model: model_id, openrouter_model: openRouterModelId, provider });
+      
+      requestBody = {
+        model: openRouterModelId,
+        messages,
+        stream,
+        temperature: config?.temperature ?? 0.7,
+        max_tokens: config?.maxTokens || 4096,
+      };
+    } else if (provider === "anthropic") {
       headers["x-api-key"] = apiKey;
       headers["anthropic-version"] = "2023-06-01";
       const formatted = formatMessagesForProvider(provider, messages);
