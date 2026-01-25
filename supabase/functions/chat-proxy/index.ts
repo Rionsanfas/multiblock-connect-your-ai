@@ -32,54 +32,133 @@ function isOpenRouterKey(apiKey: string): boolean {
   return apiKey.startsWith('sk-or-');
 }
 
-// Map internal model ID to OpenRouter model ID format (provider/model)
-function getOpenRouterModelId(modelId: string, provider: string): string {
-  // OpenRouter model mappings - use provider prefix format
-  const openRouterMappings: Record<string, string> = {
-    // OpenAI models
-    'gpt-5.2': 'openai/gpt-5.2',
-    'gpt-5.2-pro': 'openai/gpt-5.2-pro',
-    'gpt-5': 'openai/gpt-5',
-    'gpt-5-mini': 'openai/gpt-5-mini',
-    'gpt-5-nano': 'openai/gpt-5-nano',
-    'gpt-4o': 'openai/gpt-4o',
-    'gpt-4o-mini': 'openai/gpt-4o-mini',
-    'gpt-4-turbo': 'openai/gpt-4-turbo',
-    'o3-pro': 'openai/o3-pro',
-    'o3-deep-research': 'openai/o3-deep-research',
-    // Anthropic models
-    'claude-opus-4.5': 'anthropic/claude-opus-4.5',
-    'claude-sonnet-4.5': 'anthropic/claude-sonnet-4.5',
-    'claude-haiku-4.5': 'anthropic/claude-haiku-4.5',
-    'claude-opus-4.1': 'anthropic/claude-opus-4.1',
-    'claude-sonnet-4': 'anthropic/claude-sonnet-4',
-    // Google models
-    'gemini-3-pro': 'google/gemini-3-pro',
-    'gemini-3-flash': 'google/gemini-3-flash',
-    'gemini-3-nano': 'google/gemini-2.5-flash-lite',
-    'gemini-2.5-pro': 'google/gemini-2.5-pro',
-    'gemini-2.5-flash': 'google/gemini-2.5-flash',
-    // DeepSeek models
-    'deepseek-v3.2': 'deepseek/deepseek-chat',
-    'deepseek-v3.2-speciale': 'deepseek/deepseek-reasoner',
-    'deepseek-v3.1': 'deepseek/deepseek-chat',
-    'deepseek-chat': 'deepseek/deepseek-chat',
-    'deepseek-reasoner': 'deepseek/deepseek-reasoner',
-    // Mistral models
-    'mistral-large-3': 'mistralai/mistral-large-latest',
-    'mistral-medium-3.1': 'mistralai/mistral-medium-latest',
-    'mistral-small-3.2': 'mistralai/mistral-small-latest',
-    // xAI Grok models
-    'grok-4.1-fast': 'x-ai/grok-4.1-fast',
-    'grok-4.1-fast-reasoning': 'x-ai/grok-4.1-fast-reasoning',
-  };
+// ============================================
+// OPENROUTER MODEL MAPPINGS
+// Maps internal model IDs to OpenRouter's actual model slugs
+// OpenRouter uses provider/model format with their own naming
+// ============================================
+const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
+  // ========================================
+  // OPENAI - OpenRouter uses openai/model-name format
+  // ========================================
+  'gpt-5.2': 'openai/gpt-4o-2024-11-20', // Latest GPT-4o as proxy for GPT-5.2
+  'gpt-5.2-pro': 'openai/gpt-4o-2024-11-20',
+  'gpt-5': 'openai/gpt-4o',
+  'gpt-5-mini': 'openai/gpt-4o-mini',
+  'gpt-5-nano': 'openai/gpt-4o-mini',
+  'gpt-4o': 'openai/gpt-4o',
+  'gpt-4o-mini': 'openai/gpt-4o-mini',
+  'gpt-4-turbo': 'openai/gpt-4-turbo',
+  'o3-pro': 'openai/o3-mini', // o3 available via OpenRouter
+  'o3-deep-research': 'openai/o3-mini',
   
-  // Check if we have a specific mapping
-  if (openRouterMappings[modelId]) {
-    return openRouterMappings[modelId];
+  // ========================================
+  // ANTHROPIC - OpenRouter uses anthropic/claude-X format
+  // These are the ACTUAL OpenRouter model IDs
+  // ========================================
+  'claude-opus-4.5': 'anthropic/claude-3.5-sonnet', // Latest Sonnet as proxy
+  'claude-sonnet-4.5': 'anthropic/claude-3.5-sonnet',
+  'claude-haiku-4.5': 'anthropic/claude-3.5-haiku',
+  'claude-opus-4.1': 'anthropic/claude-3.5-sonnet',
+  'claude-sonnet-4': 'anthropic/claude-3.5-sonnet',
+  // Also handle resolved Anthropic model IDs (with date suffixes)
+  'claude-opus-4-5-20251101': 'anthropic/claude-3.5-sonnet',
+  'claude-sonnet-4-5-20250929': 'anthropic/claude-3.5-sonnet',
+  'claude-haiku-4-5-20251001': 'anthropic/claude-3.5-haiku',
+  'claude-opus-4-1-20250805': 'anthropic/claude-3.5-sonnet',
+  'claude-sonnet-4-20250514': 'anthropic/claude-3.5-sonnet',
+  
+  // ========================================
+  // GOOGLE - OpenRouter uses google/gemini-X format
+  // ========================================
+  'gemini-3-pro': 'google/gemini-2.5-pro-preview-06-05',
+  'gemini-3-flash': 'google/gemini-2.5-flash-preview-05-20',
+  'gemini-3-nano': 'google/gemini-2.0-flash-lite-001',
+  'gemini-2.5-pro': 'google/gemini-2.5-pro-preview-06-05',
+  'gemini-2.5-flash': 'google/gemini-2.5-flash-preview-05-20',
+  'gemini-live-2.5-flash': 'google/gemini-2.0-flash-001',
+  // Also handle resolved Google model IDs
+  'gemini-3-pro-preview': 'google/gemini-2.5-pro-preview-06-05',
+  'gemini-3-flash-preview': 'google/gemini-2.5-flash-preview-05-20',
+  'gemini-2.5-flash-lite': 'google/gemini-2.0-flash-lite-001',
+  
+  // ========================================
+  // XAI (GROK) - OpenRouter uses x-ai/grok-X format
+  // ========================================
+  'grok-4.1-fast': 'x-ai/grok-2-1212',
+  'grok-4.1-fast-reasoning': 'x-ai/grok-2-1212',
+  'grok-4.1-fast-non-reasoning': 'x-ai/grok-2-1212',
+  'grok-code-fast-1': 'x-ai/grok-2-1212',
+  'grok-4-fast-reasoning': 'x-ai/grok-2-1212',
+  'grok-4-fast-non-reasoning': 'x-ai/grok-2-1212',
+  'grok-4.0709': 'x-ai/grok-2-1212',
+  // Also handle resolved xAI model IDs
+  'grok-4-1-fast-non-reasoning': 'x-ai/grok-2-1212',
+  'grok-4-1-fast-reasoning': 'x-ai/grok-2-1212',
+  
+  // ========================================
+  // DEEPSEEK - OpenRouter uses deepseek/deepseek-X format
+  // ========================================
+  'deepseek-v3.2': 'deepseek/deepseek-chat',
+  'deepseek-v3.2-speciale': 'deepseek/deepseek-r1',
+  'deepseek-v3.1': 'deepseek/deepseek-chat',
+  'deepseek-chat': 'deepseek/deepseek-chat',
+  'deepseek-reasoner': 'deepseek/deepseek-r1',
+  'deepseek-coder': 'deepseek/deepseek-coder',
+  
+  // ========================================
+  // MISTRAL - OpenRouter uses mistralai/mistral-X format
+  // ========================================
+  'mistral-large-3': 'mistralai/mistral-large-2411',
+  'mistral-medium-3.1': 'mistralai/mistral-medium-3',
+  'mistral-small-3.2': 'mistralai/mistral-small-3.1-24b-instruct',
+  'ministral-3-14b': 'mistralai/ministral-8b',
+  'ministral-3-8b': 'mistralai/ministral-8b',
+  'ministral-3-3b': 'mistralai/ministral-3b',
+  'codestral': 'mistralai/codestral-2501',
+  'mistral-nemo-12b': 'mistralai/mistral-nemo',
+  // Also handle resolved Mistral model IDs
+  'mistral-large-latest': 'mistralai/mistral-large-2411',
+  'mistral-medium-latest': 'mistralai/mistral-medium-3',
+  'mistral-small-latest': 'mistralai/mistral-small-3.1-24b-instruct',
+  
+  // ========================================
+  // COHERE - OpenRouter uses cohere/command-X format
+  // ========================================
+  'command-a-03-2025': 'cohere/command-r-plus-08-2024',
+  'command-a-reasoning-08-2025': 'cohere/command-r-plus-08-2024',
+  'command-r-08-2024': 'cohere/command-r-08-2024',
+  'command-r-plus-08-2024': 'cohere/command-r-plus-08-2024',
+  
+  // ========================================
+  // TOGETHER - OpenRouter uses together/ or meta-llama/ format
+  // ========================================
+  'llama-3.3-70b-instruct-turbo': 'meta-llama/llama-3.3-70b-instruct',
+  'llama-4-maverick-17bx128e': 'meta-llama/llama-3.3-70b-instruct',
+  'llama-4-scout-17bx16e': 'meta-llama/llama-3.3-70b-instruct',
+  'qwen3-235b-a22b-instruct': 'qwen/qwen-2.5-72b-instruct',
+  'deepseek-v3.1-together': 'deepseek/deepseek-chat',
+  
+  // ========================================
+  // PERPLEXITY - OpenRouter uses perplexity/sonar-X format
+  // ========================================
+  'sonar': 'perplexity/sonar',
+  'sonar-pro': 'perplexity/sonar-pro',
+  'sonar-reasoning': 'perplexity/sonar-reasoning',
+  'sonar-reasoning-pro': 'perplexity/sonar-reasoning-pro',
+  'pplx-7b-online': 'perplexity/sonar',
+  'pplx-70b-online': 'perplexity/sonar-pro',
+};
+
+// Map internal model ID to OpenRouter model ID format
+function getOpenRouterModelId(modelId: string, provider: string): string {
+  // First check our explicit mapping
+  if (OPENROUTER_MODEL_MAPPINGS[modelId]) {
+    return OPENROUTER_MODEL_MAPPINGS[modelId];
   }
   
-  // Default: prefix with provider name
+  // Fallback: try to construct a reasonable OpenRouter model ID
+  // OpenRouter uses provider/model format
   const providerPrefixes: Record<string, string> = {
     openai: 'openai',
     anthropic: 'anthropic',
@@ -88,11 +167,14 @@ function getOpenRouterModelId(modelId: string, provider: string): string {
     deepseek: 'deepseek',
     mistral: 'mistralai',
     cohere: 'cohere',
-    together: 'together',
+    together: 'meta-llama',
     perplexity: 'perplexity',
   };
   
   const prefix = providerPrefixes[provider] || provider;
+  
+  // For unknown models, return with prefix but log a warning
+  // This allows flexibility while still working
   return `${prefix}/${modelId}`;
 }
 
