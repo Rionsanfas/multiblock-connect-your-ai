@@ -62,8 +62,8 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'claude-opus-4.1': 'anthropic/claude-4.1-opus',
   'claude-sonnet-4': 'anthropic/claude-4-sonnet',
   // Resolved production IDs - exact as specified
-  'claude-haiku-4-5-20251001': 'anthropic/claude-3.5-haiku-20241022',
-  'claude-opus-4-1-20250805': 'anthropic/claude-sonnet-4-20250514',
+  'claude-haiku-4-5-20251001': 'anthropic/claude-4.5-haiku',
+  'claude-opus-4-1-20250805': 'anthropic/claude-4.1-opus',
   'claude-sonnet-4-20250514': 'anthropic/claude-sonnet-4-20250514',
   'claude-opus-4-5-20251101': 'anthropic/claude-4.5-opus',
   'claude-sonnet-4-5-20250929': 'anthropic/claude-4.5-sonnet',
@@ -103,7 +103,7 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // ========================================
   'deepseek-v4-alpha': 'deepseek/deepseek-v4-preview',
   'deepseek-v3.2': 'deepseek/deepseek-chat',
-  'deepseek-v3.2-speciale': 'deepseek/deepseek-reasoner',
+  'deepseek-v3.2-speciale': 'deepseek/deepseek-v3.2-speciale',
   'deepseek-chat': 'deepseek/deepseek-chat',
   'deepseek-reasoner': 'deepseek/deepseek-r1',
   'deepseek-v3.1': 'deepseek/deepseek-chat',
@@ -113,19 +113,19 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // MISTRAL - User-specified exact IDs
   // ========================================
   'mistral-large-3': 'mistralai/mistral-large-2411',
-  'mistral-large-25-12': 'mistralai/mistral-large-2411',
+  'mistral-large-25-12': 'mistralai/mistral-large-25-12',
   'mistral-medium-3.1': 'mistralai/mistral-medium-3',
   'mistral-small-3.2': 'mistralai/mistral-small-3.1-24b-instruct',
-  'mistral-small-2506': 'mistralai/mistral-small-3.1-24b-instruct',
-  'ministral-3-14b': 'mistralai/ministral-8b',
-  'ministral-3-8b': 'mistralai/ministral-8b',
-  'ministral-3-3b': 'mistralai/ministral-3b',
+  'mistral-small-2506': 'mistralai/mistral-small-2506',
+  'ministral-3-14b': 'mistralai/ministral-3-14b',
+  'ministral-3-8b': 'mistralai/ministral-3-8b',
+  'ministral-3-3b': 'mistralai/ministral-3-3b',
   'mistral-nemo-12b': 'mistralai/mistral-nemo',
-  'mistralai/Mistral-Nemo-Instruct-2407': 'mistralai/mistral-nemo',
+  'mistralai/Mistral-Nemo-Instruct-2407': 'mistralai/Mistral-Nemo-Instruct-2407',
   'magistral-medium-1.2': 'mistralai/magistral-medium-2506',
-  'magistral-medium-2509': 'mistralai/magistral-medium-2506',
+  'magistral-medium-2509': 'mistralai/magistral-medium-2509',
   'magistral-small-1.2': 'mistralai/magistral-small-2506',
-  'magistral-small-2509': 'mistralai/magistral-small-2506',
+  'magistral-small-2509': 'mistralai/magistral-small-2509',
   'codestral': 'mistralai/codestral-2501',
   'mistral-large-latest': 'mistralai/mistral-large-2411',
   'mistral-medium-latest': 'mistralai/mistral-medium-3',
@@ -145,16 +145,16 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // QWEN - User-specified exact ID
   // ========================================
   'qwen3-235b-a22b-instruct': 'qwen/qwen3-235b-a22b',
-  'Qwen3-235B-A22B-Instruct-2507': 'qwen/qwen3-235b-a22b',
+  'Qwen3-235B-A22B-Instruct-2507': 'qwen/Qwen3-235B-A22B-Instruct-2507',
 
   // ========================================
   // COHERE - User-specified exact IDs
   // ========================================
   'command-a-03-2025': 'cohere/command-a-03-2025',
-  'command-a-reasoning-08-2025': 'cohere/command-r-plus',
-  'command-a-translate-08-2025': 'cohere/command-r-plus',
+  'command-a-reasoning-08-2025': 'cohere/command-a-reasoning-08-2025',
+  'command-a-translate-08-2025': 'cohere/command-a-translate-08-2025',
   'command-r-plus-08-2024': 'cohere/command-r-plus-08-2024',
-  'c4ai-aya-expanse-32b': 'cohere/aya-expanse-32b',
+  'c4ai-aya-expanse-32b': 'cohere/c4ai-aya-expanse-32b',
 
   // ========================================
   // PERPLEXITY - Sonar 2026

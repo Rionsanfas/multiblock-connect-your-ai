@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { useAvailableProviders } from "@/hooks/useModelConfig";
 import { cn } from "@/lib/utils";
+import { useModelDisableStore } from "@/store/useModelDisableStore";
 
 interface ModelSelectorProps {
   open: boolean;
@@ -107,6 +108,7 @@ function ProviderSection({
   expandedProviders,
   onToggleProvider
 }: ProviderSectionProps) {
+  const getDisabledReason = useModelDisableStore((s) => s.getDisabledReason);
   const isExpanded = expandedProviders.has(provider.id);
   const visibleModels = isExpanded ? models : models.slice(0, INITIAL_MODELS_SHOWN);
   const hasMore = models.length > INITIAL_MODELS_SHOWN;
@@ -170,7 +172,8 @@ function ProviderSection({
       <div className="grid gap-2">
         {visibleModels.map((model) => {
           const isSelected = model.id === selectedModelId;
-          const isDisabled = !hasKey;
+          const disabledReason = getDisabledReason(model.id);
+          const isDisabled = !hasKey || !!disabledReason;
 
           return (
             <button
@@ -200,7 +203,7 @@ function ProviderSection({
                 {isSelected && <Check className="h-4 w-4 text-primary" />}
               </div>
               <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                {model.description}
+                {disabledReason ? `Disabled: ${disabledReason}` : model.description}
               </p>
             </button>
           );
