@@ -49,81 +49,112 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'gpt-4o': 'openai/gpt-4o',
   'o3-pro': 'openai/o3-pro',
   'o3-deep-research': 'openai/o3-deep-research',
+  'o3-deep-search': 'openai/o3-deep-search', // User-specified exact ID
   'gpt-image-1.5': 'openai/gpt-image-1.5',
   'sora-2-pro': 'openai/sora-2-pro',
 
   // ========================================
-  // ANTHROPIC - Claude 4 series
+  // ANTHROPIC - Claude 4 series (User-specified exact IDs)
   // ========================================
   'claude-opus-4.5': 'anthropic/claude-4.5-opus',
   'claude-sonnet-4.5': 'anthropic/claude-4.5-sonnet',
   'claude-haiku-4.5': 'anthropic/claude-4.5-haiku',
   'claude-opus-4.1': 'anthropic/claude-4.1-opus',
   'claude-sonnet-4': 'anthropic/claude-4-sonnet',
-  // Resolved production IDs
+  // Resolved production IDs - exact as specified
+  'claude-haiku-4-5-20251001': 'anthropic/claude-3.5-haiku-20241022',
+  'claude-opus-4-1-20250805': 'anthropic/claude-sonnet-4-20250514',
+  'claude-sonnet-4-20250514': 'anthropic/claude-sonnet-4-20250514',
   'claude-opus-4-5-20251101': 'anthropic/claude-4.5-opus',
   'claude-sonnet-4-5-20250929': 'anthropic/claude-4.5-sonnet',
-  'claude-haiku-4-5-20251001': 'anthropic/claude-4.5-haiku',
-  'claude-opus-4-1-20250805': 'anthropic/claude-4.1-opus',
-  'claude-sonnet-4-20250514': 'anthropic/claude-4-sonnet',
 
   // ========================================
-  // GOOGLE - Gemini 3 Flagships
+  // GOOGLE - Gemini (User-specified exact IDs)
   // ========================================
   'gemini-3-pro': 'google/gemini-3-pro-preview',
   'gemini-3-flash': 'google/gemini-3-flash-preview',
   'gemini-3-nano': 'google/gemini-3-nano',
   'gemini-2.5-pro': 'google/gemini-2.5-pro',
   'gemini-2.5-flash': 'google/gemini-2.5-flash',
-  'gemini-live-2.5-flash': 'google/gemini-2.5-flash-live',
-  // Resolved IDs
+  'gemini-live-2.5-flash': 'google/gemini-2.5-flash-preview-native-audio-dialog',
+  'gemini-live-2.5-flash-native-audio': 'google/gemini-2.5-flash-preview-native-audio-dialog',
   'gemini-3-pro-preview': 'google/gemini-3-pro-preview',
   'gemini-3-flash-preview': 'google/gemini-3-flash-preview',
   'gemini-2.5-flash-lite': 'google/gemini-2.5-flash-lite',
 
   // ========================================
-  // XAI (GROK) - Grok 4 Reasoning
+  // XAI (GROK) - User-specified exact IDs
   // ========================================
   'grok-4.1-fast': 'x-ai/grok-4.1',
   'grok-4.1-fast-reasoning': 'x-ai/grok-4.1-reasoner',
   'grok-4.1-fast-non-reasoning': 'x-ai/grok-4.1',
+  'xai.grok-4.1-fast-reasoning': 'x-ai/grok-4.1-reasoner',
+  'xai.grok-4.1-fast-non-reasoning': 'x-ai/grok-4.1',
   'grok-code-fast-1': 'x-ai/grok-4-coder',
   'grok-4-fast-reasoning': 'x-ai/grok-4',
-  'grok-4.0709': 'x-ai/grok-4-20250709',
-  // Also map resolved xAI IDs
+  'grok-4-0709': 'x-ai/grok-4-0709',
+  'grok-4.0709': 'x-ai/grok-4-0709',
   'grok-4-1-fast-non-reasoning': 'x-ai/grok-4.1',
   'grok-4-1-fast-reasoning': 'x-ai/grok-4.1-reasoner',
   'grok-4-fast-non-reasoning': 'x-ai/grok-4',
 
   // ========================================
-  // DEEPSEEK - V4 Alpha & V3.2
+  // DEEPSEEK - User-specified exact IDs
   // ========================================
   'deepseek-v4-alpha': 'deepseek/deepseek-v4-preview',
-  'deepseek-v3.2': 'deepseek/deepseek-v3.2',
-  'deepseek-v3.2-speciale': 'deepseek/deepseek-v3.2-speciale',
-  'deepseek-chat': 'deepseek/deepseek-v3.2',
-  'deepseek-reasoner': 'deepseek/deepseek-r1-latest',
-  'deepseek-v3.1': 'deepseek/deepseek-v3.2',
+  'deepseek-v3.2': 'deepseek/deepseek-chat',
+  'deepseek-v3.2-speciale': 'deepseek/deepseek-reasoner',
+  'deepseek-chat': 'deepseek/deepseek-chat',
+  'deepseek-reasoner': 'deepseek/deepseek-r1',
+  'deepseek-v3.1': 'deepseek/deepseek-chat',
   'deepseek-coder': 'deepseek/deepseek-coder',
 
   // ========================================
-  // MISTRAL - Mistral 3 Series
+  // MISTRAL - User-specified exact IDs
   // ========================================
-  'mistral-large-3': 'mistralai/mistral-large-3',
-  'mistral-medium-3.1': 'mistralai/mistral-medium-3.1',
-  'mistral-small-3.2': 'mistralai/mistral-small-3.2',
+  'mistral-large-3': 'mistralai/mistral-large-2411',
+  'mistral-large-25-12': 'mistralai/mistral-large-2411',
+  'mistral-medium-3.1': 'mistralai/mistral-medium-3',
+  'mistral-small-3.2': 'mistralai/mistral-small-3.1-24b-instruct',
+  'mistral-small-2506': 'mistralai/mistral-small-3.1-24b-instruct',
+  'ministral-3-14b': 'mistralai/ministral-8b',
+  'ministral-3-8b': 'mistralai/ministral-8b',
+  'ministral-3-3b': 'mistralai/ministral-3b',
+  'mistral-nemo-12b': 'mistralai/mistral-nemo',
+  'mistralai/Mistral-Nemo-Instruct-2407': 'mistralai/mistral-nemo',
+  'magistral-medium-1.2': 'mistralai/magistral-medium-2506',
+  'magistral-medium-2509': 'mistralai/magistral-medium-2506',
+  'magistral-small-1.2': 'mistralai/magistral-small-2506',
+  'magistral-small-2509': 'mistralai/magistral-small-2506',
   'codestral': 'mistralai/codestral-2501',
-  // Also map resolved Mistral IDs
-  'mistral-large-latest': 'mistralai/mistral-large-3',
-  'mistral-medium-latest': 'mistralai/mistral-medium-3.1',
-  'mistral-small-latest': 'mistralai/mistral-small-3.2',
+  'mistral-large-latest': 'mistralai/mistral-large-2411',
+  'mistral-medium-latest': 'mistralai/mistral-medium-3',
+  'mistral-small-latest': 'mistralai/mistral-small-3.1-24b-instruct',
 
   // ========================================
-  // META - Llama 4 Maverick & Scout
+  // META/TOGETHER - Llama (User-specified exact IDs)
   // ========================================
   'llama-4-maverick-17bx128e': 'meta-llama/llama-4-maverick',
   'llama-4-scout-17bx16e': 'meta-llama/llama-4-scout',
   'llama-3.3-70b-instruct-turbo': 'meta-llama/llama-3.3-70b-instruct',
+  'meta-llama/Llama-3.3-70B-Instruct': 'meta-llama/llama-3.3-70b-instruct',
+  'meta-llama/Llama-4-Maverick-17B-128E': 'meta-llama/llama-4-maverick',
+  'meta-llama/Llama-4-Scout-17B-16E': 'meta-llama/llama-4-scout',
+
+  // ========================================
+  // QWEN - User-specified exact ID
+  // ========================================
+  'qwen3-235b-a22b-instruct': 'qwen/qwen3-235b-a22b',
+  'Qwen3-235B-A22B-Instruct-2507': 'qwen/qwen3-235b-a22b',
+
+  // ========================================
+  // COHERE - User-specified exact IDs
+  // ========================================
+  'command-a-03-2025': 'cohere/command-a-03-2025',
+  'command-a-reasoning-08-2025': 'cohere/command-r-plus',
+  'command-a-translate-08-2025': 'cohere/command-r-plus',
+  'command-r-plus-08-2024': 'cohere/command-r-plus-08-2024',
+  'c4ai-aya-expanse-32b': 'cohere/aya-expanse-32b',
 
   // ========================================
   // PERPLEXITY - Sonar 2026
@@ -168,7 +199,7 @@ function getOpenRouterModelId(modelId: string, provider: string): string {
 // ============================================
 const MODEL_ID_MAPPINGS: Record<string, string> = {
   // ========================================
-  // OPENAI
+  // OPENAI (User-specified exact IDs)
   // ========================================
   'gpt-5.2': 'gpt-5.2',
   'gpt-5.2-pro': 'gpt-5.2-pro',
@@ -180,11 +211,12 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'gpt-4-turbo': 'gpt-4-turbo',
   'o3-pro': 'o3-pro',
   'o3-deep-research': 'o3-deep-research',
+  'o3-deep-search': 'o3-deep-search',
   'gpt-image-1.5': 'gpt-image-1.5',
   'sora-2-pro': 'sora-2-pro',
 
   // ========================================
-  // ANTHROPIC (CANONICAL: with date suffixes)
+  // ANTHROPIC (User-specified exact IDs with date suffixes)
   // ========================================
   'claude-opus-4.5': 'claude-opus-4-5-20251101',
   'claude-sonnet-4.5': 'claude-sonnet-4-5-20250929',
@@ -193,14 +225,15 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'claude-sonnet-4': 'claude-sonnet-4-20250514',
 
   // ========================================
-  // GOOGLE (REAL, STABLE GEMINI IDS ONLY)
+  // GOOGLE (User-specified exact IDs)
   // ========================================
   'gemini-3-pro': 'gemini-3-pro-preview',
   'gemini-3-flash': 'gemini-3-flash-preview',
   'gemini-3-nano': 'gemini-2.5-flash-lite',
   'gemini-2.5-pro': 'gemini-2.5-pro',
   'gemini-2.5-flash': 'gemini-2.5-flash',
-  'gemini-live-2.5-flash': 'gemini-2.0-flash',
+  'gemini-live-2.5-flash': 'gemini-live-2.5-flash-native-audio',
+  'gemini-live-2.5-flash-native-audio': 'gemini-live-2.5-flash-native-audio',
   'nano-banana-pro': 'gemini-3-pro-image-preview',
 
   // Backward compatibility for saved blocks
@@ -210,15 +243,18 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'veo-3.1': 'veo-3.1-generate-preview',
 
   // ========================================
-  // XAI (CANONICAL: grok-4-1-fast defaults to non-reasoning)
+  // XAI (User-specified exact IDs)
   // ========================================
   'grok-4.1-fast': 'grok-4-1-fast-non-reasoning',
   'grok-4.1-fast-reasoning': 'grok-4-1-fast-reasoning',
   'grok-4.1-fast-non-reasoning': 'grok-4-1-fast-non-reasoning',
+  'xai.grok-4.1-fast-reasoning': 'xai.grok-4.1-fast-reasoning',
+  'xai.grok-4.1-fast-non-reasoning': 'xai.grok-4.1-fast-non-reasoning',
   'grok-code-fast-1': 'grok-code-fast-1',
   'grok-4-fast-reasoning': 'grok-4-fast-reasoning',
   'grok-4-fast-non-reasoning': 'grok-4-fast-non-reasoning',
   'grok-4.0709': 'grok-4-0709',
+  'grok-4-0709': 'grok-4-0709',
   'grok-imagine-image': 'grok-2-image-1212',
   'grok-imagine-video': 'grok-2-video',
 
@@ -233,18 +269,23 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'deepseek-coder': 'deepseek-coder',
 
   // ========================================
-  // MISTRAL (CANONICAL)
+  // MISTRAL (User-specified exact IDs)
   // ========================================
   'mistral-large-3': 'mistral-large-latest',
+  'mistral-large-25-12': 'mistral-large-latest',
   'mistral-medium-3.1': 'mistral-medium-latest',
   'mistral-small-3.2': 'mistral-small-latest',
+  'mistral-small-2506': 'mistral-small-latest',
   'ministral-3-14b': 'ministral-14b-latest',
   'ministral-3-8b': 'ministral-8b-latest',
   'ministral-3-3b': 'ministral-3b-latest',
   'magistral-medium-1.2': 'magistral-medium-latest',
+  'magistral-medium-2509': 'magistral-medium-latest',
   'magistral-small-1.2': 'magistral-small-latest',
+  'magistral-small-2509': 'magistral-small-latest',
   'codestral': 'codestral-latest',
   'mistral-nemo-12b': 'open-mistral-nemo',
+  'mistralai/Mistral-Nemo-Instruct-2407': 'open-mistral-nemo',
   'mistral-embed': 'mistral-embed',
   'mistral-gan': 'pixtral-12b-latest',
 
@@ -255,6 +296,7 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'llama-4-maverick-17bx128e': 'meta-llama/Llama-4-Maverick-17B-128E-Instruct',
   'llama-4-scout-17bx16e': 'meta-llama/Llama-4-Scout-17B-16E-Instruct',
   'qwen3-235b-a22b-instruct': 'Qwen/Qwen3-235B-A22B-Instruct',
+  'Qwen3-235B-A22B-Instruct-2507': 'Qwen/Qwen3-235B-A22B-Instruct-2507',
   'deepseek-v3.1-together': 'deepseek-ai/DeepSeek-V3.1',
   'flux-together': 'black-forest-labs/FLUX.1-schnell-Free',
   'stable-video-together': 'stabilityai/stable-video-diffusion-img2vid-xt-1-1',
@@ -495,12 +537,18 @@ function formatMessagesForProvider(provider: string, messages: any[]): any {
   if (provider === "cohere") {
     const systemMessage = messages.find(m => m.role === "system");
     const nonSystemMessages = messages.filter(m => m.role !== "system");
-    return {
-      preamble: systemMessage?.content || "",
-      messages: nonSystemMessages.map((m: any) => ({
+    
+    // CRITICAL: Cohere requires non-empty content - filter out any empty messages
+    const formattedMessages = nonSystemMessages
+      .map((m: any) => ({
         role: m.role === "assistant" ? "assistant" : "user",
         content: typeof m.content === "string" ? m.content : m.content[0]?.text || "",
-      })),
+      }))
+      .filter((m: any) => m.content && m.content.trim().length > 0);
+    
+    return {
+      preamble: systemMessage?.content || "",
+      messages: formattedMessages,
     };
   }
   
