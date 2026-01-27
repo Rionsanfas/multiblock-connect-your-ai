@@ -8,17 +8,24 @@ export type DisabledModelInfo = {
 
 // IMPORTANT: This store is intentionally scoped to ONLY the user-specified model IDs.
 // Do NOT add other models here unless the user explicitly requests it.
+// These are the EXACT canonical IDs from the user's list.
 export const MODEL_IDS_IN_SCOPE = new Set<string>([
+  // OpenAI
   "o3-deep-search",
+  // Anthropic
   "claude-haiku-4-5-20251001",
   "claude-opus-4-1-20250805",
   "claude-sonnet-4-20250514",
+  // Google
   "gemini-2.5-flash",
   "gemini-live-2.5-flash-native-audio",
+  // xAI
   "grok-4-0709",
   "xai.grok-4.1-fast-non-reasoning",
   "xai.grok-4.1-fast-reasoning",
+  // DeepSeek
   "deepseek-v3.2-speciale",
+  // Mistral
   "mistral-large-25-12",
   "mistral-small-2506",
   "ministral-3-14b",
@@ -27,14 +34,17 @@ export const MODEL_IDS_IN_SCOPE = new Set<string>([
   "mistralai/Mistral-Nemo-Instruct-2407",
   "magistral-medium-2509",
   "magistral-small-2509",
+  // Cohere
   "command-a-03-2025",
   "command-a-reasoning-08-2025",
   "command-a-translate-08-2025",
   "command-r-plus-08-2024",
   "c4ai-aya-expanse-32b",
+  // Meta/Together
   "meta-llama/Llama-3.3-70B-Instruct",
   "meta-llama/Llama-4-Maverick-17B-128E",
   "meta-llama/Llama-4-Scout-17B-16E",
+  // Qwen
   "Qwen3-235B-A22B-Instruct-2507",
 ]);
 

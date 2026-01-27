@@ -52,7 +52,7 @@ export interface MessageMeta {
 
 // ============================================
 // MODEL ID MAPPINGS - Internal ID → Provider API ID
-// SINGLE SOURCE OF TRUTH - No audio models
+// SINGLE SOURCE OF TRUTH - User-specified canonical IDs
 // ============================================
 const getProviderModelId = (modelId: string, provider: Provider): string => {
   const mappings: Record<string, string> = {
@@ -69,87 +69,112 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'gpt-4-turbo': 'gpt-4-turbo',
     'o3-pro': 'o3-pro',
     'o3-deep-research': 'o3-deep-research',
+    // User-specified canonical ID
+    'o3-deep-search': 'o3-deep-search',
     'gpt-image-1.5': 'gpt-image-1.5',
     'sora-2-pro': 'sora-2-pro',
 
     // ========================================
-    // ANTHROPIC (CANONICAL: with date suffixes)
+    // ANTHROPIC - User-specified canonical IDs
     // ========================================
     'claude-opus-4.5': 'claude-opus-4-5-20251101',
     'claude-sonnet-4.5': 'claude-sonnet-4-5-20250929',
     'claude-haiku-4.5': 'claude-haiku-4-5-20251001',
     'claude-opus-4.1': 'claude-opus-4-1-20250805',
     'claude-sonnet-4': 'claude-sonnet-4-20250514',
+    // Canonical IDs as primary
+    'claude-haiku-4-5-20251001': 'claude-haiku-4-5-20251001',
+    'claude-opus-4-1-20250805': 'claude-opus-4-1-20250805',
+    'claude-sonnet-4-20250514': 'claude-sonnet-4-20250514',
 
     // ========================================
-    // GOOGLE (REAL, STABLE GEMINI IDS ONLY)
+    // GOOGLE - User-specified canonical IDs
     // ========================================
     'gemini-3-pro': 'gemini-3-pro-preview',
     'gemini-3-flash': 'gemini-3-flash-preview',
     'gemini-3-nano': 'gemini-2.5-flash-lite',
     'gemini-2.5-pro': 'gemini-2.5-pro',
     'gemini-2.5-flash': 'gemini-2.5-flash',
-    'gemini-live-2.5-flash': 'gemini-2.0-flash',
+    // User-specified canonical ID (audio-only, disabled)
+    'gemini-live-2.5-flash-native-audio': 'gemini-live-2.5-flash-native-audio',
     'nano-banana-pro': 'gemini-3-pro-image-preview',
-
-    // Backward compatibility for saved blocks
     'gemini-2.5-pro-preview-06-05': 'gemini-2.5-pro',
     'gemini-2.5-pro-preview-05-06': 'gemini-2.5-pro',
     'gemini-2.5-flash-preview-04-17': 'gemini-2.5-flash',
     'veo-3.1': 'veo-3.1-generate-preview',
 
     // ========================================
-    // XAI (CANONICAL: grok-4-1-fast defaults to non-reasoning)
+    // XAI - User-specified canonical IDs
     // ========================================
     'grok-4.1-fast': 'grok-4-1-fast-non-reasoning',
     'grok-4.1-fast-reasoning': 'grok-4-1-fast-reasoning',
     'grok-4.1-fast-non-reasoning': 'grok-4-1-fast-non-reasoning',
+    // User-specified canonical IDs
+    'xai.grok-4.1-fast-reasoning': 'xai.grok-4.1-fast-reasoning',
+    'xai.grok-4.1-fast-non-reasoning': 'xai.grok-4.1-fast-non-reasoning',
     'grok-code-fast-1': 'grok-code-fast-1',
     'grok-4-fast-reasoning': 'grok-4-fast-reasoning',
     'grok-4-fast-non-reasoning': 'grok-4-fast-non-reasoning',
-    'grok-4.0709': 'grok-4-0709',
+    // User-specified canonical ID
+    'grok-4-0709': 'grok-4-0709',
     'grok-imagine-image': 'grok-2-image-1212',
     'grok-imagine-video': 'grok-2-video',
 
     // ========================================
-    // DEEPSEEK (CANONICAL)
+    // DEEPSEEK - User-specified canonical IDs
     // ========================================
     'deepseek-v3.2': 'deepseek-chat',
-    'deepseek-v3.2-speciale': 'deepseek-reasoner',
+    // User-specified canonical ID
+    'deepseek-v3.2-speciale': 'deepseek-v3.2-speciale',
     'deepseek-v3.1': 'deepseek-chat',
     'deepseek-chat': 'deepseek-chat',
     'deepseek-reasoner': 'deepseek-reasoner',
     'deepseek-coder': 'deepseek-coder',
 
     // ========================================
-    // MISTRAL (CANONICAL)
+    // MISTRAL - User-specified canonical IDs
     // ========================================
     'mistral-large-3': 'mistral-large-latest',
+    // User-specified canonical ID
+    'mistral-large-25-12': 'mistral-large-25-12',
     'mistral-medium-3.1': 'mistral-medium-latest',
     'mistral-small-3.2': 'mistral-small-latest',
-    'ministral-3-14b': 'ministral-14b-latest',
-    'ministral-3-8b': 'ministral-8b-latest',
-    'ministral-3-3b': 'ministral-3b-latest',
+    // User-specified canonical ID
+    'mistral-small-2506': 'mistral-small-2506',
+    // User-specified canonical IDs
+    'ministral-3-14b': 'ministral-3-14b',
+    'ministral-3-8b': 'ministral-3-8b',
+    'ministral-3-3b': 'ministral-3-3b',
     'magistral-medium-1.2': 'magistral-medium-latest',
     'magistral-small-1.2': 'magistral-small-latest',
+    // User-specified canonical IDs
+    'magistral-medium-2509': 'magistral-medium-2509',
+    'magistral-small-2509': 'magistral-small-2509',
     'codestral': 'codestral-latest',
     'mistral-nemo-12b': 'open-mistral-nemo',
+    // User-specified canonical ID
+    'mistralai/Mistral-Nemo-Instruct-2407': 'mistralai/Mistral-Nemo-Instruct-2407',
     'mistral-embed': 'mistral-embed',
     'mistral-gan': 'pixtral-12b-latest',
 
     // ========================================
-    // TOGETHER.AI (CANONICAL)
+    // TOGETHER.AI - User-specified canonical IDs
     // ========================================
     'llama-3.3-70b-instruct-turbo': 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
     'llama-4-maverick-17bx128e': 'meta-llama/Llama-4-Maverick-17B-128E-Instruct',
     'llama-4-scout-17bx16e': 'meta-llama/Llama-4-Scout-17B-16E-Instruct',
     'qwen3-235b-a22b-instruct': 'Qwen/Qwen3-235B-A22B-Instruct',
+    // User-specified canonical IDs
+    'meta-llama/Llama-3.3-70B-Instruct': 'meta-llama/Llama-3.3-70B-Instruct',
+    'meta-llama/Llama-4-Maverick-17B-128E': 'meta-llama/Llama-4-Maverick-17B-128E',
+    'meta-llama/Llama-4-Scout-17B-16E': 'meta-llama/Llama-4-Scout-17B-16E',
+    'Qwen3-235B-A22B-Instruct-2507': 'Qwen3-235B-A22B-Instruct-2507',
     'deepseek-v3.1-together': 'deepseek-ai/DeepSeek-V3.1',
     'flux-together': 'black-forest-labs/FLUX.1-schnell-Free',
     'stable-video-together': 'stabilityai/stable-video-diffusion-img2vid-xt-1-1',
 
     // ========================================
-    // COHERE (CANONICAL)
+    // COHERE - User-specified canonical IDs
     // ========================================
     'command-a-03-2025': 'command-a-03-2025',
     'command-a-reasoning-08-2025': 'command-a-reasoning-08-2025',
