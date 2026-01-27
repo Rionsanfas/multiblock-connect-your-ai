@@ -10,6 +10,7 @@ import {
   type ModelConfig,
 } from '@/config/models';
 import type { Message } from '@/types';
+import { isModelInScope, useModelDisableStore } from '@/store/useModelDisableStore';
 
 // Lovable does not reliably expose VITE_* env vars on the client; use the project ref URL directly.
 const SUPABASE_FUNCTIONS_BASE_URL = "https://dpeljwqtkjjkriobkhtj.supabase.co/functions/v1";
@@ -384,6 +385,13 @@ class ChatService {
     const providerModelId = getProviderModelId(resolvedModelId, provider);
     console.log(`[ChatService] Using model: ${resolvedModelId} → API: ${providerModelId}`);
 
+    // Hard-disable enforcement (ONLY for the user-specified model set)
+    const disabledReason = useModelDisableStore.getState().getDisabledReason(providerModelId);
+    if (disabledReason) {
+      callbacks.onError(`Model is disabled: ${disabledReason}`);
+      return;
+    }
+
     // Handle image generation separately
     if (modelConfig.supports_image_generation) {
       await this.handleImageGeneration(modelConfig, messageContent, callbacks, boardId, blockId);
@@ -470,6 +478,19 @@ class ChatService {
           errorMessage = 'Authentication failed. Please log in again.';
         }
 
+        // Cohere/OpenRouter compatibility enforcement: hard-disable on known provider incompatibility.
+        if (
+          isModelInScope(providerModelId) &&
+          provider === 'cohere' &&
+          /invalid request to cohere/i.test(errorMessage)
+        ) {
+          useModelDisableStore
+            .getState()
+            .disableModel(providerModelId, 'OpenRouter reports Cohere provider incompatibility (Invalid request to cohere)');
+          callbacks.onError(`${errorMessage} (model disabled)`);
+          return;
+        }
+
         callbacks.onError(errorMessage);
         return;
       }
@@ -511,6 +532,15 @@ class ChatService {
             }
           }
         }
+      }
+
+      // Treat "success with no text" as failure (ONLY for the user-specified model set)
+      if (isModelInScope(providerModelId) && fullResponse.trim().length === 0) {
+        useModelDisableStore
+          .getState()
+          .disableModel(providerModelId, 'No text output returned (API call succeeded but produced no visible text)');
+        callbacks.onError('Model returned no visible text output and has been disabled.');
+        return;
       }
 
       const latency = Date.now() - startTime;
@@ -803,15 +833,47 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
    * Supports both direct provider responses AND OpenRouter responses
    */
   private extractContent(parsed: any, provider: Provider): string {
-    // OpenRouter uses standard OpenAI-style format: choices[0].delta.content
-    // Check for OpenAI/OpenRouter format first (most common via OpenRouter)
-    if (parsed.choices?.[0]?.delta?.content !== undefined) {
-      return parsed.choices[0].delta.content || '';
+    // 1) OpenAI / OpenRouter Chat Completions streaming
+    const delta = parsed?.choices?.[0]?.delta;
+    if (delta) {
+      // Some providers use different delta fields via OpenRouter
+      if (delta.content !== undefined) return delta.content || '';
+      if (delta.text !== undefined) return delta.text || '';
+      if (delta.reasoning !== undefined) return delta.reasoning || '';
     }
-    
-    // Also handle non-streaming OpenRouter response: choices[0].message.content
-    if (parsed.choices?.[0]?.message?.content !== undefined) {
-      return parsed.choices[0].message.content || '';
+
+    // 2) OpenAI / OpenRouter Chat Completions non-stream
+    const msg = parsed?.choices?.[0]?.message;
+    if (msg?.content !== undefined) return msg.content || '';
+
+    // 3) OpenAI Responses-style streaming events (and OpenRouter normalized events)
+    // Examples: { type: 'response.output_text.delta', delta: '...' }
+    if (typeof parsed?.type === 'string' && typeof parsed?.delta === 'string') {
+      if (parsed.type.includes('output_text') && parsed.type.endsWith('.delta')) {
+        return parsed.delta;
+      }
+      // Generic delta events (best-effort)
+      if (parsed.type.endsWith('.delta')) {
+        return parsed.delta;
+      }
+    }
+
+    // 4) OpenAI Responses-style final payload (best-effort)
+    // { response: { output: [{ type: 'message', content: [{ type: 'output_text', text: '...' }] }] } }
+    const outputItems = parsed?.response?.output;
+    if (Array.isArray(outputItems)) {
+      const texts: string[] = [];
+      for (const item of outputItems) {
+        const content = item?.content;
+        if (Array.isArray(content)) {
+          for (const c of content) {
+            if (c?.type === 'output_text' && typeof c?.text === 'string') {
+              texts.push(c.text);
+            }
+          }
+        }
+      }
+      if (texts.length) return texts.join('');
     }
     
     // Provider-specific formats (for direct API calls, not through OpenRouter)
