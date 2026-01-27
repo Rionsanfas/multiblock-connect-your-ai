@@ -35,7 +35,7 @@ function isOpenRouterKey(apiKey: string): boolean {
 // ============================================
 // OPENROUTER MODEL MAPPINGS - CANONICAL SOURCE OF TRUTH
 // Maps internal model IDs to OpenRouter's actual model slugs
-// DO NOT MODIFY without explicit user instruction
+// DO NOT MODIFY without explicit user instruction mentioning model changes
 // ============================================
 const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // ========================================
@@ -49,33 +49,37 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'gpt-4o': 'openai/gpt-4o',
   'o3-pro': 'openai/o3-pro',
   'o3-deep-research': 'openai/o3-deep-research',
-  'o3-deep-search': 'openai/o3-deep-search', // User-specified exact ID
+  // User-specified exact ID (from canonical list)
+  'o3-deep-search': 'openai/o3-deep-search',
   'gpt-image-1.5': 'openai/gpt-image-1.5',
   'sora-2-pro': 'openai/sora-2-pro',
 
   // ========================================
-  // ANTHROPIC - Claude 4 series (User-specified exact IDs)
+  // ANTHROPIC - Claude 4 series
+  // Correct OpenRouter slugs: anthropic/claude-haiku-4.5, anthropic/claude-sonnet-4, etc.
   // ========================================
   'claude-opus-4.5': 'anthropic/claude-4.5-opus',
   'claude-sonnet-4.5': 'anthropic/claude-4.5-sonnet',
-  'claude-haiku-4.5': 'anthropic/claude-4.5-haiku',
-  'claude-opus-4.1': 'anthropic/claude-4.1-opus',
-  'claude-sonnet-4': 'anthropic/claude-4-sonnet',
-  // Resolved production IDs - exact as specified
-  'claude-haiku-4-5-20251001': 'anthropic/claude-4.5-haiku',
-  'claude-opus-4-1-20250805': 'anthropic/claude-4.1-opus',
-  'claude-sonnet-4-20250514': 'anthropic/claude-sonnet-4-20250514',
+  'claude-haiku-4.5': 'anthropic/claude-haiku-4.5',
+  'claude-opus-4.1': 'anthropic/claude-opus-4.1',
+  'claude-sonnet-4': 'anthropic/claude-sonnet-4',
+  // User-specified canonical IDs (exact match from list)
+  'claude-haiku-4-5-20251001': 'anthropic/claude-haiku-4.5',
+  'claude-opus-4-1-20250805': 'anthropic/claude-opus-4.1',
+  'claude-sonnet-4-20250514': 'anthropic/claude-sonnet-4',
   'claude-opus-4-5-20251101': 'anthropic/claude-4.5-opus',
   'claude-sonnet-4-5-20250929': 'anthropic/claude-4.5-sonnet',
 
   // ========================================
-  // GOOGLE - Gemini (User-specified exact IDs)
+  // GOOGLE - Gemini
   // ========================================
   'gemini-3-pro': 'google/gemini-3-pro-preview',
   'gemini-3-flash': 'google/gemini-3-flash-preview',
   'gemini-3-nano': 'google/gemini-3-nano',
   'gemini-2.5-pro': 'google/gemini-2.5-pro',
+  // User-specified canonical ID
   'gemini-2.5-flash': 'google/gemini-2.5-flash',
+  // User-specified: gemini-live-2.5-flash-native-audio (audio-only, will be disabled)
   'gemini-live-2.5-flash': 'google/gemini-2.5-flash-preview-native-audio-dialog',
   'gemini-live-2.5-flash-native-audio': 'google/gemini-2.5-flash-preview-native-audio-dialog',
   'gemini-3-pro-preview': 'google/gemini-3-pro-preview',
@@ -85,17 +89,19 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // ========================================
   // XAI (GROK) - User-specified exact IDs
   // ========================================
-  'grok-4.1-fast': 'x-ai/grok-4.1',
-  'grok-4.1-fast-reasoning': 'x-ai/grok-4.1-reasoner',
-  'grok-4.1-fast-non-reasoning': 'x-ai/grok-4.1',
-  'xai.grok-4.1-fast-reasoning': 'x-ai/grok-4.1-reasoner',
-  'xai.grok-4.1-fast-non-reasoning': 'x-ai/grok-4.1',
-  'grok-code-fast-1': 'x-ai/grok-4-coder',
+  'grok-4.1-fast': 'x-ai/grok-4-fast',
+  'grok-4.1-fast-reasoning': 'x-ai/grok-4-fast',
+  'grok-4.1-fast-non-reasoning': 'x-ai/grok-4-fast',
+  // User-specified canonical IDs
+  'xai.grok-4.1-fast-reasoning': 'x-ai/grok-4-fast',
+  'xai.grok-4.1-fast-non-reasoning': 'x-ai/grok-4-fast',
+  'grok-code-fast-1': 'x-ai/grok-code-fast-1',
   'grok-4-fast-reasoning': 'x-ai/grok-4',
-  'grok-4-0709': 'x-ai/grok-4-0709',
-  'grok-4.0709': 'x-ai/grok-4-0709',
-  'grok-4-1-fast-non-reasoning': 'x-ai/grok-4.1',
-  'grok-4-1-fast-reasoning': 'x-ai/grok-4.1-reasoner',
+  // User-specified: grok-4-0709
+  'grok-4-0709': 'x-ai/grok-4',
+  'grok-4.0709': 'x-ai/grok-4',
+  'grok-4-1-fast-non-reasoning': 'x-ai/grok-4-fast',
+  'grok-4-1-fast-reasoning': 'x-ai/grok-4-fast',
   'grok-4-fast-non-reasoning': 'x-ai/grok-4',
 
   // ========================================
@@ -103,6 +109,7 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // ========================================
   'deepseek-v4-alpha': 'deepseek/deepseek-v4-preview',
   'deepseek-v3.2': 'deepseek/deepseek-chat',
+  // User-specified canonical ID
   'deepseek-v3.2-speciale': 'deepseek/deepseek-v3.2-speciale',
   'deepseek-chat': 'deepseek/deepseek-chat',
   'deepseek-reasoner': 'deepseek/deepseek-r1',
@@ -112,22 +119,28 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // ========================================
   // MISTRAL - User-specified exact IDs
   // ========================================
-  'mistral-large-3': 'mistralai/mistral-large-2411',
-  'mistral-large-25-12': 'mistralai/mistral-large-25-12',
+  'mistral-large-3': 'mistralai/mistral-large-2512',
+  // User-specified canonical ID
+  'mistral-large-25-12': 'mistralai/mistral-large-2512',
   'mistral-medium-3.1': 'mistralai/mistral-medium-3',
   'mistral-small-3.2': 'mistralai/mistral-small-3.1-24b-instruct',
-  'mistral-small-2506': 'mistralai/mistral-small-2506',
-  'ministral-3-14b': 'mistralai/ministral-3-14b',
-  'ministral-3-8b': 'mistralai/ministral-3-8b',
-  'ministral-3-3b': 'mistralai/ministral-3-3b',
+  // User-specified canonical ID
+  'mistral-small-2506': 'mistralai/mistral-small-3.1-24b-instruct',
+  // User-specified canonical IDs for Ministral
+  'ministral-3-14b': 'mistralai/ministral-14b-2512',
+  'ministral-3-8b': 'mistralai/ministral-8b',
+  'ministral-3-3b': 'mistralai/ministral-3b',
   'mistral-nemo-12b': 'mistralai/mistral-nemo',
-  'mistralai/Mistral-Nemo-Instruct-2407': 'mistralai/Mistral-Nemo-Instruct-2407',
+  // User-specified canonical ID
+  'mistralai/Mistral-Nemo-Instruct-2407': 'mistralai/mistral-nemo',
   'magistral-medium-1.2': 'mistralai/magistral-medium-2506',
-  'magistral-medium-2509': 'mistralai/magistral-medium-2509',
+  // User-specified canonical ID
+  'magistral-medium-2509': 'mistralai/magistral-medium-2506',
   'magistral-small-1.2': 'mistralai/magistral-small-2506',
-  'magistral-small-2509': 'mistralai/magistral-small-2509',
+  // User-specified canonical ID
+  'magistral-small-2509': 'mistralai/magistral-small-2506',
   'codestral': 'mistralai/codestral-2501',
-  'mistral-large-latest': 'mistralai/mistral-large-2411',
+  'mistral-large-latest': 'mistralai/mistral-large-2512',
   'mistral-medium-latest': 'mistralai/mistral-medium-3',
   'mistral-small-latest': 'mistralai/mistral-small-3.1-24b-instruct',
 
@@ -137,6 +150,7 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'llama-4-maverick-17bx128e': 'meta-llama/llama-4-maverick',
   'llama-4-scout-17bx16e': 'meta-llama/llama-4-scout',
   'llama-3.3-70b-instruct-turbo': 'meta-llama/llama-3.3-70b-instruct',
+  // User-specified canonical IDs
   'meta-llama/Llama-3.3-70B-Instruct': 'meta-llama/llama-3.3-70b-instruct',
   'meta-llama/Llama-4-Maverick-17B-128E': 'meta-llama/llama-4-maverick',
   'meta-llama/Llama-4-Scout-17B-16E': 'meta-llama/llama-4-scout',
@@ -144,17 +158,19 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // ========================================
   // QWEN - User-specified exact ID
   // ========================================
-  'qwen3-235b-a22b-instruct': 'qwen/qwen3-235b-a22b',
-  'Qwen3-235B-A22B-Instruct-2507': 'qwen/Qwen3-235B-A22B-Instruct-2507',
+  'qwen3-235b-a22b-instruct': 'qwen/qwen3-235b-a22b-2507',
+  // User-specified canonical ID
+  'Qwen3-235B-A22B-Instruct-2507': 'qwen/qwen3-235b-a22b-2507',
 
   // ========================================
   // COHERE - User-specified exact IDs
+  // OpenRouter slugs: cohere/command-a, cohere/command-r-plus-08-2024
   // ========================================
-  'command-a-03-2025': 'cohere/command-a-03-2025',
-  'command-a-reasoning-08-2025': 'cohere/command-a-reasoning-08-2025',
-  'command-a-translate-08-2025': 'cohere/command-a-translate-08-2025',
+  'command-a-03-2025': 'cohere/command-a',
+  'command-a-reasoning-08-2025': 'cohere/command-a',
+  'command-a-translate-08-2025': 'cohere/command-a',
   'command-r-plus-08-2024': 'cohere/command-r-plus-08-2024',
-  'c4ai-aya-expanse-32b': 'cohere/c4ai-aya-expanse-32b',
+  'c4ai-aya-expanse-32b': 'cohere/aya-expanse-32b',
 
   // ========================================
   // PERPLEXITY - Sonar 2026
