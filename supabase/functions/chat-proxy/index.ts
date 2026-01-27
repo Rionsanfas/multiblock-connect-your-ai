@@ -647,13 +647,20 @@ serve(async (req) => {
 
       // Try board-linked key first, then fallback to user keys
       let apiKey: string | null = null;
+      let keySource = 'unknown';
       if (board_id) {
         const boardKey = await getApiKeyForBoard(supabaseAdmin, board_id, provider, log);
-        apiKey = boardKey?.apiKey || null;
+        if (boardKey) {
+          apiKey = boardKey.apiKey;
+          keySource = 'board';
+        }
       }
       if (!apiKey) {
         const fallbackKey = await getDecryptedApiKey(supabaseAdmin, user.id, provider, log);
-        apiKey = fallbackKey?.apiKey || null;
+        if (fallbackKey) {
+          apiKey = fallbackKey.apiKey;
+          keySource = 'personal';
+        }
       }
       
       if (!apiKey) {
@@ -663,13 +670,117 @@ serve(async (req) => {
         });
       }
 
-      log('Image generation', { provider, model_id });
+      const useOpenRouter = isOpenRouterKey(apiKey);
+      log('Image generation', { provider, model_id, useOpenRouter, keySource });
 
-      let imageResponse;
-      let imageUrl: string | null = null;
+      let imageResponse: Response | undefined;
       let imageBytes: Uint8Array | null = null;
       
-      if (provider === "openai") {
+      // ========================================
+      // OPENROUTER IMAGE GENERATION
+      // Uses /v1/chat/completions with modalities: ["image", "text"]
+      // ========================================
+      if (useOpenRouter) {
+        // Map to OpenRouter-compatible image model slugs
+        const OPENROUTER_IMAGE_MODELS: Record<string, string> = {
+          // OpenAI
+          'gpt-image-1.5': 'openai/gpt-image-1',
+          // Google
+          'nano-banana-pro': 'google/gemini-2.5-flash-preview-image-generation',
+          // Together/FLUX
+          'flux-together': 'black-forest-labs/flux-1.1-pro',
+          // xAI
+          'grok-imagine-image': 'x-ai/grok-2-image',
+        };
+        
+        const openRouterModel = OPENROUTER_IMAGE_MODELS[model_id] || 
+          (provider === 'openai' ? 'openai/gpt-image-1' : 
+           provider === 'google' ? 'google/gemini-2.5-flash-preview-image-generation' :
+           provider === 'together' ? 'black-forest-labs/flux-1.1-pro' :
+           provider === 'xai' ? 'x-ai/grok-2-image' : null);
+        
+        if (!openRouterModel) {
+          return new Response(JSON.stringify({ error: `Image generation via OpenRouter is not supported for ${provider}. Try OpenAI, Google, or Together.ai.` }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        log('OpenRouter image routing', { model_id, openRouterModel });
+        
+        imageResponse = await fetch(OPENROUTER_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+            "HTTP-Referer": OPENROUTER_REFERER,
+            "X-Title": OPENROUTER_TITLE,
+          },
+          body: JSON.stringify({
+            model: openRouterModel,
+            messages: [{ role: "user", content: prompt }],
+            modalities: ["image", "text"],
+          }),
+        });
+        
+        if (imageResponse.ok) {
+          const data = await imageResponse.json();
+          log('OpenRouter image response structure', { 
+            hasChoices: !!data.choices, 
+            choicesLength: data.choices?.length,
+            hasImages: !!data.choices?.[0]?.message?.images,
+          });
+          
+          // OpenRouter returns images in message.images array (base64 or URL)
+          const images = data.choices?.[0]?.message?.images || [];
+          if (images.length > 0) {
+            const imgData = images[0];
+            if (typeof imgData === 'string') {
+              if (imgData.startsWith('http')) {
+                const imgFetch = await fetch(imgData);
+                if (imgFetch.ok) {
+                  imageBytes = new Uint8Array(await imgFetch.arrayBuffer());
+                }
+              } else {
+                // Base64
+                const b64 = imgData.replace(/^data:image\/\w+;base64,/, '');
+                imageBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+              }
+            } else if (imgData.b64_json) {
+              imageBytes = Uint8Array.from(atob(imgData.b64_json), c => c.charCodeAt(0));
+            } else if (imgData.url) {
+              const imgFetch = await fetch(imgData.url);
+              if (imgFetch.ok) {
+                imageBytes = new Uint8Array(await imgFetch.arrayBuffer());
+              }
+            }
+          }
+          
+          // Fallback: check for inline base64 in content parts (Gemini style via OpenRouter)
+          if (!imageBytes) {
+            const content = data.choices?.[0]?.message?.content;
+            if (Array.isArray(content)) {
+              for (const part of content) {
+                if (part.type === 'image' && part.image?.base64) {
+                  imageBytes = Uint8Array.from(atob(part.image.base64), c => c.charCodeAt(0));
+                  break;
+                }
+                if (part.type === 'image_url' && part.image_url?.url?.startsWith('data:')) {
+                  const b64 = part.image_url.url.split(',')[1];
+                  if (b64) {
+                    imageBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      // ========================================
+      // DIRECT PROVIDER IMAGE GENERATION
+      // ========================================
+      else if (provider === "openai") {
         imageResponse = await fetch("https://api.openai.com/v1/images/generations", {
           method: "POST",
           headers: {
@@ -689,13 +800,11 @@ serve(async (req) => {
           const rawImage = data.data?.[0]?.url || data.data?.[0]?.b64_json;
           if (rawImage) {
             if (rawImage.startsWith('http')) {
-              // It's a URL - fetch the actual image bytes
               const imgFetch = await fetch(rawImage);
               if (imgFetch.ok) {
                 imageBytes = new Uint8Array(await imgFetch.arrayBuffer());
               }
             } else {
-              // It's base64 - decode to bytes
               const b64 = rawImage.replace(/^data:image\/\w+;base64,/, '');
               imageBytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
             }
@@ -735,8 +844,7 @@ serve(async (req) => {
         }
       } else if (provider === "google") {
         // Use Gemini 2.5 Flash with image generation via generateContent + responseModalities
-        // This is the correct approach for image generation with Gemini models
-        const geminiModel = "gemini-2.0-flash-exp"; // Supports image output
+        const geminiModel = "gemini-2.0-flash-exp";
         imageResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -750,7 +858,6 @@ serve(async (req) => {
         
         if (imageResponse.ok) {
           const data = await imageResponse.json();
-          // Extract image from Gemini response structure
           const parts = data.candidates?.[0]?.content?.parts || [];
           for (const part of parts) {
             if (part.inlineData?.mimeType?.startsWith('image/')) {
@@ -798,11 +905,11 @@ serve(async (req) => {
         });
       }
 
-      if (!imageResponse!.ok) {
-        const errorData = await imageResponse!.json().catch(() => ({}));
+      if (!imageResponse || !imageResponse.ok) {
+        const errorData = imageResponse ? await imageResponse.json().catch(() => ({})) : { error: { message: 'No response' } };
         console.error(`[chat-proxy] Image generation failed:`, errorData);
         return new Response(JSON.stringify({ error: errorData.error?.message || "Image generation failed" }), {
-          status: imageResponse!.status,
+          status: imageResponse?.status || 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
