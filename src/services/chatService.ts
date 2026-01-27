@@ -800,8 +800,21 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
 
   /**
    * Extract content from streaming response based on provider format
+   * Supports both direct provider responses AND OpenRouter responses
    */
   private extractContent(parsed: any, provider: Provider): string {
+    // OpenRouter uses standard OpenAI-style format: choices[0].delta.content
+    // Check for OpenAI/OpenRouter format first (most common via OpenRouter)
+    if (parsed.choices?.[0]?.delta?.content !== undefined) {
+      return parsed.choices[0].delta.content || '';
+    }
+    
+    // Also handle non-streaming OpenRouter response: choices[0].message.content
+    if (parsed.choices?.[0]?.message?.content !== undefined) {
+      return parsed.choices[0].message.content || '';
+    }
+    
+    // Provider-specific formats (for direct API calls, not through OpenRouter)
     switch (provider) {
       case 'anthropic':
         if (parsed.type === 'content_block_delta') {
@@ -820,14 +833,9 @@ ${model.name} · ${((Date.now() - startTime) / 1000).toFixed(1)}s`;
       case 'cohere':
         return parsed.text || '';
       
-      case 'openai':
-      case 'xai':
-      case 'deepseek':
-      case 'mistral':
-      case 'together':
-      case 'perplexity':
       default:
-        return parsed.choices?.[0]?.delta?.content || '';
+        // Fallback for any other format
+        return '';
     }
   }
 }
