@@ -9,6 +9,11 @@ interface AnimatedSectionProps {
   style?: React.CSSProperties;
 }
 
+/**
+ * AnimatedSection wrapper that NEVER blocks pointer events.
+ * On mobile: no animation, content fully visible, touch works immediately.
+ * On desktop: fade-in animation on scroll.
+ */
 export function AnimatedSection({ 
   children, 
   delay = 0, 
@@ -19,7 +24,12 @@ export function AnimatedSection({
   const [ref, { style }] = useScrollAnimation({ delay, offsetY: 50 });
 
   return (
-    <div ref={ref} className={className} style={{ ...style, ...customStyle }} id={id}>
+    <div 
+      ref={ref} 
+      className={className} 
+      style={{ ...style, ...customStyle }}
+      id={id}
+    >
       {children}
     </div>
   );
@@ -32,6 +42,11 @@ interface AnimatedElementProps {
   style?: React.CSSProperties;
 }
 
+/**
+ * AnimatedElement wrapper that NEVER blocks pointer events.
+ * On mobile: no animation, content fully visible, touch works immediately.
+ * On desktop: fade-in animation on scroll.
+ */
 export function AnimatedElement({ 
   children, 
   delay = 0, 

@@ -36,14 +36,14 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-[100svh] overflow-visible bg-background dot-grid-bg pt-20 pb-16 sm:pt-24 sm:pb-20 md:pt-28 md:pb-24 lg:pt-32 lg:pb-16">
-      {/* Pure black background */}
-      <div className="absolute inset-0 bg-background" />
+      {/* Pure black background - pointer-events-none to not block taps */}
+      <div className="absolute inset-0 bg-background pointer-events-none" aria-hidden="true" />
       
       {/* Floating Blocks Background with Centered Light Beam */}
       <FloatingBlocksBackground showLightBeam={phase >= 1} />
       
-      {/* Container */}
-      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Container - ensure it's above decorative layers */}
+      <div className="relative z-20 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero grid - stacks on mobile/tablet, side-by-side on desktop */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-center gap-8 lg:gap-10">
           {/* Left: Text Content - Always on top on mobile */}
@@ -89,55 +89,25 @@ const Hero = () => {
               to automate your workflows. Your keys, your control.
             </p>
 
-            {/* CTA Button */}
+            {/* CTA Button - touch-optimized with no hover dependency */}
             <div 
-              className="flex items-center justify-center lg:justify-start"
+              className="flex items-center justify-center lg:justify-start relative z-30"
               style={buttonsStyle}
             >
               <Link 
                 to="/auth" 
-                className="group relative inline-flex items-center justify-center overflow-hidden px-6 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-medium rounded-full"
-                style={{
-                  letterSpacing: '0.02em',
-                  background: 'linear-gradient(135deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0.04) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid hsl(0 0% 100% / 0.15)',
-                  boxShadow: `
-                    inset 0 1px 0 hsl(0 0% 100% / 0.15),
-                    inset 0 -1px 0 hsl(0 0% 0% / 0.1),
-                    0 4px 20px hsl(0 0% 0% / 0.3),
-                    0 8px 40px hsl(0 0% 0% / 0.2)
-                  `,
-                  color: 'hsl(0 0% 92%)',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, hsl(0 0% 100% / 0.15) 0%, hsl(0 0% 100% / 0.06) 100%)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, hsl(0 0% 100% / 0.1) 0%, hsl(0 0% 100% / 0.04) 100%)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
+                className="hero-cta-button group relative inline-flex items-center justify-center overflow-hidden px-6 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-medium rounded-full touch-manipulation"
               >
-                {/* Animated edge shine */}
+                {/* Animated edge shine - pointer-events-none */}
                 <span 
-                  className="absolute inset-0 rounded-full animate-edge-shine"
-                  style={{
-                    background: 'linear-gradient(90deg, transparent 0%, transparent 40%, hsl(0 0% 100% / 0.4) 50%, transparent 60%, transparent 100%)',
-                    backgroundSize: '200% 100%',
-                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                    maskComposite: 'xor',
-                    WebkitMaskComposite: 'xor',
-                    padding: '1px',
-                    pointerEvents: 'none',
-                  }}
+                  className="absolute inset-0 rounded-full animate-edge-shine pointer-events-none"
+                  aria-hidden="true"
                 />
                 
-                {/* Top gloss */}
+                {/* Top gloss - pointer-events-none */}
                 <span 
                   className="absolute inset-0 rounded-full pointer-events-none"
+                  aria-hidden="true"
                   style={{
                     background: 'linear-gradient(180deg, hsl(0 0% 100% / 0.08) 0%, transparent 50%)',
                   }}
