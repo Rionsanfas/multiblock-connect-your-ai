@@ -35,7 +35,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-[100svh] overflow-hidden bg-background dot-grid-bg pt-20 pb-8 sm:pt-24 md:pt-28 lg:pt-32 sm:pb-12 md:pb-16">
+    <section className="relative min-h-[100svh] overflow-visible bg-background dot-grid-bg pt-20 pb-16 sm:pt-24 sm:pb-20 md:pt-28 md:pb-24 lg:pt-32 lg:pb-16">
       {/* Pure black background */}
       <div className="absolute inset-0 bg-background" />
       

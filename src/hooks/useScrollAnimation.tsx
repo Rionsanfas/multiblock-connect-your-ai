@@ -35,6 +35,7 @@ interface ScrollAnimationState {
  * 3. Animation triggers ONCE when element enters viewport - never re-triggers
  * 4. No scroll-based opacity changes on mobile to prevent flickering
  * 5. Uses hasTriggeredRef to ensure single load - prevents re-animation on scroll
+ * 6. Mobile starts fully visible (opacity: 1) to prevent any flicker
  */
 export function useScrollAnimation({
   delay = 0,
@@ -45,15 +46,7 @@ export function useScrollAnimation({
   minOpacity = 0.85,
 }: ScrollAnimationOptions = {}): [React.RefObject<HTMLDivElement>, ScrollAnimationState] {
   const ref = useRef<HTMLDivElement>(null);
-  const [hasAnimatedIn, setHasAnimatedIn] = useState(false);
-  const [scrollOpacity, setScrollOpacity] = useState(1); // Start at 1 - content always visible
-  const [scrollY, setScrollY] = useState(0); // Start at 0 - no offset
-  const animationFrameRef = useRef<number>();
   
-  // CRITICAL: This ref ensures element only animates ONCE, ever.
-  // Once set to true, the element stays loaded regardless of scroll position.
-  const hasTriggeredRef = useRef(false);
-
   // Detect if user prefers reduced motion
   const prefersReducedMotion = useRef(
     typeof window !== 'undefined' 
@@ -61,26 +54,28 @@ export function useScrollAnimation({
       : false
   );
 
-  // Check if mobile (disable scroll-based opacity on mobile for performance)
+  // Check if mobile (disable ALL animations on mobile for performance - no flicker)
   const isMobile = useRef(
-    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    typeof window !== 'undefined' ? window.innerWidth < 1024 : false
   );
+  
+  // On mobile, start fully visible. On desktop, start hidden for animation.
+  const [hasAnimatedIn, setHasAnimatedIn] = useState(() => isMobile.current || prefersReducedMotion.current);
+  const [scrollOpacity, setScrollOpacity] = useState(1); // Always start at 1
+  const [scrollY, setScrollY] = useState(0); // Always start at 0
+  const animationFrameRef = useRef<number>();
+  
+  // CRITICAL: This ref ensures element only animates ONCE, ever.
+  // On mobile, it's true from the start to skip all animation logic.
+  const hasTriggeredRef = useRef(isMobile.current || prefersReducedMotion.current);
 
   // Use IntersectionObserver for reliable viewport detection - triggers ONCE only
+  // On mobile, this effect does nothing since hasTriggeredRef is already true
   useEffect(() => {
     if (!ref.current) return;
 
-    // If already triggered, do nothing - element stays loaded forever
+    // If already triggered (mobile or reduced motion), do nothing - element stays visible forever
     if (hasTriggeredRef.current) return;
-
-    // If reduced motion, skip animations entirely
-    if (prefersReducedMotion.current) {
-      hasTriggeredRef.current = true;
-      setHasAnimatedIn(true);
-      setScrollOpacity(1);
-      setScrollY(0);
-      return;
-    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -189,14 +184,16 @@ export function useScrollAnimation({
   }, [handleScroll]);
 
   // Build style object - ALWAYS renders content, just animates opacity/transform
-  const style: React.CSSProperties = prefersReducedMotion.current
-    ? { opacity: 1, transform: 'none' }
+  // On mobile/tablet: no animation at all, content is always fully visible
+  // On desktop: fade-in animation on first visibility
+  const style: React.CSSProperties = (prefersReducedMotion.current || isMobile.current)
+    ? { opacity: 1, transform: 'none' } // Mobile/reduced motion: always fully visible, no animation
     : {
-        // Start visible on mobile, animated on desktop
-        opacity: hasAnimatedIn ? scrollOpacity : (isMobile.current ? 0.99 : 0),
+        // Desktop only: animate in
+        opacity: hasAnimatedIn ? scrollOpacity : 0,
         transform: hasAnimatedIn 
           ? `translateY(${scrollY}px)` 
-          : `translateY(${isMobile.current ? 0 : offsetY}px)`,
+          : `translateY(${offsetY}px)`,
         transition: hasAnimatedIn 
           ? 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
           : `opacity ${duration}ms cubic-bezier(0.16, 1, 0.3, 1), transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1)`,
