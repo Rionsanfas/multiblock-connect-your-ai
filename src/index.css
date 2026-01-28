@@ -3069,12 +3069,13 @@
   /* Chat modal on mobile - isolate scroll to messages only */
   .chat-modal-mobile {
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    max-height: 100dvh !important;
-    height: 100dvh !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: calc(100vw - 16px) !important;
+    max-width: none !important;
+    max-height: 92dvh !important;
+    height: 92dvh !important;
     overflow: hidden !important;
     touch-action: none;
   }
@@ -3088,6 +3089,7 @@
     touch-action: pan-y;
     flex: 1;
     min-height: 0; /* Critical for flex children to scroll */
+    width: 100% !important;
   }
 }
 

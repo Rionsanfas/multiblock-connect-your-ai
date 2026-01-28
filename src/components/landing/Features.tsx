@@ -27,7 +27,7 @@ const Features = () => {
   return (
     <section
       id="features"
-      className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24"
+      className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24 mt-8 sm:mt-0"
     >
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}

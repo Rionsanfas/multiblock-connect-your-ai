@@ -421,7 +421,7 @@ export function BlockChatModal({
           "flex flex-col rounded-xl sm:rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300",
           isFullscreen 
             ? "w-[100vw] h-[100dvh] max-w-none max-h-none rounded-none" 
-            : "w-[98vw] sm:w-[95vw] md:w-[90vw] max-w-2xl h-[92dvh] sm:h-[90dvh] md:h-[80vh] max-h-none sm:max-h-[700px]",
+            : "w-[calc(100vw-16px)] sm:w-[95vw] md:w-[90vw] max-w-3xl h-[92dvh] sm:h-[90dvh] md:h-[85vh] max-h-none sm:max-h-[750px]",
           // Mobile scroll isolation - prevents viewport from scrolling
           isMobileOrTablet && "chat-modal-mobile"
         )}>
@@ -613,13 +613,13 @@ export function BlockChatModal({
                 </ScrollArea>
               </aside>}
 
-            {/* Chat content area */}
-            <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
+            {/* Chat content area - full width, no clipping */}
+            <div className="flex-1 flex flex-col overflow-hidden relative min-h-0 w-full">
               <div 
                 ref={chatContainerRef} 
                 onScroll={handleChatScroll}
                 className={cn(
-                  "flex-1 overflow-y-auto px-3 sm:px-4 md:px-5 py-3 sm:py-4 space-y-4 sm:space-y-5 min-h-0",
+                  "flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-4 md:px-5 py-3 sm:py-4 space-y-4 sm:space-y-5 min-h-0 w-full",
                   // Mobile scroll isolation - only this container scrolls
                   isMobileOrTablet && "chat-messages-scroll"
                 )}
