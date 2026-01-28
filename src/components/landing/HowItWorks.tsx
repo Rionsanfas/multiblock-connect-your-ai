@@ -135,10 +135,10 @@ const HowItWorks = () => {
             How It Works
           </span>
           <h2 className="font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
-            Simple. Powerful. Visual.
+            How Multiblock Works
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto text-break text-sm sm:text-base">
-            Get started in minutes with an intuitive workflow designed for builders.
+            Set up in minutes. Keep context flowing automatically between AI models.
           </p>
         </AnimatedSection>
 
@@ -154,9 +154,9 @@ const HowItWorks = () => {
                 </div>
                 
                 <div className="hiw-bento-content p-3 sm:p-4 lg:p-6">
-                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-2xl mb-1.5 sm:mb-2 lg:mb-3">Add Blocks</h3>
+                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-2xl mb-1.5 sm:mb-2 lg:mb-3">Create AI Blocks</h3>
                   <p className="hiw-bento-desc text-xs sm:text-sm lg:text-base">
-                    Create blocks for GPT-5, Claude, Gemini, and more.
+                    Add GPT-5, Claude, Gemini—any model you need in one workspace.
                   </p>
                 </div>
               </div>
@@ -173,9 +173,9 @@ const HowItWorks = () => {
                 </div>
                 
                 <div className="hiw-bento-content hiw-content-bottom p-3 sm:p-4 lg:p-5">
-                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-xl mb-1 sm:mb-1.5 lg:mb-2">Chat with Models</h3>
+                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-xl mb-1 sm:mb-1.5 lg:mb-2">Compare Side-by-Side</h3>
                   <p className="hiw-bento-desc text-xs sm:text-sm">
-                    Compare responses in real-time.
+                    See which model gives better results—no tab switching.
                   </p>
                 </div>
               </div>
@@ -192,9 +192,9 @@ const HowItWorks = () => {
                 </div>
                 
                 <div className="hiw-bento-content p-3 sm:p-4 lg:p-5">
-                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-xl mb-1 sm:mb-1.5 lg:mb-2">Connect Them</h3>
+                  <h3 className="hiw-bento-title text-base sm:text-lg lg:text-xl mb-1 sm:mb-1.5 lg:mb-2">Link Context Automatically</h3>
                   <p className="hiw-bento-desc text-xs sm:text-sm">
-                    One model's output becomes another's input.
+                    One block's output feeds directly into another—zero copy-paste.
                   </p>
                 </div>
               </div>

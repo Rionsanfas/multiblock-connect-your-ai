@@ -87,8 +87,7 @@ const Hero = () => {
                 ...mainStyle,
               }}
             >
-              Create blocks for different AI models, chat with them, and connect outputs to automate your workflows.
-              Your keys, your control.
+              For builders, researchers, and power users tired of copy-pasting between AI chats, hitting token limits, and losing context mid-workflow.
             </p>
 
             {/* CTA Button - touch-optimized with no hover dependency */}
@@ -112,7 +111,7 @@ const Hero = () => {
                   }}
                 />
 
-                <span className="relative z-10">Get Access</span>
+                <span className="relative z-10">Start Building Connected Workflows</span>
               </Link>
             </div>
           </div>
