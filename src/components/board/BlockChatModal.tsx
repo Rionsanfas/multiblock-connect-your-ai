@@ -11,7 +11,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent } from "react";
-import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, Link2, AlertCircle, Maximize2, Minimize2, PanelLeftClose, PanelLeft, MessageSquare, Image, Video, ArrowDown } from "lucide-react";
+import { X, Settings, Pencil, Check, Sparkles, ChevronDown, Brain, Zap, Lock, ExternalLink, AlertCircle, Maximize2, Minimize2, PanelLeftClose, PanelLeft, MessageSquare, Image, Video, ArrowDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,8 @@ import { useAppStore } from "@/store/useAppStore";
 import { useBlockMessages, useMessageActions, useBlockUsage, formatBytes } from "@/hooks/useBlockMessages";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { ChatError } from "@/components/chat/ChatError";
+import { ConnectionNotification } from "@/components/chat/ConnectionNotification";
 import { chatService, type ChatAttachment } from "@/services/chatService";
 import { useUserApiKeys } from "@/hooks/useApiKeys";
 import { useModelsGroupedByProvider, useAvailableProviders, useModelsGroupedByTypeAndProvider } from "@/hooks/useModelConfig";
@@ -84,6 +86,9 @@ export function BlockChatModal({
 
   // References state
   const [pendingReferences, setPendingReferences] = useState<ChatReference[]>([]);
+  
+  // Track if block has been auto-named (only name once from first message)
+  const hasAutoNamedRef = useRef(false);
 
   // Responsive hooks - called unconditionally at top level
   const isMobile = useIsMobile();
@@ -329,8 +334,24 @@ export function BlockChatModal({
     let userMessage;
     try {
       userMessage = await persistMessage('user', fullContent);
+      
+      // Auto-name block from first user message (only once)
+      if (!hasAutoNamedRef.current && blockMessages.length === 0 && block.title === 'New Block') {
+        hasAutoNamedRef.current = true;
+        // Extract first 1-2 words, trim punctuation
+        const words = content.trim().split(/\s+/).slice(0, 2);
+        const autoName = words.join(' ').replace(/[.,!?;:]+$/, '').substring(0, 30);
+        if (autoName.length >= 2) {
+          try {
+            await blocksDb.update(blockId, { title: autoName });
+            queryClient.invalidateQueries({ queryKey: ['block', blockId] });
+            queryClient.invalidateQueries({ queryKey: ['board-blocks', block.board_id] });
+          } catch {
+            // Ignore auto-naming errors - not critical
+          }
+        }
+      }
     } catch {
-      setMessageStatus('error');
       setErrorMessage('Message failed to send.');
       return;
     }
@@ -357,10 +378,10 @@ export function BlockChatModal({
           setMessageStatus('idle');
         },
         onError: (errorMsg) => {
-          setMessageStatus('error');
-          // Surface the actual error message from chatService instead of generic
+          // Set error message but keep status idle so user can continue
           setErrorMessage(errorMsg || 'Assistant failed. Please try again.');
           setStreamingContent("");
+          setMessageStatus('idle'); // Non-blocking: allow user to continue
 
           // Log for debugging
           console.error('[BlockChatModal] Chat error:', errorMsg);
@@ -372,7 +393,7 @@ export function BlockChatModal({
       block.board_id,
       block.id
     );
-  }, [block, blockId, hasKeyForCurrentProvider, incomingContext, isSwitchingModel, messageStatus, navigate, persistMessage, queryClient]);
+  }, [block, blockId, blockMessages.length, hasKeyForCurrentProvider, incomingContext, isSwitchingModel, messageStatus, navigate, persistMessage, queryClient]);
   const handleStop = useCallback(() => {
     chatService.stopGeneration();
     if (streamingContent) {
@@ -552,20 +573,11 @@ export function BlockChatModal({
               <div className="flex items-center justify-between"><div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"><Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" /><span>No API key for {PROVIDERS[currentProvider].name}</span></div><button onClick={() => navigate("/settings/keys")} className="text-[10px] sm:text-xs text-primary hover:underline">Add Key</button></div>
             </div>}
 
-          {errorMessage && <div className="px-3 sm:px-5 py-2 sm:py-3 bg-destructive/10 border-b border-destructive/20 flex-shrink-0">
-              <div className="flex items-center justify-between"><div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-destructive"><AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" /><span className="truncate">{errorMessage}</span></div><Button variant="ghost" size="sm" onClick={() => {
-              setErrorMessage(null);
-              setMessageStatus('idle');
-            }} className="text-[10px] sm:text-xs h-7">Dismiss</Button></div>
-            </div>}
-
-          {incomingContext.length > 0 && <div className="px-3 sm:px-5 py-1.5 sm:py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0">
-              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground"><Link2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" /><span className="truncate">Context from: {incomingContext.map(ctx => ctx.source_block_title).join(', ')}</span></div>
-            </div>}
-
-          {incomingContext.length > 0 && <div className="px-5 py-2 bg-primary/5 border-b border-primary/10 flex-shrink-0">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground"><Link2 className="h-3 w-3" /><span>Context from: {incomingContext.map(ctx => ctx.source_block_title).join(', ')}</span></div>
-            </div>}
+          {/* Connection notification - dismissible, one-time per connection set */}
+          <ConnectionNotification
+            blockId={blockId}
+            sourceBlockTitles={incomingContext.map(ctx => ctx.source_block_title)}
+          />
 
           {/* Main content area with optional sidebar */}
           <div className="flex-1 flex overflow-hidden">
@@ -638,6 +650,14 @@ export function BlockChatModal({
                         <Spinner className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         <span>Thinking...</span>
                       </div>}
+                    {/* Non-blocking error display - inside chat container with proper containment */}
+                    {errorMessage && (
+                      <ChatError
+                        message={errorMessage}
+                        onDismiss={() => setErrorMessage(null)}
+                        autoDismissMs={10000}
+                      />
+                    )}
                     <div ref={messagesEndRef} />
                   </>}
               </div>
