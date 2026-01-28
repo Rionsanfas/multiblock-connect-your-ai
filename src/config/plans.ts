@@ -222,7 +222,7 @@ const TEAM_STARTER_ANNUAL: PlanConfig = {
   tier: 'starter',
   category: 'team',
   description: 'For small teams getting started',
-  price_cents: 6000, // $60/year (70% off from $199.99)
+  price_cents: 3900, // $39/year (70% off from $129.99)
   billing_period: 'yearly',
   boards: 50,
   blocks_per_board: 'unlimited',
@@ -253,7 +253,7 @@ const TEAM_PRO_ANNUAL: PlanConfig = {
   tier: 'pro',
   category: 'team',
   description: 'For growing teams',
-  price_cents: 9000, // $90/year (70% off from $299.99)
+  price_cents: 5400, // $54/year (70% off from $179.99)
   billing_period: 'yearly',
   boards: 100,
   blocks_per_board: 'unlimited',
@@ -292,7 +292,7 @@ const LTD_STARTER_INDIVIDUAL: PlanConfig = {
   tier: 'starter',
   category: 'lifetime',
   description: 'Lifetime access for individuals',
-  price_cents: 15000, // $150 (70% off from $499.99)
+  price_cents: 12000, // $120 (70% off from $399.99)
   billing_period: 'lifetime',
   boards: 50,
   blocks_per_board: 'unlimited',
@@ -323,7 +323,7 @@ const LTD_PRO_INDIVIDUAL: PlanConfig = {
   tier: 'pro',
   category: 'lifetime',
   description: 'Lifetime Pro for individuals',
-  price_cents: 21000, // $210 (70% off from $699.99)
+  price_cents: 15000, // $150 (70% off from $499.99)
   billing_period: 'lifetime',
   boards: 150,
   blocks_per_board: 'unlimited',
@@ -362,7 +362,7 @@ const LTD_STARTER_TEAM: PlanConfig = {
   tier: 'starter',
   category: 'lifetime',
   description: 'Lifetime access for teams',
-  price_cents: 24000, // $240 (70% off from $799.99)
+  price_cents: 12900, // $129 (70% off from $429.99)
   billing_period: 'lifetime',
   boards: 150,
   blocks_per_board: 'unlimited',
@@ -485,7 +485,7 @@ export const ADDONS: AddonConfig[] = [
     id: 'addon-4gb',
     name: '+4 GB Add-On',
     description: '+4 GB storage + 50 boards',
-    price_cents: 800, // $8 (70% off from $24.99)
+    price_cents: 900, // $9 (70% off from $29.99)
     extra_boards: 50,
     extra_storage_mb: 4096, // 4 GB
     checkout_url: 'https://buy.polar.sh/polar_cl_1Oj5sYbfwJyVjmzPXnnjnlr9YS2TVCQd7OsyG1IzSMj',
@@ -495,7 +495,7 @@ export const ADDONS: AddonConfig[] = [
     id: 'addon-5gb',
     name: '+5 GB Add-On',
     description: '+5 GB storage + 60 boards',
-    price_cents: 900, // $9 (70% off from $29.99)
+    price_cents: 1000, // $10 (70% off from $34.99)
     extra_boards: 60,
     extra_storage_mb: 5120, // 5 GB
     checkout_url: 'https://buy.polar.sh/polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT',
@@ -505,7 +505,7 @@ export const ADDONS: AddonConfig[] = [
     id: 'addon-10gb',
     name: '+10 GB Add-On',
     description: '+10 GB storage + 120 boards',
-    price_cents: 1500, // $15 (70% off from $49.99)
+    price_cents: 1800, // $18 (70% off from $59.99)
     extra_boards: 120,
     extra_storage_mb: 10240, // 10 GB
     checkout_url: 'https://buy.polar.sh/polar_cl_JCkbiUFVssy28q7auRRSmERW2XUwIhqt2JnrY2yCy9b',
