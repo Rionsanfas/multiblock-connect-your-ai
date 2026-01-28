@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface ScrollAnimationOptions {
   /** Delay before animation starts (ms) */
@@ -36,15 +36,15 @@ interface ScrollAnimationState {
  * 4. No scroll-based opacity changes on mobile to prevent flickering
  * 5. Uses hasTriggeredRef to ensure single load - prevents re-animation on scroll
  * 6. Mobile starts fully visible (opacity: 1) to prevent any flicker
+ * 7. After first animate-in on desktop, the element becomes fully inert (no scroll-driven updates)
  */
-export function useScrollAnimation({
-  delay = 0,
-  duration = 800,
-  offsetY = 40,
-  fadeOutThreshold = 0.95,
-  fadeInThreshold = 0.05,
-  minOpacity = 0.85,
-}: ScrollAnimationOptions = {}): [React.RefObject<HTMLDivElement>, ScrollAnimationState] {
+export function useScrollAnimation(
+  options: ScrollAnimationOptions = {}
+): [React.RefObject<HTMLDivElement>, ScrollAnimationState] {
+  // Only these options are used for the strict “run once then inert” behavior.
+  // (Other options remain in the type for compatibility.)
+  const { delay = 0, duration = 800, offsetY = 40 } = options;
+
   const ref = useRef<HTMLDivElement>(null);
   
   // Detect if user prefers reduced motion
@@ -61,9 +61,9 @@ export function useScrollAnimation({
   
   // On mobile, start fully visible. On desktop, start hidden for animation.
   const [hasAnimatedIn, setHasAnimatedIn] = useState(() => isMobile.current || prefersReducedMotion.current);
-  const [scrollOpacity, setScrollOpacity] = useState(1); // Always start at 1
-  const [scrollY, setScrollY] = useState(0); // Always start at 0
-  const animationFrameRef = useRef<number>();
+  // Keep these values stable forever after load to prevent any direction/re-entry flicker.
+  const scrollOpacity = 1;
+  const scrollY = 0;
   
   // CRITICAL: This ref ensures element only animates ONCE, ever.
   // On mobile, it's true from the start to skip all animation logic.
@@ -87,8 +87,6 @@ export function useScrollAnimation({
             // Trigger animation after delay
             setTimeout(() => {
               setHasAnimatedIn(true);
-              setScrollOpacity(1);
-              setScrollY(0);
             }, delay);
             
             // Disconnect observer - no need to watch anymore
@@ -113,75 +111,12 @@ export function useScrollAnimation({
       hasTriggeredRef.current = true;
       setTimeout(() => {
         setHasAnimatedIn(true);
-        setScrollOpacity(1);
-        setScrollY(0);
       }, delay);
       observer.disconnect();
     }
 
     return () => observer.disconnect();
   }, [delay]);
-
-  // Scroll-based opacity and position (DESKTOP ONLY for performance)
-  // This only affects elements AFTER they've loaded - never re-triggers load
-  const handleScroll = useCallback(() => {
-    if (!ref.current || !hasAnimatedIn) return;
-    
-    // Skip scroll effects on mobile - causes flickering and poor performance
-    if (isMobile.current) return;
-
-    const rect = ref.current.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
-    
-    // Calculate visibility based on element position in viewport
-    const elementCenter = rect.top + rect.height / 2;
-    
-    // Element is in the "safe zone" - fully visible
-    const safeTop = windowHeight * fadeInThreshold;
-    const safeBottom = windowHeight * fadeOutThreshold;
-    
-    let opacity = 1;
-    let yOffset = 0;
-
-    if (elementCenter < safeTop) {
-      // Element is near the top - fade out slightly as it leaves
-      const progress = Math.max(0, elementCenter / safeTop);
-      opacity = minOpacity + progress * (1 - minOpacity);
-      yOffset = (1 - progress) * -10;
-    } else if (elementCenter > safeBottom) {
-      // Element is near the bottom - slight fade as it approaches edge
-      const distanceFromBottom = windowHeight - elementCenter;
-      const fadeZone = windowHeight - safeBottom;
-      const progress = Math.max(0, Math.min(1, distanceFromBottom / fadeZone));
-      opacity = minOpacity + progress * (1 - minOpacity);
-      yOffset = (1 - progress) * 15;
-    }
-
-    setScrollOpacity(opacity);
-    setScrollY(yOffset);
-  }, [hasAnimatedIn, fadeInThreshold, fadeOutThreshold, minOpacity]);
-
-  useEffect(() => {
-    // Skip scroll tracking on mobile
-    if (isMobile.current || prefersReducedMotion.current) return;
-
-    const onScroll = () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-      animationFrameRef.current = requestAnimationFrame(handleScroll);
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    handleScroll(); // Initial check
-
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [handleScroll]);
 
   // Build style object - ALWAYS renders content, just animates opacity/transform
   // On mobile/tablet: no animation at all, content is always fully visible
@@ -190,10 +125,8 @@ export function useScrollAnimation({
     ? { opacity: 1, transform: 'none' } // Mobile/reduced motion: always fully visible, no animation
     : {
         // Desktop only: animate in
-        opacity: hasAnimatedIn ? scrollOpacity : 0,
-        transform: hasAnimatedIn 
-          ? `translateY(${scrollY}px)` 
-          : `translateY(${offsetY}px)`,
+        opacity: hasAnimatedIn ? 1 : 0,
+        transform: hasAnimatedIn ? 'translateY(0px)' : `translateY(${offsetY}px)`,
         transition: hasAnimatedIn 
           ? 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
           : `opacity ${duration}ms cubic-bezier(0.16, 1, 0.3, 1), transform ${duration}ms cubic-bezier(0.16, 1, 0.3, 1)`,
