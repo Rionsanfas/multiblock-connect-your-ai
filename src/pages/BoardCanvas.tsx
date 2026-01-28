@@ -82,6 +82,7 @@ export default function BoardCanvas() {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const showMobileZoomControls = isMobile || isTablet;
+  const isMobileOrTablet = isMobile || isTablet;
 
   const {
     selectedBlockId,
@@ -92,6 +93,16 @@ export default function BoardCanvas() {
     isBlockChatOpen,
     chatBlockId,
   } = useAppStore();
+
+  // Mobile scroll isolation: add/remove body class to prevent viewport scrolling
+  useEffect(() => {
+    if (isMobileOrTablet && board) {
+      document.body.classList.add('board-canvas-active');
+      return () => {
+        document.body.classList.remove('board-canvas-active');
+      };
+    }
+  }, [isMobileOrTablet, board]);
 
   useEffect(() => {
     zoomRef.current = zoom;

@@ -30,10 +30,11 @@ interface ScrollAnimationState {
  * Scroll animation hook that works reliably on mobile.
  * 
  * Key fixes for mobile:
- * 1. Uses IntersectionObserver instead of scroll events for initial visibility
+ * 1. Uses IntersectionObserver for initial visibility detection
  * 2. Content is ALWAYS rendered (never display:none)
- * 3. Animation triggers immediately on mount or when element enters viewport
+ * 3. Animation triggers ONCE when element enters viewport - never re-triggers
  * 4. No scroll-based opacity changes on mobile to prevent flickering
+ * 5. Uses hasTriggeredRef to ensure single load - prevents re-animation on scroll
  */
 export function useScrollAnimation({
   delay = 0,
@@ -45,10 +46,12 @@ export function useScrollAnimation({
 }: ScrollAnimationOptions = {}): [React.RefObject<HTMLDivElement>, ScrollAnimationState] {
   const ref = useRef<HTMLDivElement>(null);
   const [hasAnimatedIn, setHasAnimatedIn] = useState(false);
-  const [isInViewport, setIsInViewport] = useState(false);
   const [scrollOpacity, setScrollOpacity] = useState(1); // Start at 1 - content always visible
   const [scrollY, setScrollY] = useState(0); // Start at 0 - no offset
   const animationFrameRef = useRef<number>();
+  
+  // CRITICAL: This ref ensures element only animates ONCE, ever.
+  // Once set to true, the element stays loaded regardless of scroll position.
   const hasTriggeredRef = useRef(false);
 
   // Detect if user prefers reduced motion
@@ -63,12 +66,16 @@ export function useScrollAnimation({
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
 
-  // Use IntersectionObserver for reliable viewport detection
+  // Use IntersectionObserver for reliable viewport detection - triggers ONCE only
   useEffect(() => {
     if (!ref.current) return;
 
+    // If already triggered, do nothing - element stays loaded forever
+    if (hasTriggeredRef.current) return;
+
     // If reduced motion, skip animations entirely
     if (prefersReducedMotion.current) {
+      hasTriggeredRef.current = true;
       setHasAnimatedIn(true);
       setScrollOpacity(1);
       setScrollY(0);
@@ -78,16 +85,26 @@ export function useScrollAnimation({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
+          // Only trigger if entering viewport AND not already triggered
           if (entry.isIntersecting && !hasTriggeredRef.current) {
-            setIsInViewport(true);
-            hasTriggeredRef.current = true;
+            hasTriggeredRef.current = true; // Mark as permanently loaded
+            
+            // Trigger animation after delay
+            setTimeout(() => {
+              setHasAnimatedIn(true);
+              setScrollOpacity(1);
+              setScrollY(0);
+            }, delay);
+            
+            // Disconnect observer - no need to watch anymore
+            observer.disconnect();
           }
         });
       },
       {
         // Trigger when any part of element is visible
         threshold: 0,
-        // Trigger slightly before element enters viewport
+        // Trigger slightly before element enters viewport for smoother experience
         rootMargin: '50px 0px 50px 0px',
       }
     );
@@ -98,27 +115,20 @@ export function useScrollAnimation({
     const rect = ref.current.getBoundingClientRect();
     const isAlreadyVisible = rect.top < window.innerHeight && rect.bottom > 0;
     if (isAlreadyVisible && !hasTriggeredRef.current) {
-      setIsInViewport(true);
       hasTriggeredRef.current = true;
+      setTimeout(() => {
+        setHasAnimatedIn(true);
+        setScrollOpacity(1);
+        setScrollY(0);
+      }, delay);
+      observer.disconnect();
     }
 
     return () => observer.disconnect();
-  }, []);
-
-  // Trigger intro animation when element enters viewport (or after delay)
-  useEffect(() => {
-    if (!isInViewport) return;
-
-    const timer = setTimeout(() => {
-      setHasAnimatedIn(true);
-      setScrollOpacity(1);
-      setScrollY(0);
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [isInViewport, delay]);
+  }, [delay]);
 
   // Scroll-based opacity and position (DESKTOP ONLY for performance)
+  // This only affects elements AFTER they've loaded - never re-triggers load
   const handleScroll = useCallback(() => {
     if (!ref.current || !hasAnimatedIn) return;
     
@@ -144,7 +154,7 @@ export function useScrollAnimation({
       opacity = minOpacity + progress * (1 - minOpacity);
       yOffset = (1 - progress) * -10;
     } else if (elementCenter > safeBottom) {
-      // Element is near the bottom - fade in as it enters
+      // Element is near the bottom - slight fade as it approaches edge
       const distanceFromBottom = windowHeight - elementCenter;
       const fadeZone = windowHeight - safeBottom;
       const progress = Math.max(0, Math.min(1, distanceFromBottom / fadeZone));

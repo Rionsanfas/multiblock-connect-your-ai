@@ -7,6 +7,7 @@
  * Features:
  * - Text selection referencing (attach quoted text to next message)
  * - Branch to new block (create new block from selected text)
+ * - Mobile scroll isolation (only chat area scrolls, not viewport)
  */
 
 import { useState, useRef, useEffect, useCallback, MouseEvent as ReactMouseEvent } from "react";
@@ -37,6 +38,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import type { Message as LegacyMessage } from "@/types";
 import type { ChatReference } from "@/types/chat-references";
 import { createReference, formatReferencesForContext } from "@/types/chat-references";
@@ -82,6 +84,11 @@ export function BlockChatModal({
 
   // References state
   const [pendingReferences, setPendingReferences] = useState<ChatReference[]>([]);
+
+  // Responsive hooks - called unconditionally at top level
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const isMobileOrTablet = isMobile || isTablet;
 
   // Sidebar resize constants
   const MIN_SIDEBAR_WIDTH = 180;
@@ -410,7 +417,14 @@ export function BlockChatModal({
   }
   return <>
       <Dialog open onOpenChange={() => closeBlockChat()}>
-        <DialogContent hideCloseButton className={cn("flex flex-col rounded-xl sm:rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300", isFullscreen ? "w-[100vw] h-[100dvh] max-w-none max-h-none rounded-none" : "w-[98vw] sm:w-[95vw] md:w-[90vw] max-w-2xl h-[92dvh] sm:h-[90dvh] md:h-[80vh] max-h-none sm:max-h-[700px]")}>
+        <DialogContent hideCloseButton className={cn(
+          "flex flex-col rounded-xl sm:rounded-2xl p-0 border border-border/30 bg-card/95 backdrop-blur-xl transition-all duration-300",
+          isFullscreen 
+            ? "w-[100vw] h-[100dvh] max-w-none max-h-none rounded-none" 
+            : "w-[98vw] sm:w-[95vw] md:w-[90vw] max-w-2xl h-[92dvh] sm:h-[90dvh] md:h-[80vh] max-h-none sm:max-h-[700px]",
+          // Mobile scroll isolation - prevents viewport from scrolling
+          isMobileOrTablet && "chat-modal-mobile"
+        )}>
         <DialogHeader className="px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 border-b border-border/20 flex-shrink-0">
             <div className="flex items-center justify-between gap-1.5 sm:gap-2">
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
@@ -600,11 +614,15 @@ export function BlockChatModal({
               </aside>}
 
             {/* Chat content area */}
-            <div className="flex-1 flex flex-col overflow-hidden relative">
+            <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
               <div 
                 ref={chatContainerRef} 
                 onScroll={handleChatScroll}
-                className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-5 py-3 sm:py-4 space-y-4 sm:space-y-5"
+                className={cn(
+                  "flex-1 overflow-y-auto px-3 sm:px-4 md:px-5 py-3 sm:py-4 space-y-4 sm:space-y-5 min-h-0",
+                  // Mobile scroll isolation - only this container scrolls
+                  isMobileOrTablet && "chat-messages-scroll"
+                )}
               >
                 {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-5 w-5 sm:h-6 sm:w-6" /></div> : blockMessages.length === 0 && !streamingContent ? <div className="flex flex-col items-center justify-center h-full text-center px-4"><Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/50 mb-2 sm:mb-3" /><p className="text-muted-foreground text-sm sm:text-base">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div> : <>
                     {blockMessages.map(message => <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} selectable />)}
