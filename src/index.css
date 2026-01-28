@@ -2876,10 +2876,12 @@
   position: absolute;
   top: 50%;
   transform: translateY(-70%);
-  left: clamp(20px, 3vw, 32px);
+  /* Padding to prevent text-shadow / letter clipping, compensated by negative margin */
+  padding-left: 8px;
+  margin-left: calc(clamp(20px, 3vw, 32px) - 8px);
   right: -20%;
   z-index: 1;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hiw-letter-highlight-container {
