@@ -446,24 +446,24 @@ export function BlockChatModal({
           // Mobile scroll isolation - prevents viewport from scrolling
           isMobileOrTablet && "chat-modal-mobile"
         )}>
-        <DialogHeader className="px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 border-b border-border/20 flex-shrink-0">
-            <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+        <DialogHeader className="px-2.5 sm:px-3 md:px-4 py-2 sm:py-2.5 border-b border-border/20 flex-shrink-0 overflow-hidden">
+            <div className="flex items-center justify-between gap-1 sm:gap-2 w-full max-w-full overflow-hidden">
+              {/* Left section: title + model selector - constrained to prevent overflow */}
+              <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1 overflow-hidden">
                 {/* Sidebar toggle - only show in fullscreen */}
                 {isFullscreen && <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 p-1 sm:p-1.5 rounded-lg flex-shrink-0" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
                     {isSidebarOpen ? <PanelLeftClose className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <PanelLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                   </Button>}
-                <DialogTitle className="text-xs sm:text-sm font-medium truncate max-w-[80px] xs:max-w-[120px] sm:max-w-none">{block.title}</DialogTitle>
                 {/* Model selector - responsive sizing */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" disabled={isSwitchingModel} className={cn("flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg border border-border/20 h-auto text-[10px] sm:text-xs", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
+                    <Button variant="ghost" disabled={isSwitchingModel} className={cn("flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg border border-border/20 h-auto text-[10px] sm:text-xs flex-shrink-0 max-w-[180px] sm:max-w-none", hasKeyForCurrentProvider ? "bg-secondary/50" : "bg-destructive/10")}>
                       {isSwitchingModel ? <>
                           <Spinner className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                           <span className="text-[10px] sm:text-xs hidden sm:inline">Switching...</span>
                         </> : currentModel ? <ProviderBadge provider={currentModel.provider} model={currentModel.name} /> : <span className="text-[10px] sm:text-xs text-muted-foreground">Select</span>}
-                      {!hasKeyForCurrentProvider && !isSwitchingModel && <Lock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive" />}
-                      <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground" />
+                      {!hasKeyForCurrentProvider && !isSwitchingModel && <Lock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-destructive flex-shrink-0" />}
+                      <ChevronDown className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground flex-shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-[280px] sm:w-80 max-h-[400px] sm:max-h-[450px] overflow-y-auto bg-card/95 backdrop-blur-xl border-border/30 rounded-xl" align="start">
@@ -544,9 +544,11 @@ export function BlockChatModal({
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                {blockUsage && <span className="hidden xs:inline text-[10px] sm:text-xs text-muted-foreground">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
+                {/* Usage stats - hidden on mobile to save space */}
+                {blockUsage && <span className="hidden sm:inline text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">{blockUsage.message_count} msgs · {formatBytes(blockUsage.total_bytes)}</span>}
               </div>
-              <div className="flex items-center gap-0.5 sm:gap-1">
+              {/* Right section: action buttons - fixed width, never wraps */}
+              <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                 <Popover>
                   <PopoverTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 p-1 sm:p-1.5 rounded-lg"><Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></Button></PopoverTrigger>
                   <PopoverContent className="w-[260px] sm:w-80 p-3 sm:p-4 space-y-3 sm:space-y-4 bg-card/95 backdrop-blur-xl border border-border/30 rounded-xl" side="bottom" align="end">
