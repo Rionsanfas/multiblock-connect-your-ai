@@ -107,8 +107,12 @@ const Navbar = () => {
         </Link>
 
         <button
-          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground"
+          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground touch-manipulation"
           onClick={() => setIsOpen(!isOpen)}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }}
           aria-label="Toggle menu"
           aria-expanded={isOpen}
         >
@@ -116,10 +120,10 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Dropdown - ensure touch works */}
       {isOpen && (
         <div
-          className="lg:hidden absolute top-20 left-4 right-4 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)] animate-fade-in overflow-hidden"
+          className="lg:hidden absolute top-20 left-4 right-4 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)] animate-fade-in overflow-hidden z-50"
         >
           <div className="flex flex-col p-3">
             {navLinks.map((link) =>
@@ -127,7 +131,7 @@ const Navbar = () => {
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-xl text-sm"
+                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-xl text-sm touch-manipulation"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
@@ -136,7 +140,7 @@ const Navbar = () => {
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-xl text-sm"
+                  className="text-foreground hover:bg-secondary/50 transition-colors py-3 px-4 rounded-xl text-sm touch-manipulation"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
@@ -147,7 +151,7 @@ const Navbar = () => {
             {isAuthenticated ? (
               <Link
                 to="/dashboard"
-                className="bg-primary text-primary-foreground text-center py-3 px-4 rounded-xl text-sm font-medium"
+                className="bg-primary text-primary-foreground text-center py-3 px-4 rounded-xl text-sm font-medium touch-manipulation block"
                 onClick={() => setIsOpen(false)}
               >
                 Dashboard
@@ -155,7 +159,7 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/auth"
-                className="bg-primary text-primary-foreground text-center py-3 px-4 rounded-xl text-sm font-medium"
+                className="bg-primary text-primary-foreground text-center py-3 px-4 rounded-xl text-sm font-medium touch-manipulation block"
                 onClick={() => setIsOpen(false)}
               >
                 Get Started
