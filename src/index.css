@@ -1532,6 +1532,11 @@
 }
 
 @layer utilities {
+  /* Word wrapping utilities for proper text containment */
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+  }
+  
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
