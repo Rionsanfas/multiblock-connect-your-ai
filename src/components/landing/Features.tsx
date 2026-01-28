@@ -6,20 +6,20 @@ type IconType = "chat" | "connect" | "canvas";
 const features: { iconType: IconType; title: string; description: string }[] = [
   {
     iconType: "chat",
-    title: "Multi-Model Chat Workspace",
+    title: "Stop Copy-Pasting Between Chats",
     description:
-      "Chat with GPT-5, Claude, Gemini, and more—all in one unified interface. Switch models instantly without juggling tabs.",
+      "AI blocks share context automatically—no manual copy-paste. Save hours and keep your workflows intact.",
   },
   {
     iconType: "connect",
-    title: "Connect Blocks to Automate",
+    title: "Never Hit Token Limits Mid-Flow",
     description:
-      "Link model outputs together. Let one AI's response feed into another, creating powerful automated workflows.",
+      "Incremental context sync across connected blocks reduces token waste and prevents interruptions when you're deep in work.",
   },
   {
     iconType: "canvas",
-    title: "Visual Board with Unlimited Blocks",
-    description: "Drag, drop, and arrange your AI blocks on an infinite canvas. Organize complex projects visually.",
+    title: "See Your Entire Workflow at Once",
+    description: "Visual boards make complex AI pipelines easy to manage. No more fragmented chats scattered across tabs.",
   },
 ];
 
@@ -37,10 +37,10 @@ const Features = () => {
             Features
           </span>
           <h2 className="font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
-            Built for AI Power Users
+            The Problems We Solve
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto text-break text-sm sm:text-base">
-            Everything you need to orchestrate multiple AI models in a single, intuitive workspace.
+            Without structured context, you'll keep losing time, hitting limits, and working in fragmented chats.
           </p>
         </AnimatedSection>
 

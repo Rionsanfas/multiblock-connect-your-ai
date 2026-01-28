@@ -54,10 +54,10 @@ const FAQ = () => {
             FAQ
           </span>
           <h2 className="font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
-            Frequently Asked Questions
+            Got Questions?
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto text-break text-sm sm:text-base">
-            Everything you need to know about Multiblock.
+            Get answers before you start building connected AI workflows.
           </p>
         </AnimatedSection>
 
