@@ -174,11 +174,11 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'sonar-reasoning-pro': 'perplexity/sonar-reasoning-pro',
 
   // ========================================
-  // IMAGE GENERATION - Kept models only
+  // IMAGE GENERATION - CANONICAL IDs (DO NOT CHANGE)
+  // gpt-image-1.5 is already mapped above in OpenAI section
   // ========================================
-  // gpt-image-1.5 (OpenAI), nano-banana-pro (Google), grok-imagine-image (xAI)
-  'nano-banana-pro': 'google/gemini-2.0-flash-exp',
-  'grok-imagine-image': 'x-ai/grok-2-image',
+  'nano-banana-pro': 'google/nano-banana-pro',
+  'grok-imagine': 'x-ai/grok-imagine',
 };
 
 // Map internal model ID to OpenRouter model ID format
@@ -250,7 +250,7 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'gemini-2.5-flash': 'gemini-2.5-flash',
   'gemini-live-2.5-flash': 'gemini-live-2.5-flash-native-audio',
   'gemini-live-2.5-flash-native-audio': 'gemini-live-2.5-flash-native-audio',
-  'nano-banana-pro': 'gemini-3-pro-image-preview',
+  'nano-banana-pro': 'nano-banana-pro', // Uses OpenRouter canonical ID
 
   // Backward compatibility for saved blocks
   'gemini-2.5-pro-preview-06-05': 'gemini-2.5-pro',
@@ -271,7 +271,7 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'grok-4-fast-non-reasoning': 'grok-4-fast-non-reasoning',
   'grok-4.0709': 'grok-4-0709',
   'grok-4-0709': 'grok-4-0709',
-  'grok-imagine-image': 'grok-2-image-1212',
+  'grok-imagine': 'grok-imagine', // Uses OpenRouter canonical ID
   'grok-imagine-video': 'grok-2-video',
 
   // ========================================
@@ -683,12 +683,10 @@ serve(async (req) => {
       if (useOpenRouter) {
         // Map to OpenRouter-compatible image model slugs
         const OPENROUTER_IMAGE_MODELS: Record<string, string> = {
-          // OpenAI
-          'gpt-image-1.5': 'openai/gpt-image-1',
-          // Google
-          'nano-banana-pro': 'google/gemini-2.0-flash-exp',
-          // xAI
-          'grok-imagine-image': 'x-ai/grok-2-image',
+          // CANONICAL - DO NOT CHANGE
+          'gpt-image-1.5': 'openai/gpt-image-1.5',
+          'nano-banana-pro': 'google/nano-banana-pro',
+          'grok-imagine': 'x-ai/grok-imagine',
         };
         
         const openRouterModel = OPENROUTER_IMAGE_MODELS[model_id] || 
