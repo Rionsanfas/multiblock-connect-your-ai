@@ -174,11 +174,11 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'sonar-reasoning-pro': 'perplexity/sonar-reasoning-pro',
 
   // ========================================
-  // IMAGE GENERATION - Additional models (CANONICAL)
+  // IMAGE GENERATION - Kept models only
   // ========================================
-  'grok-imaginegan': 'x-ai/grok-imagine-gan',
-  'mistral-gan-flux': 'black-forest-labs/flux-1.1-pro',
-  'flux-2-pro': 'black-forest-labs/flux-2-pro',
+  // gpt-image-1.5 (OpenAI), nano-banana-pro (Google), grok-imagine-image (xAI)
+  'nano-banana-pro': 'google/gemini-2.0-flash-exp',
+  'grok-imagine-image': 'x-ai/grok-2-image',
 };
 
 // Map internal model ID to OpenRouter model ID format
@@ -304,10 +304,6 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'mistral-nemo-12b': 'open-mistral-nemo',
   'mistralai/Mistral-Nemo-Instruct-2407': 'open-mistral-nemo',
   'mistral-embed': 'mistral-embed',
-  'mistral-gan': 'pixtral-12b-latest',
-  'mistral-gan-flux': 'flux-1.1-pro',
-  'flux-2-pro': 'flux-2-pro',
-  'grok-imaginegan': 'grok-imagine-gan',
 
   // ========================================
   // TOGETHER.AI (CANONICAL)
@@ -690,25 +686,18 @@ serve(async (req) => {
           // OpenAI
           'gpt-image-1.5': 'openai/gpt-image-1',
           // Google
-          'nano-banana-pro': 'google/gemini-2.5-flash-preview-image-generation',
-          // Together/FLUX
-          'flux-together': 'black-forest-labs/flux-1.1-pro',
-          'flux-2-pro': 'black-forest-labs/flux-2-pro',
-          'mistral-gan-flux': 'black-forest-labs/flux-1.1-pro',
+          'nano-banana-pro': 'google/gemini-2.0-flash-exp',
           // xAI
           'grok-imagine-image': 'x-ai/grok-2-image',
-          'grok-imaginegan': 'x-ai/grok-imagine-gan',
         };
         
         const openRouterModel = OPENROUTER_IMAGE_MODELS[model_id] || 
           (provider === 'openai' ? 'openai/gpt-image-1' : 
-           provider === 'google' ? 'google/gemini-2.5-flash-preview-image-generation' :
-           provider === 'together' ? 'black-forest-labs/flux-1.1-pro' :
-           provider === 'mistral' ? 'black-forest-labs/flux-1.1-pro' :
+           provider === 'google' ? 'google/gemini-2.0-flash-exp' :
            provider === 'xai' ? 'x-ai/grok-2-image' : null);
         
         if (!openRouterModel) {
-          return new Response(JSON.stringify({ error: `Image generation via OpenRouter is not supported for ${provider}. Try OpenAI, Google, or Together.ai.` }), {
+          return new Response(JSON.stringify({ error: `Image generation not supported for ${provider}. Try OpenAI (gpt-image-1.5), Google (nano-banana-pro), or xAI (Grok Imagine).` }), {
             status: 400,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
