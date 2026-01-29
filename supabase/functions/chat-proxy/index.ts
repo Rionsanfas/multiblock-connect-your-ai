@@ -105,44 +105,38 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'grok-4-fast-non-reasoning': 'x-ai/grok-4',
 
   // ========================================
-  // DEEPSEEK - User-specified exact IDs
+  // DEEPSEEK - Text (CANONICAL)
   // ========================================
-  'deepseek-v4-alpha': 'deepseek/deepseek-v4-preview',
+  'deepseek-v3.1': 'deepseek-ai/DeepSeek-V3.1',
   'deepseek-v3.2': 'deepseek/deepseek-chat',
-  // User-specified canonical ID
   'deepseek-v3.2-speciale': 'deepseek/deepseek-v3.2-speciale',
+  'deepseek-v4-alpha': 'deepseek/deepseek-v4-preview',
   'deepseek-chat': 'deepseek/deepseek-chat',
   'deepseek-reasoner': 'deepseek/deepseek-r1',
-  'deepseek-v3.1': 'deepseek/deepseek-chat',
   'deepseek-coder': 'deepseek/deepseek-coder',
 
   // ========================================
-  // MISTRAL - User-specified exact IDs
+  // MISTRAL / MAGISTRAL - Text & Reasoning (CANONICAL)
   // ========================================
+  'mistral-small-3.2': 'mistralai/Mistral-Small-3.2-24B-Instruct-2506',
+  'magistral-medium-1.2': 'mistralai/Magistral-Medium-2509',
+  'magistral-small-1.2': 'mistralai/Magistral-Small-2509',
+  // Aliases for backward compatibility
   'mistral-large-3': 'mistralai/mistral-large-2512',
-  // User-specified canonical ID
   'mistral-large-25-12': 'mistralai/mistral-large-2512',
   'mistral-medium-3.1': 'mistralai/mistral-medium-3',
-  'mistral-small-3.2': 'mistralai/mistral-small-3.1-24b-instruct',
-  // User-specified canonical ID
-  'mistral-small-2506': 'mistralai/mistral-small-3.1-24b-instruct',
-  // User-specified canonical IDs for Ministral
+  'mistral-small-2506': 'mistralai/Mistral-Small-3.2-24B-Instruct-2506',
   'ministral-3-14b': 'mistralai/ministral-14b-2512',
   'ministral-3-8b': 'mistralai/ministral-8b',
   'ministral-3-3b': 'mistralai/ministral-3b',
   'mistral-nemo-12b': 'mistralai/mistral-nemo',
-  // User-specified canonical ID
   'mistralai/Mistral-Nemo-Instruct-2407': 'mistralai/mistral-nemo',
-  'magistral-medium-1.2': 'mistralai/magistral-medium-2506',
-  // User-specified canonical ID
-  'magistral-medium-2509': 'mistralai/magistral-medium-2506',
-  'magistral-small-1.2': 'mistralai/magistral-small-2506',
-  // User-specified canonical ID
-  'magistral-small-2509': 'mistralai/magistral-small-2506',
+  'magistral-medium-2509': 'mistralai/Magistral-Medium-2509',
+  'magistral-small-2509': 'mistralai/Magistral-Small-2509',
   'codestral': 'mistralai/codestral-2501',
   'mistral-large-latest': 'mistralai/mistral-large-2512',
   'mistral-medium-latest': 'mistralai/mistral-medium-3',
-  'mistral-small-latest': 'mistralai/mistral-small-3.1-24b-instruct',
+  'mistral-small-latest': 'mistralai/Mistral-Small-3.2-24B-Instruct-2506',
 
   // ========================================
   // META/TOGETHER - Llama (User-specified exact IDs)
@@ -163,12 +157,11 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'Qwen3-235B-A22B-Instruct-2507': 'qwen/qwen3-235b-a22b-2507',
 
   // ========================================
-  // COHERE - User-specified exact IDs
-  // OpenRouter slugs: cohere/command-a, cohere/command-r-plus-08-2024
+  // COHERE - Text / Reasoning / Translation (CANONICAL)
   // ========================================
-  'command-a-03-2025': 'cohere/command-a',
-  'command-a-reasoning-08-2025': 'cohere/command-a',
-  'command-a-translate-08-2025': 'cohere/command-a',
+  'command-a-03-2025': 'cohere/command-a-03-2025',
+  'command-a-reasoning-08-2025': 'cohere/command-a-reasoning-08-2025',
+  'command-a-translate-08-2025': 'cohere/command-a-translate-08-2025',
   'command-r-plus-08-2024': 'cohere/command-r-plus-08-2024',
   'c4ai-aya-expanse-32b': 'cohere/aya-expanse-32b',
 
@@ -179,6 +172,13 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'sonar-pro': 'perplexity/sonar-pro',
   'sonar-reasoning': 'perplexity/sonar-reasoning',
   'sonar-reasoning-pro': 'perplexity/sonar-reasoning-pro',
+
+  // ========================================
+  // IMAGE GENERATION - Additional models (CANONICAL)
+  // ========================================
+  'grok-imaginegan': 'x-ai/grok-imagine-gan',
+  'mistral-gan-flux': 'black-forest-labs/flux-1.1-pro',
+  'flux-2-pro': 'black-forest-labs/flux-2-pro',
 };
 
 // Map internal model ID to OpenRouter model ID format
@@ -277,33 +277,37 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   // ========================================
   // DEEPSEEK (CANONICAL)
   // ========================================
+  'deepseek-v3.1': 'deepseek-chat',
   'deepseek-v3.2': 'deepseek-chat',
   'deepseek-v3.2-speciale': 'deepseek-reasoner',
-  'deepseek-v3.1': 'deepseek-chat',
   'deepseek-chat': 'deepseek-chat',
   'deepseek-reasoner': 'deepseek-reasoner',
   'deepseek-coder': 'deepseek-coder',
 
   // ========================================
-  // MISTRAL (User-specified exact IDs)
+  // MISTRAL / MAGISTRAL (CANONICAL)
   // ========================================
+  'mistral-small-3.2': 'mistral-small-2506',
+  'magistral-medium-1.2': 'magistral-medium-2509',
+  'magistral-small-1.2': 'magistral-small-2509',
+  // Backward compatibility aliases
   'mistral-large-3': 'mistral-large-latest',
   'mistral-large-25-12': 'mistral-large-latest',
   'mistral-medium-3.1': 'mistral-medium-latest',
-  'mistral-small-3.2': 'mistral-small-latest',
-  'mistral-small-2506': 'mistral-small-latest',
+  'mistral-small-2506': 'mistral-small-2506',
   'ministral-3-14b': 'ministral-14b-latest',
   'ministral-3-8b': 'ministral-8b-latest',
   'ministral-3-3b': 'ministral-3b-latest',
-  'magistral-medium-1.2': 'magistral-medium-latest',
-  'magistral-medium-2509': 'magistral-medium-latest',
-  'magistral-small-1.2': 'magistral-small-latest',
-  'magistral-small-2509': 'magistral-small-latest',
+  'magistral-medium-2509': 'magistral-medium-2509',
+  'magistral-small-2509': 'magistral-small-2509',
   'codestral': 'codestral-latest',
   'mistral-nemo-12b': 'open-mistral-nemo',
   'mistralai/Mistral-Nemo-Instruct-2407': 'open-mistral-nemo',
   'mistral-embed': 'mistral-embed',
   'mistral-gan': 'pixtral-12b-latest',
+  'mistral-gan-flux': 'flux-1.1-pro',
+  'flux-2-pro': 'flux-2-pro',
+  'grok-imaginegan': 'grok-imagine-gan',
 
   // ========================================
   // TOGETHER.AI (CANONICAL)
@@ -689,14 +693,18 @@ serve(async (req) => {
           'nano-banana-pro': 'google/gemini-2.5-flash-preview-image-generation',
           // Together/FLUX
           'flux-together': 'black-forest-labs/flux-1.1-pro',
+          'flux-2-pro': 'black-forest-labs/flux-2-pro',
+          'mistral-gan-flux': 'black-forest-labs/flux-1.1-pro',
           // xAI
           'grok-imagine-image': 'x-ai/grok-2-image',
+          'grok-imaginegan': 'x-ai/grok-imagine-gan',
         };
         
         const openRouterModel = OPENROUTER_IMAGE_MODELS[model_id] || 
           (provider === 'openai' ? 'openai/gpt-image-1' : 
            provider === 'google' ? 'google/gemini-2.5-flash-preview-image-generation' :
            provider === 'together' ? 'black-forest-labs/flux-1.1-pro' :
+           provider === 'mistral' ? 'black-forest-labs/flux-1.1-pro' :
            provider === 'xai' ? 'x-ai/grok-2-image' : null);
         
         if (!openRouterModel) {
@@ -894,7 +902,11 @@ serve(async (req) => {
           }
         }
       } else if (provider === "mistral") {
-        return new Response(JSON.stringify({ error: `Image generation is not yet available for Mistral. Please use a different provider.` }), {
+        // Mistral image models (mistral-gan-flux, flux-2-pro) route through Together.ai / Black Forest Labs
+        // For native Mistral keys, we inform the user they need OpenRouter or Together
+        return new Response(JSON.stringify({ 
+          error: `Mistral image models (Flux) require an OpenRouter key. Please add an OpenRouter API key to use ${model_id}.` 
+        }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
