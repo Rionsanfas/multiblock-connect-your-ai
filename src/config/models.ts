@@ -183,7 +183,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   // User-specified canonical ID: grok-4-0709
   { id: 'grok-4-0709', provider: 'xai', name: 'Grok 4', type: 'chat', description: 'Grok 4 July 2024 release.', context_window: 131072, max_output_tokens: 8192, input_cost_per_1k: 0.002, output_cost_per_1k: 0.01, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'high' },
   // Image Models
-  { id: 'grok-imagine-image', provider: 'xai', name: 'Grok Imagine', type: 'image', description: 'Grok-powered image generation.', context_window: 4096, max_output_tokens: 0, input_cost_per_1k: 0.04, output_cost_per_1k: 0, supports_vision: false, supports_image_generation: true, supports_video_generation: false, supports_functions: false, speed: 'medium', quality: 'high' },
+  { id: 'grok-imagine', provider: 'xai', name: 'Grok Imagine', type: 'image', description: 'Grok-powered image generation.', context_window: 4096, max_output_tokens: 0, input_cost_per_1k: 0.04, output_cost_per_1k: 0, supports_vision: false, supports_image_generation: true, supports_video_generation: false, supports_functions: false, speed: 'medium', quality: 'high' },
   // Video Models
   { id: 'grok-imagine-video', provider: 'xai', name: 'Grok Imagine Video', type: 'video', description: 'Grok-powered video generation.', context_window: 4096, max_output_tokens: 0, input_cost_per_1k: 0.1, output_cost_per_1k: 0, supports_vision: false, supports_image_generation: false, supports_video_generation: true, supports_functions: false, speed: 'slow', quality: 'high' },
 
