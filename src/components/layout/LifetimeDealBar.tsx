@@ -36,6 +36,8 @@ export function LifetimeDealBar() {
     setIsFading(true);
     try {
       localStorage.setItem(DISMISSED_KEY, 'true');
+      // Dispatch custom event so navbar can update immediately
+      window.dispatchEvent(new CustomEvent('ltd-bar-dismissed'));
     } catch {
       // ignore
     }
