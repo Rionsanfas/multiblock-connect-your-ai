@@ -43,7 +43,6 @@ export default function BoardCanvas() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
-  const [draftFrom, setDraftFrom] = useState<{ x: number; y: number } | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [connectionContextMenu, setConnectionContextMenu] = useState<{ connectionId: string; x: number; y: number } | null>(null);
@@ -146,15 +145,86 @@ export default function BoardCanvas() {
   // State for mobile connection target highlight (desktop only uses hover-based onEndConnection)
   const [connectionTargetId, setConnectionTargetId] = useState<string | null>(null);
 
-  // Desktop-only connection drag listeners are attached imperatively on mousedown
-  // (keeps tracking alive through re-renders and anchors to handle centers).
-  const connectionDragCleanupRef = useRef<null | (() => void)>(null);
+  // Desktop: update mousePos during connection line dragging for smooth cursor tracking
+  // Also handles proper target detection on mouseup - NO orphan lines
   useEffect(() => {
-    return () => {
-      connectionDragCleanupRef.current?.();
-      connectionDragCleanupRef.current = null;
+    const isMobileOrTablet = isMobile || isTablet;
+    if (!connectingFrom || isMobileOrTablet) return;
+
+    let raf = 0;
+    let latest: { x: number; y: number } | null = null;
+    let lastClientPos = { x: 0, y: 0 }; // Track last client position for target detection
+
+    const updateMousePos = () => {
+      raf = 0;
+      if (!latest) return;
+      setMousePos(latest);
+      latest = null;
     };
-  }, []);
+
+    const toWorld = (clientX: number, clientY: number) => {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return null;
+      return {
+        x: (clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
+        y: (clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
+      };
+    };
+
+    // Desktop: detect which block is under the cursor using elementsFromPoint
+    const getBlockIdAtPoint = (clientX: number, clientY: number): string | null => {
+      const els = (document.elementsFromPoint?.(clientX, clientY) ?? []) as HTMLElement[];
+      for (const el of els) {
+        const blockEl = el?.closest?.('[data-block-id]') as HTMLElement | null;
+        if (blockEl?.dataset?.blockId) return blockEl.dataset.blockId;
+      }
+      return null;
+    };
+
+    const onMove = (e: MouseEvent) => {
+      lastClientPos = { x: e.clientX, y: e.clientY };
+      const world = toWorld(e.clientX, e.clientY);
+      if (!world) return;
+
+      latest = { x: world.x, y: world.y };
+      if (!raf) raf = window.requestAnimationFrame(updateMousePos);
+
+      // Desktop: update hover target for visual feedback
+      const targetId = getBlockIdAtPoint(e.clientX, e.clientY);
+      if (targetId && targetId !== connectingFrom) {
+        setConnectionTargetId(targetId);
+      } else {
+        setConnectionTargetId(null);
+      }
+    };
+
+    const onUp = (e: MouseEvent) => {
+      // Desktop: check if released over a valid block target
+      const targetId = getBlockIdAtPoint(e.clientX, e.clientY);
+      
+      if (targetId && targetId !== connectingFrom) {
+        // Valid target - create connection
+        createConnection(connectingFrom, targetId);
+        toast.success("Connection created");
+      }
+      // else: released on empty space - just cancel, NO orphan line
+
+      // Always clean up
+      setConnectionTargetId(null);
+      endDrag();
+      setConnectingFrom(null);
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      setConnectionTargetId(null);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [connectingFrom, isMobile, isTablet, endDrag, createConnection]);
 
   // Mobile/Tablet ONLY: "all blocks accepting" mode.
   // While connectingFrom is set, ALL other blocks highlight.
@@ -439,110 +509,36 @@ export default function BoardCanvas() {
 
   // Desktop connection drag: pass initial cursor position for immediate line rendering
   const handleStartConnection = useCallback(
-    (
-      blockId: string,
-      args: {
-        handleClientX: number;
-        handleClientY: number;
-        cursorClientX: number;
-        cursorClientY: number;
-      }
-    ) => {
-      console.log('[BoardCanvas] handleStartConnection called', { blockId, args });
-      
+    (blockId: string, initialClientX?: number, initialClientY?: number) => {
       // Cancel any in-flight queries so they can't replace the connection list mid-drag.
       if (board?.id) {
         queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
       }
 
-      const isMobileOrTablet = isMobile || isTablet;
-
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (!rect) {
-        console.log('[BoardCanvas] ERROR: canvasRef.current has no bounding rect');
-        return;
+      // Initialize mousePos from cursor position (if provided) for immediate visual feedback
+      // This ensures the line appears exactly at cursor from the first frame
+      if (initialClientX !== undefined && initialClientY !== undefined) {
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (rect) {
+          const worldX = (initialClientX - rect.left - panOffsetRef.current.x) / zoomRef.current;
+          const worldY = (initialClientY - rect.top - panOffsetRef.current.y) / zoomRef.current;
+          setMousePos({ x: worldX, y: worldY });
+        }
+      } else {
+        // Fallback: start from block center with small offset
+        const block = boardBlocks.find((b) => b.id === blockId);
+        if (block) {
+          const centerX = block.position.x + DEFAULT_BLOCK_WIDTH / 2;
+          const centerY = block.position.y + DEFAULT_BLOCK_HEIGHT / 2;
+          setMousePos({ x: centerX + 30, y: centerY + 30 });
+        }
       }
-
-      const toWorld = (clientX: number, clientY: number) => ({
-        x: (clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
-        y: (clientY - rect.top - panOffsetRef.current.y) / zoomRef.current,
-      });
-
-      // Initialize draft geometry immediately (origin is HANDLE center; target is cursor)
-      const fromWorld = toWorld(args.handleClientX, args.handleClientY);
-      const cursorWorld = toWorld(args.cursorClientX, args.cursorClientY);
-      
-      console.log('[BoardCanvas] Setting draftFrom to:', fromWorld);
-      console.log('[BoardCanvas] Setting mousePos to:', cursorWorld);
-      
-      setDraftFrom(fromWorld);
-      setMousePos(cursorWorld);
 
       // Set global drag lock for connection drawing
       startDrag('connection', blockId);
-      console.log('[BoardCanvas] Setting connectingFrom to:', blockId);
       setConnectingFrom(blockId);
-
-      // Mobile/tablet uses existing touch flow (window pointerup hit-test).
-      if (isMobileOrTablet) return;
-
-      // Desktop: attach listeners to window so tracking never stops.
-      connectionDragCleanupRef.current?.();
-
-      // FIX 1: getHandleAtPoint helper - detects if cursor is over a valid connection handle
-      const getHandleAtPoint = (clientX: number, clientY: number): { blockId: string; el: HTMLElement } | null => {
-        const els = (document.elementsFromPoint?.(clientX, clientY) ?? []) as HTMLElement[];
-        for (const el of els) {
-          const handleEl = el?.closest?.('[data-connection-handle][data-handle-block-id]') as HTMLElement | null;
-          const handleBlockId = handleEl?.dataset?.handleBlockId;
-          if (handleEl && handleBlockId) return { blockId: handleBlockId, el: handleEl };
-        }
-        return null;
-      };
-
-      // FIX 1: Update mousePos DIRECTLY on every mousemove - NO RAF buffering
-      const onMove = (e: MouseEvent) => {
-        const world = toWorld(e.clientX, e.clientY);
-        console.log('[BoardCanvas] onMove - mousePos updating to:', world);
-        setMousePos(world); // Direct state update - no delay
-
-        const handle = getHandleAtPoint(e.clientX, e.clientY);
-        if (handle && handle.blockId !== blockId) {
-          setConnectionTargetId(handle.blockId);
-        } else {
-          setConnectionTargetId(null);
-        }
-      };
-
-      // FIX 3: Reset ALL state synchronously to prevent ghost lines
-      const cleanup = () => {
-        window.removeEventListener('mousemove', onMove);
-        window.removeEventListener('mouseup', onUp);
-        setConnectingFrom(null);
-        setDraftFrom(null);
-        setMousePos({ x: 0, y: 0 }); // Critical: reset to prevent stale coordinates
-        setConnectionTargetId(null);
-        endDrag();
-        connectionDragCleanupRef.current = null;
-      };
-
-      const onUp = (e: MouseEvent) => {
-        const handle = getHandleAtPoint(e.clientX, e.clientY);
-
-        if (handle && handle.blockId !== blockId) {
-          createConnection(blockId, handle.blockId);
-          toast.success('Connection created');
-        }
-
-        cleanup();
-      };
-
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
-
-      connectionDragCleanupRef.current = cleanup;
     },
-    [board?.id, queryClient, startDrag, isMobile, isTablet, endDrag, createConnection]
+    [board?.id, boardBlocks, queryClient, startDrag]
   );
 
   const handleEndConnection = useCallback(
@@ -598,27 +594,6 @@ export default function BoardCanvas() {
     return {
       x: block.position.x + DEFAULT_BLOCK_WIDTH / 2,
       y: block.position.y + DEFAULT_BLOCK_HEIGHT / 2,
-    };
-  }, [blockPositions, boardBlocks]);
-
-  // FIX 4: Get handle center position (not block center) for connection line origin
-  const getHandleCenter = useCallback((blockId: string, isOutgoing: boolean) => {
-    // First check position store (updated during drag)
-    const storePos = blockPositions[blockId];
-    const block = boardBlocks.find((b) => b.id === blockId);
-    const pos = storePos || block?.position;
-    
-    if (!pos) return { x: 0, y: 0 };
-
-    // Must match BlockCard.tsx bracket/handle offsets exactly
-    const bracketOffset = 12;
-    const handleOffset = 14; // Center of 28px handle
-
-    return {
-      x: isOutgoing
-        ? pos.x + DEFAULT_BLOCK_WIDTH + bracketOffset + handleOffset
-        : pos.x - bracketOffset - handleOffset,
-      y: pos.y + DEFAULT_BLOCK_HEIGHT / 2,
     };
   }, [blockPositions, boardBlocks]);
 
@@ -800,21 +775,12 @@ export default function BoardCanvas() {
                           </g>
                         );
                       })}
-                      {/* FIX 4: Draft line uses handle center, never block center */}
                       {connectingFrom && (
-                        <>
-                          {console.log('[Render] Drawing draft line', { 
-                            connectingFrom, 
-                            draftFrom, 
-                            mousePos,
-                            from: draftFrom || getHandleCenter(connectingFrom, true)
-                          })}
-                          <ConnectionLine
-                            from={draftFrom || getHandleCenter(connectingFrom, true)}
-                            to={mousePos}
-                            isDrawing
-                          />
-                        </>
+                        <ConnectionLine
+                          from={getBlockCenter(connectingFrom)}
+                          to={mousePos}
+                          isDrawing
+                        />
                       )}
                     </svg>
 
@@ -824,7 +790,7 @@ export default function BoardCanvas() {
                         block={block}
                         isSelected={selectedBlockId === block.id}
                         onSelect={() => selectBlock(block.id)}
-                        onStartConnection={(args) => handleStartConnection(block.id, args)}
+                        onStartConnection={(clientX, clientY) => handleStartConnection(block.id, clientX, clientY)}
                         onEndConnection={() => handleEndConnection(block.id)}
                         isConnecting={!!connectingFrom}
                         // Mobile/Tablet: all blocks are "accepting" while a connection is being dragged.
