@@ -21,7 +21,7 @@ interface BlockCardProps {
   block: Block;
   isSelected: boolean;
   onSelect: () => void;
-  onStartConnection: (initialClientX?: number, initialClientY?: number) => void;
+  onStartConnection: () => void;
   onEndConnection: () => void;
   isConnecting: boolean;
   isConnectionTarget?: boolean; // For mobile touch highlight
@@ -481,12 +481,11 @@ export function BlockCard({
             onMouseLeave={() => setIsConnectionZoneHovered(false)}
             onPointerDown={(e) => {
               // Start connection on pointer down (works for mouse + touch)
-              // Pass cursor position for immediate line rendering at cursor
               const target = e.target as HTMLElement;
               if (!target.closest('.block-main-card')) {
                 e.stopPropagation();
                 e.preventDefault();
-                onStartConnection(e.clientX, e.clientY);
+                onStartConnection();
               }
             }}
             onPointerUp={(e) => {

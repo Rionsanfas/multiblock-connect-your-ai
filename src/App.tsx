@@ -11,7 +11,6 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
-import AuthVerify from "./pages/AuthVerify";
 import Dashboard from "./pages/Dashboard";
 import BoardCanvas from "./pages/BoardCanvas";
 import Pricing from "./pages/Pricing";
@@ -84,7 +83,6 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/auth/verify" element={<AuthVerify />} />
       <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/checkout" element={<Checkout />} />

@@ -4,12 +4,11 @@ import { GlobalLoader } from "@/components/GlobalLoader";
 import { useAuth } from "@/contexts/AuthContext";
 
 /**
- * OAuth Callback Route (Google Sign-In Only)
+ * Dedicated OAuth callback route.
  * 
- * This route handles ONLY OAuth provider callbacks (e.g., Google).
- * 
- * For email verification, use /auth/verify instead.
- * This separation ensures deterministic auth flows.
+ * Why this exists:
+ * - Keeps the UI stable during PKCE code exchange.
+ * - Avoids redirect races between routes and auth hydration.
  */
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -23,7 +22,6 @@ export default function AuthCallback() {
       return;
     }
 
-    // Not authenticated after OAuth callback = something went wrong
     navigate("/auth", { replace: true });
   }, [isAuthenticated, isLoading, navigate]);
 

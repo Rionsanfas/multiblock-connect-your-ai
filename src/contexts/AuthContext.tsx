@@ -169,8 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     try {
-      // Use /auth/verify for email verification - this is the dedicated verification page
-      const redirectUrl = getRedirectUrl('/auth/verify');
+      const redirectUrl = getRedirectUrl('/auth/callback');
       
       const { error } = await supabase.auth.signUp({
         email,
