@@ -479,16 +479,7 @@ export default function BoardCanvas() {
       // Desktop: attach listeners to window so tracking never stops.
       connectionDragCleanupRef.current?.();
 
-      let raf = 0;
-      let latest: { x: number; y: number } | null = null;
-
-      const updateMousePos = () => {
-        raf = 0;
-        if (!latest) return;
-        setMousePos(latest);
-        latest = null;
-      };
-
+      // FIX 1: getHandleAtPoint helper - detects if cursor is over a valid connection handle
       const getHandleAtPoint = (clientX: number, clientY: number): { blockId: string; el: HTMLElement } | null => {
         const els = (document.elementsFromPoint?.(clientX, clientY) ?? []) as HTMLElement[];
         for (const el of els) {
@@ -499,23 +490,27 @@ export default function BoardCanvas() {
         return null;
       };
 
+      // FIX 1: Update mousePos DIRECTLY on every mousemove - NO RAF buffering
       const onMove = (e: MouseEvent) => {
         const world = toWorld(e.clientX, e.clientY);
-        latest = world;
-        if (!raf) raf = window.requestAnimationFrame(updateMousePos);
+        setMousePos(world); // Direct state update - no delay
 
         const handle = getHandleAtPoint(e.clientX, e.clientY);
-        if (handle && handle.blockId !== blockId) setConnectionTargetId(handle.blockId);
-        else setConnectionTargetId(null);
+        if (handle && handle.blockId !== blockId) {
+          setConnectionTargetId(handle.blockId);
+        } else {
+          setConnectionTargetId(null);
+        }
       };
 
+      // FIX 3: Reset ALL state synchronously to prevent ghost lines
       const cleanup = () => {
         window.removeEventListener('mousemove', onMove);
         window.removeEventListener('mouseup', onUp);
-        if (raf) window.cancelAnimationFrame(raf);
-        setConnectionTargetId(null);
         setConnectingFrom(null);
         setDraftFrom(null);
+        setMousePos({ x: 0, y: 0 }); // Critical: reset to prevent stale coordinates
+        setConnectionTargetId(null);
         endDrag();
         connectionDragCleanupRef.current = null;
       };
@@ -592,6 +587,27 @@ export default function BoardCanvas() {
     return {
       x: block.position.x + DEFAULT_BLOCK_WIDTH / 2,
       y: block.position.y + DEFAULT_BLOCK_HEIGHT / 2,
+    };
+  }, [blockPositions, boardBlocks]);
+
+  // FIX 4: Get handle center position (not block center) for connection line origin
+  const getHandleCenter = useCallback((blockId: string, isOutgoing: boolean) => {
+    // First check position store (updated during drag)
+    const storePos = blockPositions[blockId];
+    const block = boardBlocks.find((b) => b.id === blockId);
+    const pos = storePos || block?.position;
+    
+    if (!pos) return { x: 0, y: 0 };
+
+    // Must match BlockCard.tsx bracket/handle offsets exactly
+    const bracketOffset = 12;
+    const handleOffset = 14; // Center of 28px handle
+
+    return {
+      x: isOutgoing
+        ? pos.x + DEFAULT_BLOCK_WIDTH + bracketOffset + handleOffset
+        : pos.x - bracketOffset - handleOffset,
+      y: pos.y + DEFAULT_BLOCK_HEIGHT / 2,
     };
   }, [blockPositions, boardBlocks]);
 
@@ -773,9 +789,10 @@ export default function BoardCanvas() {
                           </g>
                         );
                       })}
+                      {/* FIX 4: Draft line uses handle center, never block center */}
                       {connectingFrom && (
                         <ConnectionLine
-                          from={(!isMobileOrTablet && draftFrom) ? draftFrom : getBlockCenter(connectingFrom)}
+                          from={draftFrom || getHandleCenter(connectingFrom, true)}
                           to={mousePos}
                           isDrawing
                         />
