@@ -448,6 +448,8 @@ export default function BoardCanvas() {
         cursorClientY: number;
       }
     ) => {
+      console.log('[BoardCanvas] handleStartConnection called', { blockId, args });
+      
       // Cancel any in-flight queries so they can't replace the connection list mid-drag.
       if (board?.id) {
         queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
@@ -456,7 +458,10 @@ export default function BoardCanvas() {
       const isMobileOrTablet = isMobile || isTablet;
 
       const rect = canvasRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      if (!rect) {
+        console.log('[BoardCanvas] ERROR: canvasRef.current has no bounding rect');
+        return;
+      }
 
       const toWorld = (clientX: number, clientY: number) => ({
         x: (clientX - rect.left - panOffsetRef.current.x) / zoomRef.current,
@@ -466,11 +471,16 @@ export default function BoardCanvas() {
       // Initialize draft geometry immediately (origin is HANDLE center; target is cursor)
       const fromWorld = toWorld(args.handleClientX, args.handleClientY);
       const cursorWorld = toWorld(args.cursorClientX, args.cursorClientY);
+      
+      console.log('[BoardCanvas] Setting draftFrom to:', fromWorld);
+      console.log('[BoardCanvas] Setting mousePos to:', cursorWorld);
+      
       setDraftFrom(fromWorld);
       setMousePos(cursorWorld);
 
       // Set global drag lock for connection drawing
       startDrag('connection', blockId);
+      console.log('[BoardCanvas] Setting connectingFrom to:', blockId);
       setConnectingFrom(blockId);
 
       // Mobile/tablet uses existing touch flow (window pointerup hit-test).
@@ -493,6 +503,7 @@ export default function BoardCanvas() {
       // FIX 1: Update mousePos DIRECTLY on every mousemove - NO RAF buffering
       const onMove = (e: MouseEvent) => {
         const world = toWorld(e.clientX, e.clientY);
+        console.log('[BoardCanvas] onMove - mousePos updating to:', world);
         setMousePos(world); // Direct state update - no delay
 
         const handle = getHandleAtPoint(e.clientX, e.clientY);
@@ -791,11 +802,19 @@ export default function BoardCanvas() {
                       })}
                       {/* FIX 4: Draft line uses handle center, never block center */}
                       {connectingFrom && (
-                        <ConnectionLine
-                          from={draftFrom || getHandleCenter(connectingFrom, true)}
-                          to={mousePos}
-                          isDrawing
-                        />
+                        <>
+                          {console.log('[Render] Drawing draft line', { 
+                            connectingFrom, 
+                            draftFrom, 
+                            mousePos,
+                            from: draftFrom || getHandleCenter(connectingFrom, true)
+                          })}
+                          <ConnectionLine
+                            from={draftFrom || getHandleCenter(connectingFrom, true)}
+                            to={mousePos}
+                            isDrawing
+                          />
+                        </>
                       )}
                     </svg>
 

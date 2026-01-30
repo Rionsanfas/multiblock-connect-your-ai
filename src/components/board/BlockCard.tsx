@@ -485,20 +485,31 @@ export function BlockCard({
               height: `calc(100% + ${(bracketOffset + 8) * 2}px)`,
               borderRadius: borderRadius + bracketOffset + 4,
               touchAction: 'none', // Prevent browser gestures during connection drag
+              zIndex: 5, // Below handles (z-index 10) but above other elements
             }}
             onMouseEnter={() => setIsConnectionZoneHovered(true)}
             onMouseLeave={() => setIsConnectionZoneHovered(false)}
             onPointerDown={(e) => {
+              // DIAGNOSTIC: Log connection zone pointer down
+              console.log('[Connection Zone] onPointerDown fired', { 
+                target: e.target,
+                closestMainCard: (e.target as HTMLElement).closest('.block-main-card'),
+              });
+              
               // Start connection on pointer down (works for mouse + touch)
               // Pass handle center + cursor position so desktop draft line can anchor to handle.
               const target = e.target as HTMLElement;
               if (!target.closest('.block-main-card')) {
+                console.log('[Connection Zone] Starting connection...');
                 e.stopPropagation();
                 e.preventDefault();
 
                 // Prefer outgoing handle center; fallback to pointer position.
                 const handleEl = outHandleRef.current;
+                console.log('[Connection Zone] Handle ref:', handleEl);
                 const rect = handleEl?.getBoundingClientRect?.();
+                console.log('[Connection Zone] Handle rect:', rect);
+                
                 const handleClientX = rect ? rect.left + rect.width / 2 : e.clientX;
                 const handleClientY = rect ? rect.top + rect.height / 2 : e.clientY;
 
@@ -508,6 +519,8 @@ export function BlockCard({
                   cursorClientX: e.clientX,
                   cursorClientY: e.clientY,
                 });
+              } else {
+                console.log('[Connection Zone] Click was inside main card, ignoring');
               }
             }}
             onPointerUp={(e) => {
@@ -518,7 +531,7 @@ export function BlockCard({
             }}
           />
 
-          {/* Invisible connection handles (no visual redesign) */}
+          {/* Invisible connection handles - OUT handle starts connections, IN handle receives them */}
           <div
             ref={inHandleRef}
             data-connection-handle="in"
@@ -533,6 +546,7 @@ export function BlockCard({
               borderRadius: 9999,
               touchAction: 'none',
               background: 'transparent',
+              zIndex: 10, // Ensure handle is above connection zone
             }}
             aria-hidden="true"
           />
@@ -540,7 +554,7 @@ export function BlockCard({
             ref={outHandleRef}
             data-connection-handle="out"
             data-handle-block-id={block.id}
-            className="absolute no-drag pointer-events-auto"
+            className="absolute no-drag pointer-events-auto cursor-crosshair"
             style={{
               right: -bracketOffset - 14,
               top: '50%',
@@ -550,8 +564,29 @@ export function BlockCard({
               borderRadius: 9999,
               touchAction: 'none',
               background: 'transparent',
+              zIndex: 10, // Ensure handle is above connection zone
             }}
             aria-hidden="true"
+            onPointerDown={(e) => {
+              // CRITICAL: Start connection from this OUT handle
+              console.log('[OUT Handle] onPointerDown fired');
+              e.stopPropagation();
+              e.preventDefault();
+              
+              // Get the handle's center position
+              const rect = e.currentTarget.getBoundingClientRect();
+              const handleClientX = rect.left + rect.width / 2;
+              const handleClientY = rect.top + rect.height / 2;
+              
+              console.log('[OUT Handle] Starting connection from handle center:', { handleClientX, handleClientY });
+              
+              onStartConnection({
+                handleClientX,
+                handleClientY,
+                cursorClientX: e.clientX,
+                cursorClientY: e.clientY,
+              });
+            }}
           />
 
           {/* Layer 2: Corner resize brackets - visible on hover OR always on touch devices */}
