@@ -475,19 +475,27 @@ export default function BoardCanvas() {
   }, [isPanning, endDrag]);
 
   const handleStartConnection = useCallback(
-    (blockId: string) => {
+    (blockId: string, clientX?: number, clientY?: number) => {
       // Cancel any in-flight queries so they can't replace the connection list mid-drag.
       if (board?.id) {
         queryClient.cancelQueries({ queryKey: ['board-connections', board.id] });
       }
 
-      // Initialize mousePos from block center with offset for immediate visual feedback
-      const block = boardBlocks.find((b) => b.id === blockId);
-      if (block) {
-        const centerX = block.position.x + DEFAULT_BLOCK_WIDTH / 2;
-        const centerY = block.position.y + DEFAULT_BLOCK_HEIGHT / 2;
-        // Offset slightly so the line is visible immediately
-        setMousePos({ x: centerX + 30, y: centerY + 30 });
+      // Initialize mousePos from actual pointer position if provided, otherwise from block center
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (clientX !== undefined && clientY !== undefined && rect) {
+        // Convert client coordinates to world coordinates
+        const worldX = (clientX - rect.left - panOffsetRef.current.x) / zoomRef.current;
+        const worldY = (clientY - rect.top - panOffsetRef.current.y) / zoomRef.current;
+        setMousePos({ x: worldX, y: worldY });
+      } else {
+        // Fallback: use block center with offset
+        const block = boardBlocks.find((b) => b.id === blockId);
+        if (block) {
+          const centerX = block.position.x + DEFAULT_BLOCK_WIDTH / 2;
+          const centerY = block.position.y + DEFAULT_BLOCK_HEIGHT / 2;
+          setMousePos({ x: centerX + 30, y: centerY + 30 });
+        }
       }
 
       // Set global drag lock for connection drawing
@@ -746,7 +754,7 @@ export default function BoardCanvas() {
                         block={block}
                         isSelected={selectedBlockId === block.id}
                         onSelect={() => selectBlock(block.id)}
-                        onStartConnection={() => handleStartConnection(block.id)}
+                        onStartConnection={(clientX?: number, clientY?: number) => handleStartConnection(block.id, clientX, clientY)}
                         onEndConnection={() => handleEndConnection(block.id)}
                         isConnecting={!!connectingFrom}
                         // Mobile/Tablet: all blocks are "accepting" while a connection is being dragged.
