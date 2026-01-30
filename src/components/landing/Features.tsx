@@ -1,5 +1,6 @@
 import Feature3DIcon from "./Feature3DIcon";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
+import ConnectionsFeatureCard from "./ConnectionsFeatureCard";
 
 type IconType = "chat" | "connect" | "canvas";
 
@@ -44,28 +45,58 @@ const Features = () => {
           </p>
         </AnimatedSection>
 
-        {/* Feature Cards Grid - horizontal scroll on mobile/tablet, grid on desktop */}
-        <div className="lg:grid lg:grid-cols-3 lg:gap-6 max-lg:flex max-lg:gap-3 max-lg:overflow-x-auto max-lg:pb-4 max-lg:-mx-4 max-lg:px-4 max-lg:snap-x max-lg:snap-mandatory scrollbar-hide">
-          {features.map((feature, index) => (
-            <AnimatedElement key={feature.title} delay={index * 150}>
-              <div className="glass-card-hover group dot-grid-card h-full p-3 sm:p-4 lg:p-6 pt-2 sm:pt-3 lg:pt-4 max-lg:min-w-[200px] max-lg:max-w-[220px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[240px] md:max-lg:max-w-[260px]">
-                {/* 3D Animated Icon - smaller on mobile/tablet */}
-                <div className="relative z-10 max-lg:scale-75 max-lg:origin-center max-lg:-my-2">
+        {/* Feature Cards Grid - 2 columns on desktop with video card spanning */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+          {/* Video Feature Card - Takes prominent position */}
+          <AnimatedElement delay={0} className="lg:row-span-2">
+            <ConnectionsFeatureCard />
+          </AnimatedElement>
+
+          {/* Static Feature Cards */}
+          {features.slice(0, 2).map((feature, index) => (
+            <AnimatedElement key={feature.title} delay={(index + 1) * 150}>
+              <div className="glass-card-hover group dot-grid-card h-full p-4 sm:p-5 lg:p-6 flex flex-col">
+                {/* 3D Animated Icon */}
+                <div className="relative z-10 mb-3 lg:mb-4 scale-75 lg:scale-100 origin-left -my-2 lg:my-0">
                   <Feature3DIcon type={feature.iconType} />
                 </div>
 
                 {/* Title */}
-                <h3 className="font-semibold text-foreground text-wrap-balance text-center relative z-10 text-sm sm:text-base lg:text-xl mb-1.5 sm:mb-2 lg:mb-3">
+                <h3 className="font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2 lg:mb-3">
                   {feature.title}
                 </h3>
 
                 {/* Description */}
-                <p className="text-muted-foreground leading-relaxed text-break text-center relative z-10 text-xs sm:text-sm lg:text-base">
+                <p className="text-muted-foreground leading-relaxed text-break text-xs sm:text-sm lg:text-base flex-1">
                   {feature.description}
                 </p>
               </div>
             </AnimatedElement>
           ))}
+        </div>
+
+        {/* Third feature card - full width below */}
+        <div className="mt-4 sm:mt-5 lg:mt-6">
+          <AnimatedElement delay={450}>
+            <div className="glass-card-hover group dot-grid-card p-4 sm:p-5 lg:p-6 lg:flex lg:items-center lg:gap-6">
+              {/* 3D Animated Icon */}
+              <div className="relative z-10 mb-3 lg:mb-0 scale-75 lg:scale-100 origin-left -my-2 lg:my-0 lg:flex-shrink-0">
+                <Feature3DIcon type={features[2].iconType} />
+              </div>
+
+              <div className="lg:flex-1">
+                {/* Title */}
+                <h3 className="font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2">
+                  {features[2].title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-muted-foreground leading-relaxed text-break text-xs sm:text-sm lg:text-base">
+                  {features[2].description}
+                </p>
+              </div>
+            </div>
+          </AnimatedElement>
         </div>
       </div>
     </section>
