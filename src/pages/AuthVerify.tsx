@@ -1,18 +1,24 @@
 /**
- * Email Verification Page
+ * Email Verification Page (Signup Only)
  * 
- * Handles Supabase email verification flow:
- * 1. Reads access_token/refresh_token from URL hash
- * 2. Sets the session using Supabase
- * 3. Redirects to dashboard on success
- * 4. Shows error with resend option on failure
+ * SINGLE SOURCE OF TRUTH for email verification + auto login.
+ * 
+ * Flow:
+ * 1. User signs up → receives verification email
+ * 2. User clicks link → lands on /auth/verify with tokens
+ * 3. This page validates tokens and type === 'signup'
+ * 4. Sets session → redirects to /dashboard
+ * 
+ * NO fallbacks, NO guessing, NO ambiguity.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, CheckCircle, XCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 type VerificationState = 'loading' | 'success' | 'error';
@@ -21,52 +27,55 @@ export default function AuthVerify() {
   const navigate = useNavigate();
   const [state, setState] = useState<VerificationState>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
+  const [resendEmail, setResendEmail] = useState<string>('');
   const [isResending, setIsResending] = useState(false);
+  const verificationAttempted = useRef(false);
 
   useEffect(() => {
+    // Prevent double execution in strict mode
+    if (verificationAttempted.current) return;
+    verificationAttempted.current = true;
+
     const verifyEmail = async () => {
       try {
-        // Parse tokens from URL hash (Supabase sends them in hash fragment)
+        // Parse tokens from URL - Supabase sends them in hash fragment
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const queryParams = new URLSearchParams(window.location.search);
 
-        // Try hash first, then query params
+        // Extract auth parameters (try hash first, then query)
         const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
         const type = hashParams.get('type') || queryParams.get('type');
         const errorCode = hashParams.get('error') || queryParams.get('error');
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
 
-        // Handle error from Supabase
+        // Handle Supabase-provided errors first
         if (errorCode) {
-          console.error('[AuthVerify] Error from Supabase:', errorCode, errorDescription);
+          console.error('[AuthVerify] Supabase error:', errorCode, errorDescription);
           setErrorMessage(errorDescription || 'Verification link is invalid or expired.');
           setState('error');
           return;
         }
 
-        // Check if we have tokens
+        // STRICT: Require both tokens - no fallbacks
         if (!accessToken || !refreshToken) {
-          // Maybe the auth state listener already handled it - check session
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (session) {
-            // Already authenticated, redirect to dashboard
-            setState('success');
-            setTimeout(() => navigate('/dashboard', { replace: true }), 1500);
-            return;
-          }
-
-          console.error('[AuthVerify] No tokens found in URL');
-          setErrorMessage('Invalid verification link. Please request a new one.');
+          console.error('[AuthVerify] Missing tokens in URL');
+          setErrorMessage('Invalid verification link. The link may be incomplete or malformed.');
           setState('error');
           return;
         }
 
-        console.log('[AuthVerify] Setting session with tokens, type:', type);
+        // STRICT: Only accept signup verification type
+        if (type !== 'signup') {
+          console.error('[AuthVerify] Invalid verification type:', type);
+          setErrorMessage('Invalid verification link. This page only handles email verification for new signups.');
+          setState('error');
+          return;
+        }
 
-        // Set the session using the tokens from the URL
+        console.log('[AuthVerify] Processing signup verification...');
+
+        // Set the session using tokens from URL
         const { data, error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
@@ -75,10 +84,10 @@ export default function AuthVerify() {
         if (error) {
           console.error('[AuthVerify] Session error:', error);
           
-          if (error.message.includes('expired')) {
-            setErrorMessage('This verification link has expired. Please request a new one.');
+          if (error.message.includes('expired') || error.message.includes('Refresh Token')) {
+            setErrorMessage('This verification link has expired. Please request a new verification email.');
           } else if (error.message.includes('invalid')) {
-            setErrorMessage('This verification link is invalid. Please request a new one.');
+            setErrorMessage('This verification link is invalid. Please request a new verification email.');
           } else {
             setErrorMessage(error.message);
           }
@@ -87,29 +96,23 @@ export default function AuthVerify() {
         }
 
         if (!data.session) {
-          console.error('[AuthVerify] No session returned');
-          setErrorMessage('Failed to verify email. Please try again.');
+          console.error('[AuthVerify] No session returned after setSession');
+          setErrorMessage('Failed to verify email. Please request a new verification email.');
           setState('error');
           return;
         }
 
-        // Store email for potential resend
-        if (data.session.user?.email) {
-          setEmail(data.session.user.email);
-        }
-
         console.log('[AuthVerify] Email verified successfully, user:', data.session.user?.id);
         
-        // Clean up URL
+        // Clean up URL immediately
         window.history.replaceState({}, document.title, '/auth/verify');
         
-        // Show success and redirect
+        // Show success state
         setState('success');
         toast.success('Email verified successfully!');
         
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true });
-        }, 1500);
+        // Redirect immediately - no timeout dependency for auth state
+        navigate('/dashboard', { replace: true });
 
       } catch (err) {
         console.error('[AuthVerify] Unexpected error:', err);
@@ -122,8 +125,10 @@ export default function AuthVerify() {
   }, [navigate]);
 
   const handleResendEmail = async () => {
-    if (!email) {
-      toast.error('Please go back to signup and try again.');
+    const emailToUse = resendEmail.trim();
+    
+    if (!emailToUse || !emailToUse.includes('@')) {
+      toast.error('Please enter a valid email address.');
       return;
     }
 
@@ -131,16 +136,22 @@ export default function AuthVerify() {
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
-        email: email,
+        email: emailToUse,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/verify`,
         },
       });
 
       if (error) {
-        toast.error(error.message);
+        // Handle specific error cases
+        if (error.message.includes('already confirmed')) {
+          toast.error('This email is already verified. Please sign in instead.');
+        } else {
+          toast.error(error.message);
+        }
       } else {
         toast.success('Verification email sent! Check your inbox.');
+        setResendEmail('');
       }
     } catch (err) {
       toast.error('Failed to resend email. Please try again.');
@@ -195,21 +206,36 @@ export default function AuthVerify() {
             <p className="text-muted-foreground">
               {errorMessage}
             </p>
-            <div className="flex flex-col gap-3 pt-4">
-              {email && (
-                <Button 
-                  onClick={handleResendEmail} 
-                  disabled={isResending}
-                  className="w-full"
-                >
-                  {isResending ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Mail className="h-4 w-4 mr-2" />
-                  )}
-                  Resend verification email
-                </Button>
-              )}
+            
+            {/* Resend section with email input */}
+            <div className="pt-4 space-y-4">
+              <div className="text-left space-y-2">
+                <Label htmlFor="resend-email" className="text-sm text-muted-foreground">
+                  Enter your email to resend verification
+                </Label>
+                <Input
+                  id="resend-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleResendEmail()}
+                />
+              </div>
+              
+              <Button 
+                onClick={handleResendEmail} 
+                disabled={isResending || !resendEmail.trim()}
+                className="w-full"
+              >
+                {isResending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Mail className="h-4 w-4 mr-2" />
+                )}
+                Resend verification email
+              </Button>
+              
               <Button 
                 variant="outline" 
                 onClick={handleBackToSignup}
