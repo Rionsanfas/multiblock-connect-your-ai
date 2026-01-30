@@ -45,35 +45,45 @@ export function LifetimeDealBar() {
   if (!isVisible) return null;
 
   return (
-    <div
-      className={cn(
-        "w-full bg-primary/10 border-b border-primary/20",
-        "transition-all duration-300 ease-out",
-        isFading 
-          ? "opacity-0 h-0 overflow-hidden" 
-          : "opacity-100 animate-in slide-in-from-top-1"
-      )}
-    >
-      <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-center gap-4">
-        <p className="text-sm text-foreground/90">
-          <span className="text-muted-foreground">Lifetime deal available</span>
-          <span className="mx-2 text-border">—</span>
-          <span className="text-muted-foreground">limited time</span>
-        </p>
-        <Link
-          to="/pricing#lifetime"
-          className="text-sm font-medium text-primary hover:text-primary/80 underline-offset-4 hover:underline transition-colors"
-        >
-          View plans
-        </Link>
-        <button
-          onClick={handleDismiss}
-          className="ml-2 p-1 rounded-md hover:bg-primary/10 transition-colors"
-          aria-label="Dismiss notification"
-        >
-          <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-        </button>
+    <>
+      {/* Spacer to push content down */}
+      <div 
+        className={cn(
+          "w-full transition-all duration-300",
+          isFading ? "h-0" : "h-10"
+        )} 
+      />
+      {/* Fixed notification bar */}
+      <div
+        className={cn(
+          "fixed top-0 left-0 right-0 z-[60] w-full bg-background/95 backdrop-blur-sm border-b border-border/40",
+          "transition-all duration-300 ease-out",
+          isFading 
+            ? "opacity-0 -translate-y-full" 
+            : "opacity-100 translate-y-0"
+        )}
+      >
+        <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-center gap-4">
+          <p className="text-sm text-foreground/90">
+            <span className="text-muted-foreground">Lifetime deal available</span>
+            <span className="mx-2 text-border">—</span>
+            <span className="text-muted-foreground">limited time</span>
+          </p>
+          <Link
+            to="/pricing#lifetime"
+            className="text-sm font-medium text-primary hover:text-primary/80 underline-offset-4 hover:underline transition-colors"
+          >
+            View plans
+          </Link>
+          <button
+            onClick={handleDismiss}
+            className="ml-2 p-1 rounded-md hover:bg-muted/50 transition-colors"
+            aria-label="Dismiss notification"
+          >
+            <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
