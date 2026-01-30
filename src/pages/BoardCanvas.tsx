@@ -142,18 +142,21 @@ export default function BoardCanvas() {
     [zoom, panOffset, setZoom]
   );
 
-  // State for mobile connection target highlight (desktop only uses hover-based onEndConnection)
+  // Connection target highlight - used for visual feedback during drag
   const [connectionTargetId, setConnectionTargetId] = useState<string | null>(null);
 
-  // Desktop: update mousePos during connection line dragging for smooth cursor tracking
-  // Also handles proper target detection on mouseup - NO orphan lines
+  // UNIFIED: Desktop uses the same pattern as mobile - window-level pointer tracking
+  // This ensures consistent behavior: line follows cursor, connection only on valid target release
   useEffect(() => {
+    if (!connectingFrom) return;
+
+    // Desktop uses mouse events, mobile/tablet uses pointer/touch events
+    // This effect handles DESKTOP ONLY - mobile is handled in the next effect
     const isMobileOrTablet = isMobile || isTablet;
-    if (!connectingFrom || isMobileOrTablet) return;
+    if (isMobileOrTablet) return;
 
     let raf = 0;
     let latest: { x: number; y: number } | null = null;
-    let lastClientPos = { x: 0, y: 0 }; // Track last client position for target detection
 
     const updateMousePos = () => {
       raf = 0;
@@ -172,6 +175,7 @@ export default function BoardCanvas() {
     };
 
     // Desktop: detect which block is under the cursor using elementsFromPoint
+    // Same forgiving logic as mobile - hit test all elements at point
     const getBlockIdAtPoint = (clientX: number, clientY: number): string | null => {
       const els = (document.elementsFromPoint?.(clientX, clientY) ?? []) as HTMLElement[];
       for (const el of els) {
@@ -181,15 +185,14 @@ export default function BoardCanvas() {
       return null;
     };
 
-    const onMove = (e: MouseEvent) => {
-      lastClientPos = { x: e.clientX, y: e.clientY };
+    const onMouseMove = (e: MouseEvent) => {
       const world = toWorld(e.clientX, e.clientY);
       if (!world) return;
 
       latest = { x: world.x, y: world.y };
       if (!raf) raf = window.requestAnimationFrame(updateMousePos);
 
-      // Desktop: update hover target for visual feedback
+      // Update hover target for visual feedback
       const targetId = getBlockIdAtPoint(e.clientX, e.clientY);
       if (targetId && targetId !== connectingFrom) {
         setConnectionTargetId(targetId);
@@ -198,8 +201,8 @@ export default function BoardCanvas() {
       }
     };
 
-    const onUp = (e: MouseEvent) => {
-      // Desktop: check if released over a valid block target
+    const onMouseUp = (e: MouseEvent) => {
+      // Check if released over a valid block target
       const targetId = getBlockIdAtPoint(e.clientX, e.clientY);
       
       if (targetId && targetId !== connectingFrom) {
@@ -207,7 +210,7 @@ export default function BoardCanvas() {
         createConnection(connectingFrom, targetId);
         toast.success("Connection created");
       }
-      // else: released on empty space - just cancel, NO orphan line
+      // Released on empty space = cancel (no orphan line)
 
       // Always clean up
       setConnectionTargetId(null);
@@ -215,24 +218,27 @@ export default function BoardCanvas() {
       setConnectingFrom(null);
     };
 
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    // Use capture phase to ensure we get the events before any other handlers
+    window.addEventListener('mousemove', onMouseMove, { capture: true });
+    window.addEventListener('mouseup', onMouseUp, { capture: true });
 
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('mousemove', onMouseMove, { capture: true });
+      window.removeEventListener('mouseup', onMouseUp, { capture: true });
       setConnectionTargetId(null);
       if (raf) window.cancelAnimationFrame(raf);
     };
   }, [connectingFrom, isMobile, isTablet, endDrag, createConnection]);
 
-  // Mobile/Tablet ONLY: "all blocks accepting" mode.
+  // Mobile/Tablet: "all blocks accepting" mode with touch/pointer events
   // While connectingFrom is set, ALL other blocks highlight.
   // On release, if finger is over a block (elementFromPoint), connect; else cancel.
-  // Desktop uses existing hover + onEndConnection flow.
   useEffect(() => {
+    if (!connectingFrom) return;
+    
+    // This effect is for MOBILE/TABLET ONLY - desktop is handled by the previous effect
     const isMobileOrTablet = isMobile || isTablet;
-    if (!connectingFrom || !isMobileOrTablet) return;
+    if (!isMobileOrTablet) return;
 
     let raf = 0;
     let latest: { x: number; y: number } | null = null;
