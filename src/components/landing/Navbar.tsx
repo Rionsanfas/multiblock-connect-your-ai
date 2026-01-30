@@ -4,10 +4,20 @@ import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 
+const BANNER_STORAGE_KEY = "multiblock-ltd-banner-dismissed";
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { isAuthenticated } = useAppStore();
+  
+  // Check if banner is visible to offset navbar position
+  const [bannerVisible, setBannerVisible] = useState(false);
+  
+  useEffect(() => {
+    const dismissed = localStorage.getItem(BANNER_STORAGE_KEY);
+    setBannerVisible(dismissed !== "true");
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,7 +36,10 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4">
+    <nav className={cn(
+      "fixed left-0 right-0 z-50 flex justify-center px-4",
+      bannerVisible ? "top-10 sm:top-11 pt-2" : "top-0 pt-4"
+    )}>
       {/* Desktop Pill Navbar */}
       <div
         className={cn(
@@ -123,7 +136,10 @@ const Navbar = () => {
       {/* Mobile Menu Dropdown - ensure touch works */}
       {isOpen && (
         <div
-          className="lg:hidden absolute top-20 left-4 right-4 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)] animate-fade-in overflow-hidden z-50"
+          className={cn(
+            "lg:hidden absolute left-4 right-4 bg-card/95 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[0_8px_32px_-8px_hsl(0_0%_0%/0.6)] animate-fade-in overflow-hidden z-50",
+            bannerVisible ? "top-16" : "top-20"
+          )}
         >
           <div className="flex flex-col p-3">
             {navLinks.map((link) =>

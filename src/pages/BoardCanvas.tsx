@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Plus, AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConnectionHelpTooltip } from "@/components/board/ConnectionHelpTooltip";
 
 // Responsive defaults - match BlockCard.tsx
 const DEFAULT_BLOCK_WIDTH = 260;
@@ -786,7 +787,10 @@ export default function BoardCanvas() {
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
-      </div>
+    </div>
+
+      {/* Connection Help Tooltip - desktop only */}
+      <ConnectionHelpTooltip />
 
       {isBlockChatOpen && chatBlockId && <BlockChatModal blockId={chatBlockId} />}
       

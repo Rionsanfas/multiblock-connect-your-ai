@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Navbar from "@/components/landing/Navbar";
+import { LifetimeDealBanner } from "@/components/landing/LifetimeDealBanner";
 import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
 import HowItWorks from "@/components/landing/HowItWorks";
@@ -26,6 +27,7 @@ const Index = () => {
 
   return (
     <div className="liquid-bg noise-overlay min-h-screen dot-grid-bg">
+      <LifetimeDealBanner />
       <Navbar />
       <main className="relative z-10">
         <Hero />
