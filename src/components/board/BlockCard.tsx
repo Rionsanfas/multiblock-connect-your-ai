@@ -465,9 +465,8 @@ export function BlockCard({
             </svg>
           </div>
           
-          {/* Connection click zone - invisible but clickable overlay for starting connections */}
-          {/* Connection END is handled by window-level listeners in BoardCanvas for BOTH desktop and mobile */}
-          {/* This ensures consistent behavior: drag line follows cursor, connection only on valid target */}
+          {/* Connection click zone - invisible but clickable overlay for starting/ending connections */}
+          {/* Unified pointer events for mouse + touch */}
           <div 
             className="absolute cursor-crosshair no-drag pointer-events-auto"
             style={{
@@ -490,8 +489,12 @@ export function BlockCard({
                 onStartConnection(e.clientX, e.clientY);
               }
             }}
-            // NO onPointerUp here - window-level handlers in BoardCanvas handle connection completion
-            // This eliminates race conditions between component and window handlers
+            onPointerUp={(e) => {
+              // Desktop only: end connection on pointer up.
+              // Mobile/Tablet uses window-scoped pointerup hit-test to decide connect vs cancel.
+              e.stopPropagation();
+              if (!isMobileOrTablet && isConnecting) onEndConnection();
+            }}
           />
 
           {/* Layer 2: Corner resize brackets - visible on hover OR always on touch devices */}
@@ -585,8 +588,11 @@ export function BlockCard({
                 : "shadow-[0_4px_24px_rgba(0,0,0,0.3)]",
               isDragging && "shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
             )}
-            // NO onPointerUp here - window-level handlers in BoardCanvas detect block via elementsFromPoint
-            // This unified approach works identically for desktop and mobile
+            onPointerUp={(e) => {
+              // Allow dropping connections anywhere on the main card (works for touch + mouse)
+              e.stopPropagation();
+              if (isConnecting) onEndConnection();
+            }}
           >
 
             {/* Header */}
