@@ -21,7 +21,12 @@ interface BlockCardProps {
   block: Block;
   isSelected: boolean;
   onSelect: () => void;
-  onStartConnection: (initialClientX?: number, initialClientY?: number) => void;
+  onStartConnection: (args: {
+    handleClientX: number;
+    handleClientY: number;
+    cursorClientX: number;
+    cursorClientY: number;
+  }) => void;
   onEndConnection: () => void;
   isConnecting: boolean;
   isConnectionTarget?: boolean; // For mobile touch highlight
@@ -67,6 +72,10 @@ export function BlockCard({
   const startSize = useRef({ width: 0, height: 0 });
   const startBlockPos = useRef({ x: 0, y: 0 });
   const blockPositionRef = useRef({ x: block.position.x, y: block.position.y });
+
+  // Connection handle refs (used to anchor draft line to handle center)
+  const outHandleRef = useRef<HTMLDivElement | null>(null);
+  const inHandleRef = useRef<HTMLDivElement | null>(null);
 
   // Touch/mobile detection for always-visible handles
   const isMobile = useIsMobile();
@@ -481,20 +490,68 @@ export function BlockCard({
             onMouseLeave={() => setIsConnectionZoneHovered(false)}
             onPointerDown={(e) => {
               // Start connection on pointer down (works for mouse + touch)
-              // Pass cursor position for immediate line rendering at cursor
+              // Pass handle center + cursor position so desktop draft line can anchor to handle.
               const target = e.target as HTMLElement;
               if (!target.closest('.block-main-card')) {
                 e.stopPropagation();
                 e.preventDefault();
-                onStartConnection(e.clientX, e.clientY);
+
+                // Prefer outgoing handle center; fallback to pointer position.
+                const handleEl = outHandleRef.current;
+                const rect = handleEl?.getBoundingClientRect?.();
+                const handleClientX = rect ? rect.left + rect.width / 2 : e.clientX;
+                const handleClientY = rect ? rect.top + rect.height / 2 : e.clientY;
+
+                onStartConnection({
+                  handleClientX,
+                  handleClientY,
+                  cursorClientX: e.clientX,
+                  cursorClientY: e.clientY,
+                });
               }
             }}
             onPointerUp={(e) => {
-              // Desktop only: end connection on pointer up.
-              // Mobile/Tablet uses window-scoped pointerup hit-test to decide connect vs cancel.
               e.stopPropagation();
-              if (!isMobileOrTablet && isConnecting) onEndConnection();
+              // Desktop finalize is handled by window-level mouseup in BoardCanvas.
+              // Keep mobile/tablet behavior unchanged.
+              if (isMobileOrTablet && isConnecting) onEndConnection();
             }}
+          />
+
+          {/* Invisible connection handles (no visual redesign) */}
+          <div
+            ref={inHandleRef}
+            data-connection-handle="in"
+            data-handle-block-id={block.id}
+            className="absolute no-drag pointer-events-auto"
+            style={{
+              left: -bracketOffset - 14,
+              top: '50%',
+              width: 28,
+              height: 28,
+              transform: 'translateY(-50%)',
+              borderRadius: 9999,
+              touchAction: 'none',
+              background: 'transparent',
+            }}
+            aria-hidden="true"
+          />
+          <div
+            ref={outHandleRef}
+            data-connection-handle="out"
+            data-handle-block-id={block.id}
+            className="absolute no-drag pointer-events-auto"
+            style={{
+              right: -bracketOffset - 14,
+              top: '50%',
+              width: 28,
+              height: 28,
+              transform: 'translateY(-50%)',
+              borderRadius: 9999,
+              touchAction: 'none',
+              background: 'transparent',
+            }}
+            aria-hidden="true"
           />
 
           {/* Layer 2: Corner resize brackets - visible on hover OR always on touch devices */}
@@ -591,7 +648,9 @@ export function BlockCard({
             onPointerUp={(e) => {
               // Allow dropping connections anywhere on the main card (works for touch + mouse)
               e.stopPropagation();
-              if (isConnecting) onEndConnection();
+              // Desktop finalize is handled by window-level mouseup in BoardCanvas.
+              // Keep mobile/tablet behavior unchanged.
+              if (isMobileOrTablet && isConnecting) onEndConnection();
             }}
           >
 
