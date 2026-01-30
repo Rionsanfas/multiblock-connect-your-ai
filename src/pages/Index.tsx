@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { LifetimeDealBar } from "@/components/layout/LifetimeDealBar";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
@@ -26,6 +27,7 @@ const Index = () => {
 
   return (
     <div className="liquid-bg noise-overlay min-h-screen dot-grid-bg">
+      <LifetimeDealBar />
       <Navbar />
       <main className="relative z-10">
         <Hero />
