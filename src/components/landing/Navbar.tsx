@@ -4,11 +4,43 @@ import { Link } from "react-router-dom";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 
+const LTD_DISMISSED_KEY = 'lifetime-deal-bar-dismissed';
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [ltdBarVisible, setLtdBarVisible] = useState(false);
   const { isAuthenticated } = useAppStore();
 
+  // Check if LTD bar is visible (not dismissed)
+  useEffect(() => {
+    try {
+      const dismissed = localStorage.getItem(LTD_DISMISSED_KEY) === 'true';
+      setLtdBarVisible(!dismissed);
+    } catch {
+      setLtdBarVisible(true);
+    }
+    
+    // Listen for storage changes (when bar is dismissed)
+    const handleStorage = () => {
+      try {
+        const dismissed = localStorage.getItem(LTD_DISMISSED_KEY) === 'true';
+        setLtdBarVisible(!dismissed);
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    
+    // Also listen for custom event for same-tab updates
+    const handleDismiss = () => setLtdBarVisible(false);
+    window.addEventListener('ltd-bar-dismissed', handleDismiss);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('ltd-bar-dismissed', handleDismiss);
+    };
+  }, []);
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -26,7 +58,10 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4">
+    <nav className={cn(
+      "fixed left-0 right-0 z-50 flex justify-center pt-4 px-4 transition-all duration-300",
+      ltdBarVisible ? "top-10" : "top-0"
+    )}>
       {/* Desktop Pill Navbar */}
       <div
         className={cn(
