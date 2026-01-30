@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Plus, AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConnectionGuideTip } from "@/components/board/ConnectionGuideTip";
 
 // Responsive defaults - match BlockCard.tsx
 const DEFAULT_BLOCK_WIDTH = 260;
@@ -772,6 +773,9 @@ export default function BoardCanvas() {
                     compact={isMobile}
                   />
                 )}
+
+                {/* Connection guidance tip - one-time contextual help */}
+                <ConnectionGuideTip />
               </div>
           </ContextMenuTrigger>
           <ContextMenuContent className="bg-card/90 backdrop-blur-2xl border border-border/40 rounded-xl sm:rounded-2xl min-w-[160px] sm:min-w-[180px] p-1 sm:p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
