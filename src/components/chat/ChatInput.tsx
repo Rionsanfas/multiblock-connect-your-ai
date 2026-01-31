@@ -46,6 +46,23 @@ export function ChatInput({
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea based on content
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    // Reset height to auto to get accurate scrollHeight
+    textarea.style.height = 'auto';
+    // Set to scrollHeight, capped by CSS max-height
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, []);
+
+  // Adjust height whenever input changes
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input, adjustTextareaHeight]);
 
   const handleSend = useCallback(() => {
     if (!input.trim() && attachments.length === 0 && references.length === 0) return;
@@ -227,15 +244,16 @@ export function ChatInput({
             className="hidden"
           />
 
-          {/* Text input - increased font size */}
+          {/* Text input - auto-expands up to 50vh */}
           <Textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={references.length > 0 ? 'Add a message with your references...' : placeholder}
             disabled={disabled}
             className={cn(
-              "min-h-[44px] sm:min-h-[48px] max-h-[160px] sm:max-h-[200px] resize-none rounded-lg sm:rounded-xl border-border/30 text-base sm:text-lg bg-secondary/30 focus:bg-secondary/50 transition-colors leading-relaxed",
+              "min-h-[44px] sm:min-h-[48px] max-h-[50vh] resize-none rounded-lg sm:rounded-xl border-border/30 text-base sm:text-lg bg-secondary/30 focus:bg-secondary/50 transition-colors leading-relaxed overflow-y-auto",
               disabled && "opacity-50"
             )}
             rows={1}
