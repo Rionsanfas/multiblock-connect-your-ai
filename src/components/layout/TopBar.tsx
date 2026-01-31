@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAppStore } from "@/store/useAppStore";
+import { boardsDb } from "@/lib/database";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -26,17 +28,29 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(boardTitle || "");
+  const [isSaving, setIsSaving] = useState(false);
+  const queryClient = useQueryClient();
   
   const {
-    updateBoard,
     zoom,
     setZoom,
   } = useAppStore();
 
-  const handleTitleSave = () => {
-    if (boardId && title.trim()) {
-      updateBoard(boardId, { title: title.trim() });
-      toast.success("Board title updated");
+  const handleTitleSave = async () => {
+    if (boardId && title.trim() && !isSaving) {
+      setIsSaving(true);
+      try {
+        // Save to Supabase
+        await boardsDb.update(boardId, { name: title.trim() });
+        // Invalidate queries to refresh UI
+        queryClient.invalidateQueries({ queryKey: ['workspace-boards'] });
+        queryClient.invalidateQueries({ queryKey: ['user-boards'] });
+        toast.success("Board title updated");
+      } catch (error) {
+        toast.error("Failed to update board title");
+      } finally {
+        setIsSaving(false);
+      }
     }
     setIsEditing(false);
   };

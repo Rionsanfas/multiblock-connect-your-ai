@@ -121,8 +121,7 @@ export function BlockChatModal({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   
-  // Smart auto-scroll state - only auto-scroll when user is at bottom
-  const [isUserAtBottom, setIsUserAtBottom] = useState(true);
+  // Scroll button state - NO auto-scroll, user controls scroll position
   const [showScrollButton, setShowScrollButton] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -175,16 +174,11 @@ export function BlockChatModal({
 
   // Get all blocks on this board for the sidebar
   const boardBlocks = useBoardBlocks(block?.board_id || '');
-  // Smart auto-scroll: only scroll if user is at bottom
-  useEffect(() => {
-    if (isUserAtBottom) {
-      messagesEndRef.current?.scrollIntoView({
-        behavior: "smooth"
-      });
-    }
-  }, [blockMessages, streamingContent, isUserAtBottom]);
   
-  // Handle scroll events to detect user position
+  // NO auto-scroll during streaming - user has full control
+  // Removed auto-scroll useEffect entirely
+  
+  // Handle scroll events to show/hide scroll-to-bottom button
   const handleChatScroll = useCallback(() => {
     const container = chatContainerRef.current;
     if (!container) return;
@@ -192,14 +186,12 @@ export function BlockChatModal({
     const threshold = 100; // pixels from bottom
     const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
     
-    setIsUserAtBottom(isNearBottom);
     setShowScrollButton(!isNearBottom);
   }, []);
   
-  // Scroll to bottom handler
+  // Scroll to bottom handler (manual only)
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    setIsUserAtBottom(true);
     setShowScrollButton(false);
   }, []);
   useEffect(() => {
