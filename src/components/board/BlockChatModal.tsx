@@ -261,14 +261,19 @@ export function BlockChatModal({
     }
   };
   const handleTitleSave = async () => {
-    if (title.trim() && blockId) {
+    if (title.trim() && blockId && block) {
       try {
         await blocksDb.update(blockId, {
           title: title.trim()
         });
+        // Invalidate both block and board-blocks caches for consistency
         queryClient.invalidateQueries({
           queryKey: ['block', blockId]
         });
+        queryClient.invalidateQueries({
+          queryKey: ['board-blocks', block.board_id]
+        });
+        toast.success('Title updated');
       } catch {
         toast.error('Failed to save title');
       }

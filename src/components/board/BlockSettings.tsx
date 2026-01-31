@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Pencil, Check, Loader2 } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { Input } from "@/components/ui/input";
@@ -8,25 +8,49 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppStore } from "@/store/useAppStore";
 import { useBlockActions } from "@/hooks/useBoardBlocks";
+import { useBlock } from "@/hooks/useBlockData";
 import { getChatModels, PROVIDERS, getModelConfig } from "@/config/models";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { toast } from "sonner";
 
 interface BlockSettingsProps {
   blockId: string;
+  boardId: string;
 }
 
-export function BlockSettings({ blockId }: BlockSettingsProps) {
-  const { blocks, selectBlock } = useAppStore();
-  const block = blocks.find((b) => b.id === blockId);
+export function BlockSettings({ blockId, boardId }: BlockSettingsProps) {
+  const { selectBlock } = useAppStore();
+  // Read block from React Query cache (Supabase is source of truth)
+  const { data: blockData } = useBlock(blockId);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [title, setTitle] = useState(block?.title || "");
+  const [title, setTitle] = useState("");
   const [isSwitching, setIsSwitching] = useState(false);
   
-  const { updateBlock } = useBlockActions(block?.board_id || '');
+  const { updateBlock } = useBlockActions(boardId);
   const configuredProviders = useConfiguredProviders();
 
-  if (!block) return null;
+  // Sync title state when block data changes
+  useEffect(() => {
+    if (blockData?.title) {
+      setTitle(blockData.title);
+    }
+  }, [blockData?.title]);
+
+  if (!blockData) return null;
+
+  // Transform to legacy format for UI compatibility
+  const block = {
+    id: blockData.id,
+    board_id: blockData.board_id,
+    title: blockData.title || 'Untitled Block',
+    type: 'chat' as const,
+    model_id: blockData.model_id,
+    system_prompt: blockData.system_prompt || '',
+    config: { temperature: 0.7, max_tokens: 2048 },
+    position: { x: blockData.position_x, y: blockData.position_y },
+    created_at: blockData.created_at,
+    updated_at: blockData.updated_at,
+  };
 
   // Only show chat models for block settings
   const allModels = getChatModels().map((m) => ({
