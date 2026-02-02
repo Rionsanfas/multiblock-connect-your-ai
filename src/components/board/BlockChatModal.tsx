@@ -44,6 +44,9 @@ import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import type { Message as LegacyMessage } from "@/types";
 import type { ChatReference } from "@/types/chat-references";
 import { createReference, formatReferencesForContext } from "@/types/chat-references";
+import { useMemoryActions, useBoardMemory, formatMemoryForContext } from "@/hooks/useBoardMemory";
+import { SaveToMemoryDialog } from "@/components/board/SaveToMemoryDialog";
+
 interface BlockChatModalProps {
   blockId: string;
 }
@@ -86,6 +89,14 @@ export function BlockChatModal({
 
   // References state
   const [pendingReferences, setPendingReferences] = useState<ChatReference[]>([]);
+  
+  // Save to Memory dialog state
+  const [saveMemoryDialog, setSaveMemoryDialog] = useState<{
+    isOpen: boolean;
+    messageId: string;
+    content: string;
+    role: 'user' | 'assistant';
+  } | null>(null);
   
   // Track if block has been auto-named (only name once from first message)
   const hasAutoNamedRef = useRef(false);
@@ -165,6 +176,9 @@ export function BlockChatModal({
   } = useMessageActions(blockId);
   const blockUsage = useBlockUsage(blockId);
   const incomingContext = useBlockIncomingContext(blockId);
+
+  // Board memory - fetched per board
+  const { data: boardMemoryItems = [] } = useBoardMemory(block?.board_id);
 
   // Live sync: automatically update context when connected blocks send messages
   useBlockContextSync(blockId);
@@ -357,10 +371,19 @@ export function BlockChatModal({
     setMessageStatus('waiting_llm');
     setStreamingContent("");
     const connectedContext = incomingContext.length > 0 ? incomingContext.map(ctx => `[From "${ctx.source_block_title}"]:\n${ctx.content}`).join('\n\n') : undefined;
+    
+    // Format board memory for context injection
+    const boardMemory = formatMemoryForContext(boardMemoryItems);
+    
     const cacheMessages = queryClient.getQueryData(['block-messages', blockId]) as any[] | undefined ?? [];
-    const history = chatService.buildConversationHistory(cacheMessages.map(m => toDisplayMessage(m)), activeModelId,
-    // Use validated model ID
-    block.system_prompt, undefined, connectedContext);
+    const history = chatService.buildConversationHistory(
+      cacheMessages.map(m => toDisplayMessage(m)), 
+      activeModelId,
+      block.system_prompt, 
+      undefined, 
+      connectedContext,
+      boardMemory
+    );
 
     // Use the validated model ID for the request, pass boardId for API key resolution
     await chatService.streamChat(
@@ -390,7 +413,7 @@ export function BlockChatModal({
       block.board_id,
       block.id
     );
-  }, [block, blockId, blockMessages.length, hasKeyForCurrentProvider, incomingContext, isSwitchingModel, messageStatus, navigate, persistMessage, queryClient]);
+  }, [block, blockId, blockMessages.length, boardMemoryItems, hasKeyForCurrentProvider, incomingContext, isSwitchingModel, messageStatus, navigate, persistMessage, queryClient]);
   const handleStop = useCallback(() => {
     chatService.stopGeneration();
     if (streamingContent) {
@@ -411,6 +434,12 @@ export function BlockChatModal({
   const handleDeleteMessage = useCallback(async (id: string) => {
     await deletePersistedMessage(id);
   }, [deletePersistedMessage]);
+
+  // Save to memory handler
+  const handleSaveToMemory = useCallback((messageId: string, content: string, role: 'user' | 'assistant') => {
+    setSaveMemoryDialog({ isOpen: true, messageId, content, role });
+  }, []);
+
   const isRunning = messageStatus !== 'idle' && messageStatus !== 'error';
 
   // Show brief loading state - optimistic blocks should load instantly from cache
@@ -636,7 +665,7 @@ export function BlockChatModal({
                 )}
               >
                 {messagesLoading ? <div className="flex items-center justify-center h-full"><Spinner className="h-5 w-5 sm:h-6 sm:w-6" /></div> : blockMessages.length === 0 && !streamingContent ? <div className="flex flex-col items-center justify-center h-full text-center px-4"><Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/50 mb-2 sm:mb-3" /><p className="text-muted-foreground text-sm sm:text-base">{needsModelSelection ? "Select a model above to start chatting" : "Start a conversation"}</p></div> : <>
-                    {blockMessages.map(message => <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} selectable />)}
+                    {blockMessages.map(message => <ChatMessage key={message.id} message={toDisplayMessage(message)} onRetry={message.role === 'assistant' ? () => handleRetry(toDisplayMessage(message)) : undefined} onDelete={() => handleDeleteMessage(message.id)} onSaveToMemory={handleSaveToMemory} selectable />)}
                     {streamingContent && <ChatMessage message={{
                   id: 'streaming',
                   block_id: blockId,
@@ -677,5 +706,18 @@ export function BlockChatModal({
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Save to Memory Dialog */}
+      {saveMemoryDialog && block && (
+        <SaveToMemoryDialog
+          isOpen={saveMemoryDialog.isOpen}
+          onClose={() => setSaveMemoryDialog(null)}
+          boardId={block.board_id}
+          blockId={blockId}
+          messageId={saveMemoryDialog.messageId}
+          initialContent={saveMemoryDialog.content}
+          messageRole={saveMemoryDialog.role}
+        />
+      )}
     </>;
 }

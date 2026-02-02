@@ -285,13 +285,15 @@ class ChatService {
 
   /**
    * Build conversation history with model identity and context
+   * @param boardMemory - Formatted board memory string (from formatMemoryForContext)
    */
   buildConversationHistory(
     messages: Message[],
     modelId: string,
     systemPrompt?: string,
     sourceContext?: string,
-    incomingBlockContext?: string
+    incomingBlockContext?: string,
+    boardMemory?: string
   ): ChatMessage[] {
     const history: ChatMessage[] = [];
 
@@ -306,6 +308,11 @@ class ChatService {
     systemContent = `You are ${modelName}, an AI model by ${providerName}. ` +
       `When asked about your identity, always truthfully state that you are ${modelName}.\n\n` +
       systemContent;
+
+    // Inject board memory FIRST (highest priority context)
+    if (boardMemory) {
+      systemContent = boardMemory + '\n\n' + systemContent;
+    }
 
     if (sourceContext) {
       systemContent += `\n\nContext provided:\n"${sourceContext}"`;

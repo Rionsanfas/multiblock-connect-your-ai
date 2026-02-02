@@ -4,10 +4,12 @@ import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ModelSelector } from "./ModelSelector";
+import { BoardMemoryPanel } from "./BoardMemoryPanel";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { getChatModels, type Provider } from "@/config/models";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+
 interface BlocksSidebarProps {
   boardId: string;
   onCenterView?: () => void;
@@ -94,6 +96,18 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
           </TooltipTrigger>
           <TooltipContent side="right">
             <p>Center View</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Board Memory Panel */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <BoardMemoryPanel boardId={boardId} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <p>Board Memory</p>
           </TooltipContent>
         </Tooltip>
       </aside>

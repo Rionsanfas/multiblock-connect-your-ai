@@ -186,6 +186,71 @@ export type Database = {
           },
         ]
       }
+      board_memory: {
+        Row: {
+          board_id: string
+          content: string
+          created_at: string
+          id: string
+          source_block_id: string | null
+          source_message_id: string | null
+          type: Database["public"]["Enums"]["memory_item_type"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          board_id: string
+          content: string
+          created_at?: string
+          id?: string
+          source_block_id?: string | null
+          source_message_id?: string | null
+          type?: Database["public"]["Enums"]["memory_item_type"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          board_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          source_block_id?: string | null
+          source_message_id?: string | null
+          type?: Database["public"]["Enums"]["memory_item_type"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_memory_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_memory_source_block_id_fkey"
+            columns: ["source_block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_memory_source_message_id_fkey"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_memory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boards: {
         Row: {
           api_key_id: string | null
@@ -1450,6 +1515,7 @@ export type Database = {
         | "groq"
         | "together"
         | "perplexity"
+      memory_item_type: "fact" | "decision" | "constraint" | "note"
       subscription_status:
         | "active"
         | "canceled"
@@ -1606,6 +1672,7 @@ export const Constants = {
         "together",
         "perplexity",
       ],
+      memory_item_type: ["fact", "decision", "constraint", "note"],
       subscription_status: [
         "active",
         "canceled",

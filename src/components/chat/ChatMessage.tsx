@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { Copy, Check, Trash2, RotateCcw, Paperclip, Quote, User, Bot } from 'lucide-react';
+import { useState } from 'react';
+import { Copy, Check, Trash2, RotateCcw, Paperclip, Quote, User, Bot, Bookmark } from 'lucide-react';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ interface ChatMessageProps {
   message: Message;
   onDelete?: (id: string) => void;
   onRetry?: (message: Message) => void;
+  onSaveToMemory?: (messageId: string, content: string, role: 'user' | 'assistant') => void;
   attachments?: ChatAttachment[];
   /** References attached to this message */
   references?: ChatReference[];
@@ -23,6 +24,7 @@ export function ChatMessage({
   message,
   onDelete,
   onRetry,
+  onSaveToMemory,
   attachments,
   references,
   isStreaming,
@@ -155,6 +157,16 @@ export function ChatMessage({
                 <Copy className="h-3.5 w-3.5 text-muted-foreground" />
               )}
             </button>
+
+            {onSaveToMemory && (
+              <button
+                onClick={() => onSaveToMemory(message.id, message.content, message.role as 'user' | 'assistant')}
+                className="p-1.5 rounded-md hover:bg-primary/20 transition-colors"
+                title="Save to board memory"
+              >
+                <Bookmark className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+              </button>
+            )}
 
             {isAssistant && onRetry && (
               <button
