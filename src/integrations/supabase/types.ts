@@ -192,6 +192,8 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          keywords: string[] | null
+          scope: Database["public"]["Enums"]["memory_scope"]
           source_block_id: string | null
           source_message_id: string | null
           type: Database["public"]["Enums"]["memory_item_type"]
@@ -203,6 +205,8 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          keywords?: string[] | null
+          scope?: Database["public"]["Enums"]["memory_scope"]
           source_block_id?: string | null
           source_message_id?: string | null
           type?: Database["public"]["Enums"]["memory_item_type"]
@@ -214,6 +218,8 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          keywords?: string[] | null
+          scope?: Database["public"]["Enums"]["memory_scope"]
           source_block_id?: string | null
           source_message_id?: string | null
           type?: Database["public"]["Enums"]["memory_item_type"]
@@ -1516,6 +1522,7 @@ export type Database = {
         | "together"
         | "perplexity"
       memory_item_type: "fact" | "decision" | "constraint" | "note"
+      memory_scope: "board" | "block" | "chat"
       subscription_status:
         | "active"
         | "canceled"
@@ -1673,6 +1680,7 @@ export const Constants = {
         "perplexity",
       ],
       memory_item_type: ["fact", "decision", "constraint", "note"],
+      memory_scope: ["board", "block", "chat"],
       subscription_status: [
         "active",
         "canceled",

@@ -94,6 +94,7 @@ export function formatMemoryForContext(items: MemoryItem[]): string {
 
 /**
  * Hook for memory CRUD operations
+ * @deprecated Use useScopedMemoryActions from useScopedMemory.ts for scope support
  */
 export function useMemoryActions(boardId: string | undefined) {
   const queryClient = useQueryClient();
@@ -121,6 +122,7 @@ export function useMemoryActions(boardId: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['board-memory', boardId] });
+      queryClient.invalidateQueries({ queryKey: ['scoped-board-memory', boardId] });
     },
   });
 
@@ -138,6 +140,7 @@ export function useMemoryActions(boardId: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['board-memory', boardId] });
+      queryClient.invalidateQueries({ queryKey: ['scoped-board-memory', boardId] });
     },
   });
 
@@ -152,6 +155,7 @@ export function useMemoryActions(boardId: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['board-memory', boardId] });
+      queryClient.invalidateQueries({ queryKey: ['scoped-board-memory', boardId] });
     },
   });
 

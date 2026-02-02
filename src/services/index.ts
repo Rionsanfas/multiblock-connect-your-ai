@@ -40,3 +40,18 @@ export {
   getQualityBadge,
   estimateCost,
 } from '@/hooks/useModelConfig';
+
+// Memory services
+export {
+  filterMemoryItems,
+  formatMemoryForPrompt,
+  buildMemoryContext,
+  getMemoryForBlock,
+  extractKeywords,
+} from './memoryInjectionService';
+export type {
+  MemoryScope,
+  ScopedMemoryItem,
+  MemoryFilterOptions,
+  InjectedMemoryResult,
+} from './memoryInjectionService';
