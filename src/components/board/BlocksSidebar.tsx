@@ -4,7 +4,7 @@ import { useBoardBlocks, useBlockActions } from "@/hooks/useBoardBlocks";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ModelSelector } from "./ModelSelector";
-import { BoardMemoryPanel } from "./BoardMemoryPanel";
+import { ScopedMemoryPanel } from "./ScopedMemoryPanel";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { getChatModels, type Provider } from "@/config/models";
 import { useNavigate } from "react-router-dom";
@@ -99,11 +99,11 @@ export function BlocksSidebar({ boardId, onCenterView }: BlocksSidebarProps) {
           </TooltipContent>
         </Tooltip>
 
-        {/* Board Memory Panel */}
+        {/* Scoped Memory Panel */}
         <Tooltip>
           <TooltipTrigger asChild>
             <div>
-              <BoardMemoryPanel boardId={boardId} />
+              <ScopedMemoryPanel boardId={boardId} />
             </div>
           </TooltipTrigger>
           <TooltipContent side="right">

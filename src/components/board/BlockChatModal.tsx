@@ -44,8 +44,8 @@ import { useIsMobile, useIsTablet } from "@/hooks/use-mobile";
 import type { Message as LegacyMessage } from "@/types";
 import type { ChatReference } from "@/types/chat-references";
 import { createReference, formatReferencesForContext } from "@/types/chat-references";
-import { useMemoryActions, useBoardMemory, formatMemoryForContext } from "@/hooks/useBoardMemory";
-import { SaveToMemoryDialog } from "@/components/board/SaveToMemoryDialog";
+import { useScopedBoardMemory, useScopedMemoryActions, getMemoryForBlock } from "@/hooks/useScopedMemory";
+import { SaveToScopedMemoryDialog } from "@/components/board/SaveToScopedMemoryDialog";
 
 interface BlockChatModalProps {
   blockId: string;
@@ -177,8 +177,8 @@ export function BlockChatModal({
   const blockUsage = useBlockUsage(blockId);
   const incomingContext = useBlockIncomingContext(blockId);
 
-  // Board memory - fetched per board
-  const { data: boardMemoryItems = [] } = useBoardMemory(block?.board_id);
+  // Board memory - fetched per board with scoped filtering
+  const { data: boardMemoryItems = [] } = useScopedBoardMemory(block?.board_id);
 
   // Live sync: automatically update context when connected blocks send messages
   useBlockContextSync(blockId);
@@ -372,8 +372,8 @@ export function BlockChatModal({
     setStreamingContent("");
     const connectedContext = incomingContext.length > 0 ? incomingContext.map(ctx => `[From "${ctx.source_block_title}"]:\n${ctx.content}`).join('\n\n') : undefined;
     
-    // Format board memory for context injection
-    const boardMemory = formatMemoryForContext(boardMemoryItems);
+    // Get scoped memory for this specific block (board-level + block-specific items)
+    const { formattedContent: boardMemory } = getMemoryForBlock(boardMemoryItems, blockId);
     
     const cacheMessages = queryClient.getQueryData(['block-messages', blockId]) as any[] | undefined ?? [];
     const history = chatService.buildConversationHistory(
@@ -709,14 +709,14 @@ export function BlockChatModal({
       
       {/* Save to Memory Dialog */}
       {saveMemoryDialog && block && (
-        <SaveToMemoryDialog
-          isOpen={saveMemoryDialog.isOpen}
-          onClose={() => setSaveMemoryDialog(null)}
+        <SaveToScopedMemoryDialog
+          open={saveMemoryDialog.isOpen}
+          onOpenChange={(open) => !open && setSaveMemoryDialog(null)}
           boardId={block.board_id}
           blockId={blockId}
           messageId={saveMemoryDialog.messageId}
           initialContent={saveMemoryDialog.content}
-          messageRole={saveMemoryDialog.role}
+          sourceRole={saveMemoryDialog.role}
         />
       )}
     </>;
