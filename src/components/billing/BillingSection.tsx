@@ -29,14 +29,10 @@ import { Progress } from "@/components/ui/progress";
 // Plan display names mapping
 const PLAN_DISPLAY_NAMES: Record<string, string> = {
   'free': 'Free',
-  'starter-individual-annual': 'Starter Individual',
-  'pro-individual-annual': 'Pro Individual',
-  'starter-team-annual': 'Starter Team',
-  'pro-team-annual': 'Pro Team',
-  'ltd-starter-individual': 'Lifetime Starter',
-  'ltd-pro-individual': 'Lifetime Pro',
-  'ltd-starter-team': 'Lifetime Starter Team',
-  'ltd-pro-team': 'Lifetime Pro Team',
+  'starter-individual-annual': 'Pro',
+  'starter-team-annual': 'Pro Team',
+  'ltd-starter-individual': 'Pro Lifetime',
+  'ltd-starter-team': 'Pro Lifetime Team',
 };
 
 function getStatusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {

@@ -91,18 +91,6 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     );
   }
   
-  // Enterprise - contact sales
-  if (plan.tier === 'enterprise') {
-    return (
-      <a
-        href="mailto:sales@multiblock.ai?subject=Enterprise%20Plan%20Inquiry"
-        className={`${getButtonClass()} ${className}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        Contact Sales
-      </a>
-    );
-  }
   
   // CRITICAL: Compare by PLAN ID, not tier
   // This ensures "pro-team-annual" matches exactly, not just "pro" tier

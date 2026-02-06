@@ -8,7 +8,7 @@ const corsHeaders = {
 
 /**
  * Plan configuration - maps plan_key to checkout URLs
- * Polar checkout links support metadata via query params
+ * Only 4 plans: Pro Individual, Pro Team, Pro Lifetime, Pro Lifetime Team
  */
 const PLAN_CONFIG: Record<string, { 
   checkoutUrl: string; 
@@ -18,72 +18,36 @@ const PLAN_CONFIG: Record<string, {
   seats: number;
   isLifetime: boolean;
 }> = {
-  // Individual Annual Plans
   'starter-individual-annual': {
     checkoutUrl: 'https://buy.polar.sh/polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v',
-    name: 'Starter Individual (Annual)',
+    name: 'Pro (Annual)',
     boards: 50,
     storageGb: 2,
     seats: 1,
     isLifetime: false,
   },
-  'pro-individual-annual': {
-    checkoutUrl: 'https://buy.polar.sh/polar_cl_0ANxHBAcEKSneKreosoVddmOPsNRvBMDaHKgv1QrrU9',
-    name: 'Pro Individual (Annual)',
-    boards: 100,
-    storageGb: 4,
-    seats: 1,
-    isLifetime: false,
-  },
-  // Team Annual Plans
   'starter-team-annual': {
     checkoutUrl: 'https://buy.polar.sh/polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy',
-    name: 'Starter Team (Annual)',
+    name: 'Pro Team (Annual)',
     boards: 50,
     storageGb: 5,
     seats: 10,
     isLifetime: false,
   },
-  'pro-team-annual': {
-    checkoutUrl: 'https://buy.polar.sh/polar_cl_kEOB6DUJjs7JONbOH91zrlACAQDEub2L9px0f3s4BuS',
-    name: 'Pro Team (Annual)',
-    boards: 100,
-    storageGb: 6,
-    seats: 20,
-    isLifetime: false,
-  },
-  // Individual Lifetime Deals
   'ltd-starter-individual': {
     checkoutUrl: 'https://buy.polar.sh/polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw',
-    name: 'Lifetime Starter Individual',
+    name: 'Pro Lifetime',
     boards: 50,
     storageGb: 6,
     seats: 1,
     isLifetime: true,
   },
-  'ltd-pro-individual': {
-    checkoutUrl: 'https://buy.polar.sh/polar_cl_j6g5GaxCZ3MqM7FVpqt6vbsqk8zUUuLyUOIgR03k0oU',
-    name: 'Lifetime Pro Individual',
-    boards: 150,
-    storageGb: 7,
-    seats: 1,
-    isLifetime: true,
-  },
-  // Team Lifetime Deals
   'ltd-starter-team': {
     checkoutUrl: 'https://buy.polar.sh/polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc',
-    name: 'Lifetime Starter Team',
+    name: 'Pro Lifetime Team',
     boards: 150,
     storageGb: 8,
     seats: 10,
-    isLifetime: true,
-  },
-  'ltd-pro-team': {
-    checkoutUrl: 'https://buy.polar.sh/polar_cl_pQBNRD7r0QBz4pp47hOhg21aTfj5MLn9ffRnL0dxbnR',
-    name: 'Lifetime Pro Team',
-    boards: 200,
-    storageGb: 9,
-    seats: 15,
     isLifetime: true,
   },
 };
@@ -133,7 +97,6 @@ serve(async (req) => {
   }
 
   try {
-    // Get authorization header
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       return new Response(
@@ -142,24 +105,20 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      console.error('Auth error:', authError);
       return new Response(
         JSON.stringify({ error: 'Authentication failed' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Parse request body
     const { plan_key, is_addon = false } = await req.json();
     if (!plan_key) {
       return new Response(
@@ -168,62 +127,33 @@ serve(async (req) => {
       );
     }
 
-    // Get plan/addon configuration
     const config = is_addon ? ADDON_CONFIG[plan_key] : PLAN_CONFIG[plan_key];
     if (!config) {
-      console.error('Unknown plan_key:', plan_key);
       return new Response(
         JSON.stringify({ error: 'Invalid plan_key' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Creating checkout URL for user:', user.id, 'plan:', plan_key);
-
-    // Build checkout URL with metadata as query parameters
-    // Polar preserves these in the checkout and passes them to webhooks
     const checkoutUrl = new URL(config.checkoutUrl);
-
-    // ✅ Mandatory linkage: Pass user_id in ALL possible locations Polar might use
-    // customer_external_id: Polar field (shows up as customer_external_id on checkout objects)
     checkoutUrl.searchParams.set('customer_external_id', user.id);
-    // external_customer_id: Polar field (shows up as external_customer_id on checkout objects)
     checkoutUrl.searchParams.set('external_customer_id', user.id);
-    // external_reference_id: Legacy field (sometimes null in payload, but keep it)
     checkoutUrl.searchParams.set('external_reference_id', user.id);
-
-    // Keep metadata too (useful for plan_key / addon detection + fallback user_id)
     checkoutUrl.searchParams.set('metadata[user_id]', user.id);
     checkoutUrl.searchParams.set('metadata[user_email]', user.email || '');
     checkoutUrl.searchParams.set('metadata[plan_key]', plan_key);
     checkoutUrl.searchParams.set('metadata[is_addon]', is_addon ? 'true' : 'false');
-
-    // Pre-fill customer email
     checkoutUrl.searchParams.set('customer_email', user.email || '');
-
-    // Enable embed mode for modal display
     checkoutUrl.searchParams.set('embed', 'true');
-
-    console.log('Checkout params:', {
-      user_id: user.id,
-      user_email: user.email,
-      plan_key: plan_key,
-      customer_external_id: user.id,
-      external_reference_id: user.id,
-    });
-
-    const finalUrl = checkoutUrl.toString();
-    console.log('Generated checkout URL:', finalUrl);
 
     return new Response(
       JSON.stringify({ 
-        checkout_url: finalUrl,
-        plan_key: plan_key,
-        is_addon: is_addon,
+        checkout_url: checkoutUrl.toString(),
+        plan_key,
+        is_addon,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
     console.error('Checkout creation error:', error);
     return new Response(
