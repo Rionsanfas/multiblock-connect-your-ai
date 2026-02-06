@@ -37,7 +37,7 @@ const Features = () => {
             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             Features
           </span>
-          <h2 className="font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
+          <h2 className="font-display italic font-bold text-foreground mt-4 text-wrap-balance text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 sm:mb-4">
             The Problems We Solve
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto text-break text-sm sm:text-base">
@@ -62,7 +62,7 @@ const Features = () => {
                 </div>
 
                 {/* Title */}
-                <h3 className="font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2 lg:mb-3">
+                <h3 className="font-display font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2 lg:mb-3">
                   {feature.title}
                 </h3>
 
@@ -86,7 +86,7 @@ const Features = () => {
 
               <div className="lg:flex-1">
                 {/* Title */}
-                <h3 className="font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2">
+                <h3 className="font-display font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2">
                   {features[2].title}
                 </h3>
 
