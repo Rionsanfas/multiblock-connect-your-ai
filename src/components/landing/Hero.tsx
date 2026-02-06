@@ -50,7 +50,7 @@ const Hero = () => {
           <div className="text-center lg:text-left order-1 lg:order-1 relative z-20">
             {/* Headline with shadow effect */}
             <h1
-              className="font-bold leading-tight text-wrap-balance text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl mb-4 sm:mb-5"
+              className="font-display italic font-bold leading-tight text-wrap-balance text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl mb-4 sm:mb-5"
               style={mainStyle}
             >
               <span
@@ -61,7 +61,7 @@ const Hero = () => {
                     "0 2px 20px hsl(0 0% 100% / 0.35), 0 4px 40px hsl(0 0% 100% / 0.25), 0 8px 80px hsl(0 0% 100% / 0.15), 0 0 120px hsl(0 0% 100% / 0.1)",
                 }}
               >
-                Share any chat between
+                Never let your AI
               </span>
               <span
                 className="block"
@@ -75,7 +75,7 @@ const Hero = () => {
                     "drop-shadow(0 2px 15px hsl(0 0% 100% / 0.3)) drop-shadow(0 4px 30px hsl(0 0% 100% / 0.2)) drop-shadow(0 8px 50px hsl(0 0% 100% / 0.1))",
                 }}
               >
-                Every AI Model in 1 sec.
+                forget again.
               </span>
             </h1>
 

@@ -38,6 +38,7 @@ export default {
     extend: {
       fontFamily: {
         outfit: ['Outfit', 'sans-serif'],
+        display: ['Playfair Display', 'Georgia', 'serif'],
       },
       /* Fluid font sizes using clamp() */
       fontSize: {
