@@ -385,6 +385,117 @@ class ChatService {
       return;
     }
 
+    // Check if this is an OpenRouter model ID (contains "/" like "openai/gpt-4o")
+    const isOpenRouterModel = modelId.includes('/');
+
+    if (isOpenRouterModel) {
+      // OpenRouter models bypass the built-in model config system
+      // Route directly through chat-proxy with provider='openrouter'
+      console.log(`[ChatService] OpenRouter model: ${modelId}`);
+      
+      this.abortController = new AbortController();
+      const startTime = Date.now();
+      let fullResponse = '';
+      const clientRequestId = crypto.randomUUID();
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          callbacks.onError('Not authenticated. Please log in.');
+          return;
+        }
+
+        const makeRequest = async (accessToken: string) => {
+          return fetch(`${SUPABASE_FUNCTIONS_BASE_URL}/chat-proxy`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              provider: 'openrouter',
+              model_id: modelId,
+              messages: this.formatMessagesWithAttachments(messages, attachments, 'openrouter'),
+              config: {
+                temperature: config?.temperature ?? 0.7,
+                maxTokens: config?.maxTokens ?? 2048,
+              },
+              stream: true,
+              board_id: boardId,
+              block_id: blockId,
+              client_request_id: clientRequestId,
+            }),
+            signal: this.abortController?.signal,
+          });
+        };
+
+        let response = await makeRequest(session.access_token);
+        if (response.status === 401) {
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          const nextToken = refreshed.session?.access_token;
+          if (nextToken) {
+            response = await makeRequest(nextToken);
+          }
+        }
+
+        if (!response.ok) {
+          let errorMessage = `Request failed (${response.status})`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {}
+          callbacks.onError(errorMessage);
+          return;
+        }
+
+        // Stream response (OpenRouter uses OpenAI-compatible SSE format)
+        const reader = response.body?.getReader();
+        if (!reader) {
+          callbacks.onError('No response body');
+          return;
+        }
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith(':')) continue;
+            if (!trimmed.startsWith('data: ')) continue;
+            const jsonStr = trimmed.slice(6);
+            if (jsonStr === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                fullResponse += content;
+                callbacks.onChunk(content);
+              }
+            } catch {}
+          }
+        }
+
+        const latency = Date.now() - startTime;
+        callbacks.onComplete(fullResponse, { model: modelId, latency_ms: latency });
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          callbacks.onComplete(fullResponse, { model: modelId });
+          return;
+        }
+        callbacks.onError(error instanceof Error ? error.message : 'Unknown error');
+      } finally {
+        this.abortController = null;
+      }
+      return;
+    }
+
     const hasImages = attachments?.some(a => a.type.startsWith('image/')) || false;
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     const messageContent = typeof lastUserMessage?.content === 'string' 
