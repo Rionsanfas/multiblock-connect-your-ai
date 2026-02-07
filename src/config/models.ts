@@ -2,7 +2,7 @@
 // This is the SINGLE SOURCE OF TRUTH for all models and providers
 
 // Provider type matches Supabase llm_provider enum
-export type Provider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek' | 'mistral' | 'cohere' | 'together' | 'perplexity' | 'openrouter';
+export type Provider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek' | 'mistral' | 'cohere' | 'together' | 'perplexity';
 
 // Model type categories - TEXT + IMAGE + VIDEO ONLY (no audio)
 export type ModelType = 'chat' | 'image' | 'video' | 'embedding' | 'code' | 'rerank' | 'vision';
@@ -110,14 +110,6 @@ export const PROVIDERS: Record<Provider, ProviderInfo> = {
     website: 'https://perplexity.ai',
     apiKeyUrl: 'https://www.perplexity.ai/settings/api',
     description: 'AI-powered search and routing',
-  },
-  openrouter: {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    color: 'hsl(260 70% 55%)',
-    website: 'https://openrouter.ai',
-    apiKeyUrl: 'https://openrouter.ai/keys',
-    description: 'Unified API for 200+ AI models',
   },
 };
 

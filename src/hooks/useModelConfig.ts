@@ -75,7 +75,6 @@ export function useModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
       cohere: [],
       together: [],
       perplexity: [],
-      openrouter: [],
     };
 
     MODEL_CONFIGS.forEach((model) => {
@@ -132,7 +131,6 @@ export function useModelsGroupedByTypeAndProvider(): {
       cohere: [],
       together: [],
       perplexity: [],
-      openrouter: [],
     });
 
     const result = {
@@ -166,7 +164,6 @@ export function useChatModelsGroupedByProvider(): Record<Provider, ModelConfig[]
       cohere: [],
       together: [],
       perplexity: [],
-      openrouter: [],
     };
 
     getChatModels().forEach((model) => {

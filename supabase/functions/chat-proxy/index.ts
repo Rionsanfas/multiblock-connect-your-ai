@@ -20,7 +20,6 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
   cohere: "https://api.cohere.com/v2/chat",
   together: "https://api.together.xyz/v1/chat/completions",
   perplexity: "https://api.perplexity.ai/chat/completions",
-  openrouter: "https://openrouter.ai/api/v1/chat/completions",
 };
 
 // OpenRouter endpoint and configuration
@@ -1438,22 +1437,6 @@ serve(async (req) => {
       };
     } else if (provider === "perplexity") {
       headers["Authorization"] = `Bearer ${apiKey}`;
-      requestBody = {
-        model: model_id,
-        messages,
-        stream,
-        temperature: config?.temperature ?? 0.7,
-        max_tokens: config?.maxTokens || 4096,
-      };
-    } else if (provider === "openrouter") {
-      // OpenRouter as a first-class provider - route directly to OpenRouter API
-      headers["Authorization"] = `Bearer ${apiKey}`;
-      headers["HTTP-Referer"] = OPENROUTER_REFERER;
-      headers["X-Title"] = OPENROUTER_TITLE;
-      
-      // model_id is already the full OpenRouter model ID (e.g. "openai/gpt-4o")
-      log('OpenRouter direct routing', { model_id });
-      
       requestBody = {
         model: model_id,
         messages,

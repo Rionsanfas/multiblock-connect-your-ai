@@ -166,9 +166,6 @@ export const api = {
       if (provider === 'deepseek' && !key.startsWith('sk-')) {
         return { valid: false, error: 'Invalid DeepSeek key format' };
       }
-      if (provider === 'openrouter' && !key.startsWith('sk-or-')) {
-        return { valid: false, error: 'Invalid OpenRouter key format. Keys should start with "sk-or-"' };
-      }
       
       // For now, accept keys that pass format validation
       return { valid: true };
@@ -253,11 +250,6 @@ export const api = {
         google: 'google',
         xai: 'xai',
         deepseek: 'deepseek',
-        mistral: 'mistral',
-        cohere: 'cohere',
-        together: 'together',
-        perplexity: 'perplexity',
-        openrouter: 'openrouter',
       };
       
       const supabaseProvider = providerMap[provider];

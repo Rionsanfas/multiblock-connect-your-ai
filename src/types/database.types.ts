@@ -8,7 +8,7 @@
 // ENUMS
 // ============================================
 
-export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek' | 'mistral' | 'cohere' | 'together' | 'perplexity' | 'openrouter';
+export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek' | 'mistral' | 'cohere' | 'together' | 'perplexity';
 
 export type AppRole = 'user' | 'admin' | 'super_admin';
 
@@ -579,7 +579,6 @@ export const PROVIDER_INFO: Record<LLMProvider, { name: string; icon: string; co
   cohere: { name: 'Cohere', icon: '🟣', color: '#a855f7' },
   together: { name: 'Together.ai', icon: '🔵', color: '#3b82f6' },
   perplexity: { name: 'Perplexity', icon: '🔵', color: '#06b6d4' },
-  openrouter: { name: 'OpenRouter', icon: '🟣', color: '#7c3aed' },
 };
 
 export const TIER_INFO: Record<SubscriptionTier, { name: string; color: string }> = {

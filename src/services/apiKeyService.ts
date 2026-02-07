@@ -169,11 +169,6 @@ export const apiKeyService = {
           return { valid: false, error: 'Invalid Google API key format' };
         }
         break;
-      case 'openrouter':
-        if (!key.startsWith('sk-or-')) {
-          return { valid: false, error: 'OpenRouter keys should start with "sk-or-"' };
-        }
-        break;
     }
 
     return { valid: true };

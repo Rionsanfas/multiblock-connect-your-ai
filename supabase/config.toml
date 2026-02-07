@@ -27,6 +27,3 @@ verify_jwt = true
 
 [functions.get-signed-url]
 verify_jwt = true
-
-[functions.openrouter-models]
-verify_jwt = true
