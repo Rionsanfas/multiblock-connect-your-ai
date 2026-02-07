@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, ChevronDown, ChevronUp, Lock, Plus, Zap, Star, ExternalLink, Image, Video, MessageSquare, Music, Code, Search, Layers } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Lock, Plus, Zap, Star, ExternalLink, Image, Video, MessageSquare, Code, Search, Layers, Globe } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { useConfiguredProviders } from "@/hooks/useApiKeys";
 import { useAvailableProviders } from "@/hooks/useModelConfig";
+import { useOpenRouterModels, type OpenRouterModel } from "@/hooks/useOpenRouterModels";
 import { cn } from "@/lib/utils";
 import { useModelDisableStore } from "@/store/useModelDisableStore";
 
@@ -45,17 +46,6 @@ function getModelTypeIcon(type: ModelType) {
   }
 }
 
-// Get tab color for model type
-function getTypeColor(type: ModelType) {
-  switch (type) {
-    case 'image': return 'text-purple-400';
-    case 'video': return 'text-orange-400';
-    case 'chat': return 'text-green-400';
-    case 'code': return 'text-cyan-400';
-    default: return 'text-foreground';
-  }
-}
-
 // Group models by provider for a specific type
 function getModelsGroupedByProviderForType(type: ModelType): Record<Provider, ModelConfig[]> {
   const grouped: Partial<Record<Provider, ModelConfig[]>> = {};
@@ -72,17 +62,14 @@ function getModelsGroupedByProviderForType(type: ModelType): Record<Provider, Mo
   return grouped as Record<Provider, ModelConfig[]>;
 }
 
-// Get all image models
 function getImageModels(): ModelConfig[] {
   return MODEL_CONFIGS.filter(m => m.type === 'image');
 }
 
-// Get all video models
 function getVideoModels(): ModelConfig[] {
   return MODEL_CONFIGS.filter(m => m.type === 'video');
 }
 
-// Get all chat models
 function getChatModels(): ModelConfig[] {
   return MODEL_CONFIGS.filter(m => m.type === 'chat');
 }
@@ -234,6 +221,166 @@ function ProviderSection({
   );
 }
 
+// OpenRouter models section
+interface OpenRouterSectionProps {
+  models: OpenRouterModel[];
+  hasKey: boolean;
+  selectedModelId?: string;
+  onSelect: (modelId: string) => void;
+  onAddApiKey?: (provider: Provider) => void;
+  isLoading: boolean;
+}
+
+function OpenRouterSection({
+  models,
+  hasKey,
+  selectedModelId,
+  onSelect,
+  onAddApiKey,
+  isLoading,
+}: OpenRouterSectionProps) {
+  const [expanded, setExpanded] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredModels = search
+    ? models.filter(m => 
+        m.name.toLowerCase().includes(search.toLowerCase()) ||
+        m.id.toLowerCase().includes(search.toLowerCase())
+      )
+    : models;
+
+  const visibleModels = expanded ? filteredModels : filteredModels.slice(0, 10);
+  const hasMore = filteredModels.length > 10;
+
+  if (!hasKey) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-purple-400" />
+            <h3 className="font-semibold text-base">OpenRouter Models</h3>
+            <Badge variant="outline" className="text-xs gap-1 text-muted-foreground">
+              <Lock className="h-3 w-3" />
+              No API Key
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open('https://openrouter.ai/keys', '_blank', 'noopener,noreferrer')}
+              className="text-xs gap-1 text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Get API Key
+            </Button>
+            {onAddApiKey && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onAddApiKey('openrouter')}
+                className="text-xs gap-1"
+              >
+                <Plus className="h-3 w-3" />
+                Add Key
+              </Button>
+            )}
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Add your OpenRouter API key to access 200+ models from all providers through a single key.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Globe className="h-4 w-4 text-purple-400" />
+        <h3 className="font-semibold text-base">OpenRouter Models</h3>
+        <Badge variant="secondary" className="text-xs gap-1 bg-green-500/20 text-green-400">
+          <Check className="h-3 w-3" />
+          Connected
+        </Badge>
+        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-muted/50">
+          {models.length}
+        </Badge>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-4 text-sm text-muted-foreground">Loading models...</div>
+      ) : (
+        <>
+          {models.length > 10 && (
+            <input
+              type="text"
+              placeholder="Search OpenRouter models..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-xl bg-secondary/40 border border-border/20 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          )}
+
+          <div className="grid gap-2">
+            {visibleModels.map((model) => {
+              const isSelected = model.id === selectedModelId;
+              return (
+                <button
+                  key={model.id}
+                  onClick={() => onSelect(model.id)}
+                  className={cn(
+                    "w-full p-3 rounded-xl text-left transition-all",
+                    "border border-border/20",
+                    "hover:bg-accent/50 cursor-pointer",
+                    isSelected && "ring-2 ring-primary bg-primary/10"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{model.name}</span>
+                      {model.context_length >= 100000 && (
+                        <Badge variant="secondary" className="text-[9px] px-1 py-0">
+                          {Math.round(model.context_length / 1000)}K
+                        </Badge>
+                      )}
+                    </div>
+                    {isSelected && <Check className="h-4 w-4 text-primary" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1 font-mono">
+                    {model.id}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {hasMore && !search && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded(!expanded)}
+              className="w-full text-xs text-muted-foreground gap-1"
+            >
+              {expanded ? (
+                <>
+                  <ChevronUp className="h-3 w-3" />
+                  Show less
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3 w-3" />
+                  See {filteredModels.length - 10} more models
+                </>
+              )}
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ModelSelector({ 
   open, 
   onOpenChange, 
@@ -245,6 +392,7 @@ export function ModelSelector({
 }: ModelSelectorProps) {
   const providers = useAvailableProviders();
   const configuredProviders = useConfiguredProviders();
+  const { models: openRouterModels, isLoading: orLoading, hasKey: hasOrKey } = useOpenRouterModels();
   const [expandedProviders, setExpandedProviders] = useState<Set<Provider>>(new Set());
   const [activeTab, setActiveTab] = useState<string>(defaultTab);
 
@@ -266,7 +414,12 @@ export function ModelSelector({
     onOpenChange(false);
   };
 
-  // Get models grouped by provider for each type
+  const handleOpenRouterSelect = (modelId: string) => {
+    onSelect(modelId);
+    onOpenChange(false);
+  };
+
+  // Get models grouped by provider for each type (excluding openrouter from default)
   const imageModelsByProvider = getModelsGroupedByProviderForType('image');
   const videoModelsByProvider = getModelsGroupedByProviderForType('video');
   const chatModelsByProvider = getModelsGroupedByProviderForType('chat');
@@ -275,9 +428,12 @@ export function ModelSelector({
   const imageCount = getImageModels().length;
   const videoCount = getVideoModels().length;
   const chatCount = getChatModels().length;
+  const orCount = openRouterModels.length;
 
   const renderProviderSections = (modelsByProvider: Record<Provider, ModelConfig[]>) => {
-    const providersWithModels = providers.filter(p => modelsByProvider[p.id]?.length > 0);
+    // Filter out openrouter from default providers (it gets its own section)
+    const providersWithModels = providers
+      .filter(p => p.id !== 'openrouter' && modelsByProvider[p.id]?.length > 0);
     
     if (providersWithModels.length === 0) {
       return (
@@ -317,18 +473,27 @@ export function ModelSelector({
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Select Model</DialogTitle>
           <p className="text-sm text-muted-foreground">
-            Choose a model from your connected providers
+            Choose from default providers or your OpenRouter models
           </p>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="chat" className="gap-1 whitespace-nowrap shrink-0">
               <MessageSquare className={cn("h-4 w-4 shrink-0", activeTab === 'chat' && "text-green-400")} />
               <span className="shrink-0">Chat</span>
               <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5 shrink-0">
                 {chatCount}
               </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="openrouter" className="gap-1 whitespace-nowrap shrink-0">
+              <Globe className={cn("h-4 w-4 shrink-0", activeTab === 'openrouter' && "text-purple-400")} />
+              <span className="shrink-0">OpenRouter</span>
+              {orCount > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-1 py-0 h-5 shrink-0">
+                  {orCount}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="image" className="gap-1 whitespace-nowrap shrink-0">
               <Image className={cn("h-4 w-4 shrink-0", activeTab === 'image' && "text-purple-400")} />
@@ -361,10 +526,27 @@ export function ModelSelector({
               <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                 <p className="text-xs text-green-400">
                   <MessageSquare className="h-3 w-3 inline mr-1" />
-                  Chat models for conversations, reasoning, and text generation
+                  Default models — use your provider API keys
                 </p>
               </div>
               {renderProviderSections(chatModelsByProvider)}
+            </TabsContent>
+
+            <TabsContent value="openrouter" className="mt-0">
+              <div className="mb-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <p className="text-xs text-purple-400">
+                  <Globe className="h-3 w-3 inline mr-1" />
+                  Access 200+ models through OpenRouter with a single API key
+                </p>
+              </div>
+              <OpenRouterSection
+                models={openRouterModels}
+                hasKey={hasOrKey}
+                selectedModelId={selectedModelId}
+                onSelect={handleOpenRouterSelect}
+                onAddApiKey={onAddApiKey}
+                isLoading={orLoading}
+              />
             </TabsContent>
 
             <TabsContent value="image" className="mt-0">
