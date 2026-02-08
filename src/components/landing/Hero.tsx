@@ -70,8 +70,8 @@ const Hero = () => {
             </p>
 
             {/* CTA Button - touch-optimized with no hover dependency */}
-            <div className="flex items-center justify-center lg:justify-start relative z-30" style={buttonsStyle}>
-              <Link to="/auth" className="hero-cta-button group relative inline-flex items-center justify-center overflow-hidden px-6 py-3 sm:px-8 sm:py-3.5 text-sm sm:text-base font-medium rounded-full touch-manipulation">
+            <div className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4 relative z-30" style={buttonsStyle}>
+              <Link to="/auth" className="hero-cta-button group relative inline-flex items-center justify-center overflow-hidden px-5 py-2.5 sm:px-8 sm:py-3.5 text-xs sm:text-base font-medium rounded-full touch-manipulation">
                 {/* Animated edge shine - pointer-events-none */}
                 <span className="absolute inset-0 rounded-full animate-edge-shine pointer-events-none" aria-hidden="true" />
 
@@ -82,6 +82,21 @@ const Hero = () => {
 
                 <span className="relative z-10">​Get productive </span>
               </Link>
+
+              <a
+                href="https://youtu.be/IovzpNyw88A"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 px-5 py-2.5 sm:px-7 sm:py-3.5 text-xs sm:text-base font-medium rounded-full border border-border/40 bg-card/10 backdrop-blur-sm text-foreground/90 hover:bg-card/20 hover:border-border/60 hover:text-foreground transition-all duration-300 touch-manipulation"
+                style={{
+                  boxShadow: "0 0 20px hsl(0 0% 100% / 0.04), inset 0 1px 0 hsl(0 0% 100% / 0.06)"
+                }}
+              >
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 opacity-80 group-hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                <span>Demo</span>
+              </a>
             </div>
           </div>
 
