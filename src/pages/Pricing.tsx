@@ -89,9 +89,7 @@ export default function Pricing() {
 
             {/* Contact CTA */}
             <div className="mt-10 sm:mt-12 md:mt-16 text-center pb-4">
-              <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
-                Need a custom solution for your organization?
-              </p>
+              
               
             </div>
           </div>
