@@ -1,7 +1,6 @@
 import Feature3DIcon from "./Feature3DIcon";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
 import ConnectionsFeatureCard from "./ConnectionsFeatureCard";
-import MemoryFeatureCard from "./MemoryFeatureCard";
 
 type IconType = "chat" | "connect" | "canvas";
 
@@ -11,6 +10,12 @@ const features: { iconType: IconType; title: string; description: string }[] = [
     title: "Stop Copy-Pasting Between Chats",
     description:
       "AI blocks share context automatically—no manual copy-paste. Save hours and keep your workflows intact.",
+  },
+  {
+    iconType: "connect",
+    title: "Never Hit Token Limits Mid-Flow",
+    description:
+      "Incremental context sync across connected blocks reduces token waste and prevents interruptions when you're deep in work.",
   },
   {
     iconType: "canvas",
@@ -40,38 +45,58 @@ const Features = () => {
           </p>
         </AnimatedSection>
 
-        {/* Feature Cards Grid - 2 columns on desktop */}
+        {/* Feature Cards Grid - 2 columns on desktop with video card spanning */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
-          {/* Video Feature Card */}
-          <AnimatedElement delay={0}>
+          {/* Video Feature Card - Takes prominent position */}
+          <AnimatedElement delay={0} className="lg:row-span-2">
             <ConnectionsFeatureCard />
           </AnimatedElement>
 
-          {/* Memory Feature Card */}
-          <AnimatedElement delay={150}>
-            <MemoryFeatureCard />
-          </AnimatedElement>
-        </div>
-
-        {/* Bottom row — two text feature cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 mt-4 sm:mt-5 lg:mt-6">
-          {features.map((feature, index) => (
-            <AnimatedElement key={feature.title} delay={(index + 2) * 150}>
-              <div className="glass-card-hover group dot-grid-card h-full p-4 sm:p-5 lg:p-6 lg:flex lg:items-center lg:gap-6">
-                <div className="relative z-10 mb-3 lg:mb-0 scale-75 lg:scale-100 origin-left -my-2 lg:my-0 lg:flex-shrink-0">
+          {/* Static Feature Cards */}
+          {features.slice(0, 2).map((feature, index) => (
+            <AnimatedElement key={feature.title} delay={(index + 1) * 150}>
+              <div className="glass-card-hover group dot-grid-card h-full p-4 sm:p-5 lg:p-6 flex flex-col">
+                {/* 3D Animated Icon */}
+                <div className="relative z-10 mb-3 lg:mb-4 scale-75 lg:scale-100 origin-left -my-2 lg:my-0">
                   <Feature3DIcon type={feature.iconType} />
                 </div>
-                <div className="lg:flex-1">
-                  <h3 className="font-display font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed text-break text-xs sm:text-sm lg:text-base">
-                    {feature.description}
-                  </p>
-                </div>
+
+                {/* Title */}
+                <h3 className="font-display font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2 lg:mb-3">
+                  {feature.title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-muted-foreground leading-relaxed text-break text-xs sm:text-sm lg:text-base flex-1">
+                  {feature.description}
+                </p>
               </div>
             </AnimatedElement>
           ))}
+        </div>
+
+        {/* Third feature card - full width below */}
+        <div className="mt-4 sm:mt-5 lg:mt-6">
+          <AnimatedElement delay={450}>
+            <div className="glass-card-hover group dot-grid-card p-4 sm:p-5 lg:p-6 lg:flex lg:items-center lg:gap-6">
+              {/* 3D Animated Icon */}
+              <div className="relative z-10 mb-3 lg:mb-0 scale-75 lg:scale-100 origin-left -my-2 lg:my-0 lg:flex-shrink-0">
+                <Feature3DIcon type={features[2].iconType} />
+              </div>
+
+              <div className="lg:flex-1">
+                {/* Title */}
+                <h3 className="font-display font-semibold text-foreground text-wrap-balance text-sm sm:text-base lg:text-lg mb-2">
+                  {features[2].title}
+                </h3>
+
+                {/* Description */}
+                <p className="text-muted-foreground leading-relaxed text-break text-xs sm:text-sm lg:text-base">
+                  {features[2].description}
+                </p>
+              </div>
+            </div>
+          </AnimatedElement>
         </div>
       </div>
     </section>
