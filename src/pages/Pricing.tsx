@@ -9,19 +9,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useLtdInventory } from "@/hooks/useLtdInventory";
 import { usePricingRefresh } from "@/hooks/usePageRefresh";
-
 export default function Pricing() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const { soldOut, totalSeats, remainingSeats } = useLtdInventory();
+  const {
+    isAuthenticated
+  } = useAuth();
+  const {
+    soldOut,
+    totalSeats,
+    remainingSeats
+  } = useLtdInventory();
   usePricingRefresh();
-
   const freePlan = getFreePlan();
   const paidPlans = getPaidPlans();
   const addons = getActiveAddons();
-
-  return (
-    <TooltipProvider>
+  return <TooltipProvider>
       <div className="min-h-screen liquid-bg">
         <Navbar />
         <main className="pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 md:pb-20 px-4 sm:px-6 relative z-10">
@@ -42,14 +44,10 @@ export default function Pricing() {
             {/* All plans as flat grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 max-w-7xl mx-auto items-stretch mb-12 sm:mb-16">
               <PricingCard plan={freePlan} />
-              {paidPlans.map(plan => (
-                <div key={plan.id} className={plan.billing_period === 'lifetime' ? 'relative' : ''}>
-                  {plan.billing_period === 'lifetime' && (
-                    <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
-                  )}
+              {paidPlans.map(plan => <div key={plan.id} className={plan.billing_period === 'lifetime' ? 'relative' : ''}>
+                  {plan.billing_period === 'lifetime' && <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />}
                   <PricingCard plan={plan} showSeats={plan.seats > 1} />
-                </div>
-              ))}
+                </div>)}
             </div>
 
             {/* Add-ons Section */}
@@ -63,9 +61,7 @@ export default function Pricing() {
                 </p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 max-w-5xl mx-auto">
-                {addons.map(addon => (
-                  <AddonCard key={addon.id} addon={addon} />
-                ))}
+                {addons.map(addon => <AddonCard key={addon.id} addon={addon} />)}
               </div>
             </div>
 
@@ -96,14 +92,11 @@ export default function Pricing() {
               <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">
                 Need a custom solution for your organization?
               </p>
-              <a href="mailto:sales@multiblock.ai?subject=Enterprise%20Plan%20Inquiry" className="text-sm sm:text-base text-accent hover:text-accent/80 font-medium transition-colors">
-                Contact our sales team →
-              </a>
+              
             </div>
           </div>
         </main>
         <Footer />
       </div>
-    </TooltipProvider>
-  );
+    </TooltipProvider>;
 }
