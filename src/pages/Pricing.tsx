@@ -88,10 +88,7 @@ export default function Pricing() {
             </div>
 
             {/* Contact CTA */}
-            <div className="mt-10 sm:mt-12 md:mt-16 text-center pb-4">
-              
-              
-            </div>
+            
           </div>
         </main>
         <Footer />
