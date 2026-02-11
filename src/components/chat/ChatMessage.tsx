@@ -138,11 +138,11 @@ export function ChatMessage({
           </div>
         )}
 
-        {/* Action buttons */}
+        {/* Action buttons - always visible */}
         {!isStreaming && (
           <div
             className={cn(
-              "flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity",
+              "flex items-center gap-1 mt-1",
               isUser && "flex-row-reverse"
             )}
           >
@@ -161,10 +161,10 @@ export function ChatMessage({
             {onSaveToMemory && (
               <button
                 onClick={() => onSaveToMemory(message.id, message.content, message.role as 'user' | 'assistant')}
-                className="p-1.5 rounded-md hover:bg-primary/20 transition-colors"
+                className="memory-btn-highlight p-1.5 rounded-md transition-colors"
                 title="Save to board memory"
               >
-                <Bookmark className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                <Bookmark className="h-3.5 w-3.5" />
               </button>
             )}
 
