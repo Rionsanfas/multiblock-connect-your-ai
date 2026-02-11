@@ -1,10 +1,18 @@
 import { Link } from "react-router-dom";
 import { HeroBlocks } from "./HeroBlocks";
 import { FloatingBlocksBackground } from "./FloatingBlocksBackground";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
 const Hero = () => {
-  const [phase, setPhase] = useState(0);
+  // Detect mobile to skip animations entirely
+  const isMobile = useRef(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  const [phase, setPhase] = useState(isMobile.current ? 2 : 0);
+
   useEffect(() => {
+    if (isMobile.current) return; // no timers on mobile
     const timer1 = setTimeout(() => setPhase(1), 200);
     const timer2 = setTimeout(() => setPhase(2), 1400);
     return () => {
@@ -12,17 +20,20 @@ const Hero = () => {
       clearTimeout(timer2);
     };
   }, []);
-  const mainStyle = {
+
+  const noAnim: React.CSSProperties = { opacity: 1, transform: 'none' };
+
+  const mainStyle: React.CSSProperties = isMobile.current ? noAnim : {
     opacity: phase >= 1 ? 1 : 0,
     transform: phase >= 1 ? "translateY(0)" : "translateY(50px)",
     transition: "opacity 1.8s cubic-bezier(0.16, 1, 0.3, 1), transform 2s cubic-bezier(0.16, 1, 0.3, 1)",
   };
-  const visualStyle = {
+  const visualStyle: React.CSSProperties = isMobile.current ? noAnim : {
     opacity: phase >= 1 ? 1 : 0,
     transform: phase >= 1 ? "translateY(0) scale(1)" : "translateY(40px) scale(0.96)",
     transition: "opacity 2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, transform 2.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s",
   };
-  const buttonsStyle = {
+  const buttonsStyle: React.CSSProperties = isMobile.current ? noAnim : {
     opacity: phase >= 2 ? 1 : 0,
     transform: phase >= 2 ? "translateY(0)" : "translateY(20px)",
     transition: "opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s",

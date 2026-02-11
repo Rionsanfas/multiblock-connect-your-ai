@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { Plus, AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectionGuideTip } from "@/components/board/ConnectionGuideTip";
+import { DemoFloatingCard } from "@/components/DemoFloatingCard";
 
 // Responsive defaults - match BlockCard.tsx
 const DEFAULT_BLOCK_WIDTH = 260;
@@ -813,6 +814,8 @@ export default function BoardCanvas() {
           </div>
         </div>
       )}
+
+      <DemoFloatingCard />
     </DashboardLayout>
   );
 }

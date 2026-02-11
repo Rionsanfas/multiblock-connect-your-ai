@@ -29,6 +29,7 @@ import { StorageUsageCard } from "@/components/dashboard/StorageUsageCard";
 import { PlanUsageCard } from "@/components/dashboard/PlanUsageCard";
 import { BoardTransferDialog } from "@/components/board/BoardTransferDialog";
 import { WorkspaceSwitcher } from "@/components/teams/WorkspaceSwitcher";
+import { DemoFloatingCard } from "@/components/DemoFloatingCard";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -381,6 +382,8 @@ export default function Dashboard() {
           onOpenChange={(open) => !open && setTransferBoard(null)}
         />
       )}
+
+      <DemoFloatingCard />
     </DashboardLayout>
   );
 }
