@@ -45,7 +45,7 @@ export function ConnectionGuideTip() {
   return (
     <div
       className={cn(
-        "absolute bottom-20 left-4 z-40 max-w-xs",
+        "fixed bottom-4 left-4 z-50 max-w-xs",
         "bg-card/95 backdrop-blur-sm border border-border/50 rounded-xl",
         "shadow-lg shadow-black/10",
         "transition-all duration-300 ease-out",
