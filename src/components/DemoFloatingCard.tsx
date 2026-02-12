@@ -24,7 +24,7 @@ export function DemoFloatingCard() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
+    <div className="fixed bottom-20 sm:bottom-4 right-4 z-50 animate-fade-in">
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="relative group">
