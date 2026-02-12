@@ -7,29 +7,26 @@ type IconType = "chat" | "connect" | "canvas";
 const features: { iconType: IconType; title: string; description: string }[] = [
   {
     iconType: "chat",
+    title: " Nothing to re-explain to AI again",
+    description: "Save any context in the memory, and let the AI remember your important details.",
+  },
+  {
+    iconType: "connect",
     title: "Stop Copy-Pasting Between Chats",
     description:
       "AI blocks share context automatically—no manual copy-paste. Save hours and keep your workflows intact.",
   },
   {
-    iconType: "connect",
-    title: "Never Hit Token Limits Mid-Flow",
-    description:
-      "Incremental context sync across connected blocks reduces token waste and prevents interruptions when you're deep in work.",
-  },
-  {
     iconType: "canvas",
     title: "See Your Entire Workflow at Once",
-    description: "Visual boards make complex AI pipelines easy to manage. No more fragmented chats scattered across tabs.",
+    description:
+      "Visual boards make complex AI pipelines easy to manage. No more fragmented chats scattered across tabs.",
   },
 ];
 
 const Features = () => {
   return (
-    <section
-      id="features"
-      className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24 mt-8 sm:mt-0"
-    >
+    <section id="features" className="relative dot-grid-bg py-12 sm:py-16 md:py-20 lg:py-24 mt-8 sm:mt-0">
       <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <AnimatedSection delay={0} className="text-center mb-8 sm:mb-12 md:mb-16">
