@@ -24,21 +24,27 @@ const Pricing = () => {
             </p>
           </AnimatedSection>
 
-          {/* All plans as flat grid - no tabs */}
+          {/* Annual Plans Row */}
           <AnimatedSection delay={100}>
-            {/* Mobile/tablet: horizontal scroll. Desktop: 5-col grid (free + 4 paid) */}
-            <div className="lg:grid lg:grid-cols-5 lg:gap-5 lg:max-w-7xl lg:mx-auto lg:items-stretch max-lg:flex max-lg:gap-3 max-lg:overflow-x-auto max-lg:pb-4 max-lg:-mx-4 max-lg:px-4 max-lg:snap-x max-lg:snap-mandatory scrollbar-hide">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 max-w-5xl mx-auto items-stretch mb-6 sm:mb-8">
               <AnimatedElement delay={0}>
-                <div className="max-lg:min-w-[220px] max-lg:max-w-[250px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[260px] md:max-lg:max-w-[280px]">
-                  <PricingCard plan={freePlan} />
-                </div>
+                <PricingCard plan={freePlan} />
               </AnimatedElement>
-              {paidPlans.map((plan, index) => (
+              {paidPlans.filter(p => p.billing_period !== 'lifetime').map((plan, index) => (
                 <AnimatedElement key={plan.id} delay={(index + 1) * 100}>
-                  <div className={`max-lg:min-w-[220px] max-lg:max-w-[250px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[260px] md:max-lg:max-w-[280px] ${plan.billing_period === 'lifetime' ? 'relative' : ''}`}>
-                    {plan.billing_period === 'lifetime' && (
-                      <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
-                    )}
+                  <PricingCard plan={plan} showSeats={plan.seats > 1} />
+                </AnimatedElement>
+              ))}
+            </div>
+          </AnimatedSection>
+
+          {/* Lifetime Plans Row */}
+          <AnimatedSection delay={200}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 lg:gap-6 max-w-3xl mx-auto items-stretch">
+              {paidPlans.filter(p => p.billing_period === 'lifetime').map((plan, index) => (
+                <AnimatedElement key={plan.id} delay={index * 100}>
+                  <div className="relative">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
                     <PricingCard plan={plan} showSeats={plan.seats > 1} />
                   </div>
                 </AnimatedElement>

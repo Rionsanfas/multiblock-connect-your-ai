@@ -41,13 +41,22 @@ export default function Pricing() {
               </p>
             </div>
 
-            {/* All plans as flat grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 max-w-7xl mx-auto items-stretch mb-12 sm:mb-16">
+            {/* Annual Plans Row — Free + Pro + Pro Team */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch mb-8 sm:mb-10">
               <PricingCard plan={freePlan} />
-              {paidPlans.map(plan => <div key={plan.id} className={plan.billing_period === 'lifetime' ? 'relative' : ''}>
-                  {plan.billing_period === 'lifetime' && <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />}
+              {paidPlans.filter(p => p.billing_period !== 'lifetime').map(plan => (
+                <PricingCard key={plan.id} plan={plan} showSeats={plan.seats > 1} />
+              ))}
+            </div>
+
+            {/* Lifetime Plans Row — Pro Lifetime + Pro Lifetime Team */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 lg:gap-8 max-w-3xl mx-auto items-stretch mb-12 sm:mb-16">
+              {paidPlans.filter(p => p.billing_period === 'lifetime').map(plan => (
+                <div key={plan.id} className="relative">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-transparent to-accent/30 rounded-2xl blur-lg opacity-50" />
                   <PricingCard plan={plan} showSeats={plan.seats > 1} />
-                </div>)}
+                </div>
+              ))}
             </div>
 
             {/* Add-ons Section */}

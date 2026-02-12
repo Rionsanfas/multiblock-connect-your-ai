@@ -18,7 +18,7 @@ export function PricingCard({
   const isEnterprise = plan.tier === 'enterprise';
   return <div className={`premium-card-wrapper ${plan.highlight ? 'sm:scale-105 z-10' : ''} h-full`}>
       <div className="premium-card-gradient" />
-      <div className="premium-card-content h-full p-3 sm:p-4 md:p-6 relative flex flex-col px-[10px]">
+      <div className="premium-card-content h-full p-4 sm:p-5 md:p-6 relative flex flex-col">
         {/* Badge */}
         {plan.badge && <div className="inline-flex self-start px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded-full mb-2 sm:mb-3 md:mb-4 badge-3d-shiny whitespace-nowrap">
             {plan.badge}
@@ -32,9 +32,9 @@ export function PricingCard({
           <p className="text-[10px] sm:text-xs md:text-sm text-muted-foreground mb-2 sm:mb-3 md:mb-4 line-clamp-2">
             {plan.description}
           </p>
-          <div className="flex items-baseline gap-1">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-bold px-0 py-0 my-[2px] mx-0">
-              {isEnterprise ? 'Custom' : plan.price_cents === 0 ? 'Free' : `$${(plan.price_cents / 100).toFixed(2)}`}
+          <div className="flex items-baseline gap-1 whitespace-nowrap">
+            <span className="text-2xl sm:text-3xl md:text-4xl font-bold">
+              {isEnterprise ? 'Custom' : plan.price_cents === 0 ? 'Free' : `$${(plan.price_cents / 100).toFixed(0)}`}
             </span>
             {plan.price_cents > 0 && !isEnterprise && <span className="text-muted-foreground text-xs sm:text-sm">
                 {isLifetime ? ' one-time' : '/year'}
@@ -47,7 +47,7 @@ export function PricingCard({
         </div>
 
         {/* Key Stats */}
-        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 p-2.5 sm:p-3 md:p-4 rounded-lg sm:rounded-xl bg-muted/20 border border-border/30 px-[9px]">
+        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-muted/20 border border-border/30">
           {/* Boards */}
           <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
             <div className="icon-3d-box p-1 sm:p-1.5">
