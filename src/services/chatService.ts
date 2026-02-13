@@ -200,6 +200,47 @@ const getProviderModelId = (modelId: string, provider: Provider): string => {
     'grok-4.1-pplx': 'sonar-pro',
     'kimi-k2-pplx': 'sonar',
     'o3-pro-pplx': 'sonar-reasoning-pro',
+
+    // ========================================
+    // ANTHROPIC - Claude 4.6 Series
+    // ========================================
+    'claude-opus-4.6': 'claude-opus-4-6-20260201',
+    'claude-sonnet-4.6': 'claude-sonnet-4-6-20260201',
+    'claude-haiku-4.6': 'claude-haiku-4-6-20260201',
+
+    // ========================================
+    // DEEPSEEK - V4 Alpha
+    // ========================================
+    'deepseek-v4-alpha': 'deepseek-chat',
+
+    // ========================================
+    // MISTRAL - Large 3 2512
+    // ========================================
+    'mistral-large-3-2512': 'mistral-large-2512',
+
+    // ========================================
+    // OPENROUTER MODELS (routed via OpenRouter API)
+    // ========================================
+    'llama-4-maverick': 'meta-llama/llama-4-maverick',
+    'llama-4-scout': 'meta-llama/llama-4-scout',
+    'llama-3.3-70b-instruct': 'meta-llama/llama-3.3-70b-instruct',
+    'kimi-k2.5-or': 'moonshotai/kimi-k2.5',
+    'kimi-k2-thinking-or': 'moonshotai/kimi-k2-thinking',
+    'kimi-k2-0905-or': 'moonshotai/kimi-k2-0905',
+    'kimi-k1.5-or': 'moonshotai/kimi-k1.5',
+    'qwen3-235b-a22b': 'qwen/qwen3-235b-a22b-2507',
+    'sonar-or': 'sonar',
+    'sonar-pro-or': 'sonar-pro',
+    'sonar-reasoning-or': 'sonar-reasoning',
+    'sonar-reasoning-pro-or': 'sonar-reasoning-pro',
+
+    // ========================================
+    // MOONSHOT (KIMI) - Direct via Moonshot API
+    // ========================================
+    'kimi-k2.5': 'kimi-k2.5',
+    'kimi-k2-thinking': 'kimi-k2-thinking',
+    'kimi-k2-0905': 'kimi-k2-0905',
+    'kimi-k1.5': 'kimi-k1.5',
   };
 
   // Direct match - return mapped value
