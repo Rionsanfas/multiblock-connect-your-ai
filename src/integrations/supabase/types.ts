@@ -1522,7 +1522,6 @@ export type Database = {
         | "together"
         | "perplexity"
         | "openrouter"
-        | "moonshot"
       memory_item_type: "fact" | "decision" | "constraint" | "note"
       memory_scope: "board" | "block" | "chat"
       subscription_status:
@@ -1681,7 +1680,6 @@ export const Constants = {
         "together",
         "perplexity",
         "openrouter",
-        "moonshot",
       ],
       memory_item_type: ["fact", "decision", "constraint", "note"],
       memory_scope: ["board", "block", "chat"],

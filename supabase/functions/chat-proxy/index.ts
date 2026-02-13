@@ -20,8 +20,6 @@ const PROVIDER_ENDPOINTS: Record<string, string> = {
   cohere: "https://api.cohere.com/v2/chat",
   together: "https://api.together.xyz/v1/chat/completions",
   perplexity: "https://api.perplexity.ai/chat/completions",
-  openrouter: "https://openrouter.ai/api/v1/chat/completions",
-  moonshot: "https://api.moonshot.cn/v1/chat/completions",
 };
 
 // OpenRouter endpoint and configuration
@@ -174,47 +172,6 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   'sonar-pro': 'perplexity/sonar-pro',
   'sonar-reasoning': 'perplexity/sonar-reasoning',
   'sonar-reasoning-pro': 'perplexity/sonar-reasoning-pro',
-
-  // ========================================
-  // ANTHROPIC - Claude 4.6 Series
-  // ========================================
-  'claude-opus-4.6': 'anthropic/claude-opus-4.6',
-  'claude-sonnet-4.6': 'anthropic/claude-sonnet-4.6',
-  'claude-haiku-4.6': 'anthropic/claude-haiku-4.6',
-
-  // ========================================
-  // DEEPSEEK - V4 Alpha
-  // ========================================
-  'deepseek-v4-alpha': 'deepseek/deepseek-v4-preview',
-
-  // ========================================
-  // MISTRAL - Large 3 2512
-  // ========================================
-  'mistral-large-3-2512': 'mistralai/mistral-large-2512',
-
-  // ========================================
-  // MOONSHOT (KIMI) via OpenRouter
-  // ========================================
-  'kimi-k2.5': 'moonshotai/kimi-k2.5',
-  'kimi-k2-thinking': 'moonshotai/kimi-k2-thinking',
-  'kimi-k2-0905': 'moonshotai/kimi-k2-0905',
-  'kimi-k1.5': 'moonshotai/kimi-k1.5',
-  'kimi-k2.5-or': 'moonshotai/kimi-k2.5',
-  'kimi-k2-thinking-or': 'moonshotai/kimi-k2-thinking',
-  'kimi-k2-0905-or': 'moonshotai/kimi-k2-0905',
-  'kimi-k1.5-or': 'moonshotai/kimi-k1.5',
-
-  // ========================================
-  // OPENROUTER-only models
-  // ========================================
-  'llama-4-maverick': 'meta-llama/llama-4-maverick',
-  'llama-4-scout': 'meta-llama/llama-4-scout',
-  'llama-3.3-70b-instruct': 'meta-llama/llama-3.3-70b-instruct',
-  'qwen3-235b-a22b': 'qwen/qwen3-235b-a22b-2507',
-  'sonar-or': 'perplexity/sonar',
-  'sonar-pro-or': 'perplexity/sonar-pro',
-  'sonar-reasoning-or': 'perplexity/sonar-reasoning',
-  'sonar-reasoning-pro-or': 'perplexity/sonar-reasoning-pro',
 
   // ========================================
   // IMAGE GENERATION - CANONICAL IDs (DO NOT CHANGE)
@@ -375,43 +332,18 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
   'c4ai-aya-expanse-32b': 'c4ai-aya-expanse-32b',
   'c4ai-aya-vision-32b': 'c4ai-aya-vision-32b',
 
-    // ========================================
-    // PERPLEXITY
-    // ========================================
-    'sonar-large-online': 'sonar-pro',
-    'pplx-70b': 'sonar',
-    'gpt-5.1-pplx': 'sonar-pro',
-    'claude-sonnet-4.5-pplx': 'sonar-pro',
-    'claude-opus-4.1-thinking-pplx': 'sonar-reasoning-pro',
-    'gemini-3-pro-pplx': 'sonar-pro',
-    'grok-4.1-pplx': 'sonar-pro',
-    'kimi-k2-pplx': 'sonar',
-    'o3-pro-pplx': 'sonar-reasoning-pro',
-
-    // ========================================
-    // ANTHROPIC - Claude 4.6 Series
-    // ========================================
-    'claude-opus-4.6': 'claude-opus-4-6-20260201',
-    'claude-sonnet-4.6': 'claude-sonnet-4-6-20260201',
-    'claude-haiku-4.6': 'claude-haiku-4-6-20260201',
-
-    // ========================================
-    // DEEPSEEK - V4 Alpha
-    // ========================================
-    'deepseek-v4-alpha': 'deepseek-chat',
-
-    // ========================================
-    // MISTRAL - Large 3 2512
-    // ========================================
-    'mistral-large-3-2512': 'mistral-large-2512',
-
-    // ========================================
-    // MOONSHOT (KIMI) - Direct via Moonshot API
-    // ========================================
-    'kimi-k2.5': 'kimi-k2.5',
-    'kimi-k2-thinking': 'kimi-k2-thinking',
-    'kimi-k2-0905': 'kimi-k2-0905',
-    'kimi-k1.5': 'kimi-k1.5',
+  // ========================================
+  // PERPLEXITY
+  // ========================================
+  'sonar-large-online': 'sonar-pro',
+  'pplx-70b': 'sonar',
+  'gpt-5.1-pplx': 'sonar-pro',
+  'claude-sonnet-4.5-pplx': 'sonar-pro',
+  'claude-opus-4.1-thinking-pplx': 'sonar-reasoning-pro',
+  'gemini-3-pro-pplx': 'sonar-pro',
+  'grok-4.1-pplx': 'sonar-pro',
+  'kimi-k2-pplx': 'sonar',
+  'o3-pro-pplx': 'sonar-reasoning-pro',
 };
 
 // Resolve model ID to provider API ID

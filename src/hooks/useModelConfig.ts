@@ -18,23 +18,6 @@ import {
   type ModelType
 } from '@/config/models';
 
-// Helper to create an empty record for all providers
-function createEmptyProviderRecord(): Record<Provider, ModelConfig[]> {
-  return {
-    openai: [],
-    anthropic: [],
-    google: [],
-    xai: [],
-    deepseek: [],
-    mistral: [],
-    cohere: [],
-    together: [],
-    perplexity: [],
-    openrouter: [],
-    moonshot: [],
-  };
-}
-
 /**
  * Get the model configuration for a specific block
  */
@@ -82,10 +65,22 @@ export function useVideoModels(): ModelConfig[] {
  */
 export function useModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
   return useMemo(() => {
-    const grouped = createEmptyProviderRecord();
+    const grouped: Record<Provider, ModelConfig[]> = {
+      openai: [],
+      anthropic: [],
+      google: [],
+      xai: [],
+      deepseek: [],
+      mistral: [],
+      cohere: [],
+      together: [],
+      perplexity: [],
+    };
+
     MODEL_CONFIGS.forEach((model) => {
       grouped[model.provider].push(model);
     });
+
     return grouped;
   }, []);
 }
@@ -118,6 +113,7 @@ export function useModelsGroupedByType(): Record<ModelType, ModelConfig[]> {
 
 /**
  * Get models grouped by type AND provider (for the model selector)
+ * Returns { chat: { openai: [...], anthropic: [...], ... }, image: { ... }, ... }
  */
 export function useModelsGroupedByTypeAndProvider(): {
   chat: Record<Provider, ModelConfig[]>;
@@ -125,10 +121,22 @@ export function useModelsGroupedByTypeAndProvider(): {
   video: Record<Provider, ModelConfig[]>;
 } {
   return useMemo(() => {
+    const createProviderRecord = (): Record<Provider, ModelConfig[]> => ({
+      openai: [],
+      anthropic: [],
+      google: [],
+      xai: [],
+      deepseek: [],
+      mistral: [],
+      cohere: [],
+      together: [],
+      perplexity: [],
+    });
+
     const result = {
-      chat: createEmptyProviderRecord(),
-      image: createEmptyProviderRecord(),
-      video: createEmptyProviderRecord(),
+      chat: createProviderRecord(),
+      image: createProviderRecord(),
+      video: createProviderRecord(),
     };
 
     MODEL_CONFIGS.forEach((model) => {
@@ -146,10 +154,22 @@ export function useModelsGroupedByTypeAndProvider(): {
  */
 export function useChatModelsGroupedByProvider(): Record<Provider, ModelConfig[]> {
   return useMemo(() => {
-    const grouped = createEmptyProviderRecord();
+    const grouped: Record<Provider, ModelConfig[]> = {
+      openai: [],
+      anthropic: [],
+      google: [],
+      xai: [],
+      deepseek: [],
+      mistral: [],
+      cohere: [],
+      together: [],
+      perplexity: [],
+    };
+
     getChatModels().forEach((model) => {
       grouped[model.provider].push(model);
     });
+
     return grouped;
   }, []);
 }

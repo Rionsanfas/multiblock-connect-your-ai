@@ -2,7 +2,7 @@
 // This is the SINGLE SOURCE OF TRUTH for all models and providers
 
 // Provider type matches Supabase llm_provider enum
-export type Provider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek' | 'mistral' | 'cohere' | 'together' | 'perplexity' | 'openrouter' | 'moonshot';
+export type Provider = 'openai' | 'anthropic' | 'google' | 'xai' | 'deepseek' | 'mistral' | 'cohere' | 'together' | 'perplexity';
 
 // Model type categories - TEXT + IMAGE + VIDEO ONLY (no audio)
 export type ModelType = 'chat' | 'image' | 'video' | 'embedding' | 'code' | 'rerank' | 'vision';
@@ -111,22 +111,6 @@ export const PROVIDERS: Record<Provider, ProviderInfo> = {
     apiKeyUrl: 'https://www.perplexity.ai/settings/api',
     description: 'AI-powered search and routing',
   },
-  openrouter: {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    color: 'hsl(260 70% 55%)',
-    website: 'https://openrouter.ai',
-    apiKeyUrl: 'https://openrouter.ai/keys',
-    description: 'Unified access to 200+ AI models',
-  },
-  moonshot: {
-    id: 'moonshot',
-    name: 'Moonshot (Kimi)',
-    color: 'hsl(210 80% 55%)',
-    website: 'https://platform.moonshot.ai',
-    apiKeyUrl: 'https://platform.moonshot.ai/console/api-keys',
-    description: 'Kimi AI models by Moonshot',
-  },
 };
 
 // ============================================
@@ -158,9 +142,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   // ========================================
   // ANTHROPIC MODELS
   // ========================================
-  { id: 'claude-opus-4.6', provider: 'anthropic', name: 'Claude Opus 4.6', type: 'chat', description: 'Latest Claude Opus with top-tier reasoning.', context_window: 200000, max_output_tokens: 32768, input_cost_per_1k: 0.018, output_cost_per_1k: 0.09, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'slow', quality: 'premium' },
-  { id: 'claude-sonnet-4.6', provider: 'anthropic', name: 'Claude Sonnet 4.6', type: 'chat', description: 'Latest Claude Sonnet with best speed/quality.', context_window: 200000, max_output_tokens: 16384, input_cost_per_1k: 0.004, output_cost_per_1k: 0.02, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'premium' },
-  { id: 'claude-haiku-4.6', provider: 'anthropic', name: 'Claude Haiku 4.6', type: 'chat', description: 'Latest Claude Haiku, fastest and most affordable.', context_window: 200000, max_output_tokens: 8192, input_cost_per_1k: 0.001, output_cost_per_1k: 0.005, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
   { id: 'claude-opus-4.5', provider: 'anthropic', name: 'Claude Opus 4.5', type: 'chat', description: 'Most capable Claude with supreme reasoning.', context_window: 200000, max_output_tokens: 32768, input_cost_per_1k: 0.015, output_cost_per_1k: 0.075, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'slow', quality: 'premium' },
   { id: 'claude-sonnet-4.5', provider: 'anthropic', name: 'Claude Sonnet 4.5', type: 'chat', description: 'Best balance of intelligence and speed.', context_window: 200000, max_output_tokens: 8192, input_cost_per_1k: 0.003, output_cost_per_1k: 0.015, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'premium' },
   // User-specified canonical ID: claude-haiku-4-5-20251001
@@ -213,7 +194,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   // User-specified canonical ID: deepseek-v3.2-speciale
   { id: 'deepseek-v3.2-speciale', provider: 'deepseek', name: 'DeepSeek V3.2-Speciale', type: 'chat', description: 'DeepSeek V3.2 with specialized reasoning.', context_window: 128000, max_output_tokens: 16384, input_cost_per_1k: 0.00028, output_cost_per_1k: 0.00056, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
   { id: 'deepseek-v3.1', provider: 'deepseek', name: 'DeepSeek V3.1', type: 'chat', description: 'DeepSeek V3.1 general model.', context_window: 64000, max_output_tokens: 8192, input_cost_per_1k: 0.00014, output_cost_per_1k: 0.00028, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
-  { id: 'deepseek-v4-alpha', provider: 'deepseek', name: 'DeepSeek V4 Alpha', type: 'chat', description: 'Preview of next-gen DeepSeek.', context_window: 128000, max_output_tokens: 16384, input_cost_per_1k: 0.0003, output_cost_per_1k: 0.0006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
 
   // ========================================
   // MISTRAL MODELS
@@ -221,7 +201,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   // Chat Models
   // User-specified canonical ID: mistral-large-25-12
   { id: 'mistral-large-25-12', provider: 'mistral', name: 'Mistral Large 3', type: 'chat', description: 'Most capable Mistral model.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'mistral-large-3-2512', provider: 'mistral', name: 'Mistral Large 3 (2512)', type: 'chat', description: 'Mistral Large December 2025 release.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
   { id: 'mistral-medium-3.1', provider: 'mistral', name: 'Mistral Medium 3.1', type: 'chat', description: 'Balanced Mistral for most tasks.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.001, output_cost_per_1k: 0.003, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'high' },
   // User-specified canonical ID: mistral-small-2506
   { id: 'mistral-small-2506', provider: 'mistral', name: 'Mistral Small 3.2', type: 'chat', description: 'Fast Mistral for simple tasks.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.0002, output_cost_per_1k: 0.0006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
@@ -235,12 +214,13 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   // User-specified canonical ID: mistralai/Mistral-Nemo-Instruct-2407
   { id: 'mistralai/Mistral-Nemo-Instruct-2407', provider: 'mistral', name: 'Mistral Nemo 12B', type: 'chat', description: 'Efficient 12B parameter model.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.00015, output_cost_per_1k: 0.00015, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
   { id: 'mistral-embed', provider: 'mistral', name: 'Mistral Embed', type: 'embedding', description: 'Text embeddings model.', context_window: 8192, max_output_tokens: 0, input_cost_per_1k: 0.0001, output_cost_per_1k: 0, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: false, speed: 'fast', quality: 'high' },
+  // Image Models - REMOVED: mistral-gan, mistral-gan-flux, flux-2-pro, grok-imaginegan (invalid model IDs)
 
   // ========================================
   // TOGETHER.AI MODELS
   // ========================================
   // Chat Models
-  // User-specified canonical IDs
+  // User-specified canonical IDs: meta-llama/Llama-3.3-70B-Instruct, meta-llama/Llama-4-Maverick-17B-128E, meta-llama/Llama-4-Scout-17B-16E
   { id: 'meta-llama/Llama-3.3-70B-Instruct', provider: 'together', name: 'Llama 3.3 70B Instruct Turbo', type: 'chat', description: 'Fast Llama 3.3 70B.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.0009, output_cost_per_1k: 0.0009, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
   { id: 'meta-llama/Llama-4-Maverick-17B-128E', provider: 'together', name: 'Llama 4 Maverick 17Bx128E', type: 'chat', description: 'MoE Llama 4 variant.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.0012, output_cost_per_1k: 0.0012, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
   { id: 'meta-llama/Llama-4-Scout-17B-16E', provider: 'together', name: 'Llama 4 Scout 17Bx16E', type: 'chat', description: 'Lightweight Llama 4 MoE.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.0008, output_cost_per_1k: 0.0008, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
@@ -283,30 +263,6 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   { id: 'grok-4.1-pplx', provider: 'perplexity', name: 'Grok 4.1', type: 'chat', description: 'Grok via Perplexity.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.003, output_cost_per_1k: 0.01, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
   { id: 'kimi-k2-pplx', provider: 'perplexity', name: 'Kimi K2', type: 'chat', description: 'Kimi K2 via Perplexity.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'high' },
   { id: 'o3-pro-pplx', provider: 'perplexity', name: 'o3-pro', type: 'chat', description: 'o3-pro via Perplexity.', context_window: 200000, max_output_tokens: 100000, input_cost_per_1k: 0.02, output_cost_per_1k: 0.08, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'slow', quality: 'premium' },
-
-  // ========================================
-  // OPENROUTER MODELS (Unified multi-provider access)
-  // ========================================
-  { id: 'llama-4-maverick', provider: 'openrouter', name: 'Llama 4 Maverick', type: 'chat', description: 'Meta Llama 4 Maverick via OpenRouter.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.0012, output_cost_per_1k: 0.0012, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'llama-4-scout', provider: 'openrouter', name: 'Llama 4 Scout', type: 'chat', description: 'Meta Llama 4 Scout via OpenRouter.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.0008, output_cost_per_1k: 0.0008, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
-  { id: 'llama-3.3-70b-instruct', provider: 'openrouter', name: 'Llama 3.3 70B Instruct', type: 'chat', description: 'Meta Llama 3.3 70B via OpenRouter.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.0009, output_cost_per_1k: 0.0009, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
-  { id: 'kimi-k2.5-or', provider: 'openrouter', name: 'Kimi K2.5', type: 'chat', description: 'Moonshot Kimi K2.5 via OpenRouter.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'kimi-k2-thinking-or', provider: 'openrouter', name: 'Kimi K2 Thinking', type: 'chat', description: 'Moonshot Kimi K2 with reasoning via OpenRouter.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'kimi-k2-0905-or', provider: 'openrouter', name: 'Kimi K2 0905', type: 'chat', description: 'Moonshot Kimi K2 September release via OpenRouter.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'high' },
-  { id: 'kimi-k1.5-or', provider: 'openrouter', name: 'Kimi K1.5', type: 'chat', description: 'Moonshot Kimi K1.5 via OpenRouter.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.001, output_cost_per_1k: 0.003, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
-  { id: 'qwen3-235b-a22b', provider: 'openrouter', name: 'Qwen3 235B-A22B', type: 'chat', description: 'Qwen3 large MoE via OpenRouter.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.0015, output_cost_per_1k: 0.0015, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'sonar-or', provider: 'openrouter', name: 'Sonar', type: 'chat', description: 'Perplexity Sonar via OpenRouter.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.001, output_cost_per_1k: 0.001, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
-  { id: 'sonar-pro-or', provider: 'openrouter', name: 'Sonar Pro', type: 'chat', description: 'Perplexity Sonar Pro via OpenRouter.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'sonar-reasoning-or', provider: 'openrouter', name: 'Sonar Reasoning', type: 'chat', description: 'Perplexity Sonar with reasoning via OpenRouter.', context_window: 128000, max_output_tokens: 16384, input_cost_per_1k: 0.003, output_cost_per_1k: 0.012, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'sonar-reasoning-pro-or', provider: 'openrouter', name: 'Sonar Reasoning Pro', type: 'chat', description: 'Perplexity Sonar Reasoning Pro via OpenRouter.', context_window: 128000, max_output_tokens: 16384, input_cost_per_1k: 0.005, output_cost_per_1k: 0.02, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'slow', quality: 'premium' },
-
-  // ========================================
-  // MOONSHOT (KIMI) MODELS - Direct via Moonshot API
-  // ========================================
-  { id: 'kimi-k2.5', provider: 'moonshot', name: 'Kimi K2.5', type: 'chat', description: 'Latest Kimi model with advanced reasoning.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'kimi-k2-thinking', provider: 'moonshot', name: 'Kimi K2 Thinking', type: 'chat', description: 'Kimi K2 with extended reasoning.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
-  { id: 'kimi-k2-0905', provider: 'moonshot', name: 'Kimi K2 0905', type: 'chat', description: 'Kimi K2 September 2025 release.', context_window: 256000, max_output_tokens: 16384, input_cost_per_1k: 0.002, output_cost_per_1k: 0.006, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'high' },
-  { id: 'kimi-k1.5', provider: 'moonshot', name: 'Kimi K1.5', type: 'chat', description: 'Kimi K1.5 general purpose model.', context_window: 128000, max_output_tokens: 8192, input_cost_per_1k: 0.001, output_cost_per_1k: 0.003, supports_vision: false, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
 ];
 
 // ============================================
@@ -382,4 +338,25 @@ export function getVisionModelForProvider(provider: Provider): ModelConfig | und
  */
 export function getImageGenModelForProvider(provider: Provider): ModelConfig | undefined {
   return MODEL_CONFIGS.find((m) => m.provider === provider && m.supports_image_generation);
+}
+
+/**
+ * Check if a provider supports image generation
+ */
+export function providerSupportsImageGeneration(provider: Provider): boolean {
+  return MODEL_CONFIGS.some((m) => m.provider === provider && m.supports_image_generation);
+}
+
+/**
+ * Check if a provider supports vision
+ */
+export function providerSupportsVision(provider: Provider): boolean {
+  return MODEL_CONFIGS.some((m) => m.provider === provider && m.supports_vision);
+}
+
+/**
+ * Check if a provider supports video generation
+ */
+export function providerSupportsVideoGeneration(provider: Provider): boolean {
+  return MODEL_CONFIGS.some((m) => m.provider === provider && m.supports_video_generation);
 }
