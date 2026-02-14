@@ -1512,6 +1512,39 @@ serve(async (req) => {
         temperature: config?.temperature ?? 0.7,
         max_tokens: config?.maxTokens || 4096,
       };
+    } else if (provider === "openrouter") {
+      // OpenRouter provider - uses OpenRouter endpoint with special headers
+      headers["Authorization"] = `Bearer ${apiKey}`;
+      headers["HTTP-Referer"] = OPENROUTER_REFERER;
+      headers["X-Title"] = OPENROUTER_TITLE;
+      endpoint = OPENROUTER_ENDPOINT;
+      
+      // Map internal model ID to OpenRouter slug
+      const openRouterModelId = getOpenRouterModelId(model_id, provider);
+      log('OpenRouter provider routing', { original_model: model_id, openrouter_model: openRouterModelId });
+      
+      requestBody = {
+        model: openRouterModelId,
+        messages,
+        stream,
+        temperature: config?.temperature ?? 0.7,
+        max_tokens: config?.maxTokens || 4096,
+      };
+    } else if (provider === "moonshot") {
+      // Moonshot (Kimi) provider - OpenAI-compatible format via Moonshot API
+      headers["Authorization"] = `Bearer ${apiKey}`;
+      endpoint = PROVIDER_ENDPOINTS["moonshot"];
+      
+      const resolvedModel = resolveModelId(model_id, provider, log);
+      log('Moonshot provider routing', { original_model: model_id, resolved_model: resolvedModel });
+      
+      requestBody = {
+        model: resolvedModel,
+        messages,
+        stream,
+        temperature: config?.temperature ?? 0.7,
+        max_tokens: config?.maxTokens || 4096,
+      };
     } else {
       // OpenAI-compatible (openai, xai, deepseek)
       headers["Authorization"] = `Bearer ${apiKey}`;
