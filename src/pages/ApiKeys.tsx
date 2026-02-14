@@ -218,6 +218,27 @@ export default function ApiKeys() {
           </div>
         </GlassCard>
 
+        {/* OpenRouter Tip */}
+        <GlassCard variant="soft" className="p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 border-border/30 bg-accent/30">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Key className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+            <div className="text-xs sm:text-sm">
+              <span className="font-medium">Use OpenRouter for any provider</span>
+              <span className="text-muted-foreground ml-1 sm:ml-2">
+                — a single OpenRouter key gives you access to models from all major providers.{' '}
+                <a
+                  href="https://openrouter.ai/keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-0.5"
+                >
+                  Get your key <ExternalLink className="h-3 w-3" />
+                </a>
+              </span>
+            </div>
+          </div>
+        </GlassCard>
+
 
         {/* Error State */}
         {keysError && (
@@ -312,9 +333,6 @@ export default function ApiKeys() {
             <DialogTitle className="text-xl font-semibold">
               {isTeamWorkspace ? "Add Team API Key" : "Add API Key"}
             </DialogTitle>
-          </DialogHeader>
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Add API Key</DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-4">
             <div className="space-y-2">
