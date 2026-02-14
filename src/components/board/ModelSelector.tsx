@@ -364,6 +364,15 @@ export function ModelSelector({
                   Chat models for conversations, reasoning, and text generation
                 </p>
               </div>
+              <div className="mb-4 p-3 rounded-lg bg-accent/50 border border-border/30">
+                <p className="text-xs text-muted-foreground">
+                  <Zap className="h-3 w-3 inline mr-1 text-primary" />
+                  <span className="font-medium text-foreground">Tip:</span> Add an <span className="font-medium text-foreground">OpenRouter</span> key to access models from any provider with a single API key.{' '}
+                  <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-0.5">
+                    Get one <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                </p>
+              </div>
               {renderProviderSections(chatModelsByProvider)}
             </TabsContent>
 
