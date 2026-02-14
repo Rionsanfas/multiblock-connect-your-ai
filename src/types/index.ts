@@ -136,8 +136,6 @@ export {
   getProviderFromModel,
   getVisionModelForProvider,
   getImageGenModelForProvider,
-  providerSupportsImageGeneration,
-  providerSupportsVision
 } from '@/config/models';
 
 // Local type alias for use within this file
