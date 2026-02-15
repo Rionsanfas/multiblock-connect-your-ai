@@ -8,12 +8,15 @@ import {
   Pencil,
   HelpCircle,
   Home,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAppStore } from "@/store/useAppStore";
-import { boardsDb } from "@/lib/database";
+import { boardsDb, blocksDb, messagesDb } from "@/lib/database";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -29,12 +32,57 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(boardTitle || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const queryClient = useQueryClient();
   
   const {
     zoom,
     setZoom,
   } = useAppStore();
+
+  const handleExportChats = async () => {
+    if (!boardId) return;
+    setIsExporting(true);
+    try {
+      const blocks = await blocksDb.getForBoard(boardId);
+      const exportData = await Promise.all(
+        blocks.map(async (block) => {
+          const messages = await messagesDb.getForBlock(block.id);
+          return {
+            block_id: block.id,
+            block_title: block.title || 'Untitled Block',
+            model: block.model_id,
+            provider: block.provider,
+            messages: messages.map((m) => ({
+              role: m.role,
+              content: m.content,
+              created_at: m.created_at,
+              ...(m.meta && Object.keys(m.meta).length > 0 ? { meta: m.meta } : {}),
+            })),
+          };
+        })
+      );
+
+      const payload = {
+        board_title: boardTitle || 'Untitled Board',
+        exported_at: new Date().toISOString(),
+        blocks: exportData,
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(boardTitle || 'board').replace(/[^a-zA-Z0-9]/g, '_')}_export.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Board chats exported');
+    } catch (error) {
+      toast.error('Failed to export chats');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleTitleSave = async () => {
     if (boardId && title.trim() && !isSaving) {
@@ -135,6 +183,29 @@ export function TopBar({ boardId, boardTitle, showBoardControls = false }: TopBa
       <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
         {showBoardControls && (
           <>
+            {/* Export Board Chats */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="key-icon-3d p-2 sm:p-2.5 rounded-lg sm:rounded-xl h-8 w-8 sm:h-auto sm:w-auto"
+                  title="Export Board Chats"
+                  onClick={handleExportChats}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Export all chats</p>
+              </TooltipContent>
+            </Tooltip>
+
             {/* Instructions Popover - shows board usage instructions */}
             <Popover>
               <PopoverTrigger asChild>
