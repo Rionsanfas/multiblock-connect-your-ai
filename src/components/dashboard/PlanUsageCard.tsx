@@ -8,13 +8,18 @@ import { useBilling } from "@/hooks/useBilling";
 // Plan display name mapping
 const PLAN_DISPLAY_NAMES: Record<string, string> = {
   'free': 'Free',
-  'starter-individual-annual': 'Starter',
-  'pro-individual-annual': 'Pro',
-  'starter-team-annual': 'Starter Team',
-  'pro-team-annual': 'Pro Team',
-  'ltd-starter-individual': 'Starter LTD',
+  'pro-monthly': 'Pro',
+  'pro-annual': 'Pro',
+  'team-monthly': 'Pro Team',
+  'team-annual': 'Pro Team',
+  // Legacy plans
+  'starter-individual-annual': 'Pro (Legacy)',
+  'pro-individual-annual': 'Pro (Legacy)',
+  'starter-team-annual': 'Pro Team (Legacy)',
+  'pro-team-annual': 'Pro Team (Legacy)',
+  'ltd-starter-individual': 'Pro LTD',
   'ltd-pro-individual': 'Pro LTD',
-  'ltd-starter-team': 'Starter Team LTD',
+  'ltd-starter-team': 'Pro Team LTD',
   'ltd-pro-team': 'Pro Team LTD',
 };
 

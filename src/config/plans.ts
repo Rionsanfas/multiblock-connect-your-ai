@@ -1,3 +1,8 @@
+/**
+ * Pricing Plans Configuration
+ * Monthly-first pricing model with Polar.sh integration
+ */
+
 import {
   FREE_PLAN_STORAGE_MB,
   FREE_PLAN_STORAGE_DISPLAY,
@@ -6,12 +11,28 @@ import {
   FREE_PLAN_SEATS,
   FREE_PLAN_MESSAGES_PER_DAY,
   FREE_PLAN_API_KEYS,
+  PRO_PLAN_BOARDS,
+  PRO_PLAN_STORAGE_MB,
+  PRO_PLAN_STORAGE_GB,
+  PRO_PLAN_SEATS,
+  TEAM_PLAN_BOARDS,
+  TEAM_PLAN_STORAGE_MB,
+  TEAM_PLAN_STORAGE_GB,
+  TEAM_PLAN_SEATS,
+  PRO_MONTHLY_PRICE,
+  PRO_ANNUAL_PRICE,
+  PRO_ANNUAL_SAVINGS,
+  TEAM_MONTHLY_PRICE,
+  TEAM_ANNUAL_PRICE,
+  TEAM_ANNUAL_SAVINGS,
+  TRIAL_DAYS,
+  POLAR_PRODUCT_IDS,
 } from './plan-constants';
 
 import type { PlanCapabilities } from '@/types';
 
-export type PlanCategory = 'individual' | 'team' | 'lifetime' | 'addon';
-export type PlanTier = 'free' | 'starter' | 'pro' | 'team' | 'enterprise';
+export type PlanCategory = 'individual' | 'team';
+export type PlanTier = 'free' | 'pro' | 'team' | 'enterprise';
 export type BillingPeriod = 'monthly' | 'yearly' | 'lifetime' | 'one_time';
 
 export interface PlanConfig {
@@ -36,18 +57,9 @@ export interface PlanConfig {
   is_active: boolean;
   checkout_url?: string;
   polar_product_id?: string;
-}
-
-export interface AddonConfig {
-  id: string;
-  name: string;
-  description: string;
-  price_cents: number;
-  extra_boards: number;
-  extra_storage_mb: number;
-  checkout_url: string;
-  polar_product_id?: string;
-  is_active: boolean;
+  trial_days?: number;
+  annual_price_cents?: number;
+  annual_savings?: number;
 }
 
 // Base capabilities
@@ -64,35 +76,35 @@ const BASE_CAPABILITIES: PlanCapabilities = {
   advanced_analytics: false,
 };
 
-const FREE_CAPABILITIES: PlanCapabilities = { ...BASE_CAPABILITIES };
-
 const PRO_CAPABILITIES: PlanCapabilities = {
   ...BASE_CAPABILITIES,
+  api_access: true,
   custom_models: true,
+  priority_support: true,
   export_json: true,
 };
 
-const PRO_TEAM_CAPABILITIES: PlanCapabilities = {
+const TEAM_CAPABILITIES: PlanCapabilities = {
   ...PRO_CAPABILITIES,
   sso_enabled: true,
   audit_logs: true,
   custom_branding: true,
+  advanced_analytics: true,
 };
 
-/**
- * ============================================
- * FREE PLAN
- * ============================================
- */
+// ============================================
+// PLAN DEFINITIONS
+// ============================================
+
 const FREE_PLAN: PlanConfig = {
   id: 'free',
   name: 'Free',
   tier: 'free',
   category: 'individual',
-  description: 'Perfect for trying out MultiBlock',
+  description: 'Try Multiblock with basic features',
   price_cents: 0,
   billing_period: 'monthly',
-  boards: 1,
+  boards: FREE_PLAN_BOARDS,
   blocks_per_board: FREE_PLAN_BLOCKS_PER_BOARD,
   storage_mb: FREE_PLAN_STORAGE_MB,
   seats: FREE_PLAN_SEATS,
@@ -103,326 +115,192 @@ const FREE_PLAN: PlanConfig = {
     `${FREE_PLAN_BLOCKS_PER_BOARD} blocks per board`,
     `${FREE_PLAN_STORAGE_DISPLAY} storage`,
     `${FREE_PLAN_MESSAGES_PER_DAY} messages/day`,
-    'Basic AI models',
-    'Community support',
+    'Basic AI models (BYOK)',
+    '7-day history',
   ],
-  capabilities: FREE_CAPABILITIES,
-  badge: 'Free Forever',
+  capabilities: BASE_CAPABILITIES,
   sort_order: 0,
   is_active: true,
 };
 
-/**
- * ============================================
- * PRO INDIVIDUAL (Annual) - was Starter Individual
- * ============================================
- */
-const PRO_INDIVIDUAL_ANNUAL: PlanConfig = {
-  id: 'starter-individual-annual',
+const PRO_MONTHLY: PlanConfig = {
+  id: 'pro-monthly',
   name: 'Pro',
   tier: 'pro',
   category: 'individual',
-  description: 'For individuals getting started',
-  price_cents: 3000,
-  billing_period: 'yearly',
-  boards: 50,
+  description: 'For power users who need unlimited AI',
+  price_cents: PRO_MONTHLY_PRICE * 100,
+  billing_period: 'monthly',
+  boards: PRO_PLAN_BOARDS,
   blocks_per_board: 'unlimited',
-  storage_mb: 2048,
-  seats: 1,
+  storage_mb: PRO_PLAN_STORAGE_MB,
+  seats: PRO_PLAN_SEATS,
   messages_per_day: -1,
-  api_keys: 5,
+  api_keys: -1,
   features: [
-    '50 boards',
+    `${PRO_PLAN_BOARDS} boards`,
     'Unlimited blocks',
-    '2 GB storage',
-    '1 seat',
-    '1-year access',
-    'All AI models',
-    'Export to JSON',
-    'Email support',
-  ],
-  capabilities: PRO_CAPABILITIES,
-  badge: '1-Year Access',
-  sort_order: 1,
-  is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v',
-};
-
-/**
- * ============================================
- * PRO TEAM (Annual) - was Starter Team
- * ============================================
- */
-const PRO_TEAM_ANNUAL: PlanConfig = {
-  id: 'starter-team-annual',
-  name: 'Pro Team',
-  tier: 'pro',
-  category: 'team',
-  description: 'For small teams getting started',
-  price_cents: 3900,
-  billing_period: 'yearly',
-  boards: 50,
-  blocks_per_board: 'unlimited',
-  storage_mb: 5120,
-  seats: 10,
-  messages_per_day: -1,
-  api_keys: 10,
-  features: [
-    '50 boards',
-    'Unlimited blocks',
-    '5 GB storage',
-    'Up to 10 seats',
-    '1-year access',
-    'All AI models',
-    'Team collaboration',
-    'Email support',
-  ],
-  capabilities: PRO_TEAM_CAPABILITIES,
-  badge: '1-Year Access',
-  sort_order: 2,
-  is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy',
-};
-
-/**
- * ============================================
- * PRO LIFETIME (Individual) - was LTD Starter Individual
- * ============================================
- */
-const PRO_LIFETIME_INDIVIDUAL: PlanConfig = {
-  id: 'ltd-starter-individual',
-  name: 'Pro Lifetime',
-  tier: 'pro',
-  category: 'lifetime',
-  description: 'Lifetime access for individuals',
-  price_cents: 12000,
-  billing_period: 'lifetime',
-  boards: 50,
-  blocks_per_board: 'unlimited',
-  storage_mb: 6144,
-  seats: 1,
-  messages_per_day: -1,
-  api_keys: 5,
-  features: [
-    '50 boards',
-    'Unlimited blocks',
-    '6 GB storage',
-    '1 seat',
-    'Lifetime access',
-    'All AI models',
-    'Export to JSON',
+    `${PRO_PLAN_STORAGE_GB} GB storage`,
+    'Unlimited messages',
+    'All AI models (BYOK)',
+    'Infinite history',
     'Priority support',
+    'Export data',
   ],
   capabilities: PRO_CAPABILITIES,
   highlight: true,
-  badge: 'Lifetime Deal',
+  badge: 'Most Popular',
+  sort_order: 1,
+  is_active: true,
+  checkout_url: `https://polar.sh/multiblock/checkout?product=${POLAR_PRODUCT_IDS['pro-monthly']}`,
+  polar_product_id: POLAR_PRODUCT_IDS['pro-monthly'],
+  trial_days: TRIAL_DAYS,
+  annual_price_cents: PRO_ANNUAL_PRICE * 100,
+  annual_savings: PRO_ANNUAL_SAVINGS,
+};
+
+const PRO_ANNUAL: PlanConfig = {
+  id: 'pro-annual',
+  name: 'Pro',
+  tier: 'pro',
+  category: 'individual',
+  description: 'Save $46 with annual billing',
+  price_cents: PRO_ANNUAL_PRICE * 100,
+  billing_period: 'yearly',
+  boards: PRO_PLAN_BOARDS,
+  blocks_per_board: 'unlimited',
+  storage_mb: PRO_PLAN_STORAGE_MB,
+  seats: PRO_PLAN_SEATS,
+  messages_per_day: -1,
+  api_keys: -1,
+  features: PRO_MONTHLY.features,
+  capabilities: PRO_CAPABILITIES,
+  highlight: true,
+  badge: 'Save $46',
+  sort_order: 2,
+  is_active: true,
+  checkout_url: `https://polar.sh/multiblock/checkout?product=${POLAR_PRODUCT_IDS['pro-annual']}`,
+  polar_product_id: POLAR_PRODUCT_IDS['pro-annual'],
+};
+
+const TEAM_MONTHLY: PlanConfig = {
+  id: 'team-monthly',
+  name: 'Pro Team',
+  tier: 'team',
+  category: 'team',
+  description: 'For teams that collaborate with AI',
+  price_cents: TEAM_MONTHLY_PRICE * 100,
+  billing_period: 'monthly',
+  boards: TEAM_PLAN_BOARDS,
+  blocks_per_board: 'unlimited',
+  storage_mb: TEAM_PLAN_STORAGE_MB,
+  seats: TEAM_PLAN_SEATS,
+  messages_per_day: -1,
+  api_keys: -1,
+  features: [
+    `${TEAM_PLAN_BOARDS} boards`,
+    'Unlimited blocks',
+    `${TEAM_PLAN_STORAGE_GB} GB storage`,
+    `Up to ${TEAM_PLAN_SEATS} seats`,
+    'All AI models (BYOK)',
+    'Shared boards & team memory',
+    'Admin controls & analytics',
+    'Audit logs',
+  ],
+  capabilities: TEAM_CAPABILITIES,
   sort_order: 3,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw',
+  checkout_url: `https://polar.sh/multiblock/checkout?product=${POLAR_PRODUCT_IDS['team-monthly']}`,
+  polar_product_id: POLAR_PRODUCT_IDS['team-monthly'],
+  trial_days: TRIAL_DAYS,
+  annual_price_cents: TEAM_ANNUAL_PRICE * 100,
+  annual_savings: TEAM_ANNUAL_SAVINGS,
 };
 
-/**
- * ============================================
- * PRO LIFETIME TEAM - was LTD Starter Team
- * ============================================
- */
-const PRO_LIFETIME_TEAM: PlanConfig = {
-  id: 'ltd-starter-team',
-  name: 'Pro Lifetime Team',
-  tier: 'pro',
-  category: 'lifetime',
-  description: 'Lifetime access for teams',
-  price_cents: 12900,
-  billing_period: 'lifetime',
-  boards: 150,
+const TEAM_ANNUAL: PlanConfig = {
+  id: 'team-annual',
+  name: 'Pro Team',
+  tier: 'team',
+  category: 'team',
+  description: 'Save $118 with annual billing',
+  price_cents: TEAM_ANNUAL_PRICE * 100,
+  billing_period: 'yearly',
+  boards: TEAM_PLAN_BOARDS,
   blocks_per_board: 'unlimited',
-  storage_mb: 8192,
-  seats: 10,
+  storage_mb: TEAM_PLAN_STORAGE_MB,
+  seats: TEAM_PLAN_SEATS,
   messages_per_day: -1,
-  api_keys: 10,
-  features: [
-    '150 boards',
-    'Unlimited blocks',
-    '8 GB storage',
-    'Up to 10 seats',
-    'Lifetime access',
-    'All AI models',
-    'Team collaboration',
-    'Priority support',
-  ],
-  capabilities: PRO_TEAM_CAPABILITIES,
-  badge: 'Lifetime Deal',
+  api_keys: -1,
+  features: TEAM_MONTHLY.features,
+  capabilities: TEAM_CAPABILITIES,
   sort_order: 4,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc',
+  checkout_url: `https://polar.sh/multiblock/checkout?product=${POLAR_PRODUCT_IDS['team-annual']}`,
+  polar_product_id: POLAR_PRODUCT_IDS['team-annual'],
 };
 
-/**
- * ============================================
- * STORAGE ADD-ONS (STACKABLE)
- * ============================================
- */
-export const ADDONS: AddonConfig[] = [
-  {
-    id: 'addon-1gb',
-    name: '+1 GB Add-On',
-    description: '+1 GB storage + 10 boards',
-    price_cents: 500,
-    extra_boards: 10,
-    extra_storage_mb: 1024,
-    checkout_url: 'https://buy.polar.sh/polar_cl_OBo7BCQ6ZYvqCFhc59DMFZJqfSg2ORRsow1RI3e8hEM',
-    is_active: true,
-  },
-  {
-    id: 'addon-2gb',
-    name: '+2 GB Add-On',
-    description: '+2 GB storage + 20 boards',
-    price_cents: 600,
-    extra_boards: 20,
-    extra_storage_mb: 2048,
-    checkout_url: 'https://buy.polar.sh/polar_cl_3jJPkH6afjDo1zVJUsauoPKlIclTotWyV9ssE006a3k',
-    is_active: true,
-  },
-  {
-    id: 'addon-4gb',
-    name: '+4 GB Add-On',
-    description: '+4 GB storage + 50 boards',
-    price_cents: 900,
-    extra_boards: 50,
-    extra_storage_mb: 4096,
-    checkout_url: 'https://buy.polar.sh/polar_cl_1Oj5sYbfwJyVjmzPXnnjnlr9YS2TVCQd7OsyG1IzSMj',
-    is_active: true,
-  },
-  {
-    id: 'addon-5gb',
-    name: '+5 GB Add-On',
-    description: '+5 GB storage + 60 boards',
-    price_cents: 1000,
-    extra_boards: 60,
-    extra_storage_mb: 5120,
-    checkout_url: 'https://buy.polar.sh/polar_cl_BL5ku7NkvCcIsfr2pjq1gHnmn5sN87tkja0IP0PaJDT',
-    is_active: true,
-  },
-  {
-    id: 'addon-10gb',
-    name: '+10 GB Add-On',
-    description: '+10 GB storage + 120 boards',
-    price_cents: 1800,
-    extra_boards: 120,
-    extra_storage_mb: 10240,
-    checkout_url: 'https://buy.polar.sh/polar_cl_JCkbiUFVssy28q7auRRSmERW2XUwIhqt2JnrY2yCy9b',
-    is_active: true,
-  },
-];
+// ============================================
+// ALL PLANS (EXPORT)
+// ============================================
 
-/**
- * ============================================
- * ALL PRICING PLANS (EXPORT)
- * ============================================
- */
 export const PRICING_PLANS: PlanConfig[] = [
   FREE_PLAN,
-  PRO_INDIVIDUAL_ANNUAL,
-  PRO_TEAM_ANNUAL,
-  PRO_LIFETIME_INDIVIDUAL,
-  PRO_LIFETIME_TEAM,
+  PRO_MONTHLY,
+  PRO_ANNUAL,
+  TEAM_MONTHLY,
+  TEAM_ANNUAL,
 ];
 
-/**
- * ============================================
- * HELPER FUNCTIONS
- * ============================================
- */
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
 
 export function getPlanById(planId: string): PlanConfig | undefined {
   return PRICING_PLANS.find(p => p.id === planId);
-}
-
-export function getPlansByCategory(category: PlanCategory): PlanConfig[] {
-  return PRICING_PLANS.filter(p => p.category === category && p.is_active);
-}
-
-/** Get all paid plans (excluding free) */
-export function getPaidPlans(): PlanConfig[] {
-  return PRICING_PLANS.filter(p => p.tier !== 'free' && p.is_active)
-    .sort((a, b) => a.sort_order - b.sort_order);
-}
-
-export function getIndividualAnnualPlans(): PlanConfig[] {
-  return PRICING_PLANS.filter(p => 
-    p.category === 'individual' && 
-    p.billing_period === 'yearly' && 
-    p.is_active
-  ).sort((a, b) => a.sort_order - b.sort_order);
-}
-
-export function getTeamAnnualPlans(): PlanConfig[] {
-  return PRICING_PLANS.filter(p => 
-    p.category === 'team' && 
-    p.billing_period === 'yearly' && 
-    p.tier !== 'enterprise' &&
-    p.is_active
-  ).sort((a, b) => a.sort_order - b.sort_order);
-}
-
-export function getLifetimePlans(): PlanConfig[] {
-  return PRICING_PLANS.filter(p => 
-    p.billing_period === 'lifetime' && 
-    p.is_active
-  ).sort((a, b) => a.sort_order - b.sort_order);
-}
-
-export function getIndividualLifetimePlans(): PlanConfig[] {
-  return PRICING_PLANS.filter(p => 
-    p.billing_period === 'lifetime' && 
-    p.seats === 1 &&
-    p.is_active
-  ).sort((a, b) => a.sort_order - b.sort_order);
-}
-
-export function getTeamLifetimePlans(): PlanConfig[] {
-  return PRICING_PLANS.filter(p => 
-    p.billing_period === 'lifetime' && 
-    p.seats > 1 &&
-    p.is_active
-  ).sort((a, b) => a.sort_order - b.sort_order);
-}
-
-export function getActiveAddons(): AddonConfig[] {
-  return ADDONS.filter(a => a.is_active);
 }
 
 export function getFreePlan(): PlanConfig {
   return FREE_PLAN;
 }
 
-export function getPlanCheckoutUrl(plan: PlanConfig): string | null {
-  return plan.checkout_url || null;
+export function getProMonthlyPlan(): PlanConfig {
+  return PRO_MONTHLY;
 }
 
-export function comparePlanTiers(tierA: PlanTier, tierB: PlanTier): number {
-  const order: Record<PlanTier, number> = {
-    free: 0,
-    starter: 1,
-    pro: 2,
-    team: 3,
-    enterprise: 4,
-  };
-  return order[tierA] - order[tierB];
+export function getProAnnualPlan(): PlanConfig {
+  return PRO_ANNUAL;
 }
 
-export function canUpgrade(currentTier: PlanTier, targetTier: PlanTier): boolean {
-  return comparePlanTiers(currentTier, targetTier) < 0;
+export function getTeamMonthlyPlan(): PlanConfig {
+  return TEAM_MONTHLY;
+}
+
+export function getTeamAnnualPlan(): PlanConfig {
+  return TEAM_ANNUAL;
+}
+
+/** Get plans for a specific billing period */
+export function getPlansByBillingPeriod(period: 'monthly' | 'yearly'): PlanConfig[] {
+  return [
+    FREE_PLAN,
+    ...PRICING_PLANS.filter(p => p.billing_period === period && p.tier !== 'free' && p.is_active),
+  ];
+}
+
+/** Get all paid plans */
+export function getPaidPlans(): PlanConfig[] {
+  return PRICING_PLANS.filter(p => p.tier !== 'free' && p.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order);
 }
 
 export function formatPlanPrice(plan: PlanConfig): string {
   if (plan.tier === 'enterprise') return 'Custom';
   if (plan.price_cents === 0) return 'Free';
-  
+
   const price = plan.price_cents / 100;
-  if (plan.billing_period === 'lifetime') return `$${price.toFixed(2)}`;
-  if (plan.billing_period === 'yearly') return `$${price.toFixed(2)}/year`;
-  return `$${price.toFixed(2)}/month`;
+  if (plan.billing_period === 'yearly') return `$${price.toFixed(0)}/year`;
+  if (plan.billing_period === 'lifetime') return `$${price.toFixed(0)}`;
+  return `$${price.toFixed(0)}/month`;
 }
 
 export function formatStorage(mb: number): string {
@@ -439,29 +317,39 @@ export function formatLimit(value: number | 'unlimited'): string {
   return value.toString();
 }
 
-export function getPlanIdByCheckoutUrl(url: string): string | undefined {
-  const plan = PRICING_PLANS.find(p => p.checkout_url === url);
-  return plan?.id;
+export function comparePlanTiers(tierA: PlanTier, tierB: PlanTier): number {
+  const order: Record<PlanTier, number> = {
+    free: 0,
+    pro: 1,
+    team: 2,
+    enterprise: 3,
+  };
+  return (order[tierA] ?? 0) - (order[tierB] ?? 0);
 }
 
-export function getAllCheckoutMappings(): Record<string, { planId: string; isLifetime: boolean; seats: number; boards: number; storageMb: number }> {
-  const mappings: Record<string, { planId: string; isLifetime: boolean; seats: number; boards: number; storageMb: number }> = {};
-  
-  for (const plan of PRICING_PLANS) {
-    if (plan.checkout_url) {
-      mappings[plan.checkout_url] = {
-        planId: plan.id,
-        isLifetime: plan.billing_period === 'lifetime',
-        seats: plan.seats,
-        boards: plan.boards,
-        storageMb: plan.storage_mb,
-      };
-    }
-  }
-  
-  return mappings;
+export function canUpgrade(currentTier: PlanTier, targetTier: PlanTier): boolean {
+  return comparePlanTiers(currentTier, targetTier) < 0;
 }
 
-export function getAddonByCheckoutUrl(url: string): AddonConfig | undefined {
-  return ADDONS.find(a => a.checkout_url === url);
+// Legacy compatibility exports
+
+/** @deprecated Add-ons removed in new pricing. Kept for backward compat. */
+export interface AddonConfig {
+  id: string;
+  name: string;
+  description: string;
+  price_cents: number;
+  extra_boards: number;
+  extra_storage_mb: number;
+  checkout_url: string;
+  polar_product_id?: string;
+  is_active: boolean;
+}
+
+/** @deprecated Add-ons removed in new pricing. Returns empty array. */
+export const ADDONS: AddonConfig[] = [];
+
+export function getActiveAddons(): AddonConfig[] { return []; }
+export function getPlanCheckoutUrl(plan: PlanConfig): string | null {
+  return plan.checkout_url || null;
 }

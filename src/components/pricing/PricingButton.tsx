@@ -135,7 +135,7 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
 function getTierFromPlanId(planId: string): PlanTier {
   if (planId === 'free') return 'free';
   if (planId === 'enterprise') return 'enterprise';
-  if (planId.includes('pro')) return 'pro';
-  if (planId.includes('starter')) return 'starter';
+  if (planId.includes('team')) return 'team';
+  if (planId.includes('pro') || planId.includes('starter') || planId.includes('ltd')) return 'pro';
   return 'free';
 }
