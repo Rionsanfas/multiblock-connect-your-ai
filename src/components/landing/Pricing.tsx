@@ -47,20 +47,27 @@ function HomePricingCard({ plan }: { plan: PlanConfig }) {
               Save ${plan.annual_savings} vs monthly
             </p>
           )}
-          {plan.trial_days && plan.billing_period === 'monthly' && (
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-              {plan.trial_days}-day free trial
-            </p>
-          )}
         </div>
 
         {/* Plan Name */}
         <h3 className={`text-base sm:text-lg font-bold mb-1 ${isHighlight ? 'text-gold-shine' : 'text-foreground'}`}>
           {plan.name}
         </h3>
-        <p className="text-[10px] sm:text-xs text-muted-foreground mb-4 leading-relaxed line-clamp-2">
+        <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 leading-relaxed line-clamp-2">
           {plan.description}
         </p>
+
+        {/* Trial badge - only for paid plans with trial */}
+        {plan.trial_days && plan.billing_period === 'monthly' && (
+          <div className="mb-3">
+            <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-accent bg-accent/10 border border-accent/20 px-2.5 py-1 rounded-full">
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 8v4l3 3" /><circle cx="12" cy="12" r="10" />
+              </svg>
+              {plan.trial_days}-day free trial
+            </span>
+          </div>
+        )}
 
         {/* CTA Button */}
         <div className="mb-4 sm:mb-5">
