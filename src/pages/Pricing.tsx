@@ -92,7 +92,7 @@ function PricingCard({ plan }: { plan: PlanConfig }) {
         <ul className="space-y-2.5 flex-1">
           {plan.features.map((feature) => (
             <li key={feature} className="flex items-start gap-2.5 text-xs sm:text-sm">
-              <div className="mt-0.5 flex-shrink-0 h-4 w-4 rounded-full bg-accent/15 flex items-center justify-center">
+              <div className="mt-0.5 check-icon-3d">
                 <Check className="h-2.5 w-2.5 text-accent" />
               </div>
               <span className="text-muted-foreground">{feature}</span>
@@ -137,7 +137,7 @@ function FeatureComparisonTable() {
     if (value === true) {
       return (
         <div className="flex justify-center">
-          <div className="h-5 w-5 rounded-full bg-accent/20 flex items-center justify-center">
+          <div className="check-icon-3d" style={{ width: 22, height: 22 }}>
             <Check className="h-3 w-3 text-accent" />
           </div>
         </div>
@@ -146,7 +146,7 @@ function FeatureComparisonTable() {
     if (value === false) {
       return (
         <div className="flex justify-center">
-          <div className="h-5 w-5 rounded-full bg-muted/30 flex items-center justify-center">
+          <div className="x-icon-3d" style={{ width: 22, height: 22 }}>
             <X className="h-3 w-3 text-muted-foreground/40" />
           </div>
         </div>
