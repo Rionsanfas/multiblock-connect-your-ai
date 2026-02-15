@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { Plus, AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConnectionGuideTip } from "@/components/board/ConnectionGuideTip";
+import { LockedBoardBanner } from "@/components/board/LockedBoardBanner";
+import { useBoardLockStatus } from "@/hooks/useDowngradeStatus";
 import { DemoFloatingCard } from "@/components/DemoFloatingCard";
 
 // Responsive defaults - match BlockCard.tsx
@@ -80,7 +82,9 @@ export default function BoardCanvas() {
   // Live sync: when messages are sent in connected blocks, update context automatically
   useBoardConnectionSync(board?.id);
 
-  // Responsive hooks - MUST be called unconditionally at top level
+  // Board lock status
+  const { data: boardLockData } = useBoardLockStatus(board?.id);
+  const isBoardLocked = boardLockData?.is_locked ?? false;
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const showMobileZoomControls = isMobile || isTablet;
@@ -679,7 +683,15 @@ export default function BoardCanvas() {
   // 7. Board loaded - render canvas
   return (
     <DashboardLayout boardId={board.id} boardTitle={board.title} showBoardControls hideSidebar>
-      <div className="flex h-full relative">
+      <div className="flex flex-col h-full relative">
+        {/* Locked board banner */}
+        {isBoardLocked && (
+          <div className="px-3 py-2 flex-shrink-0">
+            <LockedBoardBanner reason={boardLockData?.locked_reason} />
+          </div>
+        )}
+
+        <div className="flex flex-1 relative min-h-0">
         {/* Fixed sidebar - outside of the canvas transform */}
         <BlocksSidebar boardId={board.id} onCenterView={handleCenterView} />
 
@@ -791,6 +803,7 @@ export default function BoardCanvas() {
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
+      </div>
       </div>
 
       {isBlockChatOpen && chatBlockId && <BlockChatModal blockId={chatBlockId} />}

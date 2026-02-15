@@ -295,6 +295,11 @@ export function BlockChatModal({
     setIsEditingTitle(false);
   };
   const handleSend = useCallback(async (content: string, attachments?: ChatAttachment[], references?: ChatReference[]) => {
+    // Block sending in locked blocks
+    if ((block as any)?.is_locked) {
+      toast.error("This block is locked. Upgrade to continue messaging.");
+      return;
+    }
     // Block sending while model is switching
     if (isSwitchingModel) {
       toast.error("Please wait for model switch to complete");

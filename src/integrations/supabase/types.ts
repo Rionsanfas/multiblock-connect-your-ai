@@ -18,7 +18,10 @@ export type Database = {
         Row: {
           api_key_encrypted: string
           created_at: string
+          disabled_at: string | null
+          disabled_reason: string | null
           id: string
+          is_active: boolean | null
           is_valid: boolean | null
           key_hint: string | null
           last_validated_at: string | null
@@ -30,7 +33,10 @@ export type Database = {
         Insert: {
           api_key_encrypted: string
           created_at?: string
+          disabled_at?: string | null
+          disabled_reason?: string | null
           id?: string
+          is_active?: boolean | null
           is_valid?: boolean | null
           key_hint?: string | null
           last_validated_at?: string | null
@@ -42,7 +48,10 @@ export type Database = {
         Update: {
           api_key_encrypted?: string
           created_at?: string
+          disabled_at?: string | null
+          disabled_reason?: string | null
           id?: string
+          is_active?: boolean | null
           is_valid?: boolean | null
           key_hint?: string | null
           last_validated_at?: string | null
@@ -125,6 +134,8 @@ export type Database = {
           height: number | null
           id: string
           is_collapsed: boolean | null
+          is_locked: boolean | null
+          locked_at: string | null
           model_id: string
           position_x: number
           position_y: number
@@ -142,6 +153,8 @@ export type Database = {
           height?: number | null
           id?: string
           is_collapsed?: boolean | null
+          is_locked?: boolean | null
+          locked_at?: string | null
           model_id: string
           position_x?: number
           position_y?: number
@@ -159,6 +172,8 @@ export type Database = {
           height?: number | null
           id?: string
           is_collapsed?: boolean | null
+          is_locked?: boolean | null
+          locked_at?: string | null
           model_id?: string
           position_x?: number
           position_y?: number
@@ -267,7 +282,10 @@ export type Database = {
           description: string | null
           id: string
           is_archived: boolean | null
+          is_locked: boolean | null
           is_public: boolean | null
+          locked_at: string | null
+          locked_reason: string | null
           name: string
           team_id: string | null
           updated_at: string
@@ -282,7 +300,10 @@ export type Database = {
           description?: string | null
           id?: string
           is_archived?: boolean | null
+          is_locked?: boolean | null
           is_public?: boolean | null
+          locked_at?: string | null
+          locked_reason?: string | null
           name?: string
           team_id?: string | null
           updated_at?: string
@@ -297,7 +318,10 @@ export type Database = {
           description?: string | null
           id?: string
           is_archived?: boolean | null
+          is_locked?: boolean | null
           is_public?: boolean | null
+          locked_at?: string | null
+          locked_reason?: string | null
           name?: string
           team_id?: string | null
           updated_at?: string
@@ -852,6 +876,8 @@ export type Database = {
           boards: number | null
           created_at: string | null
           current_period_end: string | null
+          downgraded_at: string | null
+          grace_period_ends_at: string | null
           grandfathered_plan_name: string | null
           grandfathered_price_cents: number | null
           is_grandfathered: boolean | null
@@ -878,6 +904,8 @@ export type Database = {
           boards?: number | null
           created_at?: string | null
           current_period_end?: string | null
+          downgraded_at?: string | null
+          grace_period_ends_at?: string | null
           grandfathered_plan_name?: string | null
           grandfathered_price_cents?: number | null
           is_grandfathered?: boolean | null
@@ -904,6 +932,8 @@ export type Database = {
           boards?: number | null
           created_at?: string | null
           current_period_end?: string | null
+          downgraded_at?: string | null
+          grace_period_ends_at?: string | null
           grandfathered_plan_name?: string | null
           grandfathered_price_cents?: number | null
           is_grandfathered?: boolean | null
@@ -1431,6 +1461,14 @@ export type Database = {
           storage_used_mb: number
         }[]
       }
+      handle_subscription_downgrade: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      handle_subscription_upgrade: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1450,6 +1488,8 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      is_block_locked: { Args: { p_block_id: string }; Returns: boolean }
+      is_board_locked: { Args: { p_board_id: string }; Returns: boolean }
       is_in_grace: { Args: { p_user_id: string }; Returns: boolean }
       is_team_admin_or_owner: {
         Args: { p_team_id: string; p_user_id: string }

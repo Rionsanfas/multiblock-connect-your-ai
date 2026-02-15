@@ -24,6 +24,8 @@ function transformBoard(board: SupabaseBoard): LegacyBoard {
     title: board.name,
     user_id: board.user_id,
     team_id: board.team_id,
+    is_locked: (board as any).is_locked ?? false,
+    locked_reason: (board as any).locked_reason ?? null,
     metadata: {
       description: board.description || undefined,
     },

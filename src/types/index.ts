@@ -20,6 +20,8 @@ export interface Board {
   title: string;
   user_id: string;
   team_id?: string | null;
+  is_locked?: boolean;
+  locked_reason?: string | null;
   metadata: {
     description?: string;
     thumbnail?: string;
@@ -39,6 +41,7 @@ export interface Block {
   config: BlockConfig;
   position: { x: number; y: number };
   source_context?: SourceContext; // Context this block was created from
+  is_locked?: boolean; // Locked due to downgrade
   created_at: string;
   updated_at: string;
 }

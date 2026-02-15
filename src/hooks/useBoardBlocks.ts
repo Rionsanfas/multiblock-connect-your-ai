@@ -57,6 +57,7 @@ export function useBoardBlocks(boardId: string | undefined) {
         system_prompt: b.system_prompt || '',
         config: { temperature: 0.7, max_tokens: 2048 },
         position: { x: b.position_x, y: b.position_y },
+        is_locked: (b as any).is_locked ?? false,
         created_at: b.created_at,
         updated_at: b.updated_at,
       }))
