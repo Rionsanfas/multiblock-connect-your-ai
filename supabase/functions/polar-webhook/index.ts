@@ -41,18 +41,73 @@ interface PlanConfig {
   plan_id: string;
   plan_key: string;
   plan_category: 'individual' | 'team';
-  billing_type: 'annual' | 'lifetime';
+  billing_type: 'monthly' | 'annual' | 'lifetime';
   boards: number;
   blocks: number;
   storage_gb: number;
   seats: number;
   is_lifetime: boolean;
   is_addon: boolean;
+  trial_days?: number;
 }
 
 // Map by checkout URL path (the unique identifier in Polar checkout links)
 const CHECKOUT_TO_PLAN: Record<string, PlanConfig> = {
+  // Individual Monthly (with 3-day trial)
+  'polar_cl_IH82mfObkRtRmHKdbp2OSDLXQN0QC4CBVnKMo3gLSIL': {
+    plan_id: '00000000-0000-0000-0000-000000000050',
+    plan_key: 'pro-monthly',
+    plan_category: 'individual',
+    billing_type: 'monthly',
+    boards: 100,
+    blocks: -1,
+    storage_gb: 4,
+    seats: 1,
+    is_lifetime: false,
+    is_addon: false,
+    trial_days: 3,
+  },
   // Individual Annual
+  'polar_cl_DwPQiQgpjYb3xgk4cMtPDK3oapSGLSs2iU8qt2w8Mif': {
+    plan_id: '00000000-0000-0000-0000-000000000051',
+    plan_key: 'pro-annual',
+    plan_category: 'individual',
+    billing_type: 'annual',
+    boards: 100,
+    blocks: -1,
+    storage_gb: 4,
+    seats: 1,
+    is_lifetime: false,
+    is_addon: false,
+  },
+  // Team Monthly (with 3-day trial)
+  'polar_cl_VRn60gsBMzVPECfYeC2ga1BsCq20rcv7Fw02Y2bm3wa': {
+    plan_id: '00000000-0000-0000-0000-000000000052',
+    plan_key: 'team-monthly',
+    plan_category: 'team',
+    billing_type: 'monthly',
+    boards: 200,
+    blocks: -1,
+    storage_gb: 6,
+    seats: 20,
+    is_lifetime: false,
+    is_addon: false,
+    trial_days: 3,
+  },
+  // Team Annual
+  'polar_cl_O0KhX8QrZVtK95iQrHceWabozRA8jfZzTwOvB0UaTft': {
+    plan_id: '00000000-0000-0000-0000-000000000053',
+    plan_key: 'team-annual',
+    plan_category: 'team',
+    billing_type: 'annual',
+    boards: 200,
+    blocks: -1,
+    storage_gb: 6,
+    seats: 20,
+    is_lifetime: false,
+    is_addon: false,
+  },
+  // Legacy Individual Annual
   'polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v': {
     plan_id: '00000000-0000-0000-0000-000000000010',
     plan_key: 'starter-individual-annual',
@@ -531,8 +586,8 @@ serve(async (req) => {
   console.log("[polar-webhook] Plan config:", planConfig);
 
   // Handle cancellation events
-  if (eventType?.includes('cancel')) {
-    console.log("[polar-webhook] Processing cancellation");
+  if (eventType?.includes('cancel') || eventType?.includes('revok')) {
+    console.log("[polar-webhook] Processing cancellation/revocation");
     
     const { error: cancelError } = await supabase
       .from('user_billing')
@@ -548,6 +603,32 @@ serve(async (req) => {
       console.error("[polar-webhook] Cancel update error:", cancelError);
     } else {
       console.log("[polar-webhook] Subscription cancelled for user:", userId);
+    }
+
+    // Check if current_period_end has passed - if so, downgrade immediately
+    const { data: billingData } = await supabase
+      .from('user_billing')
+      .select('current_period_end, is_lifetime')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const shouldDowngradeNow = !billingData?.is_lifetime && (
+      !billingData?.current_period_end || 
+      new Date(billingData.current_period_end) <= new Date()
+    );
+
+    if (shouldDowngradeNow) {
+      console.log("[polar-webhook] Period ended - running immediate downgrade");
+      const { error: downgradeError } = await supabase.rpc('handle_subscription_downgrade', {
+        p_user_id: userId,
+      });
+      if (downgradeError) {
+        console.error("[polar-webhook] Downgrade error:", downgradeError);
+      } else {
+        console.log("[polar-webhook] User downgraded to free tier");
+      }
+    } else {
+      console.log("[polar-webhook] User retains access until period end:", billingData?.current_period_end);
     }
 
     return new Response("ok", { status: 200, headers: responseHeaders });
@@ -627,6 +708,17 @@ serve(async (req) => {
   }
 
   console.log("[polar-webhook] SUCCESS - Billing updated:", upsertResult);
+
+  // Remove any locks from previous downgrades
+  const { error: upgradeError } = await supabase.rpc('handle_subscription_upgrade', {
+    p_user_id: userId,
+  });
+  if (upgradeError) {
+    console.error("[polar-webhook] Upgrade unlock error:", upgradeError);
+  } else {
+    console.log("[polar-webhook] All locks removed for user:", userId);
+  }
+
   console.log("========================================");
 
   return new Response("ok", { status: 200, headers: responseHeaders });

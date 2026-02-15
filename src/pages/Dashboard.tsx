@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen, Users } from "lucide-react";
+import { Plus, LayoutGrid, List, MoreHorizontal, Copy, Trash2, FolderOpen, Users, Lock } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
@@ -449,7 +449,8 @@ function BoardCard({
       onMouseEnter={onMouseEnter}
     >
       <div className={viewMode === "list" ? "flex items-center gap-3 sm:gap-4 flex-1 min-w-0" : ""}>
-        <h3 className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors truncate">
+        <h3 className="font-semibold text-base sm:text-lg group-hover:text-primary transition-colors truncate flex items-center gap-2">
+          {board.is_locked && <Lock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
           {board.title}
         </h3>
         <div className="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 text-xs sm:text-sm text-muted-foreground flex-wrap">

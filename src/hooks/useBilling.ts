@@ -26,6 +26,9 @@ export interface BillingInfo {
   is_grandfathered: boolean;
   grandfathered_plan_name: string | null;
   grandfathered_price_cents: number | null;
+  // Downgrade tracking
+  downgraded_at: string | null;
+  grace_period_ends_at: string | null;
 }
 
 interface AddonEntry {
@@ -100,6 +103,9 @@ export function useBilling() {
         is_grandfathered: (data as any).is_grandfathered ?? false,
         grandfathered_plan_name: (data as any).grandfathered_plan_name ?? null,
         grandfathered_price_cents: (data as any).grandfathered_price_cents ?? null,
+        // Downgrade tracking
+        downgraded_at: (data as any).downgraded_at ?? null,
+        grace_period_ends_at: (data as any).grace_period_ends_at ?? null,
       };
     },
     enabled: !!user,

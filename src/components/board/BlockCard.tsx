@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { LockedBlockOverlay } from "./LockedBlockOverlay";
 import { Copy, Trash2, MoreHorizontal, MessageSquare, GripVertical, Settings } from "lucide-react";
 import { IconButton } from "@/components/ui/icon-button";
 import { ProviderBadge } from "@/components/ui/provider-badge";
@@ -431,8 +432,10 @@ export function BlockCard({
             setIsConnectionZoneHovered(false);
           }}
         >
+          {/* Lock overlay for locked blocks */}
+          {block.is_locked && <LockedBlockOverlay />}
+
           {/* Layer 1: Full outline bracket for connections - always visible, symmetric offset */}
-          {/* Enhanced glow when this block is a mobile connection target */}
           <div 
             className={cn(
               "absolute pointer-events-none transition-all duration-150",
