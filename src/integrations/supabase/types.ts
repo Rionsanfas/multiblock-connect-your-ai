@@ -852,6 +852,9 @@ export type Database = {
           boards: number | null
           created_at: string | null
           current_period_end: string | null
+          grandfathered_plan_name: string | null
+          grandfathered_price_cents: number | null
+          is_grandfathered: boolean | null
           is_lifetime: boolean | null
           last_event_id: string | null
           last_event_type: string | null
@@ -875,6 +878,9 @@ export type Database = {
           boards?: number | null
           created_at?: string | null
           current_period_end?: string | null
+          grandfathered_plan_name?: string | null
+          grandfathered_price_cents?: number | null
+          is_grandfathered?: boolean | null
           is_lifetime?: boolean | null
           last_event_id?: string | null
           last_event_type?: string | null
@@ -898,6 +904,9 @@ export type Database = {
           boards?: number | null
           created_at?: string | null
           current_period_end?: string | null
+          grandfathered_plan_name?: string | null
+          grandfathered_price_cents?: number | null
+          is_grandfathered?: boolean | null
           is_lifetime?: boolean | null
           last_event_id?: string | null
           last_event_type?: string | null
