@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Info, Zap, ArrowRight, Shield, MessageSquare, LayoutGrid, HardDrive, Users, Sparkles } from "lucide-react";
+import { Check, X, Info, Shield, ArrowRight, Sparkles } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,134 +15,167 @@ import {
   formatStorage,
   type PlanConfig,
 } from "@/config/plans";
-import {
-  PRO_ANNUAL_SAVINGS,
-  TEAM_ANNUAL_SAVINGS,
-  TRIAL_DAYS,
-} from "@/config/plan-constants";
 
-function PricingCard({ plan, isAnnual }: { plan: PlanConfig; isAnnual?: boolean }) {
+// ============================================
+// PRICING CARD (Reference: image 1 layout)
+// Price → Plan name → Description → Button → Features
+// ============================================
+
+function PricingCard({ plan }: { plan: PlanConfig }) {
   const isFree = plan.tier === 'free';
   const isHighlight = plan.highlight;
 
   return (
-    <div className={`relative flex flex-col h-full rounded-2xl border p-5 sm:p-6 transition-all duration-300 ${
+    <div className={`relative flex flex-col h-full rounded-2xl transition-all duration-500 overflow-hidden ${
       isHighlight
-        ? 'border-accent/50 bg-card/60 shadow-[0_0_30px_-5px_hsl(var(--accent)/0.15)]'
-        : 'border-border/30 bg-card/30'
+        ? 'pricing-card-highlight'
+        : 'pricing-card-default'
     }`}>
+      {/* Badge */}
       {plan.badge && (
-        <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap ${
+        <div className={`absolute -top-px left-1/2 -translate-x-1/2 px-4 py-1 rounded-b-lg text-[10px] sm:text-xs font-semibold whitespace-nowrap z-10 ${
           isHighlight
             ? 'bg-accent text-accent-foreground'
-            : 'bg-muted text-muted-foreground border border-border/30'
+            : 'bg-muted text-muted-foreground'
         }`}>
           {plan.badge}
         </div>
       )}
 
-      {/* Plan Name */}
-      <h3 className="text-lg sm:text-xl font-bold mt-2 mb-1">{plan.name}</h3>
-      <p className="text-xs sm:text-sm text-muted-foreground mb-4">{plan.description}</p>
-
-      {/* Price */}
-      <div className="mb-5">
-        <div className="flex items-baseline gap-1 whitespace-nowrap">
-          <span className="text-3xl sm:text-4xl font-bold">
-            {plan.price_cents === 0 ? '$0' : `$${(plan.price_cents / 100).toFixed(0)}`}
-          </span>
-          {plan.price_cents > 0 && (
-            <span className="text-sm text-muted-foreground">
-              /{plan.billing_period === 'yearly' ? 'year' : 'mo'}
+      <div className="p-5 sm:p-7 flex flex-col h-full">
+        {/* Price (large, top) */}
+        <div className="mb-4 mt-2">
+          <div className="flex items-baseline gap-1.5 whitespace-nowrap">
+            <span className="text-4xl sm:text-5xl font-bold tracking-tight">
+              {plan.price_cents === 0 ? '$0' : `$${(plan.price_cents / 100).toFixed(0)}`}
             </span>
+            {plan.price_cents > 0 && (
+              <span className="text-sm text-muted-foreground font-medium">
+                / {plan.billing_period === 'yearly' ? 'year' : 'Per Month'}
+              </span>
+            )}
+          </div>
+          {plan.billing_period === 'yearly' && plan.annual_savings && (
+            <p className="text-xs text-green-500 font-medium mt-1.5">
+              Save ${plan.annual_savings} vs monthly
+            </p>
+          )}
+          {plan.trial_days && plan.billing_period === 'monthly' && (
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {plan.trial_days}-day free trial
+            </p>
           )}
         </div>
-        {plan.billing_period === 'yearly' && plan.annual_savings && (
-          <p className="text-xs text-green-500 mt-1">
-            Save ${plan.annual_savings} vs monthly
-          </p>
-        )}
-        {plan.trial_days && plan.billing_period === 'monthly' && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {plan.trial_days}-day free trial
-          </p>
-        )}
-      </div>
 
-      {/* Key Stats */}
-      <div className="space-y-2.5 mb-5 p-3 sm:p-4 rounded-xl bg-muted/20 border border-border/20">
-        <div className="flex items-center gap-2.5 text-xs sm:text-sm">
-          <LayoutGrid className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-          <span>{plan.boards} board{plan.boards !== 1 ? 's' : ''}</span>
-        </div>
-        <div className="flex items-center gap-2.5 text-xs sm:text-sm">
-          <Zap className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-          <span>{plan.blocks_per_board === 'unlimited' ? 'Unlimited' : plan.blocks_per_board} blocks/board</span>
-        </div>
-        <div className="flex items-center gap-2.5 text-xs sm:text-sm">
-          <HardDrive className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-          <span>{formatStorage(plan.storage_mb)} storage</span>
-        </div>
-        <div className="flex items-center gap-2.5 text-xs sm:text-sm">
-          <MessageSquare className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-          <span>{plan.messages_per_day === -1 ? 'Unlimited' : plan.messages_per_day} messages/day</span>
-        </div>
-        {plan.seats > 1 && (
-          <div className="flex items-center gap-2.5 text-xs sm:text-sm">
-            <Users className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-            <span>Up to {plan.seats} team seats</span>
-          </div>
-        )}
-      </div>
-
-      {/* Features */}
-      <ul className="space-y-2 mb-6 flex-1">
-        {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2 text-xs sm:text-sm">
-            <Check className="h-3.5 w-3.5 text-accent mt-0.5 flex-shrink-0" />
-            <span className="text-muted-foreground">{feature}</span>
-          </li>
-        ))}
-      </ul>
-
-      {/* CTA */}
-      <PricingButton plan={plan} variant={isHighlight ? 'primary' : 'secondary'} />
-
-      {!isFree && plan.trial_days && plan.billing_period === 'monthly' && (
-        <p className="text-[10px] text-center text-muted-foreground mt-2">
-          No credit card required to start
+        {/* Plan Name */}
+        <h3 className="text-lg sm:text-xl font-bold mb-1">{plan.name}</h3>
+        <p className="text-xs sm:text-sm text-muted-foreground mb-5 leading-relaxed">
+          {plan.description}
         </p>
-      )}
+
+        {/* CTA Button */}
+        <div className="mb-6">
+          <PricingButton plan={plan} variant={isHighlight ? 'primary' : 'secondary'} />
+          {!isFree && plan.trial_days && plan.billing_period === 'monthly' && (
+            <p className="text-[10px] text-center text-muted-foreground mt-2">
+              No credit card required
+            </p>
+          )}
+        </div>
+
+        {/* Features label */}
+        <p className="text-xs font-semibold text-foreground mb-3 tracking-wide uppercase">
+          Features:
+        </p>
+
+        {/* Features List */}
+        <ul className="space-y-2.5 flex-1">
+          {plan.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2.5 text-xs sm:text-sm">
+              <div className="mt-0.5 flex-shrink-0 h-4 w-4 rounded-full bg-accent/15 flex items-center justify-center">
+                <Check className="h-2.5 w-2.5 text-accent" />
+              </div>
+              <span className="text-muted-foreground">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
 
-function ComparisonTable() {
-  const rows = [
-    { feature: 'Price', chatgpt: '$20/month', multiblock: '$19/month + API' },
-    { feature: 'Usage Limits', chatgpt: '40 msgs/3 hours', multiblock: 'Unlimited' },
-    { feature: 'Models', chatgpt: 'GPT-4 only', multiblock: 'All models (BYOK)' },
-    { feature: 'Data Ownership', chatgpt: 'Trains on data', multiblock: 'Your keys, your data' },
-    { feature: 'Interface', chatgpt: 'Chat (resets)', multiblock: 'Persistent boards' },
-    { feature: 'Context', chatgpt: 'Resets daily', multiblock: 'Compounds forever' },
+// ============================================
+// COMPARISON TABLE (Reference: image 2 layout)
+// Clean grid with checkmarks & alternating rows
+// ============================================
+
+interface ComparisonRow {
+  feature: string;
+  free: string | boolean;
+  pro: string | boolean;
+  team: string | boolean;
+}
+
+function FeatureComparisonTable() {
+  const rows: ComparisonRow[] = [
+    { feature: 'Boards', free: '1', pro: '50', team: '50' },
+    { feature: 'Blocks per Board', free: '3', pro: 'Unlimited', team: 'Unlimited' },
+    { feature: 'Storage', free: '100 MB', pro: '5 GB', team: '20 GB' },
+    { feature: 'Messages per Day', free: '50', pro: 'Unlimited', team: 'Unlimited' },
+    { feature: 'API Keys (BYOK)', free: '3', pro: 'Unlimited', team: 'Unlimited' },
+    { feature: 'Team Seats', free: false, pro: false, team: 'Up to 10' },
+    { feature: 'All AI Models', free: true, pro: true, team: true },
+    { feature: 'Board Memory', free: false, pro: true, team: true },
+    { feature: 'Priority Support', free: false, pro: true, team: true },
+    { feature: 'Data Export', free: false, pro: true, team: true },
+    { feature: 'Shared Boards', free: false, pro: false, team: true },
+    { feature: 'Admin Controls', free: false, pro: false, team: true },
+    { feature: 'Audit Logs', free: false, pro: false, team: true },
   ];
+
+  const renderCell = (value: string | boolean) => {
+    if (value === true) {
+      return (
+        <div className="flex justify-center">
+          <div className="h-5 w-5 rounded-full bg-accent/20 flex items-center justify-center">
+            <Check className="h-3 w-3 text-accent" />
+          </div>
+        </div>
+      );
+    }
+    if (value === false) {
+      return (
+        <div className="flex justify-center">
+          <div className="h-5 w-5 rounded-full bg-muted/30 flex items-center justify-center">
+            <X className="h-3 w-3 text-muted-foreground/40" />
+          </div>
+        </div>
+      );
+    }
+    return <span className="text-sm font-medium text-foreground">{value}</span>;
+  };
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs sm:text-sm">
+      <table className="w-full">
         <thead>
           <tr className="border-b border-border/30">
-            <th className="text-left py-3 pr-4 text-muted-foreground font-medium">Feature</th>
-            <th className="text-left py-3 px-4 text-muted-foreground font-medium">ChatGPT Plus</th>
-            <th className="text-left py-3 pl-4 font-medium text-accent">Multiblock Pro</th>
+            <th className="text-left py-4 pr-4 text-sm font-semibold text-muted-foreground">Features</th>
+            <th className="py-4 px-4 text-center text-sm font-semibold text-muted-foreground">Free</th>
+            <th className="py-4 px-4 text-center text-sm font-semibold text-accent">Pro</th>
+            <th className="py-4 pl-4 text-center text-sm font-semibold text-muted-foreground">Pro Team</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.feature} className="border-b border-border/10">
-              <td className="py-2.5 pr-4 font-medium">{row.feature}</td>
-              <td className="py-2.5 px-4 text-muted-foreground">{row.chatgpt}</td>
-              <td className="py-2.5 pl-4 text-foreground">{row.multiblock}</td>
+          {rows.map((row, i) => (
+            <tr
+              key={row.feature}
+              className={`border-b border-border/10 ${i % 2 === 0 ? 'bg-muted/5' : ''}`}
+            >
+              <td className="py-3 pr-4 text-sm font-medium text-foreground">{row.feature}</td>
+              <td className="py-3 px-4 text-center">{renderCell(row.free)}</td>
+              <td className="py-3 px-4 text-center">{renderCell(row.pro)}</td>
+              <td className="py-3 pl-4 text-center">{renderCell(row.team)}</td>
             </tr>
           ))}
         </tbody>
@@ -151,13 +184,16 @@ function ComparisonTable() {
   );
 }
 
+// ============================================
+// API COST SECTION
+// ============================================
+
 function ApiCostSection() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         Multiblock uses <strong className="text-foreground">Bring Your Own Key (BYOK)</strong>. You pay AI providers (OpenAI, Anthropic, etc.) directly for API usage.
       </p>
-
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { label: 'Light use', desc: '~10 conversations', cost: '~$3/mo' },
@@ -171,7 +207,6 @@ function ApiCostSection() {
           </div>
         ))}
       </div>
-
       <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20">
         <p className="text-xs sm:text-sm">
           <span className="font-semibold text-green-500">Total example:</span>{' '}
@@ -187,6 +222,10 @@ function ApiCostSection() {
     </div>
   );
 }
+
+// ============================================
+// MAIN PRICING PAGE
+// ============================================
 
 export default function Pricing() {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -224,9 +263,9 @@ export default function Pricing() {
 
             {/* Header */}
             <div className="text-center mb-8 sm:mb-10">
-              <span className="section-badge mb-4">Simple Pricing</span>
+              <span className="section-badge mb-4">Pricing</span>
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">
-                Choose Your Plan
+                Our pricing plans
               </h1>
               <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
                 Start free, upgrade when you need more power.
@@ -234,43 +273,55 @@ export default function Pricing() {
             </div>
 
             {/* Billing Toggle */}
-            <div className="flex items-center justify-center gap-3 mb-8 sm:mb-10">
-              <button
-                onClick={() => setIsAnnual(false)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  !isAnnual
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setIsAnnual(true)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                  isAnnual
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Annual
-                <span className="text-[10px] font-semibold text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full">
-                  Save 20%
-                </span>
-              </button>
+            <div className="flex items-center justify-center mb-8 sm:mb-10">
+              <div className="inline-flex items-center rounded-full p-1 bg-card/60 border border-border/30 backdrop-blur-sm">
+                <button
+                  onClick={() => setIsAnnual(false)}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                    !isAnnual
+                      ? 'bg-foreground text-background shadow-md'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setIsAnnual(true)}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1.5 ${
+                    isAnnual
+                      ? 'bg-foreground text-background shadow-md'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Yearly
+                  <span className="text-[10px] font-semibold text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full">
+                    Save 20%
+                  </span>
+                </button>
+              </div>
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-5xl mx-auto items-stretch mb-12 sm:mb-16">
-              <PricingCard plan={freePlan} isAnnual={isAnnual} />
-              <PricingCard plan={proPlan} isAnnual={isAnnual} />
-              <PricingCard plan={teamPlan} isAnnual={isAnnual} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-5xl mx-auto items-stretch mb-16 sm:mb-20">
+              <PricingCard plan={freePlan} />
+              <PricingCard plan={proPlan} />
+              <PricingCard plan={teamPlan} />
+            </div>
+
+            {/* Feature Comparison Table */}
+            <div className="max-w-4xl mx-auto mb-12 sm:mb-16">
+              <h2 className="text-xl sm:text-2xl font-bold text-center mb-8">
+                Compare Plans
+              </h2>
+              <div className="pricing-card-default rounded-2xl p-4 sm:p-6">
+                <FeatureComparisonTable />
+              </div>
             </div>
 
             {/* API Costs Section */}
             <div className="max-w-3xl mx-auto mb-12 sm:mb-16">
               <details className="group">
-                <summary className="flex items-center gap-3 cursor-pointer p-4 rounded-xl bg-card/30 border border-border/20 hover:border-border/40 transition-colors">
+                <summary className="flex items-center gap-3 cursor-pointer p-4 rounded-xl pricing-card-default transition-colors hover:border-border/40">
                   <Shield className="h-5 w-5 text-accent flex-shrink-0" />
                   <span className="font-medium text-sm sm:text-base">What About API Costs?</span>
                   <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto transition-transform group-open:rotate-90" />
@@ -279,16 +330,6 @@ export default function Pricing() {
                   <ApiCostSection />
                 </div>
               </details>
-            </div>
-
-            {/* Comparison Table */}
-            <div className="max-w-3xl mx-auto mb-12 sm:mb-16">
-              <h2 className="text-xl sm:text-2xl font-bold text-center mb-6">
-                How Multiblock Compares
-              </h2>
-              <div className="p-4 sm:p-6 rounded-2xl bg-card/30 border border-border/20">
-                <ComparisonTable />
-              </div>
             </div>
 
             {/* Storage Info */}
