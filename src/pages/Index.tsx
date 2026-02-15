@@ -4,11 +4,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LifetimeDealBar } from "@/components/layout/LifetimeDealBar";
 import Navbar from "@/components/landing/Navbar";
 import Hero from "@/components/landing/Hero";
+import CostCalculator from "@/components/landing/CostCalculator";
 import Features from "@/components/landing/Features";
 import HowItWorks from "@/components/landing/HowItWorks";
+import UseCases from "@/components/landing/UseCases";
 import Pricing from "@/components/landing/Pricing";
 import FAQ from "@/components/landing/FAQ";
 import Comparison from "@/components/landing/Comparison";
+import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
 
 const Index = () => {
@@ -32,11 +35,14 @@ const Index = () => {
       <Navbar />
       <main className="relative z-10">
         <Hero />
+        <CostCalculator />
         <Features />
         <HowItWorks />
+        <UseCases />
         <Pricing />
         <Comparison />
         <FAQ />
+        <FinalCTA />
       </main>
       <Footer />
     </div>

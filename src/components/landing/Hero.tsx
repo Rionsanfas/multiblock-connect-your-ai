@@ -65,7 +65,7 @@ const Hero = () => {
                     "0 2px 20px hsl(0 0% 100% / 0.35), 0 4px 40px hsl(0 0% 100% / 0.25), 0 8px 80px hsl(0 0% 100% / 0.15), 0 0 120px hsl(0 0% 100% / 0.1)",
                 }}
               >
-                Never let your AI
+                The AI Workspace
               </span>
               <span
                 className="block"
@@ -79,21 +79,41 @@ const Hero = () => {
                     "drop-shadow(0 2px 15px hsl(0 0% 100% / 0.3)) drop-shadow(0 4px 30px hsl(0 0% 100% / 0.2)) drop-shadow(0 8px 50px hsl(0 0% 100% / 0.1))",
                 }}
               >
-                forget again.
+                That Remembers
               </span>
             </h1>
 
             {/* Sub-headline */}
             <p
-              className="text-muted-foreground max-w-lg mx-auto lg:mx-0 text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 lg:mb-10"
+              className="text-muted-foreground max-w-lg mx-auto lg:mx-0 text-sm sm:text-base lg:text-lg mb-4 sm:mb-5 lg:mb-6"
               style={{
                 lineHeight: 1.7,
                 ...mainStyle,
               }}
             >
-              Give your AI conversations persistent memory. ChatGPT, Claude, and Gemini finally remember what you told
-              them—across every chat, forever.
+              Stop losing your best AI conversations. Multiblock saves every context, every model, every insight — so your AI work builds on itself instead of starting over.
             </p>
+
+            {/* Supporting points */}
+            <div
+              className="flex flex-col gap-2 sm:gap-2.5 mb-6 sm:mb-8 lg:mb-10 max-w-lg mx-auto lg:mx-0"
+              style={mainStyle}
+            >
+              {[
+                "Connect all AI models (GPT, Claude, Gemini, and more)",
+                "Persistent boards that never reset",
+                "Your keys, your data, your control",
+              ].map((point) => (
+                <div key={point} className="flex items-center gap-2.5">
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-accent/15 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <span className="text-muted-foreground text-xs sm:text-sm">{point}</span>
+                </div>
+              ))}
+            </div>
 
             {/* CTA Button - touch-optimized with no hover dependency */}
             <div
