@@ -1,7 +1,15 @@
+import { useState } from "react";
 import { Check } from "lucide-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatedSection, AnimatedElement } from "./AnimatedSection";
-import { getFreePlan, getPaidPlans, getProMonthlyPlan, getTeamMonthlyPlan, type PlanConfig } from "@/config/plans";
+import {
+  getFreePlan,
+  getProMonthlyPlan,
+  getProAnnualPlan,
+  getTeamMonthlyPlan,
+  getTeamAnnualPlan,
+  type PlanConfig,
+} from "@/config/plans";
 import { PricingButton } from "@/components/pricing/PricingButton";
 import { useNavigate } from "react-router-dom";
 
@@ -34,6 +42,11 @@ function HomePricingCard({ plan }: { plan: PlanConfig }) {
               </span>
             )}
           </div>
+          {plan.billing_period === 'yearly' && plan.annual_savings && (
+            <p className="text-[10px] sm:text-xs text-accent font-medium mt-1">
+              Save ${plan.annual_savings} vs monthly
+            </p>
+          )}
           {plan.trial_days && plan.billing_period === 'monthly' && (
             <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {plan.trial_days}-day free trial
@@ -74,9 +87,10 @@ function HomePricingCard({ plan }: { plan: PlanConfig }) {
 }
 
 const Pricing = () => {
+  const [isAnnual, setIsAnnual] = useState(false);
   const freePlan = getFreePlan();
-  const proPlan = getProMonthlyPlan();
-  const teamPlan = getTeamMonthlyPlan();
+  const proPlan = isAnnual ? getProAnnualPlan() : getProMonthlyPlan();
+  const teamPlan = isAnnual ? getTeamAnnualPlan() : getTeamMonthlyPlan();
   const navigate = useNavigate();
 
   return (
@@ -94,6 +108,27 @@ const Pricing = () => {
             <p className="text-muted-foreground max-w-xl mx-auto text-break text-sm sm:text-base">
               Start free, upgrade when you need more.
             </p>
+          </AnimatedSection>
+
+          {/* Billing Toggle */}
+          <AnimatedSection delay={50} className="flex items-center justify-center mb-6 sm:mb-8">
+            <div className="billing-toggle-3d">
+              <button
+                onClick={() => setIsAnnual(false)}
+                className={`billing-toggle-btn ${!isAnnual ? 'billing-toggle-active' : ''}`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setIsAnnual(true)}
+                className={`billing-toggle-btn flex items-center gap-1.5 ${isAnnual ? 'billing-toggle-active' : ''}`}
+              >
+                Yearly
+                <span className="text-[10px] font-semibold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">
+                  Save 20%
+                </span>
+              </button>
+            </div>
           </AnimatedSection>
 
           {/* Pricing Cards */}

@@ -152,7 +152,7 @@ const PRO_MONTHLY: PlanConfig = {
   badge: 'Most Popular',
   sort_order: 1,
   is_active: true,
-  checkout_url: `https://polar.sh/multiblock/checkout?product=${POLAR_PRODUCT_IDS['pro-monthly']}`,
+  checkout_url: 'https://buy.polar.sh/polar_cl_IH82mfObkRtRmHKdbp2OSDLXQN0QC4CBVnKMo3gLSIL',
   polar_product_id: POLAR_PRODUCT_IDS['pro-monthly'],
   trial_days: TRIAL_DAYS,
   annual_price_cents: PRO_ANNUAL_PRICE * 100,
@@ -179,7 +179,7 @@ const PRO_ANNUAL: PlanConfig = {
   badge: 'Save $46',
   sort_order: 2,
   is_active: true,
-  checkout_url: `https://polar.sh/multiblock/checkout?product=${POLAR_PRODUCT_IDS['pro-annual']}`,
+  checkout_url: 'https://buy.polar.sh/polar_cl_DwPQiQgpjYb3xgk4cMtPDK3oapSGLSs2iU8qt2w8Mif',
   polar_product_id: POLAR_PRODUCT_IDS['pro-annual'],
 };
 
@@ -210,7 +210,7 @@ const TEAM_MONTHLY: PlanConfig = {
   capabilities: TEAM_CAPABILITIES,
   sort_order: 3,
   is_active: true,
-  checkout_url: `https://polar.sh/multiblock/checkout?product=${POLAR_PRODUCT_IDS['team-monthly']}`,
+  checkout_url: 'https://buy.polar.sh/polar_cl_VRn60gsBMzVPECfYeC2ga1BsCq20rcv7Fw02Y2bm3wa',
   polar_product_id: POLAR_PRODUCT_IDS['team-monthly'],
   trial_days: TRIAL_DAYS,
   annual_price_cents: TEAM_ANNUAL_PRICE * 100,
@@ -235,7 +235,7 @@ const TEAM_ANNUAL: PlanConfig = {
   capabilities: TEAM_CAPABILITIES,
   sort_order: 4,
   is_active: true,
-  checkout_url: `https://polar.sh/multiblock/checkout?product=${POLAR_PRODUCT_IDS['team-annual']}`,
+  checkout_url: 'https://buy.polar.sh/polar_cl_O0KhX8QrZVtK95iQrHceWabozRA8jfZzTwOvB0UaTft',
   polar_product_id: POLAR_PRODUCT_IDS['team-annual'],
 };
 

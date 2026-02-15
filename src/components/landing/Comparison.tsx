@@ -14,10 +14,10 @@ const rows: ComparisonRow[] = [
   { feature: 'Visual Board Canvas', multiblock: true, chatgpt: false, claude: false },
   { feature: 'Connected AI Blocks', multiblock: true, chatgpt: false, claude: false },
   { feature: 'Bring Your Own API Key', multiblock: true, chatgpt: false, claude: false },
-  { feature: 'Team Collaboration', multiblock: true, chatgpt: 'Enterprise only', claude: 'Enterprise only' },
+  { feature: 'Team Collaboration', multiblock: true, chatgpt: true, claude: true },
   { feature: 'Unlimited Messages', multiblock: 'Fair-use', chatgpt: 'Paid only', claude: 'Paid only' },
-  { feature: 'Data Export', multiblock: true, chatgpt: 'Limited', claude: 'Limited' },
-  { feature: 'Starting Price', multiblock: 'Free / $19/mo', chatgpt: '$20/mo', claude: '$20/mo' },
+  { feature: 'Data Export', multiblock: true, chatgpt: true, claude: true },
+  { feature: 'Starting Price', multiblock: 'Free / $19/mo', chatgpt: '$20–25/mo', claude: '$20–25/mo' },
 ];
 
 const PARTIAL_LABELS = ['Partial', 'Limited', 'Enterprise only', 'Paid only'];
@@ -78,7 +78,7 @@ const Comparison = () => {
                   <th className="text-left py-4 pr-4 text-sm font-semibold text-muted-foreground">Features</th>
                   <th className="py-4 px-4 text-center text-sm font-semibold text-accent">Multiblock</th>
                   <th className="py-4 px-4 text-center text-sm font-semibold text-muted-foreground">ChatGPT</th>
-                  <th className="py-4 pl-4 text-center text-sm font-semibold text-muted-foreground">Claude</th>
+                  <th className="py-4 pl-4 text-center text-sm font-semibold text-muted-foreground">Others</th>
                 </tr>
               </thead>
               <tbody>
