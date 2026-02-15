@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { Check, X, Minus } from "lucide-react";
 import { AnimatedSection } from "./AnimatedSection";
 
 interface ComparisonRow {
@@ -10,15 +10,17 @@ interface ComparisonRow {
 
 const rows: ComparisonRow[] = [
   { feature: 'Multiple AI Models', multiblock: true, chatgpt: false, claude: false },
-  { feature: 'Persistent Context / Memory', multiblock: true, chatgpt: false, claude: false },
+  { feature: 'Persistent Context / Memory', multiblock: true, chatgpt: 'Partial', claude: 'Partial' },
   { feature: 'Visual Board Canvas', multiblock: true, chatgpt: false, claude: false },
   { feature: 'Connected AI Blocks', multiblock: true, chatgpt: false, claude: false },
   { feature: 'Bring Your Own API Key', multiblock: true, chatgpt: false, claude: false },
   { feature: 'Team Collaboration', multiblock: true, chatgpt: 'Enterprise only', claude: 'Enterprise only' },
-  { feature: 'Unlimited Messages', multiblock: true, chatgpt: 'Paid only', claude: 'Paid only' },
-  { feature: 'Data Export', multiblock: true, chatgpt: false, claude: false },
+  { feature: 'Unlimited Messages', multiblock: 'Fair-use', chatgpt: 'Paid only', claude: 'Paid only' },
+  { feature: 'Data Export', multiblock: true, chatgpt: 'Limited', claude: 'Limited' },
   { feature: 'Starting Price', multiblock: 'Free / $19/mo', chatgpt: '$20/mo', claude: '$20/mo' },
 ];
+
+const PARTIAL_LABELS = ['Partial', 'Limited', 'Enterprise only', 'Paid only'];
 
 function renderCell(value: string | boolean) {
   if (value === true) {
@@ -36,6 +38,16 @@ function renderCell(value: string | boolean) {
         <div className="x-icon-3d" style={{ width: 22, height: 22 }}>
           <X className="h-3 w-3 text-muted-foreground/40" />
         </div>
+      </div>
+    );
+  }
+  if (typeof value === 'string' && PARTIAL_LABELS.includes(value)) {
+    return (
+      <div className="flex flex-col items-center gap-0.5">
+        <div className="partial-icon-3d" style={{ width: 22, height: 22 }}>
+          <Minus className="h-3 w-3 text-amber-400/80" />
+        </div>
+        <span className="text-[10px] text-muted-foreground leading-tight">{value}</span>
       </div>
     );
   }
