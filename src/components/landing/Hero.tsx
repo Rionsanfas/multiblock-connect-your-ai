@@ -119,7 +119,12 @@ const Hero = () => {
                   }}
                 />
 
-                <span className="relative z-10">​Get productive </span>
+                <span className="relative z-10 flex items-center gap-2">
+                  Start Free Trial
+                  <span className="text-[10px] sm:text-xs font-semibold bg-accent/20 text-accent px-2 py-0.5 rounded-full">
+                    3 days free
+                  </span>
+                </span>
               </Link>
 
               <a

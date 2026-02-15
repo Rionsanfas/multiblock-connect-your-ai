@@ -15,7 +15,7 @@ const rows: ComparisonRow[] = [
   { feature: 'Connected AI Blocks', multiblock: true, chatgpt: false, claude: false },
   { feature: 'Bring Your Own API Key', multiblock: true, chatgpt: false, claude: false },
   { feature: 'Team Collaboration', multiblock: true, chatgpt: true, claude: true },
-  { feature: 'Unlimited Messages', multiblock: 'Fair-use', chatgpt: 'Paid only', claude: 'Paid only' },
+  { feature: 'Unlimited Messages', multiblock: true, chatgpt: 'Paid only', claude: 'Paid only' },
   { feature: 'Data Export', multiblock: true, chatgpt: true, claude: true },
   { feature: 'Starting Price', multiblock: 'Free / $19/mo', chatgpt: '$20–25/mo', claude: '$20–25/mo' },
 ];

@@ -107,7 +107,14 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
   // Determine if upgrade or downgrade by comparing tiers
   const currentTier = getTierFromPlanId(currentPlanId);
   const comparison = comparePlanTiers(currentTier, plan.tier);
-  const buttonText = comparison < 0 ? 'Upgrade' : 'Switch Plan';
+  
+  // Show trial text only if user has never subscribed (still on free plan)
+  const hasEverSubscribed = currentPlanId !== 'free';
+  const showTrial = plan.trial_days && plan.billing_period === 'monthly' && !hasEverSubscribed;
+  
+  const buttonText = showTrial
+    ? `Start ${plan.trial_days}-day free trial`
+    : comparison < 0 ? 'Upgrade' : 'Switch Plan';
   
   return (
     <a
