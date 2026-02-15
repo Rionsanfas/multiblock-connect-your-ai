@@ -1409,6 +1409,45 @@
     animation: goldShimmer 3s ease-in-out infinite;
   }
 
+  /* 3D Billing Toggle - dark classy pill */
+  .billing-toggle-3d {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 4px;
+    background: linear-gradient(145deg, hsl(0 0% 10%) 0%, hsl(0 0% 6%) 100%);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    box-shadow:
+      0 4px 16px -4px hsl(0 0% 0% / 0.5),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.04),
+      inset 0 -1px 2px 0 hsl(0 0% 0% / 0.2);
+  }
+
+  .billing-toggle-btn {
+    padding: 8px 20px;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+  }
+
+  .billing-toggle-btn:hover:not(.billing-toggle-active) {
+    color: hsl(var(--foreground));
+  }
+
+  .billing-toggle-active {
+    background: linear-gradient(145deg, hsl(0 0% 18%) 0%, hsl(0 0% 14%) 100%);
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow:
+      0 2px 8px -2px hsl(0 0% 0% / 0.4),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.08);
+  }
+
   /* 3D Check Icon - classy glassmorphism checkmark */
   .check-icon-3d {
     display: flex;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, X, Info, Shield, ArrowRight, Sparkles } from "lucide-react";
+import { Check, X, ArrowRight } from "lucide-react";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -56,7 +56,7 @@ function PricingCard({ plan }: { plan: PlanConfig }) {
             )}
           </div>
           {plan.billing_period === 'yearly' && plan.annual_savings && (
-            <p className="text-xs text-green-500 font-medium mt-1.5">
+            <p className="text-xs text-accent font-medium mt-1.5">
               Save ${plan.annual_savings} vs monthly
             </p>
           )}
@@ -207,16 +207,16 @@ function ApiCostSection() {
           </div>
         ))}
       </div>
-      <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/20">
+      <div className="p-4 rounded-xl border border-accent/20 bg-accent/5">
         <p className="text-xs sm:text-sm">
-          <span className="font-semibold text-green-500">Total example:</span>{' '}
+          <span className="font-semibold text-accent">Total example:</span>{' '}
           <span className="text-muted-foreground">
             $19/mo (Multiblock) + $15/mo (APIs) = <strong className="text-foreground">$34/mo</strong>
           </span>
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           vs ChatGPT Plus ($20) + Claude Pro ($20) = $40/mo —{' '}
-          <strong className="text-green-500">you save $6/mo</strong> + get unlimited usage + persistent boards
+          <strong className="text-accent">you save $6/mo</strong> + get unlimited usage + persistent boards
         </p>
       </div>
     </div>
@@ -249,10 +249,9 @@ export default function Pricing() {
             {/* Grandfathered badge */}
             {isGrandfathered && grandfatheredPrice && (
               <div className="max-w-2xl mx-auto mb-6">
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/30">
-                  <Sparkles className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <div className="p-4 rounded-xl pricing-card-default">
                   <p className="text-sm">
-                    <span className="font-semibold text-green-500">You're grandfathered!</span>{' '}
+                    <span className="font-semibold text-accent">You're grandfathered!</span>{' '}
                     <span className="text-muted-foreground">
                       Your {grandfatheredPlan} plan at ${(grandfatheredPrice / 100).toFixed(0)}/year will never change.
                     </span>
@@ -274,27 +273,19 @@ export default function Pricing() {
 
             {/* Billing Toggle */}
             <div className="flex items-center justify-center mb-8 sm:mb-10">
-              <div className="inline-flex items-center rounded-full p-1 bg-card/60 border border-border/30 backdrop-blur-sm">
+              <div className="billing-toggle-3d">
                 <button
                   onClick={() => setIsAnnual(false)}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                    !isAnnual
-                      ? 'bg-foreground text-background shadow-md'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={`billing-toggle-btn ${!isAnnual ? 'billing-toggle-active' : ''}`}
                 >
                   Monthly
                 </button>
                 <button
                   onClick={() => setIsAnnual(true)}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-1.5 ${
-                    isAnnual
-                      ? 'bg-foreground text-background shadow-md'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={`billing-toggle-btn flex items-center gap-1.5 ${isAnnual ? 'billing-toggle-active' : ''}`}
                 >
                   Yearly
-                  <span className="text-[10px] font-semibold text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded-full">
+                  <span className="text-[10px] font-semibold text-accent bg-accent/10 px-1.5 py-0.5 rounded-full">
                     Save 20%
                   </span>
                 </button>
@@ -322,11 +313,10 @@ export default function Pricing() {
             <div className="max-w-3xl mx-auto mb-12 sm:mb-16">
               <details className="group">
                 <summary className="flex items-center gap-3 cursor-pointer p-4 rounded-xl pricing-card-default transition-colors hover:border-border/40">
-                  <Shield className="h-5 w-5 text-accent flex-shrink-0" />
                   <span className="font-medium text-sm sm:text-base">What About API Costs?</span>
                   <ArrowRight className="h-4 w-4 text-muted-foreground ml-auto transition-transform group-open:rotate-90" />
                 </summary>
-                <div className="p-4 sm:p-5 mt-2 rounded-xl bg-card/20 border border-border/10">
+                <div className="p-4 sm:p-5 mt-2 rounded-xl pricing-card-default">
                   <ApiCostSection />
                 </div>
               </details>
@@ -334,15 +324,12 @@ export default function Pricing() {
 
             {/* Storage Info */}
             <div className="max-w-2xl mx-auto">
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-card/20 border border-border/20">
-                <Info className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <div>
-                  <h3 className="font-medium text-sm mb-1">About Storage</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Storage covers messages, block configs, system prompts, and uploads.
-                    Usage is tracked in real-time on your dashboard.
-                  </p>
-                </div>
+              <div className="p-4 rounded-xl pricing-card-default">
+                <h3 className="font-medium text-sm mb-1">About Storage</h3>
+                <p className="text-xs text-muted-foreground">
+                  Storage covers messages, block configs, system prompts, and uploads.
+                  Usage is tracked in real-time on your dashboard.
+                </p>
               </div>
             </div>
           </div>
