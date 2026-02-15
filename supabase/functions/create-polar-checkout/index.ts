@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 /**
- * Plan configuration - maps plan_key to checkout URLs
- * Only 4 plans: Pro Individual, Pro Team, Pro Lifetime, Pro Lifetime Team
+ * Plan configuration - maps plan_key to Polar checkout URLs
+ * Updated for monthly-first pricing (Feb 2026)
  */
 const PLAN_CONFIG: Record<string, { 
   checkoutUrl: string; 
@@ -18,9 +18,51 @@ const PLAN_CONFIG: Record<string, {
   seats: number;
   isLifetime: boolean;
 }> = {
+  // New monthly/annual plans
+  'pro-monthly': {
+    checkoutUrl: 'https://polar.sh/multiblock/checkout?product=8756df4f-5d81-4e88-8f9f-0e8d2dfe03a3',
+    name: 'Pro Monthly',
+    boards: 50,
+    storageGb: 5,
+    seats: 1,
+    isLifetime: false,
+  },
+  'pro-annual': {
+    checkoutUrl: 'https://polar.sh/multiblock/checkout?product=7ce03e88-d1a3-45f7-a60d-f282aa83e94a',
+    name: 'Pro Annual',
+    boards: 50,
+    storageGb: 5,
+    seats: 1,
+    isLifetime: false,
+  },
+  'team-monthly': {
+    checkoutUrl: 'https://polar.sh/multiblock/checkout?product=bbace997-28ad-4afe-877e-b932e41e29c6',
+    name: 'Pro Team Monthly',
+    boards: 50,
+    storageGb: 20,
+    seats: 10,
+    isLifetime: false,
+  },
+  'team-annual': {
+    checkoutUrl: 'https://polar.sh/multiblock/checkout?product=4bf80645-0f04-4cac-b614-35af721dc294',
+    name: 'Pro Team Annual',
+    boards: 50,
+    storageGb: 20,
+    seats: 10,
+    isLifetime: false,
+  },
+  // Legacy plans (for existing grandfathered users)
   'starter-individual-annual': {
     checkoutUrl: 'https://buy.polar.sh/polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v',
-    name: 'Pro (Annual)',
+    name: 'Pro (Annual - Legacy)',
+    boards: 50,
+    storageGb: 2,
+    seats: 1,
+    isLifetime: false,
+  },
+  'pro-individual-annual': {
+    checkoutUrl: 'https://buy.polar.sh/polar_cl_Wpj4KKxWzVB8JiPP3onxWewwXief8j9zQiKlY2sln4v',
+    name: 'Pro (Annual - Legacy)',
     boards: 50,
     storageGb: 2,
     seats: 1,
@@ -28,7 +70,15 @@ const PLAN_CONFIG: Record<string, {
   },
   'starter-team-annual': {
     checkoutUrl: 'https://buy.polar.sh/polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy',
-    name: 'Pro Team (Annual)',
+    name: 'Pro Team (Annual - Legacy)',
+    boards: 50,
+    storageGb: 5,
+    seats: 10,
+    isLifetime: false,
+  },
+  'pro-team-annual': {
+    checkoutUrl: 'https://buy.polar.sh/polar_cl_zcgQ6zb7NcsR2puGVZPM0Nr1UgcLrVBjBpZlz39h2Qy',
+    name: 'Pro Team (Annual - Legacy)',
     boards: 50,
     storageGb: 5,
     seats: 10,
@@ -36,7 +86,15 @@ const PLAN_CONFIG: Record<string, {
   },
   'ltd-starter-individual': {
     checkoutUrl: 'https://buy.polar.sh/polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw',
-    name: 'Pro Lifetime',
+    name: 'Pro Lifetime (Legacy)',
+    boards: 50,
+    storageGb: 6,
+    seats: 1,
+    isLifetime: true,
+  },
+  'ltd-pro-individual': {
+    checkoutUrl: 'https://buy.polar.sh/polar_cl_WSLjTyotrxxtOORhYNOKcHlHxpZ3lXXPLJqUI4Le3rw',
+    name: 'Pro Lifetime (Legacy)',
     boards: 50,
     storageGb: 6,
     seats: 1,
@@ -44,7 +102,15 @@ const PLAN_CONFIG: Record<string, {
   },
   'ltd-starter-team': {
     checkoutUrl: 'https://buy.polar.sh/polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc',
-    name: 'Pro Lifetime Team',
+    name: 'Pro Lifetime Team (Legacy)',
+    boards: 150,
+    storageGb: 8,
+    seats: 10,
+    isLifetime: true,
+  },
+  'ltd-pro-team': {
+    checkoutUrl: 'https://buy.polar.sh/polar_cl_mEuch8kmwciGhCy9QZuNnkSrKDhIY9erLsuvU36JqVc',
+    name: 'Pro Lifetime Team (Legacy)',
     boards: 150,
     storageGb: 8,
     seats: 10,
@@ -52,7 +118,7 @@ const PLAN_CONFIG: Record<string, {
   },
 };
 
-// Addon configuration
+// Addon configuration (kept for existing users)
 const ADDON_CONFIG: Record<string, {
   checkoutUrl: string;
   name: string;

@@ -9,7 +9,7 @@ export interface BillingInfo {
   product_id: string | null;
   active_plan: string;
   plan_category: 'individual' | 'team';
-  billing_type: 'annual' | 'lifetime';
+  billing_type: 'monthly' | 'annual' | 'lifetime';
   subscription_status: string;
   current_period_end: string | null;
   access_expires_at: string | null;
@@ -22,6 +22,10 @@ export interface BillingInfo {
   // Computed totals (base + addons)
   total_boards: number;
   total_storage_gb: number;
+  // Grandfathering
+  is_grandfathered: boolean;
+  grandfathered_plan_name: string | null;
+  grandfathered_price_cents: number | null;
 }
 
 interface AddonEntry {
@@ -79,7 +83,7 @@ export function useBilling() {
         product_id: data.product_id,
         active_plan: data.active_plan ?? 'free',
         plan_category: (data.plan_category as 'individual' | 'team') ?? 'individual',
-        billing_type: (data.billing_type as 'annual' | 'lifetime') ?? 'annual',
+        billing_type: (data.billing_type as 'monthly' | 'annual' | 'lifetime') ?? 'monthly',
         subscription_status: data.subscription_status ?? 'inactive',
         current_period_end: data.current_period_end,
         access_expires_at: data.access_expires_at,
@@ -92,6 +96,10 @@ export function useBilling() {
         // Totals with addons stacked
         total_boards: baseBoards === -1 ? -1 : baseBoards + addonBoards,
         total_storage_gb: baseStorage === -1 ? -1 : baseStorage + addonStorage,
+        // Grandfathering
+        is_grandfathered: (data as any).is_grandfathered ?? false,
+        grandfathered_plan_name: (data as any).grandfathered_plan_name ?? null,
+        grandfathered_price_cents: (data as any).grandfathered_price_cents ?? null,
       };
     },
     enabled: !!user,
@@ -151,14 +159,19 @@ export function useBilling() {
     
     const planNames: Record<string, string> = {
       'free': 'Free',
-      'starter-individual-annual': 'Starter (Individual)',
-      'pro-individual-annual': 'Pro (Individual)',
-      'starter-team-annual': 'Starter (Team)',
-      'pro-team-annual': 'Pro (Team)',
-      'ltd-starter-individual': 'LTD Starter',
-      'ltd-pro-individual': 'LTD Pro',
-      'ltd-starter-team': 'LTD Starter (Team)',
-      'ltd-pro-team': 'LTD Pro (Team)',
+      'pro-monthly': 'Pro',
+      'pro-annual': 'Pro',
+      'team-monthly': 'Pro Team',
+      'team-annual': 'Pro Team',
+      // Legacy plans
+      'starter-individual-annual': 'Pro (Legacy)',
+      'pro-individual-annual': 'Pro (Legacy)',
+      'starter-team-annual': 'Pro Team (Legacy)',
+      'pro-team-annual': 'Pro Team (Legacy)',
+      'ltd-starter-individual': 'Pro LTD',
+      'ltd-pro-individual': 'Pro LTD',
+      'ltd-starter-team': 'Pro Team LTD',
+      'ltd-pro-team': 'Pro Team LTD',
     };
     
     return planNames[plan] || plan;
