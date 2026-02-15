@@ -104,27 +104,21 @@ export function PricingButton({ plan, className = '', variant = 'secondary' }: P
     );
   }
   
-  // No checkout URL means no product configured in Polar
-  if (!plan.checkout_url) {
-    return (
-      <button className={`${getButtonClass(true)} ${className}`} disabled>
-        Coming Soon
-      </button>
-    );
-  }
-  
   // Determine if upgrade or downgrade by comparing tiers
   const currentTier = getTierFromPlanId(currentPlanId);
   const comparison = comparePlanTiers(currentTier, plan.tier);
   const buttonText = comparison < 0 ? 'Upgrade' : 'Switch Plan';
   
   return (
-    <PolarCheckoutButton
-      planKey={plan.id}
-      className={`${getButtonClass()} ${className}`}
+    <a
+      href={plan.checkout_url}
+      data-polar-checkout
+      data-polar-checkout-theme="dark"
+      className={`${getButtonClass()} ${className} no-underline`}
+      onClick={(e) => e.stopPropagation()}
     >
       {buttonText}
-    </PolarCheckoutButton>
+    </a>
   );
 }
 
