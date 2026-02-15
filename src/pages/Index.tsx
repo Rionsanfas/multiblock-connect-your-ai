@@ -8,6 +8,7 @@ import Features from "@/components/landing/Features";
 import HowItWorks from "@/components/landing/HowItWorks";
 import Pricing from "@/components/landing/Pricing";
 import FAQ from "@/components/landing/FAQ";
+import Comparison from "@/components/landing/Comparison";
 import Footer from "@/components/landing/Footer";
 
 const Index = () => {
@@ -34,6 +35,7 @@ const Index = () => {
         <Features />
         <HowItWorks />
         <Pricing />
+        <Comparison />
         <FAQ />
       </main>
       <Footer />
