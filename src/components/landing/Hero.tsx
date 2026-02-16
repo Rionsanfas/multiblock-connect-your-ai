@@ -12,7 +12,7 @@ const Hero = () => {
   const [phase, setPhase] = useState(isMobile.current ? 2 : 0);
 
   useEffect(() => {
-    if (isMobile.current) return; // no timers on mobile
+    if (isMobile.current) return;
     const timer1 = setTimeout(() => setPhase(1), 200);
     const timer2 = setTimeout(() => setPhase(2), 1400);
     return () => {
@@ -38,25 +38,23 @@ const Hero = () => {
     transform: phase >= 2 ? "translateY(0)" : "translateY(20px)",
     transition: "opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s"
   };
+
   return (
     <section className="relative min-h-[100svh] overflow-visible bg-background dot-grid-bg pt-20 pb-16 sm:pt-24 sm:pb-20 md:pt-28 md:pb-24 lg:pt-32 lg:pb-16">
-      {/* Pure black background - pointer-events-none to not block taps */}
+      {/* Pure black background */}
       <div className="absolute inset-0 bg-background pointer-events-none" aria-hidden="true" />
 
-      {/* Floating Blocks Background with Centered Light Beam */}
+      {/* Floating Blocks Background */}
       <FloatingBlocksBackground showLightBeam={phase >= 1} />
 
-      {/* Container - ensure it's above decorative layers */}
+      {/* Container */}
       <div className="relative z-20 w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero grid - stacks on mobile/tablet, side-by-side on desktop */}
         <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] items-center gap-8 lg:gap-10">
-          {/* Left: Text Content - Always on top on mobile */}
+          {/* Left: Text Content */}
           <div className="text-center lg:text-left order-1 lg:order-1 relative z-20">
-            {/* Headline with shadow effect */}
             <h1
               className="font-display italic font-bold leading-tight text-wrap-balance text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl mb-4 sm:mb-5"
               style={mainStyle}>
-
               <span
                 className="block"
                 style={{
@@ -64,7 +62,6 @@ const Hero = () => {
                   textShadow:
                   "0 2px 20px hsl(0 0% 100% / 0.35), 0 4px 40px hsl(0 0% 100% / 0.25), 0 8px 80px hsl(0 0% 100% / 0.15), 0 0 120px hsl(0 0% 100% / 0.1)"
                 }}>
-
                 Never let your AI
               </span>
               <span
@@ -78,47 +75,35 @@ const Hero = () => {
                   filter:
                   "drop-shadow(0 2px 15px hsl(0 0% 100% / 0.3)) drop-shadow(0 4px 30px hsl(0 0% 100% / 0.2)) drop-shadow(0 8px 50px hsl(0 0% 100% / 0.1))"
                 }}>
-
                 forget again.
               </span>
             </h1>
 
-            {/* Sub-headline */}
             <p
               className="text-muted-foreground max-w-lg mx-auto lg:mx-0 text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 lg:mb-10"
               style={{
                 lineHeight: 1.7,
                 ...mainStyle
               }}>
-
               Give your AI conversations persistent memory. ChatGPT, Claude, and Gemini finally remember what you told
               them—across every chat, forever.
             </p>
 
-            {/* CTA Button - touch-optimized with no hover dependency */}
+            {/* CTA Buttons - larger tap targets, higher z-index, active feedback */}
             <div
-              className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4 relative z-30"
+              className="flex items-center justify-center lg:justify-start gap-4 relative z-40"
               style={buttonsStyle}>
 
               <Link
                 to="/auth"
-                className="hero-cta-button group relative inline-flex items-center justify-center overflow-hidden px-5 py-2.5 sm:px-8 sm:py-3.5 text-xs sm:text-base font-medium rounded-full touch-manipulation">
-
-                {/* Animated edge shine - pointer-events-none */}
-                
-
-
-
-
-                {/* Top gloss - pointer-events-none */}
+                className="hero-cta-button group relative inline-flex items-center justify-center overflow-hidden px-7 py-3.5 sm:px-8 sm:py-3.5 text-sm sm:text-base font-medium rounded-full touch-manipulation active:scale-[0.96] transition-transform duration-150 select-none"
+                style={{ minHeight: 48, minWidth: 160 }}>
                 <span
                   className="absolute inset-0 rounded-full pointer-events-none"
                   aria-hidden="true"
                   style={{
                     background: "linear-gradient(180deg, hsl(0 0% 100% / 0.08) 0%, transparent 50%)"
                   }} />
-
-
                 <span className="relative z-10">Start Free Trial</span>
               </Link>
 
@@ -126,16 +111,16 @@ const Hero = () => {
                 href="https://www.youtube.com/watch?v=IovzpNyw88A"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative inline-flex items-center justify-center gap-1.5 sm:gap-2 px-5 py-2.5 sm:px-7 sm:py-3.5 text-xs sm:text-base font-medium rounded-full border border-border/40 bg-card/10 backdrop-blur-sm text-foreground/90 hover:bg-card/20 hover:border-border/60 hover:text-foreground transition-all duration-300 touch-manipulation"
+                className="group relative inline-flex items-center justify-center gap-2 px-7 py-3.5 sm:px-7 sm:py-3.5 text-sm sm:text-base font-medium rounded-full border border-border/40 bg-card/10 backdrop-blur-sm text-foreground/90 hover:bg-card/20 hover:border-border/60 hover:text-foreground transition-all duration-200 touch-manipulation active:scale-[0.96] select-none"
                 style={{
-                  boxShadow: "0 0 20px hsl(0 0% 100% / 0.04), inset 0 1px 0 hsl(0 0% 100% / 0.06)"
+                  boxShadow: "0 0 20px hsl(0 0% 100% / 0.04), inset 0 1px 0 hsl(0 0% 100% / 0.06)",
+                  minHeight: 48,
+                  minWidth: 120
                 }}>
-
                 <svg
-                  className="w-3.5 h-3.5 sm:w-4 sm:h-4 opacity-80 group-hover:opacity-100 transition-opacity"
+                  className="w-4 h-4 opacity-80 group-hover:opacity-100 transition-opacity"
                   viewBox="0 0 24 24"
                   fill="currentColor">
-
                   <path d="M8 5v14l11-7z" />
                 </svg>
                 <span>Demo</span>
@@ -143,16 +128,16 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right: Connected Blocks Visual - Desktop: full size, Mobile/Tablet: scaled up and centered */}
+          {/* Right: Connected Blocks Visual */}
           <div
-            className="flex order-2 lg:order-2 items-center justify-center min-h-[360px] sm:min-h-[400px] md:min-h-[440px] lg:min-h-[500px] xl:min-h-[550px] max-h-[55vh] sm:max-h-[50vh] lg:max-h-[70vh] relative z-10 w-full overflow-visible"
+            className="flex order-2 lg:order-2 items-center justify-center min-h-[360px] sm:min-h-[400px] md:min-h-[440px] lg:min-h-[500px] xl:min-h-[550px] max-h-[55vh] sm:max-h-[50vh] lg:max-h-[70vh] relative z-10 w-full overflow-visible pointer-events-none lg:pointer-events-auto"
             style={visualStyle}>
-
             <HeroBlocks />
           </div>
         </div>
       </div>
-    </section>);
-
+    </section>
+  );
 };
+
 export default Hero;
