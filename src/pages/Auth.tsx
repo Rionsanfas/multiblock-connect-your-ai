@@ -348,13 +348,14 @@ export default function Auth() {
 
               {/* Privacy consent checkbox for signup */}
               {mode === 'signup' && (
-                <div className="flex items-start gap-2" style={formFieldStyle(150)}>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-secondary/20 border border-border/30" style={formFieldStyle(150)}>
                   <Checkbox
                     id="privacy-consent"
                     checked={agreedToPrivacy}
                     onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+                    className="mt-0.5"
                   />
-                  <label htmlFor="privacy-consent" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                  <label htmlFor="privacy-consent" className="text-xs sm:text-sm text-muted-foreground leading-relaxed cursor-pointer">
                     I agree to the{" "}
                     <Link to="/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</Link>
                     {" "}and{" "}
