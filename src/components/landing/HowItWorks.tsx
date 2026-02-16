@@ -168,7 +168,7 @@ const HowItWorks = () => {
             <div className="hiw-bento-card hiw-card-3d hiw-card-3d-right dot-grid-card h-full min-h-[200px] sm:min-h-[240px] lg:min-h-[200px] max-lg:min-w-[200px] max-lg:max-w-[220px] max-lg:flex-shrink-0 max-lg:snap-center md:max-lg:min-w-[240px] md:max-lg:max-w-[260px]">
               <div className="hiw-card-3d-inner h-full flex flex-col">
                 {/* Sequential letter highlight text - smaller on mobile */}
-                <div className="hiw-overflow-text-new flex-1 flex items-center justify-start pt-4 sm:pt-6 lg:pt-8 max-lg:scale-75 max-lg:origin-top-center">
+                <div className="hiw-overflow-text-new flex-1 flex items-start justify-center pt-6 sm:pt-8 lg:pt-10 max-lg:scale-75 max-lg:origin-top-center">
                   <LetterHighlight text="Compare" />
                 </div>
                 
