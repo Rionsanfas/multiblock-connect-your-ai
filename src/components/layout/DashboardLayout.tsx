@@ -7,6 +7,9 @@ import { Layers, Key, Users, Settings, Inbox, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useAuth } from "@/hooks/useAuth";
+import { usePrivacyConsent } from "@/hooks/usePrivacyConsent";
+import { PrivacyConsentModal } from "@/components/PrivacyConsentModal";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -26,6 +29,8 @@ export function DashboardLayout({
   const location = useLocation();
   const { count: inboxCount } = useInboxCount();
   const { user } = useCurrentUser();
+  const { user: authUser } = useAuth();
+  const { needsConsent, markAccepted } = usePrivacyConsent(authUser?.id ?? null);
   const isFreePlan = user?.plan?.toLowerCase() === 'free';
 
   const mobileNavItems = [
@@ -37,6 +42,8 @@ export function DashboardLayout({
   ];
 
   return (
+    <>
+      {authUser && <PrivacyConsentModal userId={authUser.id} open={needsConsent} onAccepted={markAccepted} />}
     <div className="flex h-screen w-full bg-background noise-bg">
       {!hideSidebar && <AppSidebar />}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -101,5 +108,6 @@ export function DashboardLayout({
         )}
       </div>
     </div>
+    </>
   );
 }
