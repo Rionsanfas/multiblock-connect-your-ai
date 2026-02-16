@@ -94,7 +94,7 @@ const Footer = () => {
           {/* Social Links - Only X with 3D premium styling */}
           <div className="flex items-center order-2 md:order-3">
             <a
-              href="https://x.com/rionsanfas"
+              href="https://x.com/fas_is_faisal"
               target="_blank"
               rel="noopener noreferrer"
               className="group relative rounded-full flex items-center justify-center text-muted-foreground transition-all duration-500 ease-out focus:outline-none focus:ring-2 focus:ring-primary/50"
