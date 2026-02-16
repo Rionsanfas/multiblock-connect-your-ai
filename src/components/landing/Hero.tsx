@@ -89,22 +89,23 @@ const Hero = () => {
               them—across every chat, forever.
             </p>
 
-            {/* CTA Buttons - larger tap targets, higher z-index, active feedback */}
+            {/* CTA Buttons - isolated stacking context for reliable mobile taps */}
             <div
-              className="flex items-center justify-center lg:justify-start gap-4 relative z-40"
+              className="flex items-center justify-center lg:justify-start gap-4 relative z-50 isolate"
               style={buttonsStyle}>
 
               <Link
                 to="/auth"
                 className="hero-cta-button group relative inline-flex items-center justify-center overflow-hidden px-7 py-3.5 sm:px-8 sm:py-3.5 text-sm sm:text-base font-medium rounded-full touch-manipulation active:scale-[0.96] transition-transform duration-150 select-none"
-                style={{ minHeight: 48, minWidth: 160 }}>
+                style={{ minHeight: 48, minWidth: 160 }}
+                onClick={(e) => e.stopPropagation()}>
                 <span
                   className="absolute inset-0 rounded-full pointer-events-none"
                   aria-hidden="true"
                   style={{
                     background: "linear-gradient(180deg, hsl(0 0% 100% / 0.08) 0%, transparent 50%)"
                   }} />
-                <span className="relative z-10">Start Free Trial</span>
+                <span className="relative z-10 pointer-events-none">Start Free Trial</span>
               </Link>
 
               <a
@@ -116,14 +117,15 @@ const Hero = () => {
                   boxShadow: "0 0 20px hsl(0 0% 100% / 0.04), inset 0 1px 0 hsl(0 0% 100% / 0.06)",
                   minHeight: 48,
                   minWidth: 120
-                }}>
+                }}
+                onClick={(e) => e.stopPropagation()}>
                 <svg
-                  className="w-4 h-4 opacity-80 group-hover:opacity-100 transition-opacity"
+                  className="w-4 h-4 opacity-80 group-hover:opacity-100 transition-opacity pointer-events-none"
                   viewBox="0 0 24 24"
                   fill="currentColor">
                   <path d="M8 5v14l11-7z" />
                 </svg>
-                <span>Demo</span>
+                <span className="pointer-events-none">Demo</span>
               </a>
             </div>
           </div>

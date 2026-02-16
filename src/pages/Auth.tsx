@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { Loader2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 // Google icon SVG component
 const GoogleIcon = () => <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -36,6 +38,9 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
+  const [showEmailNotice, setShowEmailNotice] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -101,6 +106,10 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+    if (mode === 'signup' && !agreedToPrivacy) {
+      toast.error("Please agree to the Privacy Policy to continue");
+      return;
+    }
     setIsLoading(true);
     setErrors({});
     try {
@@ -127,6 +136,7 @@ export default function Auth() {
           }
         } else {
           toast.success("Account created! Please check your email to confirm your account.");
+          setShowEmailNotice(true);
         }
       } else {
         const {
@@ -336,9 +346,25 @@ export default function Auth() {
                   </button>
                 </div>}
 
-              
+              {/* Privacy consent checkbox for signup */}
+              {mode === 'signup' && (
+                <div className="flex items-start gap-2" style={formFieldStyle(150)}>
+                  <Checkbox
+                    id="privacy-consent"
+                    checked={agreedToPrivacy}
+                    onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+                  />
+                  <label htmlFor="privacy-consent" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                    I agree to the{" "}
+                    <Link to="/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</Link>
+                    {" "}and{" "}
+                    <Link to="/terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Terms of Service</Link>
+                  </label>
+                </div>
+              )}
+
               <div style={buttonStyle}>
-                <Button type="submit" className="w-full h-10 sm:h-12 rounded-xl gap-2 bg-primary text-primary-foreground hover:bg-primary/90 text-center text-base font-normal" disabled={isLoading}>
+                <Button type="submit" className="w-full h-10 sm:h-12 rounded-xl gap-2 bg-primary text-primary-foreground hover:bg-primary/90 text-center text-base font-normal" disabled={isLoading || (mode === 'signup' && !agreedToPrivacy)}>
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>
                       {mode === 'signup' && 'Create Account'}
                       {mode === 'signin' && 'Sign In'}
@@ -348,6 +374,36 @@ export default function Auth() {
                     </>}
                 </Button>
               </div>
+
+              {/* Email deliverability notice after signup */}
+              {showEmailNotice && mode === 'signup' && (
+                <Alert className="border-border/50 bg-secondary/30">
+                  <Mail className="h-4 w-4" />
+                  <AlertTitle>Check your email</AlertTitle>
+                  <AlertDescription className="text-xs">
+                    We've sent a verification link to <strong>{email}</strong>.{" "}
+                    <strong>Check your spam folder</strong> if you don't see it in a few minutes.
+                    <br />
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-xs text-muted-foreground hover:text-foreground"
+                      disabled={resendingEmail}
+                      onClick={async () => {
+                        setResendingEmail(true);
+                        const { error } = await supabase.auth.resend({ type: 'signup', email });
+                        if (error) {
+                          toast.error(error.message);
+                        } else {
+                          toast.success("Verification email resent!");
+                        }
+                        setResendingEmail(false);
+                      }}
+                    >
+                      {resendingEmail ? "Sending..." : "Didn't receive it? Resend verification email"}
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
             </form>
 
             <div className="mt-6 text-center" style={footerStyle}>
