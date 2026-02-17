@@ -169,6 +169,8 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   { id: 'claude-opus-4-1-20250805', provider: 'anthropic', name: 'Claude Opus 4.1', type: 'chat', description: 'Powerful Claude with enhanced reasoning.', context_window: 200000, max_output_tokens: 16384, input_cost_per_1k: 0.012, output_cost_per_1k: 0.06, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'medium', quality: 'premium' },
   // User-specified canonical ID: claude-sonnet-4-20250514
   { id: 'claude-sonnet-4-20250514', provider: 'anthropic', name: 'Claude Sonnet 4', type: 'chat', description: 'Balanced Claude 4 performance.', context_window: 200000, max_output_tokens: 8192, input_cost_per_1k: 0.003, output_cost_per_1k: 0.015, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'high' },
+  // User-specified canonical ID: claude-sonnet-4-6
+  { id: 'claude-sonnet-4-6', provider: 'anthropic', name: 'Claude Sonnet 4.6', type: 'chat', description: 'Claude Sonnet 4.6 with best speed/quality balance.', context_window: 200000, max_output_tokens: 16384, input_cost_per_1k: 0.004, output_cost_per_1k: 0.02, supports_vision: true, supports_image_generation: false, supports_video_generation: false, supports_functions: true, speed: 'fast', quality: 'premium' },
 
   // ========================================
   // GOOGLE MODELS

@@ -180,6 +180,7 @@ const OPENROUTER_MODEL_MAPPINGS: Record<string, string> = {
   // ========================================
   'claude-opus-4.6': 'anthropic/claude-opus-4.6',
   'claude-sonnet-4.6': 'anthropic/claude-sonnet-4.6',
+  'claude-sonnet-4-6': 'anthropic/claude-sonnet-4.6',
   'claude-haiku-4.6': 'anthropic/claude-haiku-4.6',
 
   // ========================================
@@ -393,6 +394,7 @@ const MODEL_ID_MAPPINGS: Record<string, string> = {
     // ========================================
     'claude-opus-4.6': 'claude-opus-4-6-20260201',
     'claude-sonnet-4.6': 'claude-sonnet-4-6-20260201',
+    'claude-sonnet-4-6': 'claude-sonnet-4-6-20260201',
     'claude-haiku-4.6': 'claude-haiku-4-6-20260201',
 
     // ========================================
