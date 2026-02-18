@@ -26,10 +26,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={cn(
-      "fixed left-0 right-0 z-50 flex justify-center pt-4 px-4 transition-all duration-300",
-      ltdBarVisible ? "top-10" : "top-0"
-    )}>
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4 transition-all duration-300">
       {/* Desktop Pill Navbar */}
       <div
         className={cn(
