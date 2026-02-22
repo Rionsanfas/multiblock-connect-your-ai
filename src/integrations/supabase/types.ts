@@ -14,6 +14,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          agent_id: string | null
+          details: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          timestamp: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          details?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          timestamp?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          details?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          timestamp?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agents: {
+        Row: {
+          board_id: string | null
+          config: Json | null
+          created_at: string | null
+          id: string
+          last_run_at: string | null
+          name: string
+          openclaw_agent_id: string
+          role: string | null
+          status: string | null
+          tools: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          board_id?: string | null
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          last_run_at?: string | null
+          name: string
+          openclaw_agent_id: string
+          role?: string | null
+          status?: string | null
+          tools?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          board_id?: string | null
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          last_run_at?: string | null
+          name?: string
+          openclaw_agent_id?: string
+          role?: string | null
+          status?: string | null
+          tools?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           api_key_encrypted: string
@@ -513,6 +607,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      openclaw_connections: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_heartbeat: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          webhook_token: string
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_heartbeat?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          webhook_token?: string
+          webhook_url?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_heartbeat?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          webhook_token?: string
+          webhook_url?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1268,6 +1395,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      generate_webhook_token: { Args: never; Returns: string }
       get_available_keys_for_board: {
         Args: { p_board_id: string }
         Returns: {
