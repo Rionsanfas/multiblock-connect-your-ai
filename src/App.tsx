@@ -24,6 +24,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import RefundPolicy from "./pages/RefundPolicy";
 import NotFound from "./pages/NotFound";
+import OpenClawSettings from "./pages/OpenClawSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -140,6 +141,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <InboxPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/openclaw"
+        element={
+          <ProtectedRoute>
+            <OpenClawSettings />
           </ProtectedRoute>
         }
       />
