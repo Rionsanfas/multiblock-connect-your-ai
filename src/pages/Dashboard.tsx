@@ -30,6 +30,7 @@ import { PlanUsageCard } from "@/components/dashboard/PlanUsageCard";
 import { BoardTransferDialog } from "@/components/board/BoardTransferDialog";
 import { WorkspaceSwitcher } from "@/components/teams/WorkspaceSwitcher";
 import { DemoFloatingCard } from "@/components/DemoFloatingCard";
+import { OpenClawSection } from "@/components/dashboard/OpenClawSection";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -266,6 +267,9 @@ export default function Dashboard() {
             {/* WorkspaceSwitcher handles its own visibility based on hasTeamAccess */}
             <WorkspaceSwitcher />
           </div>
+
+          {/* OpenClaw Connection */}
+          <OpenClawSection />
 
           {/* Usage Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
