@@ -6,6 +6,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// --- Validation Constants ---
+const MAX_PAYLOAD_SIZE = 1024 * 1024; // 1MB
+const MAX_AGENTS = 100;
+const MAX_STRING_LENGTH = 1000;
+const MAX_DETAILS_LENGTH = 5000;
+const MAX_TOOLS = 50;
+
 // --- Types ---
 
 interface HeartbeatPayload {
@@ -36,6 +43,69 @@ interface ActivityLogPayload {
 
 type WebhookPayload = HeartbeatPayload | AgentSyncPayload | ActivityLogPayload;
 
+// --- Validation Helpers ---
+
+function truncateString(val: unknown, max: number): string {
+  if (typeof val !== "string") return "";
+  return val.slice(0, max);
+}
+
+function validateAgentSyncPayload(payload: unknown): { valid: boolean; error?: string; data?: AgentSyncPayload } {
+  const p = payload as Record<string, unknown>;
+  if (!Array.isArray(p.agents)) return { valid: false, error: "agents must be an array" };
+  if (p.agents.length > MAX_AGENTS) return { valid: false, error: `agents array exceeds maximum of ${MAX_AGENTS}` };
+  
+  const sanitizedAgents = [];
+  for (const agent of p.agents) {
+    if (typeof agent !== "object" || agent === null) continue;
+    const a = agent as Record<string, unknown>;
+    if (typeof a.id !== "string" || !a.id) return { valid: false, error: "Each agent must have a string id" };
+    if (typeof a.name !== "string" || !a.name) return { valid: false, error: "Each agent must have a string name" };
+    
+    const tools = Array.isArray(a.tools) ? a.tools.filter((t): t is string => typeof t === "string").slice(0, MAX_TOOLS) : [];
+    
+    sanitizedAgents.push({
+      id: truncateString(a.id, 255),
+      name: truncateString(a.name, 255),
+      role: a.role ? truncateString(a.role, 255) : undefined,
+      tools,
+      status: a.status ? truncateString(a.status, 50) : undefined,
+    });
+  }
+  
+  return { valid: true, data: { event: "agent_sync", agents: sanitizedAgents } };
+}
+
+function validateActivityLogPayload(payload: unknown): { valid: boolean; error?: string; data?: ActivityLogPayload } {
+  const p = payload as Record<string, unknown>;
+  const validTypes = ["info", "error", "success", "warning"];
+  
+  if (typeof p.agent_id !== "string" || !p.agent_id) return { valid: false, error: "agent_id is required" };
+  if (typeof p.type !== "string" || !validTypes.includes(p.type)) return { valid: false, error: "type must be one of: info, error, success, warning" };
+  if (typeof p.message !== "string" || !p.message) return { valid: false, error: "message is required" };
+  
+  // Sanitize metadata - limit depth/size
+  let metadata: Record<string, unknown> = {};
+  if (p.metadata && typeof p.metadata === "object" && !Array.isArray(p.metadata)) {
+    const metaStr = JSON.stringify(p.metadata);
+    if (metaStr.length <= 10000) {
+      metadata = p.metadata as Record<string, unknown>;
+    }
+  }
+  
+  return {
+    valid: true,
+    data: {
+      event: "activity_log",
+      agent_id: truncateString(p.agent_id, 255),
+      type: p.type as ActivityLogPayload["type"],
+      message: truncateString(p.message, MAX_STRING_LENGTH),
+      details: p.details ? truncateString(p.details, MAX_DETAILS_LENGTH) : undefined,
+      metadata,
+    },
+  };
+}
+
 // --- Helpers ---
 
 function json(body: Record<string, unknown>, status = 200) {
@@ -53,6 +123,7 @@ function serviceClient() {
 }
 
 async function validateToken(token: string) {
+  if (token.length > 255) return null;
   const supabase = serviceClient();
   const { data, error } = await supabase
     .from("openclaw_connections")
@@ -61,7 +132,7 @@ async function validateToken(token: string) {
     .maybeSingle();
 
   if (error) throw error;
-  return data; // null if not found
+  return data;
 }
 
 async function updateHeartbeat(connectionId: string) {
@@ -119,7 +190,6 @@ async function handleAgentSync(userId: string, payload: AgentSyncPayload) {
 async function handleActivityLog(userId: string, payload: ActivityLogPayload) {
   const supabase = serviceClient();
 
-  // Resolve internal agent id from openclaw_agent_id
   let agentId: string | null = null;
   if (payload.agent_id) {
     const { data } = await supabase
@@ -161,6 +231,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Check content length
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength) > MAX_PAYLOAD_SIZE) {
+      return json({ error: "Payload too large" }, 413);
+    }
+
     // Extract token
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
@@ -177,31 +253,47 @@ Deno.serve(async (req) => {
       return json({ error: "Connection is disconnected" }, 403);
     }
 
-    // Parse body
+    // Parse body with size limit
+    let rawBody: string;
+    try {
+      rawBody = await req.text();
+      if (rawBody.length > MAX_PAYLOAD_SIZE) {
+        return json({ error: "Payload too large" }, 413);
+      }
+    } catch {
+      return json({ error: "Failed to read request body" }, 400);
+    }
+
     let payload: WebhookPayload;
     try {
-      payload = await req.json();
+      payload = JSON.parse(rawBody);
     } catch {
       return json({ error: "Invalid JSON body" }, 400);
     }
 
-    if (!payload.event) {
-      return json({ error: "Missing event field" }, 400);
+    if (!payload || typeof payload !== "object" || !("event" in payload) || typeof payload.event !== "string") {
+      return json({ error: "Missing or invalid event field" }, 400);
     }
 
     // Update heartbeat for every valid request
     await updateHeartbeat(connection.id);
 
-    // Route to handler
+    // Route to handler with validation
     switch (payload.event) {
       case "heartbeat":
         return await handleHeartbeat(connection.id, connection.status);
-      case "agent_sync":
-        return await handleAgentSync(connection.user_id, payload as AgentSyncPayload);
-      case "activity_log":
-        return await handleActivityLog(connection.user_id, payload as ActivityLogPayload);
+      case "agent_sync": {
+        const agentResult = validateAgentSyncPayload(payload);
+        if (!agentResult.valid) return json({ error: agentResult.error }, 400);
+        return await handleAgentSync(connection.user_id, agentResult.data!);
+      }
+      case "activity_log": {
+        const logResult = validateActivityLogPayload(payload);
+        if (!logResult.valid) return json({ error: logResult.error }, 400);
+        return await handleActivityLog(connection.user_id, logResult.data!);
+      }
       default:
-        return json({ error: `Unknown event: ${(payload as any).event}` }, 400);
+        return json({ error: "Unknown event type" }, 400);
     }
   } catch (err) {
     console.error("Webhook error:", err);

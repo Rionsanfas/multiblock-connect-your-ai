@@ -962,7 +962,7 @@ serve(async (req) => {
         // Mistral image models (mistral-gan-flux, flux-2-pro) route through Together.ai / Black Forest Labs
         // For native Mistral keys, we inform the user they need OpenRouter or Together
         return new Response(JSON.stringify({ 
-          error: `Mistral image models (Flux) require an OpenRouter key. Please add an OpenRouter API key to use ${model_id}.` 
+          error: `Image generation is not available for this provider with a native API key. Please use an OpenRouter API key to access ${model_id}.` 
         }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -1624,11 +1624,11 @@ serve(async (req) => {
         errorMessage = `Invalid request to ${provider}: ${errorMessage}`;
       }
 
+      // Log detailed error server-side only
+      console.error(`[chat-proxy] Provider error: ${provider} ${response.status}`, errorDetails);
+      
       return new Response(JSON.stringify({ 
         error: errorMessage,
-        details: errorDetails,
-        status: response.status,
-        provider,
         request_id: requestId,
         client_request_id,
       }), {
@@ -1655,8 +1655,8 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error("[chat-proxy] Error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    console.error("[chat-proxy] Unhandled error:", error);
+    return new Response(JSON.stringify({ error: "An error occurred processing your request. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
