@@ -610,6 +610,7 @@ export type Database = {
       }
       openclaw_connections: {
         Row: {
+          connection_name: string
           created_at: string | null
           id: string
           last_heartbeat: string | null
@@ -620,6 +621,7 @@ export type Database = {
           webhook_url: string
         }
         Insert: {
+          connection_name?: string
           created_at?: string | null
           id?: string
           last_heartbeat?: string | null
@@ -630,6 +632,7 @@ export type Database = {
           webhook_url?: string
         }
         Update: {
+          connection_name?: string
           created_at?: string | null
           id?: string
           last_heartbeat?: string | null
