@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   Users,
   Inbox,
+  Terminal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -36,6 +37,7 @@ export function AppSidebar() {
     { icon: Key, label: "API Keys", href: "/settings/keys", show: true },
     // Only show Team Settings if user has team access
     { icon: Users, label: "Team Settings", href: "/team/settings", show: hasTeamAccess && !teamAccessLoading },
+    { icon: Terminal, label: "OpenClaw", href: "/settings/openclaw", show: true },
     { icon: CreditCard, label: "Pricing", href: "/pricing", show: true },
     { icon: Settings, label: "Settings", href: "/settings", show: true },
   ];
