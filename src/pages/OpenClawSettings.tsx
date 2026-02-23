@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,14 +10,21 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Check, Plug, PlugZap, Unplug, ExternalLink } from "lucide-react";
+import { Copy, Check, PlugZap, Unplug, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+function isConnectedRecently(lastHeartbeat: string | null): boolean {
+  if (!lastHeartbeat) return false;
+  const diff = Date.now() - new Date(lastHeartbeat).getTime();
+  return diff < 2 * 60 * 1000;
+}
 
 export default function OpenClawSettings() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [copied, setCopied] = useState(false);
   const [showDisconnect, setShowDisconnect] = useState(false);
+  const hasAutoCreated = useRef(false);
 
   const { data: connection, isLoading } = useQuery({
     queryKey: ["openclaw-connection", user?.id],
@@ -30,6 +37,7 @@ export default function OpenClawSettings() {
       return data;
     },
     enabled: !!user?.id,
+    refetchInterval: 30000,
   });
 
   const createConnection = useMutation({
@@ -47,12 +55,19 @@ export default function OpenClawSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["openclaw-connection"] });
-      toast({ title: "Connection created", description: "Your webhook URL is ready." });
     },
     onError: (err: Error) => {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     },
   });
+
+  // Auto-create connection if none exists
+  useEffect(() => {
+    if (!isLoading && connection === null && user?.id && !createConnection.isPending && !hasAutoCreated.current) {
+      hasAutoCreated.current = true;
+      createConnection.mutate();
+    }
+  }, [isLoading, connection, user?.id, createConnection.isPending]);
 
   const disconnectMutation = useMutation({
     mutationFn: async () => {
@@ -63,6 +78,7 @@ export default function OpenClawSettings() {
       if (error) throw error;
     },
     onSuccess: () => {
+      hasAutoCreated.current = false;
       queryClient.invalidateQueries({ queryKey: ["openclaw-connection"] });
       setShowDisconnect(false);
       toast({ title: "Disconnected", description: "OpenClaw connection removed." });
@@ -80,24 +96,13 @@ export default function OpenClawSettings() {
     toast({ title: "Copied!", description: "Webhook URL copied to clipboard." });
   };
 
-  const statusColor = connection?.status === "connected"
-    ? "bg-emerald-500"
-    : connection?.status === "pending"
-      ? "bg-amber-500"
-      : "bg-destructive";
-
-  const statusLabel = connection?.status === "connected"
-    ? "Connected"
-    : connection?.status === "pending"
-      ? "Pending"
-      : connection
-        ? "Disconnected"
-        : "Not Connected";
+  const isConnected = isConnectedRecently(connection?.last_heartbeat ?? null);
+  const statusColor = isConnected ? "bg-emerald-500" : "bg-destructive";
+  const statusLabel = isConnected ? "Connected" : "Disconnected";
 
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight">OpenClaw Integration</h1>
@@ -105,49 +110,21 @@ export default function OpenClawSettings() {
               Connect your local OpenClaw installation to Multiblock.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={cn("h-2.5 w-2.5 rounded-full", statusColor)} />
-            <Badge variant="outline" className="text-xs font-medium">
-              {statusLabel}
-            </Badge>
-          </div>
+          {connection && (
+            <div className="flex items-center gap-2">
+              <span className={cn("h-2.5 w-2.5 rounded-full", statusColor)} />
+              <Badge variant="outline" className="text-xs font-medium">
+                {statusLabel}
+              </Badge>
+            </div>
+          )}
         </div>
 
-        {isLoading ? (
+        {isLoading || (!connection && createConnection.isPending) ? (
           <div className="flex justify-center py-16">
             <Spinner size="lg" />
           </div>
-        ) : !connection ? (
-          /* No connection — setup card */
-          <Card className="border-border/50">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-secondary flex items-center justify-center">
-                  <Plug className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Set Up Connection</CardTitle>
-                  <CardDescription>Generate a webhook URL to link OpenClaw.</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button
-                onClick={() => createConnection.mutate()}
-                disabled={createConnection.isPending}
-                className="w-full"
-              >
-                {createConnection.isPending ? (
-                  <Spinner size="sm" className="mr-2 text-background" />
-                ) : (
-                  <PlugZap className="mr-2 h-4 w-4" />
-                )}
-                Generate Webhook URL
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          /* Connected / Pending — details card */
+        ) : connection ? (
           <Card className="border-border/50">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
@@ -157,7 +134,7 @@ export default function OpenClawSettings() {
                 <div>
                   <CardTitle className="text-lg">Connection Details</CardTitle>
                   <CardDescription>
-                    {connection.status === "connected"
+                    {isConnected
                       ? "OpenClaw is actively connected."
                       : "Waiting for first heartbeat from OpenClaw."}
                   </CardDescription>
@@ -165,7 +142,6 @@ export default function OpenClawSettings() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Webhook URL */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Webhook URL
@@ -174,18 +150,12 @@ export default function OpenClawSettings() {
                   <code className="flex-1 bg-secondary/60 rounded-xl px-3 py-2.5 text-xs font-mono break-all select-all border border-border/30">
                     {connection.webhook_url}
                   </code>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={copyUrl}
-                    className="shrink-0"
-                  >
+                  <Button variant="outline" size="icon" onClick={copyUrl} className="shrink-0">
                     {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
 
-              {/* Last heartbeat */}
               {connection.last_heartbeat && (
                 <div className="text-xs text-muted-foreground">
                   Last heartbeat:{" "}
@@ -195,7 +165,6 @@ export default function OpenClawSettings() {
                 </div>
               )}
 
-              {/* Disconnect */}
               <Button
                 variant="outline"
                 className="w-full text-destructive hover:text-destructive"
@@ -206,9 +175,8 @@ export default function OpenClawSettings() {
               </Button>
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
-        {/* Setup Instructions */}
         <Card className="border-border/50">
           <CardContent className="pt-6">
             <Accordion type="single" collapsible defaultValue="instructions">
@@ -218,10 +186,11 @@ export default function OpenClawSettings() {
                 </AccordionTrigger>
                 <AccordionContent className="pt-4">
                   <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
-                    <li>Open your OpenClaw configuration</li>
-                    <li>Add the webhook URL above to your config</li>
+                    <li>Copy the webhook URL above</li>
+                    <li>Open your OpenClaw configuration file</li>
+                    <li>Add the webhook URL to your config</li>
                     <li>Restart OpenClaw</li>
-                    <li>Connection will show as active once OpenClaw sends its first heartbeat</li>
+                    <li>The status will change to "Connected" once OpenClaw sends its first heartbeat</li>
                   </ol>
                   <a
                     href="https://openclaw.dev/docs"
@@ -238,7 +207,6 @@ export default function OpenClawSettings() {
           </CardContent>
         </Card>
 
-        {/* Disconnect Dialog */}
         <ConfirmDialog
           open={showDisconnect}
           onOpenChange={setShowDisconnect}
