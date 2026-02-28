@@ -20,7 +20,7 @@ const PLAN_CONFIG: Record<string, {
 }> = {
   // New monthly/annual plans
   'pro-monthly': {
-    checkoutUrl: 'https://polar.sh/multiblock/checkout?product=8756df4f-5d81-4e88-8f9f-0e8d2dfe03a3',
+    checkoutUrl: 'https://buy.polar.sh/polar_cl_IH82mfObkRtRmHKdbp2OSDLXQN0QC4CBVnKMo3gLSIL',
     name: 'Pro Monthly',
     boards: 50,
     storageGb: 5,
@@ -28,7 +28,7 @@ const PLAN_CONFIG: Record<string, {
     isLifetime: false,
   },
   'pro-annual': {
-    checkoutUrl: 'https://polar.sh/multiblock/checkout?product=7ce03e88-d1a3-45f7-a60d-f282aa83e94a',
+    checkoutUrl: 'https://buy.polar.sh/polar_cl_DwPQiQgpjYb3xgk4cMtPDK3oapSGLSs2iU8qt2w8Mif',
     name: 'Pro Annual',
     boards: 50,
     storageGb: 5,
@@ -36,7 +36,7 @@ const PLAN_CONFIG: Record<string, {
     isLifetime: false,
   },
   'team-monthly': {
-    checkoutUrl: 'https://polar.sh/multiblock/checkout?product=bbace997-28ad-4afe-877e-b932e41e29c6',
+    checkoutUrl: 'https://buy.polar.sh/polar_cl_VRn60gsBMzVPECfYeC2ga1BsCq20rcv7Fw02Y2bm3wa',
     name: 'Pro Team Monthly',
     boards: 50,
     storageGb: 20,
