@@ -44,7 +44,7 @@ const PLAN_CONFIG: Record<string, {
     isLifetime: false,
   },
   'team-annual': {
-    checkoutUrl: 'https://polar.sh/multiblock/checkout?product=4bf80645-0f04-4cac-b614-35af721dc294',
+    checkoutUrl: 'https://buy.polar.sh/polar_cl_DwPQiQgpjYb3xgk4cMtPDK3oapSGLSs2iU8qt2w8Mif',
     name: 'Pro Team Annual',
     boards: 50,
     storageGb: 20,

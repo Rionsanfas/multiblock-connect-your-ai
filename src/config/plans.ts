@@ -235,7 +235,7 @@ const TEAM_ANNUAL: PlanConfig = {
   capabilities: TEAM_CAPABILITIES,
   sort_order: 4,
   is_active: true,
-  checkout_url: 'https://buy.polar.sh/polar_cl_O0KhX8QrZVtK95iQrHceWabozRA8jfZzTwOvB0UaTft',
+  checkout_url: 'https://buy.polar.sh/polar_cl_DwPQiQgpjYb3xgk4cMtPDK3oapSGLSs2iU8qt2w8Mif',
   polar_product_id: POLAR_PRODUCT_IDS['team-annual'],
 };
 
